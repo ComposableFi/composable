@@ -1,9 +1,5 @@
 # Editing Docs
 
-_So meta_
-
-The editing process of these docs has also been nixified.
-
 ## Serving a hot-reloading version of these docs
 
 To serve a hot-reloading version of these docs, simply run:

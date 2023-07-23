@@ -10,46 +10,22 @@
 
 Each composable node release involves a release of (at-least) the following components,
 
-1. Runtime wasm - Dali, Picasso and Composable at the time of this writing.
+1. Runtime wasm - Picasso and Composable at the time of this writing.
 
     In order to allow clear identification with the native runtime version of each node release the runtime version for each runtime is an integer that is monotonic increasing for each release.
 2. The Composable Node - main node executable.
    This is in the format `vMajor.Minor.Patch` (eg: `v5.4200.10`). Where `Major=Branch number eg: 5`, `Minor=Runtime spec_version eg: 4200` and `Patch=a patch version 0..n`. The major version number ensures that there is always a way to branch the code for an upcoming release with relevant feature flags etc., while also serving as the major version for that release. Minor version always serves to indicate a backwards compatible patch to that release.
-3. Subsquid - Data archival and query system for networks.
-4. Frontends - There are two FE components in existence at the time of this writing.
-5. ComposableJs - This is the library to interact with composable parachains using typescript/JS.
 
-For 3, 4, 5 have the following characteristics which require them to be versioned in a different scheme,
-- They all depend on the node rpc and runtime (and types) directly hence requiring updates whenever the node RPC/event interfaces change.
-- They all can make breaking changes from the point of view of external dependants such as ComposableJS which could have major versions/breaking interface changes without a direct relationship to Node/runtime changes.
-
-Because of these characteristics following specific versioning scheme is proposed be used,
-
+Release template name is:
 `<component name>-<node v.major.minor version>-<component specific versioning>`
-
-Eg: 
-
-For Picasso FE : `fe-v2.4-picasso-abcd`
-
-For Subsquid : `subsquid-v2.5-1.0.1`
-
-etc.
 
 #### 3.1.1. Expected Typical Release Artifact List 
 
 ```
 - Composable Node v5.4200.12
 -- Runtimes
---- dali-4200
 --- picasso-4200
 --- composable-4200
--- FE
---- fe-v5.4200-picasso-abcd
---- fe-v5.4200-pablo-xyz
--- ComposableJS
---- composablejs-v5.4200-mnop
--- Subsquid
---- subsquid-v5.4200-111
 ```
 
 ### 3.2. Release Process
@@ -63,16 +39,6 @@ As the work starts for a `vMajor` (eg: v5) release,
 3. QA/Audit happens on these released tag.
 4. Any reported issues must be fixed on `main` and merged/cherry picked to the `release-v5` branch. Then a tag should be created for the next round and so on until "release-able" version is found.
 5. Node and runtimes are released together from the same tag while other components(eg: fe) must have their own tag/workflows to release.
-
-#### 3.2.1 Frontend releases:
-Frontend releases follows the above guideline, with a few rules:
-- Versioning and Triggers:
-Create a tag `staging-fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
-- To deploy to production, the approved commit should be tagged with: `fe-v[MAJOR].[MINOR]-picasso-[FE_VERSION_NUMBER]`
-
-> Note: [MAJOR] and [MINOR] follows the convention of the branch.
-
-**[FE_VERSION_NUMBER] is a number incremented on each release.**
 
 ## 4. Implementation
 
@@ -99,9 +65,6 @@ The following section lays out the release steps for each release in a checklist
    - [ ] Update `spec_version` (automate-able)
    - [ ] Update `transaction_version` if existing extrinsics or their ordering has changed. Can be verified via [metadata comparison](https://github.com/paritytech/polkadot/blob/master/doc/release-checklist.md#extrinsic-ordering).
 - [ ] Update composable node version if the code has changed (relevant number in workspace `Cargo.toml`)
-- [ ] Update composableJs version (if necessary to be released)
-- [ ] Update FE version (if necessary to be released)
-- [ ] Update Subsquid version (if necessary to be released)
 - [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.

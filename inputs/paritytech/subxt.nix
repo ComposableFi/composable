@@ -13,8 +13,10 @@
         in crane.nightly.buildPackage (rec {
           inherit name;
           pname = "subxt-cli";
+          nativeBuildInputs = systemCommonRust.darwin-deps;
           cargoArtifacts = crane.nightly.buildDepsOnly ({
             doCheck = false;
+            inherit name;
             inherit src;
             cargoTestCommand = "";
             nativeBuildInputs = systemCommonRust.darwin-deps;

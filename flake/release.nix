@@ -2,6 +2,8 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       packages = let
+        nix-config = ''
+          --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --accept-flake-config'';
         packages = self'.packages;
         make-bundle = type: package:
           self.inputs.bundlers.bundlers."${system}"."${type}" package;
@@ -33,21 +35,21 @@
             ## Nix
             ```bash
             # Generate the Wasm runtimes
-            nix build ${flake-url}#picasso-runtime  --accept-flake-config
-            nix build ${flake-url}#composable-runtime --accept-flake-config
+            nix build ${flake-url}#picasso-runtime ${nix-config}
+            nix build ${flake-url}#composable-runtime ${nix-config}
 
             # Run the Composable node (release mode) alone
-            nix run ${flake-url}#composable-node
+            nix run ${flake-url}#composable-node ${nix-config}
 
             # Spin up a local devnet
-            nix run ${flake-url}#devnet-picasso
-            nix run ${flake-url}#devnet-composable
+            nix run ${flake-url}#devnet-picasso ${nix-config}
+            nix run ${flake-url}#devnet-composable ${nix-config}
+
+            # CW CLI tool
+            nix run ${flake-url}#ccw ${nix-config}
 
             # Spin up a local XC(Inter chain) devnet
-            nix run ${flake-url}
-
-            # Show all possible apps, shells and packages
-            nix flake show ${flake-url} --allow-import-from-derivation
+            nix run ${flake-url}#devnet-xc-fresh ${nix-config}
             ```
           '';
         };

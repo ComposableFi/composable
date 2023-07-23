@@ -1,0 +1,45 @@
+name: pull-request-comments
+
+on:
+  pull_request:
+    types: [opened]
+permissions:
+  pull-requests: write
+  issues: write
+  
+jobs:
+  pull-request-open:
+    runs-on: ubuntu-latest
+    steps:
+      - name: pull-request-stats
+        uses: flowwer-dev/pull-request-stats@master
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: pull-request-stats-run
+        uses: thollander/actions-comment-pull-request@v2        
+        with:
+          reactions: "+1"
+          message: |
+            
+            ```shell
+            # run Composable node
+            nix run "github:ComposableFi/composable/${{ github.ref }}" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            ````
+
+            ```shell
+            # run local Picasso DevNet (for CosmWasm development)
+            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-picasso" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            ```
+
+            ```shell
+            # CosmWasm on Substrate CLI tool
+            nix run "github:ComposableFi/composable/${{ github.ref }}#ccw" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            ```
+
+            ```shell
+            # run cross chain devnet with Dotsama and Cosmos nodes 
+            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-fresh" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            ```
+            
+            [About nix](https://docs.composable.finance/nix.html)

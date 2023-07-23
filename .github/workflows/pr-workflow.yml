@@ -404,7 +404,7 @@ jobs:
             sandbox = relaxed
             narinfo-cache-negative-ttl = 0      
             system-features = kvm
-            
+      - uses: DeterminateSystems/magic-nix-cache-action@main          
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:

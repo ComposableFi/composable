@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
-    , devnetTools, cargoTools, ... }:
+    , subnix, devnetTools, cargoTools, ... }:
 
     let
 
@@ -89,8 +89,9 @@
           dontStrip = true;
         };
 
-        ccw = crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
+        ccw = crane.nightly.buildPackage (subnix.subenv // rec {
           name = "ccw";
+          pname = name;
           cargoBuildCommand = "cargo build --release --package ${name}";
           meta = { mainProgram = name; };
           src = ccw-patched-src;
@@ -99,6 +100,8 @@
         composable-node-image = toDockerImage composable-node;
         composable-node = makeComposableNode self'.packages.picasso-runtime
           self'.packages.composable-runtime;
+        default = composable-node;
+
         composable-testfast-node =
           makeComposableNode self'.packages.picasso-testfast-runtime
           self'.packages.composable-testfast-runtime;

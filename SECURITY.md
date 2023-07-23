@@ -4,7 +4,6 @@ At Composable Finance we are always striving towards writing secure and stable c
 vulnerability, you can simply report your findings to us.  
 
 
-
 ## Reporting a Vulnerability
 When you report a security vulnerability please include:
 *  Description of the findings   
