@@ -7,7 +7,7 @@
       relay = "on_failure"; # `no` not to restart
     in {
       packages = rec {
-        default = pkgs.writeShellApplication {
+        devnet-xc-fresh-background = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh-background";
           text = ''

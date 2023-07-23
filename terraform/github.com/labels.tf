@@ -5,6 +5,8 @@ locals {
     "dependencies"     = "bot"
     "lfs-detected!"    = "bot: Warning Label for use when LFS is detected in the commits of a Pull Request"
     "needs-benchmarks" = "bot: Runs benchmarks on target hardware"
+    "stale-item"       = "bot: Stale PRs and issues handling"
+    "stale-branch"     = "bot: Stale branches handling"
   }
 }
 

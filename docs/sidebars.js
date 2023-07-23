@@ -293,38 +293,13 @@ const sidebars = {
                         'nix/running-checks',
                         'nix/reading-logs',
                         'nix/defining-your-own-packages',
-                        'nix/composing-services-with-arion',
                         'nix/editing-docs',
                         'nix/troubleshooting',
                     ],
                 },
                 {
-                    type: 'category',
-                    label: 'Codespaces',
-                    link: {
-                        type: 'doc',
-                        id: 'codespaces',
-                    },
-                    collapsible: true,
-                    collapsed: true,
-                    items: [
-                        'codespaces/getting-started',
-                        {
-                            type: 'category',
-                            label: 'Using Codespaces',
-                            link: {
-                                type: 'doc',
-                                id: 'codespaces/using-codespaces',
-                            },
-                            collapsible: true,
-                            collapsed: false,
-                            items: [
-                                'codespaces/book',
-                                'codespaces/substrate',
-                                'codespaces/frontend',
-                                'codespaces/runtime-tests'],
-                        },
-                    ],
+                    type: 'doc',
+                    id: 'codespaces',
                 },
                 {
                     type: 'category',

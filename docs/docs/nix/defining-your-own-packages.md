@@ -25,5 +25,3 @@ Your package is probably similar to one of ours, so you will most likely be able
 If you have any further questions, feel free to ask them in the `#nix` channel on Slack.
 
 ---
-
-If your packaged service is part of a bigger composition, then here's [how to compose services with Arion](./composing-services-with-arion)!
