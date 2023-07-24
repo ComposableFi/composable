@@ -1,3 +1,5 @@
+// copy pasted linters from `composable-traits`
+// named in code only errors, feel free to fix warnings
 #![cfg_attr(
 	not(test),
 	deny(
@@ -10,8 +12,46 @@
 	)
 )] // allow in tests
 #![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
+
+#![cfg_attr(
+	not(test),
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(bad_style, trivial_numeric_casts)]
+#![deny(
+	bare_trait_objects,
+	improper_ctypes,
+	no_mangle_generic_items,
+	non_shorthand_field_patterns,
+	overflowing_literals,
+	path_statements,
+	patterns_in_fns_without_body,
+	private_in_public,
+	trivial_casts,
+	unconditional_recursion,
+	unused_allocation,
+	unused_comparisons,
+	unused_extern_crates,
+	unused_imports,
+	unused_parens,
+	while_true
+)]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
+
+
+// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+// `.unwrap()` - with let should work nice
+
 pub use pallet::*;
 
 mod prelude;
@@ -25,6 +65,7 @@ pub mod pallet {
 	use ibc_primitives::Timeout as IbcTimeout;
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
+	// PLEASE REMOVE COMMENTED OUT CODE
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
 		prelude::{String, Vec},
@@ -57,6 +98,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxMultihopCount: Get<u32>;
 
+		// not clear what vec it limits? is it is chain name maximal length? may you document this config item?
 		#[pallet::constant]
 		type ChainNameVecLimit: Get<u32>;
 	}
@@ -124,25 +166,31 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		u128, /* chain id */
+		// very long name hard to read, afaik usually there are type aliases for such cases
 		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
-		ValueQuery,
+		ValueQuery, // use OptionQuery so there is only get with option as per
+	// 	error: `frame_support::pallet_prelude::ValueQuery` is not allowed according to config
+	// 	--> parachain/frame/pallet-multihop-xcm-ibc/src/lib.rs:167:3
+	// 	 |
+	//  167 |         ValueQuery,
+	// 	 |         ^^^^^^^^^^		
 	>;
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {} // why we need empty hook?
 
 	// The pallet's dispatchable functions.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(1000)]
+		#[pallet::weight(1000)] // please set 100_000
 		pub fn add_route(
 			origin: OriginFor<T>,
 			route_id: u128,
 			route: BoundedVec<
 				(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>),
 				T::MaxMultihopCount,
-			>,
+			> // type alias please,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			ChainIdToMiltihopRoutePath::<T>::insert(route_id, route);
@@ -166,6 +214,7 @@ pub mod pallet {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
 			let Ok(id) = acc_bytes.try_into() else{
+				// please return error and log Error above or return to user. 				
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 					reason: 0,
 					from: from.clone(),
@@ -176,8 +225,9 @@ pub mod pallet {
 				});
 				return None;
 			};
+			// this event does not seems needed
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
-				reason: 1,
+				reason: 1, // what reason means? please document each value or use enum mapped to numbers (there are some nice SO answers)
 				from: from.clone(),
 				to: to.clone(),
 				amount,
@@ -202,6 +252,8 @@ pub mod pallet {
 				),
 				WeightLimit::Unlimited,
 			);
+			// i guess write here success even or log error?
+			// if you use events as data exchange, that is really sloppy tbh, no up to parity guideline
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 				reason: 2,
@@ -217,7 +269,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
-			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
+			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>, // type alias? rename vec to something else please so it is clear what it means
 		) -> Result<Option<MemoData>, DispatchError> {
 			vec.reverse(); // reverse to create memo from the end
 
@@ -227,30 +279,36 @@ pub mod pallet {
 			//polkadot(xcm) = ibc transfer from picasso to composable
 
 			let mut last_memo_data: Option<MemoData> = None;
-
+			// this whole loop is fold, please consider using fold
 			for (i, name, address) in vec {
 				let mut forward = if i.is_substrate_xcm {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, i.para_id)
 				} else {
 					let memo_receiver = if i.is_substrate_ibc {
+						// please use not reexported format
 						scale_info::prelude::format!("0x{}", hex::encode(&address))
 					} else {
+						// please rewrite this block, it is super bad rust error handling i have seen for last 3 years :) 
 						let result: core::result::Result<
 							Vec<bech32_no_std::u5>,
 							bech32_no_std::Error,
 						> = address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
 						let data =
+						    // remove commented out text
 							// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
-							result.map_err(|_| DispatchError::Other("()"))?;
+							result.map_err(|_| DispatchError::Other("()"))?; // please do not ue dispatch with "()" text
 
 						let name = String::from_utf8(name.into())
+							// remove commented out text
 							// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as
 							// u8 })?;
 							.map_err(|_| DispatchError::Other("()"))?;
 						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+							// remove commented out text
 							// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
 							// }
+							// how w suppose to read such errors in production?
 							DispatchError::Other("()")
 						})?
 					};
@@ -258,7 +316,10 @@ pub mod pallet {
 					Forward::new_ibc_memo(
 						memo_receiver,
 						String::from("transfer"),
+						// do not use scale_info::prelude::format reexport, really better use ibc_scale_rs
 						String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
+						// return error in case of no value set. how it supposed to work with zero timeout? so sure people can set zero timeout, but please ask
+						// them to set
 						i.timeout.unwrap_or_default().to_string(),
 						i.retries.unwrap_or_default(),
 					)
@@ -270,7 +331,7 @@ pub mod pallet {
 				last_memo_data = Some(new_memo);
 			}
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
-				reason: 255,
+				reason: 255, // what is 255?
 				memo_none: last_memo_data.is_none(),
 			});
 			Ok(last_memo_data)
@@ -376,6 +437,7 @@ pub mod pallet {
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
+					// why not vec![...] ?
 					vec.push(ibc1.clone());
 					vec.push(ibc2.clone());
 					vec.push(ibc3.clone());
@@ -578,6 +640,9 @@ pub mod pallet {
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				transfer_params,
+
+				// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+				// `.unwrap()` - with let should work nice
 				asset_id.unwrap(), //TODO remove unwrap
 				(*amount).into(),
 				memo.clone(),
@@ -591,6 +656,9 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
+
+						// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+						// `.unwrap()` - with let should work nice						
 						asset_id: asset_id.unwrap(),
 						memo,
 						bytes: memo_bytes.clone(),
@@ -602,6 +670,9 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
+
+						// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+						// `.unwrap()` - with let should work nice						
 						asset_id: asset_id.unwrap(),
 						memo,
 					});
