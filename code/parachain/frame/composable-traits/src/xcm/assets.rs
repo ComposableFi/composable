@@ -92,6 +92,7 @@ pub struct ForeignMetadata<AssetNativeLocation> {
 
 pub trait MultiCurrencyCallback {
 	type AssetId;
+	// please document this
 	fn deposit_asset(
 		asset: &xcm::latest::MultiAsset,
 		location: &xcm::latest::MultiLocation,

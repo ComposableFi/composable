@@ -447,6 +447,7 @@ pub mod pallet {
 				},
 				_ => {
 					//emit event
+					// log error, return error, not event
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedMatchLocation {});
 					return None
 				},
