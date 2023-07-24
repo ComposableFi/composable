@@ -2,34 +2,24 @@ extern crate alloc;
 
 use crate::{
 	assets, auth,
+	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
 	events::make_event,
-	exec, msg,
-	prelude::*,
-	state,
-	topology::get_route,
+	msg, state,
+	state::Config,
 };
 
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
-	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
-	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
-	MessageInfo, Reply, Response, SubMsg, SubMsgResult, WasmMsg,
+	to_binary, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
+	Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
-use cw2::set_contract_version;
-use cw20::Cw20ExecuteMsg;
-
-use cw_utils::ensure_from_older_version;
-use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
-use xc_core::{
-	ibc::{to_cw_message, Ics20MessageHook, WasmMemo},
-	proto::{decode_packet, Encodable},
-	shared::XcPacket,
-	CallOrigin, Displayed, Funds, Picasso, XCVMAck,
+use cw20::{Cw20Contract, Cw20ExecuteMsg};
+use cw_xc_interpreter::contract::{
+	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
+use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
-use super::EXEC_PROGRAM_REPLY_ID;
+use super::ibc::one::handle_ibc_set_network_channel;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
@@ -44,18 +34,22 @@ pub fn execute(
 			handle_ibc_set_network_channel(auth, deps, to, channel_id)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { execute_program } =>
-			exec::handle_execute_program(deps, env, info, execute_program),
+		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
+			handle_execute_program(deps, env, info, execute_program, tip),
 
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
-			exec::handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
+			handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program, tip)
 		},
 
-		msg::ExecuteMsg::Bridge(msg) => {
+		msg::ExecuteMsg::BridgeForward(msg) => {
 			let auth =
 				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
-			handle_bridge_forward(auth, deps, info, msg)
+			if msg.msg.assets.0.len() > 0 {
+				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg)
+			} else {
+				super::ibc::one::handle_bridge_forward_no_assets(auth, deps, info, msg)
+			}
 		},
 
 		msg::ExecuteMsg::RegisterAsset(msg) => {
@@ -67,108 +61,213 @@ pub fn execute(
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
 			assets::handle_unregister_asset(auth, deps, asset_id)
 		},
-		msg::ExecuteMsg::Wasm(msg) => {
+		msg::ExecuteMsg::Ics20MessageHook(msg) => {
 			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
-			remote_wasm_execute(auth, msg, env)
+			super::ibc::ics20::ics20_message_hook(auth, msg, env, info.sender)
 		},
 	}
 }
 
-fn remote_wasm_execute(
-	_: auth::WasmHook,
-	msg: Ics20MessageHook,
-	env: Env,
-) -> Result<Response, ContractError> {
-	let packet: XcPacket = decode_packet(&msg.data).map_err(ContractError::Protobuf)?;
-	let call_origin = CallOrigin::Remote {
-		relayer: Addr::unchecked("no access"),
-		user_origin: packet.user_origin,
-	};
-	let execute_program = msg::ExecuteProgramMsg {
-		salt: packet.salt,
-		program: packet.program,
-		assets: packet.assets,
-	};
-	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
-	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
-	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
-}
-
-/// Handle a request gateway message.
-/// The call must originate from an interpreter.
-fn handle_bridge_forward(
-	_: auth::Interpreter,
-	deps: DepsMut,
-	info: MessageInfo,
-	msg: xc_core::gateway::BridgeMsg,
-) -> ContractResult<Response> {
-	let channel_id = state::IBC_NETWORK_CHANNEL
-		.load(deps.storage, msg.network_id)
-		.map_err(|_| ContractError::UnknownChannel)?;
-
-	let packet: xc_core::Packet<
-		xc_core::Program<
-			std::collections::VecDeque<
-				xc_core::Instruction<Vec<u8>, cosmwasm_std::CanonicalAddr, Funds>,
-			>,
-		>,
-	> = XcPacket {
-		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin,
-		salt: msg.execute_program.salt,
-		program: msg.execute_program.program,
-		assets: msg.execute_program.assets,
-	};
-
-	let (local_asset, amount) = packet.assets.0.get(0).expect("verified at outer boundaries");
-	let route = get_route(deps.storage, msg.network_id, *local_asset)?;
-
-	let mut event = make_event("bridge")
-		.add_attribute("to_network_id", msg.network_id.to_string())
-		.add_attribute(
-			"assets",
-			serde_json_wasm::to_string(&packet.assets)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		)
-		.add_attribute(
-			"program",
-			serde_json_wasm::to_string(&packet.program)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		);
-	if !packet.salt.is_empty() {
-		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
-		event = event.add_attribute("salt", salt_attr);
+fn transfer_from_user(
+	deps: &DepsMut,
+	self_address: Addr,
+	user: Addr,
+	funds: Vec<Coin>,
+	assets: &Funds<Displayed<u128>>,
+) -> ContractResult<Vec<CosmosMsg>> {
+	let mut transfers = Vec::with_capacity(assets.0.len());
+	for (asset_id, Displayed(amount)) in assets.0.iter() {
+		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
+		match reference.local {
+			msg::AssetReference::Native { denom } => {
+				let Coin { amount: provided_amount, .. } = funds
+					.iter()
+					.find(|c| c.denom == denom)
+					.ok_or(ContractError::InsufficientFunds)?;
+				if u128::from(*provided_amount) != *amount {
+					return Err(ContractError::InsufficientFunds)?
+				}
+			},
+			msg::AssetReference::Virtual { cw20_address } =>
+				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
+					owner: user.to_string(),
+					recipient: self_address.to_string(),
+					amount: amount.clone().into(),
+				})?),
+		}
 	}
-		
-	let coin = Coin::new(amount.0.into(), route.local_native_denom.clone());
-
-	let memo = serde_json_wasm::to_string(&WasmMemo {
-		contract: route.gateway_to_send_to.clone(),
-		msg: to_binary(&Ics20MessageHook {
-			from_network_id: route.from_network,
-			data: Binary::from(packet.encode()),
-		})?,
-		ibc_callback: None,
-	})?;
-
-	let msg = to_cw_message(memo, coin, route)?;
-
-	Ok(Response::default().add_event(event).add_message(msg))
+	Ok(transfers)
 }
 
-fn handle_ibc_set_network_channel(
-	_: auth::Admin,
+/// Handles request to execute an [`XCVMProgram`].
+///
+/// This is the entry point for executing a program from a user.  Handling
+pub(crate) fn handle_execute_program(
 	deps: DepsMut,
-	network_id: xc_core::NetworkId,
-	channel_id: ChannelId,
+	env: Env,
+	info: MessageInfo,
+	execute_program: msg::ExecuteProgramMsg,
+	tip: Addr,
 ) -> ContractResult<Response> {
-	state::IBC_CHANNEL_INFO
-		.load(deps.storage, channel_id.to_string())
-		.map_err(|_| ContractError::UnknownChannel)?;
-	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id.to_string())?;
-	Ok(Response::default().add_event(
-		make_event("set_network_channel")
-			.add_attribute("network_id", network_id.to_string())
-			.add_attribute("channel_id", channel_id.to_string()),
-	))
+	let self_address = env.contract.address;
+	let call_origin = CallOrigin::Local { user: info.sender.clone() };
+	let transfers = transfer_from_user(
+		&deps,
+		self_address.clone(),
+		info.sender,
+		info.funds,
+		&execute_program.assets,
+	)?;
+	let msg = wasm_execute(
+		self_address,
+		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip },
+		Default::default(),
+	)?;
+	Ok(Response::default().add_messages(transfers).add_message(msg))
+}
+
+/// Handle a request to execute a [`XCVMProgram`].
+/// Only the gateway is allowed to dispatch such operation.
+/// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
+/// checking on it.
+pub(crate) fn handle_execute_program_privilleged(
+	_: auth::Contract,
+	deps: DepsMut,
+	env: Env,
+	call_origin: CallOrigin,
+	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
+	tip: Addr,
+) -> ContractResult<Response> {
+	let config = Config::load(deps.storage)?;
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
+	let interpreter = state::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
+	if let Some(state::Interpreter { address }) = interpreter {
+		// There is already an interpreter instance, so all we do is fund the interpreter, then
+		// add a callback to it
+		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
+		let wasm_msg = wasm_execute(
+			address.clone(),
+			&cw_xc_interpreter::msg::ExecuteMsg::Execute { tip, program },
+			vec![],
+		)?;
+		Ok(response
+			.add_event(
+				make_event("route.execute").add_attribute("interpreter", address.into_string()),
+			)
+			.add_message(wasm_msg))
+	} else {
+		// First, add a callback to instantiate an interpreter (which we later get the result
+		// and save it)
+		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
+			// router is the default admin of a contract
+			admin: Some(env.contract.address.clone().into_string()),
+			code_id: config.interpreter_code_id,
+			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
+				gateway_address: env.contract.address.clone().into_string(),
+				interpreter_origin: interpreter_origin.clone(),
+			})?,
+			funds: vec![],
+			label: format!("xcvm-interpreter-{interpreter_origin}"),
+		}
+		.into();
+
+		let interpreter_instantiate_submessage =
+			SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);
+		// Secondly, call itself again with the same parameters, so that this functions goes
+		// into `Ok` state and properly executes the interpreter
+		let self_call_message: CosmosMsg = wasm_execute(
+			env.contract.address,
+			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
+				call_origin: call_origin.clone(),
+				execute_program: xc_core::gateway::ExecuteProgramMsg {
+					salt: interpreter_origin.salt,
+					program,
+					assets,
+				},
+				tip,
+			},
+			vec![],
+		)?
+		.into();
+		Ok(Response::new()
+			.add_event(make_event("route.create"))
+			.add_submessage(interpreter_instantiate_submessage)
+			.add_message(self_call_message))
+	}
+}
+
+/// Transfer funds attached to a [`XCVMProgram`] before dispatching the program to the interpreter.
+fn send_funds_to_interpreter(
+	deps: Deps,
+	interpreter_address: Addr,
+	funds: Funds<Displayed<u128>>,
+) -> ContractResult<Response> {
+	let mut response = Response::new();
+	let interpreter_address = interpreter_address.into_string();
+	for (asset_id, Displayed(amount)) in funds.0 {
+		// We ignore zero amounts
+		if amount == 0 {
+			continue
+		}
+
+		let reference = assets::query_lookup(deps.clone(), asset_id)?.reference;
+		let msg: CosmosMsg = match reference.local {
+			msg::AssetReference::Native { denom } => BankMsg::Send {
+				to_address: interpreter_address.clone(),
+				amount: vec![Coin::new(amount, denom)],
+			}
+			.into(),
+			msg::AssetReference::Virtual { cw20_address } => {
+				let contract = Cw20Contract(cw20_address);
+				contract
+					.call(Cw20ExecuteMsg::Transfer {
+						recipient: interpreter_address.clone(),
+						amount: amount.into(),
+					})?
+					.into()
+			},
+		};
+		response = response.add_message(msg);
+	}
+	Ok(response)
+}
+
+pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	let response = msg.result.into_result().map_err(StdError::generic_err)?;
+
+	// Catch the default `instantiate` event which contains `_contract_address` attribute that
+	// has the instantiated contract's address
+	let address = &response
+		.events
+		.iter()
+		.find(|event| event.ty == "instantiate")
+		.ok_or_else(|| StdError::not_found("instantiate event not found"))?
+		.attributes
+		.iter()
+		.find(|attr| &attr.key == "_contract_address")
+		.ok_or_else(|| StdError::not_found("_contract_address attribute not found"))?
+		.value;
+	let interpreter_address = deps.api.addr_validate(&address)?;
+
+	// Interpreter provides `network_id, user_id` pair as an event for the router to know which
+	// pair is instantiated
+	let event_name = format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX);
+	let interpreter_origin = &response
+		.events
+		.iter()
+		.find(|event| event.ty.starts_with(&event_name))
+		.ok_or_else(|| StdError::not_found("interpreter event not found"))?
+		.attributes
+		.iter()
+		.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
+		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
+		.value;
+	let interpreter_origin =
+		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
+
+	let interpreter = state::Interpreter { address: interpreter_address };
+	state::INTERPRETERS.save(deps.storage, interpreter_origin, &interpreter)?;
+
+	Ok(Response::new())
 }

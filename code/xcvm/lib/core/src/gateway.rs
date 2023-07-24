@@ -48,6 +48,7 @@ pub enum ExecuteMsg {
 	ExecuteProgram {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
+		tip: Addr,
 	},
 
 	/// Request to execute a program on behalf of given user.
@@ -58,11 +59,13 @@ pub enum ExecuteMsg {
 		call_origin: CallOrigin,
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
+
+		tip: Addr,
 	},
 
 	/// Message sent from interpreter trying to spawn program on another
 	/// network.
-	Bridge(BridgeMsg),
+	BridgeForward(BridgeMsg),
 
 	/// Message sent by an admin to register a new asset.
 	RegisterAsset(RegisterAssetMsg),
@@ -72,7 +75,7 @@ pub enum ExecuteMsg {
 		asset_id: AssetId,
 	},
 
-	Wasm(Ics20MessageHook),
+	Ics20MessageHook(Ics20MessageHook),
 }
 
 /// when message is sent to other side, we should identify receiver of some kind
@@ -135,7 +138,7 @@ pub struct BridgeMsg {
 	pub interpreter_origin: InterpreterOrigin,
 	/// target network
 	pub network_id: NetworkId,
-	pub execute_program: ExecuteProgramMsg,
+	pub msg: ExecuteProgramMsg,
 }
 
 /// Definition of an asset on this local chain to operate with

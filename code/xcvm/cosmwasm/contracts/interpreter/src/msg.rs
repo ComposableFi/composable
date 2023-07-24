@@ -9,8 +9,8 @@ use xc_core::{shared::DefaultXCVMProgram, InterpreterOrigin, Register};
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub struct Step {
-	/// The relayer that initially dispatched our program.
-	pub relayer: Addr,
+	/// Tip party facilitated bridging and execution.
+	pub tip: Addr,
 	/// The current instruction pointer in the program.
 	/// Note that the [`Step::program`] instructions are poped when executed, we can't rely on this
 	/// instruction pointer to index into the instructions. In fact, this pointer tells us how many
@@ -35,7 +35,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
 	/// Execute an XCVM program
-	Execute { relayer: Addr, program: DefaultXCVMProgram },
+	Execute { tip: Addr, program: DefaultXCVMProgram },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
 	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
 	/// hit a call, the program queue the call and queue itself after it to ensure that the side

@@ -4,7 +4,7 @@ use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, TIP_REGISTER, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
 use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
@@ -64,8 +64,7 @@ pub fn execute(
 	// Only owners can execute entrypoints of the interpreter
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
-		ExecuteMsg::Execute { relayer, program } =>
-			initiate_execution(token, deps, env, relayer, program),
+		ExecuteMsg::Execute { tip, program } => initiate_execution(token, deps, env, tip, program),
 
 		ExecuteMsg::ExecuteStep { step } => {
 			ensure!(env.contract.address == info.sender, ContractError::NotSelf);
@@ -103,14 +102,14 @@ fn external_query_lookup_asset(
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
 /// store it in the `RESULT_REGISTER`.
-/// The [`TIP_REGISTER`] is updated to hold the current relayer address. Note that the
-/// [`TIP_REGISTER`] always contains a value, and the value is equal to the last relayer that
+/// The [`RELAYER_REGISTER`] is updated to hold the current relayer address. Note that the
+/// [`RELAYER_REGISTER`] always contains a value, and the value is equal to the last relayer that
 /// executed a program if any.
 fn initiate_execution(
 	_: Authenticated,
 	deps: DepsMut,
 	env: Env,
-	relayer: Addr,
+	tip: Addr,
 	program: DefaultXCVMProgram,
 ) -> Result<Response, ContractError> {
 	// Reset instruction pointer to zero.
@@ -122,9 +121,7 @@ fn initiate_execution(
 		.add_submessage(SubMsg::reply_on_error(
 			wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::ExecuteStep {
-					step: Step { relayer, instruction_pointer: 0, program },
-				},
+				&ExecuteMsg::ExecuteStep { step: Step { tip, instruction_pointer: 0, program } },
 				Default::default(),
 			)?,
 			SELF_CALL_ID,
@@ -168,20 +165,14 @@ pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
 	env: Env,
-	Step { relayer, instruction_pointer, mut program }: Step,
+	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result<Response, ContractError> {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, &relayer, to, assets),
-			Instruction::Call { bindings, encoded } => interpret_call(
-				deps.as_ref(),
-				&env,
-				bindings,
-				encoded,
-				instruction_pointer,
-				&relayer,
-			),
+				interpret_transfer(&mut deps, &env, &tip, to, assets),
+			Instruction::Call { bindings, encoded } =>
+				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
 		}?;
@@ -191,7 +182,7 @@ pub fn handle_execute_step(
 		response.add_message(wasm_execute(
 			env.contract.address,
 			&ExecuteMsg::ExecuteStep {
-				step: Step { relayer, instruction_pointer: instruction_pointer + 1, program },
+				step: Step { tip, instruction_pointer: instruction_pointer + 1, program },
 			},
 			Default::default(),
 		)?)
@@ -199,7 +190,7 @@ pub fn handle_execute_step(
 		// We subtract because of the extra loop to reach the empty instructions case.
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
 		// We save the relayer that executed the last program.
-		TIP_REGISTER.save(deps.storage, &relayer)?;
+		TIP_REGISTER.save(deps.storage, &tip)?;
 		let mut event =
 			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
 		if program.tag.len() >= 3 {
@@ -223,7 +214,7 @@ pub fn interpret_call(
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
 	instruction_pointer: u16,
-	relayer: &Addr,
+	tip: &Addr,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_json::Value> = if !bindings
@@ -238,8 +229,7 @@ pub fn interpret_call(
 			let data = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(instruction_pointer.to_string().into_bytes()),
-				BindingValue::Register(Register::Tip) =>
-					Cow::Owned(relayer.to_string().into_bytes()),
+				BindingValue::Register(Register::Tip) => Cow::Owned(tip.to_string().into_bytes()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -362,9 +352,9 @@ pub fn interpret_spawn(
 	Ok(response
 		.add_message(wasm_execute(
 			gateway_address,
-			&GWExecuteMsg::Bridge(BridgeMsg {
+			&GWExecuteMsg::BridgeForward(BridgeMsg {
 				interpreter_origin: interpreter_origin.clone(),
-				execute_program,
+				msg: execute_program,
 				network_id: network,
 			}),
 			Default::default(),
@@ -448,8 +438,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Tip) =>
-			Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 	}
 }
 

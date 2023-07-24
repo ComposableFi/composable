@@ -286,8 +286,7 @@ impl TryFrom<binding_value::Type> for crate::BindingValue {
 	fn try_from(binding_val: binding_value::Type) -> core::result::Result<Self, Self::Error> {
 		Ok(match binding_val {
 			binding_value::Type::Self_(_) => crate::BindingValue::Register(crate::Register::This),
-			binding_value::Type::Tip(_) =>
-				crate::BindingValue::Register(crate::Register::Tip),
+			binding_value::Type::Tip(_) => crate::BindingValue::Register(crate::Register::Tip),
 			binding_value::Type::Result(_) =>
 				crate::BindingValue::Register(crate::Register::Result),
 			binding_value::Type::IpRegister(_) =>

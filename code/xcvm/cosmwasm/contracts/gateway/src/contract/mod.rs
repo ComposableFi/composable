@@ -1,4 +1,4 @@
-pub(crate) mod execute;
+pub mod execute;
 pub mod ibc;
 
 extern crate alloc;
@@ -7,7 +7,7 @@ use crate::{
 	assets, auth,
 	error::{ContractError, ContractResult},
 	events::make_event,
-	exec, msg, state,
+	msg, state,
 };
 
 use cosmwasm_std::{
@@ -26,13 +26,14 @@ use xc_core::{
 	CallOrigin, Displayed, Funds, XCVMAck,
 };
 
-use self::ibc::make_ibc_failure_event;
+use self::{execute::handle_instantiate_reply, ibc::make_ibc_failure_event};
 
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const EXEC_PROGRAM_REPLY_ID: u64 = 0;
-pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 1;
+pub const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 0;
+pub const TRANSFER_PROGRAM_REPLY_ID: u64 = 1;
+pub const EXEC_PROGRAM_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
@@ -72,7 +73,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 	match msg.id {
 		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
 		INSTANTIATE_INTERPRETER_REPLY_ID =>
-			exec::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
+			handle_instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
 }

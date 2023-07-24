@@ -1,31 +1,33 @@
+//! custom ibc channel, cannot directly transfer ics20 assets
+//! name take from ics999 port name, just to say it same idea
+
 use crate::{
 	assets, auth,
+	contract::EXEC_PROGRAM_REPLY_ID,
 	error::{ContractError, ContractResult},
 	events::make_event,
-	exec, msg, state,
+	msg, state,
 };
 
 use cosmwasm_std::{
-	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
-	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
-	Response, SubMsg, SubMsgResult, ensure_eq,
+	ensure_eq, to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env,
+	Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg,
+	IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
+	MessageInfo, Reply, Response, SubMsg, SubMsgResult,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
+use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use xc_core::{
+	gateway::BridgeMsg,
 	proto::{decode_packet, Encodable},
 	shared::XcPacket,
-	CallOrigin, Displayed, Funds, XCVMAck, gateway::BridgeMsg,
+	CallOrigin, Displayed, Funds, XCVMAck,
 };
 
-const CONTRACT_NAME: &str = "composable:xcvm-gateway";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const EXEC_PROGRAM_REPLY_ID: u64 = 0;
-pub(crate) const INSTANTIATE_INTERPRETER_REPLY_ID: u64 = 1;
+use super::make_ibc_failure_event;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn ibc_channel_open(
@@ -100,14 +102,17 @@ pub fn ibc_packet_receive(
 	let response = IbcReceiveResponse::default().add_event(make_event("receive"));
 	let msg = (|| -> ContractResult<_> {
 		let packet: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
-		let call_origin =
-			CallOrigin::Remote { relayer: msg.relayer, user_origin: packet.user_origin };
+		let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
 		};
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
+			call_origin,
+			execute_program,
+			tip: msg.relayer,
+		};
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
@@ -116,12 +121,6 @@ pub fn ibc_packet_receive(
 		Err(err) =>
 			response.add_event(make_ibc_failure_event(err.to_string())).set_ack(XCVMAck::KO),
 	})
-}
-
-pub fn make_ibc_failure_event(reason: String) -> cosmwasm_std::Event {
-	make_event("receive")
-		.add_attribute("result", "failure")
-		.add_attribute("reason", reason.to_string())
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -157,26 +156,24 @@ pub fn ibc_packet_timeout(
 	Ok(IbcBasicResponse::default())
 }
 
-
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
-fn handle_bridge_forward_no_assets(
+pub(crate) fn handle_bridge_forward_no_assets(
 	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: BridgeMsg,
 ) -> ContractResult<Response> {
-	
-	ensure_eq!(msg.execute_program.assets.0.len(), 0, ContractError::AssetsNonTransferrable);
+	ensure_eq!(msg.msg.assets.0.len(), 0, ContractError::AssetsNonTransferrable);
 	let channel_id = state::IBC_NETWORK_CHANNEL
 		.load(deps.storage, msg.network_id)
 		.map_err(|_| ContractError::UnknownChannel)?;
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
-		salt: msg.execute_program.salt,
-		program: msg.execute_program.program,
-		assets: msg.execute_program.assets,
+		salt: msg.msg.salt,
+		program: msg.msg.program,
+		assets: msg.msg.assets,
 	};
 	let mut event = make_event("bridge")
 		.add_attribute("network_id", msg.network_id.to_string())
@@ -202,4 +199,21 @@ fn handle_bridge_forward_no_assets(
 		// TODO: should be a parameter or configuration
 		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
 	}))
+}
+
+pub(crate) fn handle_ibc_set_network_channel(
+	_: auth::Admin,
+	deps: DepsMut,
+	network_id: xc_core::NetworkId,
+	channel_id: ChannelId,
+) -> ContractResult<Response> {
+	state::IBC_CHANNEL_INFO
+		.load(deps.storage, channel_id.to_string())
+		.map_err(|_| ContractError::UnknownChannel)?;
+	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id.to_string())?;
+	Ok(Response::default().add_event(
+		make_event("set_network_channel")
+			.add_attribute("network_id", network_id.to_string())
+			.add_attribute("channel_id", channel_id.to_string()),
+	))
 }

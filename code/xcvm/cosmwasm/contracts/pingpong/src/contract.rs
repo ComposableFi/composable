@@ -65,7 +65,7 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 pub fn execute(
 	deps: DepsMut,
 	env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	let network = NETWORK.load(deps.storage)?;
@@ -94,7 +94,7 @@ pub fn execute(
 	};
 	Ok(Response::default().add_message(wasm_execute(
 		gateway,
-		&xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program },
+		&xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program, tip: info.sender },
 		Default::default(),
 	)?))
 }
