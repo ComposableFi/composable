@@ -55,7 +55,7 @@
 //! };
 //!
 //! let payload = LateCall::wasm_execute(
-//!    StaticBinding::Some(BindingValue::Asset(1)),
+//!     StaticBinding::Some(BindingValue::Asset(1)),
 //!     IndexedBinding::Some((payload_bindings, cw20_transfer_msg)),
 //!     Vec::new()
 //! );
