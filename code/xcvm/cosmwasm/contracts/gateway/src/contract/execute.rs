@@ -94,7 +94,7 @@ fn wasm_hook(
 		assets: packet.assets,
 	};
 	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, msg };
-	let msg = wasm_hook(env.contract.address, &msg, Default::default())?;
+	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
 }
 
