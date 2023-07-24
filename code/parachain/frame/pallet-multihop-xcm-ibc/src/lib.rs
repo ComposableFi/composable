@@ -348,6 +348,7 @@ pub mod pallet {
 
 		// i guess moving match to separate method could make this one better
 		// so generally error handling is really bad, may be read something about
+		// i guess better rename this method deposit_asset as it is also much more thing
 		fn deposit_asset(
 			asset: &xcm::latest::MultiAsset,
 			location: &xcm::latest::MultiLocation,
@@ -596,6 +597,7 @@ pub mod pallet {
 					route_id,
 					reason: 8,
 				});
+				// for each case of error and return none use errors and exit via ? form 
 				return None;
 				// return Err(Error::<T>::DoesNotSupportNonFungible);
 			};
