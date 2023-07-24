@@ -204,6 +204,7 @@ pub mod pallet {
 		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
 	{
 		type AccountId = T::AccountId;
+		// is it used anywhere?
 		fn transfer_xcm(
 			from: T::AccountId,
 			to: T::AccountId,
