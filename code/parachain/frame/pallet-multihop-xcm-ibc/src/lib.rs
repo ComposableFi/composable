@@ -1,5 +1,5 @@
 // copy pasted linters from `composable-traits`
-
+// named in code only errors, feel free to fix warnings
 #![cfg_attr(
 	not(test),
 	deny(
@@ -98,6 +98,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxMultihopCount: Get<u32>;
 
+		// not clear what vec it limits? is it is chain name maximal length? may you document this config item?
 		#[pallet::constant]
 		type ChainNameVecLimit: Get<u32>;
 	}
@@ -165,25 +166,31 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		u128, /* chain id */
+		// very long name hard to read, afaik usually there are type aliases for such cases
 		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
-		ValueQuery,
+		ValueQuery, // use OptionQuery so there is only get with option as per
+	// 	error: `frame_support::pallet_prelude::ValueQuery` is not allowed according to config
+	// 	--> parachain/frame/pallet-multihop-xcm-ibc/src/lib.rs:167:3
+	// 	 |
+	//  167 |         ValueQuery,
+	// 	 |         ^^^^^^^^^^		
 	>;
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {} // why we need empty hook?
 
 	// The pallet's dispatchable functions.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(1000)]
+		#[pallet::weight(1000)] // please set 100_000
 		pub fn add_route(
 			origin: OriginFor<T>,
 			route_id: u128,
 			route: BoundedVec<
 				(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>),
 				T::MaxMultihopCount,
-			>,
+			> // type alias please,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			ChainIdToMiltihopRoutePath::<T>::insert(route_id, route);
@@ -207,6 +214,7 @@ pub mod pallet {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
 			let Ok(id) = acc_bytes.try_into() else{
+				// please return error and log Error above or return to user. 				
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 					reason: 0,
 					from: from.clone(),
@@ -217,8 +225,9 @@ pub mod pallet {
 				});
 				return None;
 			};
+			// this event does not seems needed
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
-				reason: 1,
+				reason: 1, // what reason means? please document each value or use enum mapped to numbers (there are some nice SO answers)
 				from: from.clone(),
 				to: to.clone(),
 				amount,
@@ -243,6 +252,8 @@ pub mod pallet {
 				),
 				WeightLimit::Unlimited,
 			);
+			// i guess write here success even or log error?
+			// if you use events as data exchange, that is really sloppy tbh, no up to parity guideline
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 				reason: 2,
@@ -258,7 +269,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
-			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
+			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>, // type alias? rename vec to something else please so it is clear what it means
 		) -> Result<Option<MemoData>, DispatchError> {
 			vec.reverse(); // reverse to create memo from the end
 
