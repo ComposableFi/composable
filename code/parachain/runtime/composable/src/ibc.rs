@@ -223,6 +223,7 @@ impl pallet_ibc::Config for Runtime {
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
+	// why commented?
 	// type SubstrateMultihopXcmHandler = SubstrateMultihopXcmHandlerNone<Runtime>;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type FeeAccount = FeeAccount;
