@@ -78,10 +78,9 @@ impl From<MemoData> for pallet_ibc::ics20::MemoData {
 
 impl From<Forward> for pallet_ibc::ics20::Forward {
 	fn from(value: Forward) -> Self {
-		let next = match value.next {
-			Some(e) => Some(sp_std::boxed::Box::new(pallet_ibc::ics20::MemoData::from(*e))),
-			None => None,
-		};
+		let next = value
+			.next
+			.map(|e| sp_std::boxed::Box::new(pallet_ibc::ics20::MemoData::from(*e)));
 		pallet_ibc::ics20::Forward {
 			receiver: value.receiver,
 			port: value.port,

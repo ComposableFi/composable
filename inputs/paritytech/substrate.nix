@@ -34,7 +34,7 @@
       # and this one https://github.com/frewsxcv/cargo-all-features/issues/45
       check-pallet = pkgs.writeShellApplication {
         name = "check-pallet";
-        runtimeInputs = [ self'.packages.rust-nightly ];
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
           EXTRA_FEATURES=""
           if [[ -n "''${2-}" ]]; then
