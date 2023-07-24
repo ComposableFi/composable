@@ -290,6 +290,7 @@ impl<
 			},
 			// unknown asset
 			_ => {
+				// log error
 				//TODO? should we try in case if asset is unknown?
 			},
 		}
