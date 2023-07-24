@@ -188,8 +188,6 @@ pub(crate) fn handle_bridge_forward_no_assets(
 				.map_err(|_| ContractError::FailedToSerialize)?,
 		);
 	if !packet.salt.is_empty() {
-		// TODO(mina86): We're unnecessarily clone packet.salt here.  What we
-		// want here is ‘to_base64(&packet.salt)’.
 		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
 		event = event.add_attribute("salt", salt_attr);
 	}

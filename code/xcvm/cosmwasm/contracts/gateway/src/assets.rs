@@ -2,8 +2,7 @@ use crate::{
 	auth,
 	error::{ContractError, ContractResult},
 	events::make_event,
-	msg,
-	state,
+	msg, state,
 };
 use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;

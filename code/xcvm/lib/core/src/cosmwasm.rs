@@ -50,7 +50,7 @@
 //! let payload_bindings: OrderedBindings = [(13, BindingValue::Register(Register::This))].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
 //!     // Make sure to leave fields that uses late-bindings empty
-//!    recipient: String::new(),
+//!     recipient: String::new(),
 //!     amount: 10000,
 //! };
 //!

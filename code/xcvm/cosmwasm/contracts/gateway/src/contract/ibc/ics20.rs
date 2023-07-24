@@ -3,8 +3,8 @@
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage,
-	SubMsg,
+	ensure_eq, to_binary, wasm_execute, Addr, Binary, Coin, DepsMut, Env, MessageInfo, Response,
+	Storage, SubMsg,
 };
 use cw_xc_interpreter::msg;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
@@ -49,7 +49,8 @@ pub(crate) fn handle_bridge_forward(
 		assets: msg.msg.assets,
 	};
 
-	let (local_asset, amount) = packet.assets.0.get(0).expect("verified at outer boundaries");
+	ensure_eq!(packet.assets.0.len(), 0, ContractError::ProgramCannotBeHandledByDestination);
+	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
 	let route = get_route(deps.storage, msg.network_id, *local_asset)?;
 
 	let mut event = make_event("bridge")

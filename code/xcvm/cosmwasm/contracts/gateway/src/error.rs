@@ -46,6 +46,8 @@ pub enum ContractError {
 	Serde(#[from] serde_json_wasm::ser::Error),
 	#[error("Assets non transferrable")]
 	AssetsNonTransferrable,
+	#[error("Program cannot be handled by destination")]
+	ProgramCannotBeHandledByDestination,
 }
 
 impl From<bech32_no_std::Error> for ContractError {
