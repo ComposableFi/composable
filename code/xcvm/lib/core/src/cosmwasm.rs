@@ -20,9 +20,9 @@
 //! Let's assume that we wan't to send `WasmMsg::Execute`:
 //! ```json
 //! {
-//! 	"contract_addr": "",
-//! 	"msg": "SOME PAYLOAD",
-//! 	"funds": []
+//!     "contract_addr": "",
+//!     "msg": "SOME PAYLOAD",
+//!     "funds": []
 //! }
 //! ```
 //! In this case, we know that `contract_addr` is a static `String`, not
@@ -50,12 +50,12 @@
 //! let payload_bindings: OrderedBindings = [(13, BindingValue::Register(Register::This))].into();
 //! let cw20_transfer_msg = Cw20ExecuteMsg::Transfer {
 //!     // Make sure to leave fields that uses late-bindings empty
-//! 	recipient: String::new(),
+//!     recipient: String::new(),
 //!     amount: 10000,
 //! };
 //!
 //! let payload = LateCall::wasm_execute(
-//! 	StaticBinding::Some(BindingValue::Asset(1)),
+//!     StaticBinding::Some(BindingValue::Asset(1)),
 //!     IndexedBinding::Some((payload_bindings, cw20_transfer_msg)),
 //!     Vec::new()
 //! );
@@ -296,7 +296,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -336,7 +336,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(execute_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(execute_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -379,7 +379,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(instantiate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(instantiate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -416,7 +416,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -446,7 +446,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg.clone())).map_err(|_| ())?;
+			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -533,7 +533,7 @@ mod tests {
 			IndexedBinding::Some((
 				[
 					(9, BindingValue::Register(Register::This)),
-					(36, BindingValue::Register(Register::Relayer)),
+					(36, BindingValue::Register(Register::Tip)),
 				]
 				.into(),
 				test_msg,
@@ -556,7 +556,7 @@ mod tests {
 			vec![
 				(36, BindingValue::Register(Register::Ip)),
 				(54, BindingValue::Register(Register::This)),
-				(81, BindingValue::Register(Register::Relayer))
+				(81, BindingValue::Register(Register::Tip))
 			]
 		);
 
@@ -588,7 +588,7 @@ mod tests {
 			vec![
 				(32, BindingValue::Asset(1.into())),
 				(62, BindingValue::Register(Register::This)),
-				(89, BindingValue::Register(Register::Relayer)),
+				(89, BindingValue::Register(Register::Tip)),
 			]
 		);
 
@@ -614,7 +614,7 @@ mod tests {
 			msg.bindings,
 			vec![
 				(82, BindingValue::Register(Register::This)),
-				(109, BindingValue::Register(Register::Relayer))
+				(109, BindingValue::Register(Register::Tip))
 			]
 		);
 

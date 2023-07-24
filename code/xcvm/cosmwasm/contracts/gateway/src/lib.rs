@@ -1,8 +1,9 @@
-pub use cw_xc_common::gateway as msg;
+pub use xc_core::gateway as msg;
 
 pub mod assets;
-pub mod common;
+pub mod auth;
 pub mod contract;
 pub mod error;
-pub mod exec;
+mod events;
+mod prelude;
 pub mod state;

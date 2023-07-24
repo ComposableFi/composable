@@ -4,27 +4,26 @@ use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
 use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps, DepsMut,
-	Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError, StdResult,
-	SubMsg, WasmQuery,
+	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps,
+	DepsMut, Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError,
+	StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
 use cw_utils::ensure_from_older_version;
-use cw_xc_common::{
-	gateway::{AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
-	shared::{encode_base64, DefaultXCVMProgram},
-};
 use num::Zero;
 use xc_core::{
-	apply_bindings, AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction,
-	NetworkId, Register,
+	apply_bindings,
+	gateway::{Asset, AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
+	shared::{encode_base64, DefaultXCVMProgram},
+	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
+	Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -65,17 +64,12 @@ pub fn execute(
 	// Only owners can execute entrypoints of the interpreter
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
-		ExecuteMsg::Execute { relayer, program } =>
-			initiate_execution(token, deps, env, relayer, program),
+		ExecuteMsg::Execute { tip, program } => initiate_execution(token, deps, env, tip, program),
 
-		// ExecuteStep should be called by interpreter itself
-		ExecuteMsg::ExecuteStep { step } =>
-			if env.contract.address != info.sender {
-				Err(ContractError::NotSelf)
-			} else {
-				// Self ownership in this token
-				handle_execute_step(token, deps, env, step)
-			},
+		ExecuteMsg::ExecuteStep { step } => {
+			ensure!(env.contract.address == info.sender, ContractError::NotSelf);
+			handle_execute_step(token, deps, env, step)
+		},
 
 		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
 
@@ -97,11 +91,11 @@ fn external_query_lookup_asset(
 	querier: QuerierWrapper,
 	gateway_addr: Addr,
 	asset_id: AssetId,
-) -> StdResult<AssetReference> {
-	let query = cw_xc_common::gateway::QueryMsg::LookupAsset { asset_id };
+) -> StdResult<Asset> {
+	let query = xc_core::gateway::QueryMsg::LookupAsset { asset_id };
 	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
 	querier
-		.query::<cw_xc_common::gateway::LookupResponse>(&msg.into())
+		.query::<xc_core::gateway::LookupResponse>(&msg.into())
 		.map(|response| response.reference)
 }
 
@@ -115,7 +109,7 @@ fn initiate_execution(
 	_: Authenticated,
 	deps: DepsMut,
 	env: Env,
-	relayer: Addr,
+	tip: Addr,
 	program: DefaultXCVMProgram,
 ) -> Result<Response, ContractError> {
 	// Reset instruction pointer to zero.
@@ -127,9 +121,7 @@ fn initiate_execution(
 		.add_submessage(SubMsg::reply_on_error(
 			wasm_execute(
 				env.contract.address,
-				&ExecuteMsg::ExecuteStep {
-					step: Step { relayer, instruction_pointer: 0, program },
-				},
+				&ExecuteMsg::ExecuteStep { step: Step { tip, instruction_pointer: 0, program } },
 				Default::default(),
 			)?,
 			SELF_CALL_ID,
@@ -173,20 +165,14 @@ pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
 	env: Env,
-	Step { relayer, instruction_pointer, mut program }: Step,
+	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result<Response, ContractError> {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, &relayer, to, assets),
-			Instruction::Call { bindings, encoded } => interpret_call(
-				deps.as_ref(),
-				&env,
-				bindings,
-				encoded,
-				instruction_pointer,
-				&relayer,
-			),
+				interpret_transfer(&mut deps, &env, &tip, to, assets),
+			Instruction::Call { bindings, encoded } =>
+				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
 		}?;
@@ -196,7 +182,7 @@ pub fn handle_execute_step(
 		response.add_message(wasm_execute(
 			env.contract.address,
 			&ExecuteMsg::ExecuteStep {
-				step: Step { relayer, instruction_pointer: instruction_pointer + 1, program },
+				step: Step { tip, instruction_pointer: instruction_pointer + 1, program },
 			},
 			Default::default(),
 		)?)
@@ -204,7 +190,7 @@ pub fn handle_execute_step(
 		// We subtract because of the extra loop to reach the empty instructions case.
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
 		// We save the relayer that executed the last program.
-		RELAYER_REGISTER.save(deps.storage, &relayer)?;
+		TIP_REGISTER.save(deps.storage, &tip)?;
 		let mut event =
 			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
 		if program.tag.len() >= 3 {
@@ -228,7 +214,7 @@ pub fn interpret_call(
 	bindings: Vec<(u32, BindingValue)>,
 	payload: Vec<u8>,
 	instruction_pointer: u16,
-	relayer: &Addr,
+	tip: &Addr,
 ) -> Result<Response, ContractError> {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_json::Value> = if !bindings
@@ -243,8 +229,7 @@ pub fn interpret_call(
 			let data = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(instruction_pointer.to_string().into_bytes()),
-				BindingValue::Register(Register::Relayer) =>
-					Cow::Owned(relayer.to_string().into_bytes()),
+				BindingValue::Register(Register::Tip) => Cow::Owned(tip.to_string().into_bytes()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
 				BindingValue::Register(Register::Result) => Cow::Owned(
@@ -257,7 +242,7 @@ pub fn interpret_call(
 						gateway_address.clone(),
 						asset_id,
 					)?;
-					match reference {
+					match reference.local {
 						AssetReference::Virtual { cw20_address } =>
 							Cow::Owned(cw20_address.into_string().into()),
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
@@ -269,7 +254,7 @@ pub fn interpret_call(
 						gateway_address.clone(),
 						asset_id,
 					)?;
-					let amount = match reference {
+					let amount = match reference.local {
 						AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
 							deps,
 							&balance,
@@ -323,14 +308,9 @@ pub fn interpret_spawn(
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
-		if balance.amount.is_zero() {
-			// We ignore zero amounts
-			continue
-		}
-
 		let reference =
 			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
-		let transfer_amount = match &reference {
+		let transfer_amount = match &reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
 					return Err(ContractError::DecimalsInNativeToken)
@@ -353,7 +333,7 @@ pub fn interpret_spawn(
 		if !transfer_amount.is_zero() {
 			let asset_id: u128 = asset_id.into();
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
-			response = match reference {
+			response = match reference.local {
 				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
 					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
@@ -372,9 +352,9 @@ pub fn interpret_spawn(
 	Ok(response
 		.add_message(wasm_execute(
 			gateway_address,
-			&GWExecuteMsg::Bridge(BridgeMsg {
+			&GWExecuteMsg::BridgeForward(BridgeMsg {
 				interpreter_origin: interpreter_origin.clone(),
-				execute_program,
+				msg: execute_program,
 				network_id: network,
 			}),
 			Default::default(),
@@ -399,7 +379,7 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
-	relayer: &Addr,
+	tip: &Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
 ) -> Result<Response, ContractError> {
@@ -407,7 +387,7 @@ pub fn interpret_transfer(
 
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
-		Destination::Relayer => relayer.into(),
+		Destination::Tip => tip.into(),
 	};
 
 	let mut response = Response::default();
@@ -418,7 +398,7 @@ pub fn interpret_transfer(
 
 		let reference =
 			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
-		response = match reference {
+		response = match reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
 					return Err(ContractError::DecimalsInNativeToken)
@@ -458,8 +438,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Relayer) =>
-			Ok(to_binary(&RELAYER_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 	}
 }
 
@@ -473,7 +452,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	// TODO(aeryz): we can have an intermediate data type to bundle all errors with the IP_REGISTER
 	match msg.result.into_result() {
 		Ok(_) => Err(StdError::generic_err("Returned OK from a reply that is called with `reply_on_error`. This should never happen")),
 		Err(e) => {

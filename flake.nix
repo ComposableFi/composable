@@ -43,8 +43,7 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cosmos 
-    = {
+    cosmos = {
       url =
         "github:dzmitry-lahoda-forks/cosmos.nix/16f6aaf252d36505ab3333f9e82389b5f6c78a39";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -92,14 +91,14 @@
         ./flake/check.nix
         ./flake/darwin-configurations.nix
         ./flake/dev-shells.nix
+        ./flake/devnet.nix
         ./flake/docker.nix
         ./flake/fmt.nix
-        ./flake/ibc.nix
-        ./flake/osmosis.nix
         ./flake/hermes.nix
-        ./flake/devnet.nix
         ./flake/home-configurations.nix
+        ./flake/ibc.nix
         ./flake/live.nix
+        ./flake/osmosis.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
@@ -107,9 +106,10 @@
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/ComposableFi/centauri/flake-module.nix
         ./inputs/chevdor/subwasm.nix
+        ./inputs/ComposableFi/centauri/flake-module.nix
         ./inputs/CosmosContracts/juno.nix
+        ./inputs/CosmWasm/flake-module.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/osmosis-labs/beaker/flake-module.nix
         ./inputs/paritytech/cumulus.nix

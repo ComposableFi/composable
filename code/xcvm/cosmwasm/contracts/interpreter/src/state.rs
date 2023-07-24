@@ -1,10 +1,10 @@
 use cosmwasm_std::{Addr, SubMsgResponse};
 use cw_storage_plus::{Item, Map};
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use xc_core::InterpreterOrigin;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct Config {
 	pub gateway_address: Addr,
 	pub interpreter_origin: InterpreterOrigin,
@@ -23,5 +23,4 @@ pub const IP_REGISTER: Item<u16> = Item::new("ip_register");
 /// This register contains the latest executed program result.
 pub const RESULT_REGISTER: Item<Result<SubMsgResponse, String>> = Item::new("result_register");
 
-/// This register contains the latest relayer that executed a program on our behalf.
-pub const RELAYER_REGISTER: Item<Addr> = Item::new("relayer_register");
+pub const TIP_REGISTER: Item<Addr> = Item::new("tip_register");

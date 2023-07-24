@@ -31,9 +31,10 @@
           ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
+      # and this one https://github.com/frewsxcv/cargo-all-features/issues/45
       check-pallet = pkgs.writeShellApplication {
         name = "check-pallet";
-        runtimeInputs = [ self'.packages.rust-nightly ];
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
           EXTRA_FEATURES=""
           if [[ -n "''${2-}" ]]; then
@@ -47,12 +48,35 @@
       };
       check-std-wasm = pkgs.writeShellApplication {
         name = "check-std-wasm";
-        runtimeInputs = [ self'.packages.rust-nightly ];
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
-          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
-          cargo clippy --package "$1" -- --deny warnings --allow deprecated
+          # we cannot use `check` because it does not not validates linker like `build`, errors happen there too
+          FEATURES=""
+          if [[ -n "''${2-}" ]]; then
+            FEATURES="--features=$2"
+          fi          
+          # shellcheck disable=SC2086
+          cargo build --no-default-features --target wasm32-unknown-unknown --package "$1" $FEATURES
+          # shellcheck disable=SC2086
+          cargo clippy --package "$1" $FEATURES-- --deny warnings --allow deprecated
+
+          # shellcheck disable=SC2086
+          cargo test --package "$1" $FEATURES
         '';
       };
+
+      check-no-std = pkgs.writeShellApplication {
+        name = "check-no-std";
+        runtimeInputs = [ self'.packages.rust-nightly ];
+        text = ''
+          FEATURES=""
+          if [[ -n "''${2-}" ]]; then
+            FEATURES="--features=$2"
+          fi          
+          # shellcheck disable=SC2086
+          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES        '';
+      };
+
       check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };

@@ -27,7 +27,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
-hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex = { workspace = true, default-features = false, features = ["alloc"] }
 is_sorted = { version = "0.1.1", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 p256 = { version = "0.12", default-features = false, features = [

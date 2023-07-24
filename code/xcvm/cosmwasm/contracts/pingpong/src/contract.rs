@@ -15,7 +15,7 @@ use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
 use xc_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
-	Balance, Funds, Juno, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
+	Balance, Centauri, Funds, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-pingpong";
@@ -39,7 +39,7 @@ pub fn instantiate(
 fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<u8>>>(
 	remote_address: UserId,
 	msg: ExecuteMsg,
-) -> Result<cw_xc_common::shared::DefaultXCVMProgram, ContractError> {
+) -> Result<xc_core::shared::DefaultXCVMProgram, ContractError> {
 	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
 		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),
@@ -65,16 +65,16 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 pub fn execute(
 	deps: DepsMut,
 	env: Env,
-	_info: MessageInfo,
+	info: MessageInfo,
 	msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
 	let network = NETWORK.load(deps.storage)?;
 	let gateway = GATEWAY.load(deps.storage)?;
 	let make_program = |remote_address, msg| {
 		if network == Picasso::ID {
-			make_program::<Picasso, Juno>(remote_address, msg)
+			make_program::<Picasso, Centauri>(remote_address, msg)
 		} else {
-			make_program::<Juno, Picasso>(remote_address, msg)
+			make_program::<Centauri, Picasso>(remote_address, msg)
 		}
 	};
 	let local_origin = UserOrigin {
@@ -87,14 +87,14 @@ pub fn execute(
 		ExecuteMsg::Pong { user_origin, counter } =>
 			(user_origin, ExecuteMsg::Ping { user_origin: local_origin, counter }),
 	};
-	let execute_program = cw_xc_common::gateway::ExecuteProgramMsg {
+	let execute_program = xc_core::gateway::ExecuteProgramMsg {
 		salt: vec![0x01, 0x02, 0x03],
 		program: make_program(user_origin.user_id, message)?,
 		assets: Funds::default(),
 	};
 	Ok(Response::default().add_message(wasm_execute(
 		gateway,
-		&cw_xc_common::gateway::ExecuteMsg::ExecuteProgram { execute_program },
+		&xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program, tip: info.sender },
 		Default::default(),
 	)?))
 }
