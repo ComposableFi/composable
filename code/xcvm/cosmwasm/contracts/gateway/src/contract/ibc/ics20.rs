@@ -31,10 +31,6 @@ pub(crate) fn handle_bridge_forward(
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeMsg,
 ) -> ContractResult<Response> {
-	let channel_id = state::IBC_NETWORK_CHANNEL
-		.load(deps.storage, msg.network_id)
-		.map_err(|_| ContractError::UnknownChannel)?;
-
 	let packet: xc_core::Packet<
 		xc_core::Program<
 			std::collections::VecDeque<
