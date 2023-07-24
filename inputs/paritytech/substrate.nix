@@ -48,7 +48,7 @@
       };
       check-std-wasm = pkgs.writeShellApplication {
         name = "check-std-wasm";
-        runtimeInputs = [ self'.packages.rust-nightly ];
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
           # we cannot use `check` because it does not not validates linker like `build`, errors happen there too
           FEATURES=""

@@ -533,7 +533,7 @@ mod tests {
 			IndexedBinding::Some((
 				[
 					(9, BindingValue::Register(Register::This)),
-					(36, BindingValue::Register(Register::Relayer)),
+					(36, BindingValue::Register(Register::Tip)),
 				]
 				.into(),
 				test_msg,
@@ -556,7 +556,7 @@ mod tests {
 			vec![
 				(36, BindingValue::Register(Register::Ip)),
 				(54, BindingValue::Register(Register::This)),
-				(81, BindingValue::Register(Register::Relayer))
+				(81, BindingValue::Register(Register::Tip))
 			]
 		);
 
@@ -588,7 +588,7 @@ mod tests {
 			vec![
 				(32, BindingValue::Asset(1.into())),
 				(62, BindingValue::Register(Register::This)),
-				(89, BindingValue::Register(Register::Relayer)),
+				(89, BindingValue::Register(Register::Tip)),
 			]
 		);
 
@@ -614,7 +614,7 @@ mod tests {
 			msg.bindings,
 			vec![
 				(82, BindingValue::Register(Register::This)),
-				(109, BindingValue::Register(Register::Relayer))
+				(109, BindingValue::Register(Register::Tip))
 			]
 		);
 

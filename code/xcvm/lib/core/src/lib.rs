@@ -167,7 +167,7 @@ mod tests {
 						Ok(child
 							.call(DummyProtocol2)?
 							.call(DummyProtocol1)?
-							.transfer(Destination::Relayer, Funds::from([(1u128, u128::MAX)])))
+							.transfer(Destination::Tip, Funds::from([(1u128, u128::MAX)])))
 					},
 				)?
 				.build())
@@ -200,7 +200,7 @@ mod tests {
 									encoded: vec![192, 222, 192, 222]
 								},
 								Instruction::Transfer {
-									to: Destination::Relayer,
+									to: Destination::Tip,
 									assets: Funds::from(vec![(1u128, u128::MAX)])
 								}
 							])
