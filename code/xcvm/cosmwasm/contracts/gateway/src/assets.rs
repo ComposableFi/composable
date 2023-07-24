@@ -3,7 +3,7 @@ use crate::{
 	error::{ContractError, ContractResult},
 	events::make_event,
 	msg,
-	state::{self},
+	state,
 };
 use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::AssetId;
