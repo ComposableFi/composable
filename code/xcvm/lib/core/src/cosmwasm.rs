@@ -20,9 +20,9 @@
 //! Let's assume that we wan't to send `WasmMsg::Execute`:
 //! ```json
 //! {
-//!    "contract_addr": "",
-//!    "msg": "SOME PAYLOAD",
-//!    "funds": []
+//!     "contract_addr": "",
+//!     "msg": "SOME PAYLOAD",
+//!     "funds": []
 //! }
 //! ```
 //! In this case, we know that `contract_addr` is a static `String`, not
