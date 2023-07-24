@@ -65,7 +65,6 @@ thiserror = { version = "1.0.38", package = "thiserror-core", default-features =
 
 serde-cw-value = { version = "0.7.0", default-features = false }
 
-
 [patch.crates-io]
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81" }
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6" }
