@@ -1,3 +1,5 @@
+// copy pasted linters from `composable-traits`
+
 #![cfg_attr(
 	not(test),
 	deny(
@@ -10,8 +12,46 @@
 	)
 )] // allow in tests
 #![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
+
+#![cfg_attr(
+	not(test),
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(bad_style, trivial_numeric_casts)]
+#![deny(
+	bare_trait_objects,
+	improper_ctypes,
+	no_mangle_generic_items,
+	non_shorthand_field_patterns,
+	overflowing_literals,
+	path_statements,
+	patterns_in_fns_without_body,
+	private_in_public,
+	trivial_casts,
+	unconditional_recursion,
+	unused_allocation,
+	unused_comparisons,
+	unused_extern_crates,
+	unused_imports,
+	unused_parens,
+	while_true
+)]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
+
+
+// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+// `.unwrap()` - with let should work nice
+
 pub use pallet::*;
 
 mod prelude;
@@ -25,6 +65,7 @@ pub mod pallet {
 	use ibc_primitives::Timeout as IbcTimeout;
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
+	// PLEASE REMOVE COMMENTED OUT CODE
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
 		prelude::{String, Vec},
@@ -376,6 +417,7 @@ pub mod pallet {
 						),
 				} => {
 					let mut vec = sp_std::vec::Vec::new();
+					// why not vec![...] ?
 					vec.push(ibc1.clone());
 					vec.push(ibc2.clone());
 					vec.push(ibc3.clone());
@@ -578,6 +620,9 @@ pub mod pallet {
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				transfer_params,
+
+				// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+				// `.unwrap()` - with let should work nice
 				asset_id.unwrap(), //TODO remove unwrap
 				(*amount).into(),
 				memo.clone(),
@@ -591,6 +636,9 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
+
+						// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+						// `.unwrap()` - with let should work nice						
 						asset_id: asset_id.unwrap(),
 						memo,
 						bytes: memo_bytes.clone(),
@@ -602,6 +650,9 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
+
+						// please fix unwraps as per `cargo clippy --package pallet-multihop-xcm-ibc`
+						// `.unwrap()` - with let should work nice						
 						asset_id: asset_id.unwrap(),
 						memo,
 					});
