@@ -86,6 +86,9 @@ pub(crate) fn handle_bridge_forward(
 	Ok(Response::default().add_event(event).add_message(msg))
 }
 
+/// given target network and this network assets identifier,
+/// find channels, target denomination and gateway on other network
+/// so can form and sent ICS20 PFM Wasm terminated packet
 pub fn get_route(
 	storage: &mut dyn Storage,
 	to: xc_core::NetworkId,
