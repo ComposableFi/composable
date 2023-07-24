@@ -346,6 +346,8 @@ pub mod pallet {
 	{
 		type AssetId = T::AssetId;
 
+		// i guess moving match to separate method could make this one better
+		// so generally error handling is really bad, may be read something about
 		fn deposit_asset(
 			asset: &xcm::latest::MultiAsset,
 			location: &xcm::latest::MultiLocation,
@@ -455,17 +457,19 @@ pub mod pallet {
 
 			let (pallet_id, address_from, route_id, mut addresses) = location_info;
 
+			/// what if PalletInstanceId is const, just asking, can you match on it?
 			if *pallet_id != T::PalletInstanceId::get() {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 1,
+					reason: 1, // what is reason? 
 				});
 				return None
 			}
 
+			// remove
 			// return None;
-
+				
 			//deposit does not executed propertly. nothing todo. assets will stay in the account id
 			// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
 			deposit_result.ok()?;
@@ -498,7 +502,7 @@ pub mod pallet {
 				});
 				return None;
 			};
-
+			// tbh, sill believe could store betch prefixes instead of addresses, one addesses, many betch prefixes :) 
 			if addresses.len() != route_len {
 				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
 				// return Err(Error::<T>::IncorrectCountOfAddresses)
