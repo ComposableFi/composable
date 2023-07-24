@@ -23,5 +23,4 @@ pub const IP_REGISTER: Item<u16> = Item::new("ip_register");
 /// This register contains the latest executed program result.
 pub const RESULT_REGISTER: Item<Result<SubMsgResponse, String>> = Item::new("result_register");
 
-/// This register contains the latest relayer that executed a program on our behalf.
-pub const RELAYER_REGISTER: Item<Addr> = Item::new("relayer_register");
+pub const TIP_REGISTER: Item<Addr> = Item::new("tip_register");

@@ -24,8 +24,8 @@ pub enum BindingValue {
 pub enum Register {
 	/// Instruction pointer
 	Ip,
-	/// Relayer's address
-	Relayer,
+	/// Tip's address
+	Tip,
 	/// Interpreter's address
 	This,
 	/// Result of the last executed instruction
@@ -43,7 +43,7 @@ pub type OrderedBindings = BTreeMap<u32, BindingValue>;
 #[serde(rename_all = "snake_case")]
 pub enum Destination<Account> {
 	Account(Account),
-	Relayer,
+	Tip,
 }
 
 /// Base XCVM instructions.

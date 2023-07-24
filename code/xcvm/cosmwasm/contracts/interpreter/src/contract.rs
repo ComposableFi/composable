@@ -4,7 +4,7 @@ use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::ContractError,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, RELAYER_REGISTER, RESULT_REGISTER},
+	state::{Config, CONFIG, IP_REGISTER, OWNERS, TIP_REGISTER, RESULT_REGISTER},
 };
 use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
@@ -103,8 +103,8 @@ fn external_query_lookup_asset(
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
 /// execution by resetting the necessary registers as well as being able to catch any failures and
 /// store it in the `RESULT_REGISTER`.
-/// The [`RELAYER_REGISTER`] is updated to hold the current relayer address. Note that the
-/// [`RELAYER_REGISTER`] always contains a value, and the value is equal to the last relayer that
+/// The [`TIP_REGISTER`] is updated to hold the current relayer address. Note that the
+/// [`TIP_REGISTER`] always contains a value, and the value is equal to the last relayer that
 /// executed a program if any.
 fn initiate_execution(
 	_: Authenticated,
@@ -199,7 +199,7 @@ pub fn handle_execute_step(
 		// We subtract because of the extra loop to reach the empty instructions case.
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
 		// We save the relayer that executed the last program.
-		RELAYER_REGISTER.save(deps.storage, &relayer)?;
+		TIP_REGISTER.save(deps.storage, &relayer)?;
 		let mut event =
 			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
 		if program.tag.len() >= 3 {
@@ -238,7 +238,7 @@ pub fn interpret_call(
 			let data = match binding {
 				BindingValue::Register(Register::Ip) =>
 					Cow::Owned(instruction_pointer.to_string().into_bytes()),
-				BindingValue::Register(Register::Relayer) =>
+				BindingValue::Register(Register::Tip) =>
 					Cow::Owned(relayer.to_string().into_bytes()),
 				BindingValue::Register(Register::This) =>
 					Cow::Borrowed(env.contract.address.as_bytes()),
@@ -389,7 +389,7 @@ pub fn interpret_spawn(
 pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
-	relayer: &Addr,
+	tip: &Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
 ) -> Result<Response, ContractError> {
@@ -397,7 +397,7 @@ pub fn interpret_transfer(
 
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
-		Destination::Relayer => relayer.into(),
+		Destination::Tip => tip.into(),
 	};
 
 	let mut response = Response::default();
@@ -448,8 +448,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Relayer) =>
-			Ok(to_binary(&RELAYER_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::Tip) =>
+			Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 	}
 }
 

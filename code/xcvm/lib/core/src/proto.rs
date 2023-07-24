@@ -286,8 +286,8 @@ impl TryFrom<binding_value::Type> for crate::BindingValue {
 	fn try_from(binding_val: binding_value::Type) -> core::result::Result<Self, Self::Error> {
 		Ok(match binding_val {
 			binding_value::Type::Self_(_) => crate::BindingValue::Register(crate::Register::This),
-			binding_value::Type::Relayer(_) =>
-				crate::BindingValue::Register(crate::Register::Relayer),
+			binding_value::Type::Tip(_) =>
+				crate::BindingValue::Register(crate::Register::Tip),
 			binding_value::Type::Result(_) =>
 				crate::BindingValue::Register(crate::Register::Result),
 			binding_value::Type::IpRegister(_) =>
@@ -371,7 +371,7 @@ where
 		Ok(match account_type {
 			transfer::AccountType::Account(Account { account }) =>
 				Destination::Account(account.as_slice().try_into().map_err(|_| ())?),
-			transfer::AccountType::Relayer(_) => Destination::Relayer,
+			transfer::AccountType::Tip(_) => Destination::Tip,
 		})
 	}
 }
@@ -490,8 +490,8 @@ impl From<crate::BindingValue> for binding_value::Type {
 		match binding_value {
 			crate::BindingValue::Register(crate::Register::Ip) =>
 				binding_value::Type::IpRegister(IpRegister { ip: 0 }),
-			crate::BindingValue::Register(crate::Register::Relayer) =>
-				binding_value::Type::Relayer(Relayer { id: 0 }),
+			crate::BindingValue::Register(crate::Register::Tip) =>
+				binding_value::Type::Tip(Tip { id: 0 }),
 			crate::BindingValue::Register(crate::Register::Result) =>
 				binding_value::Type::Result(Result { result: 0 }),
 			crate::BindingValue::Register(crate::Register::This) =>
@@ -526,7 +526,7 @@ where
 		match destination {
 			Destination::Account(account) =>
 				transfer::AccountType::Account(Account { account: account.into() }),
-			Destination::Relayer => transfer::AccountType::Relayer(Relayer { id: 0 }),
+			Destination::Tip => transfer::AccountType::Tip(Tip { id: 0 }),
 		}
 	}
 }

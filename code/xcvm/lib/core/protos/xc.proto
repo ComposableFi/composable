@@ -82,7 +82,7 @@ message Self {
   uint32 self = 1;
 }
 
-message Relayer {
+message Tip {
   uint32 id = 1;
 }
 
@@ -103,7 +103,7 @@ message IpRegister {
 message BindingValue {
   oneof type {
     Self self = 1;
-    Relayer relayer = 2;
+    Tip tip = 2;
     Result result = 3;
     AssetAmount assetAmount = 4;
     AssetId assetId = 5;
@@ -123,7 +123,7 @@ message Bindings {
 message Transfer {
   oneof account_type{
     Account account = 1;
-    Relayer relayer = 2;
+    Tip tip = 2;
   }
   repeated Asset assets = 3;
 }
