@@ -63,7 +63,7 @@ pub fn execute(
 		},
 		msg::ExecuteMsg::Ics20MessageHook(msg) => {
 			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
-			super::ibc::ics20::ics20_message_hook(auth, msg, env, info.sender)
+			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
 		},
 	}
 }

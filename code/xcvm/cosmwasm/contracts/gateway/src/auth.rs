@@ -4,7 +4,7 @@ use crate::{
 	state::{self},
 };
 use cosmwasm_std::{ensure, Deps, Env, MessageInfo, Storage};
-use xc_core::{gateway::GatewayId, NetworkId};
+use xc_core::{gateway::GatewayId, shared::DefaultXCVMProgram, NetworkId};
 
 /// Authorisation token indicating call is authorised according to policy
 /// `T`.

@@ -75,6 +75,7 @@ pub enum Instruction<Payload, Account, Assets> {
 		assets: Assets,
 		program: Program<VecDeque<Self>>,
 	},
+	// Buy
 }
 
 /// Error types for late binding operation

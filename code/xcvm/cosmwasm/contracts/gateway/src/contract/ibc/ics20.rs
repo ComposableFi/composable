@@ -12,7 +12,7 @@ use xc_core::{
 	gateway::{Asset, ExecuteMsg, ExecuteProgramMsg, GatewayId},
 	ibc::{to_cw_message, IbcRoute, Ics20MessageHook, WasmMemo},
 	proto::{decode_packet, Encodable},
-	shared::XcPacket,
+	shared::{DefaultXCVMProgram, XcPacket},
 	AssetId, CallOrigin, Funds,
 };
 
@@ -115,13 +115,27 @@ pub(crate) fn ics20_message_hook(
 	_: auth::WasmHook,
 	msg: Ics20MessageHook,
 	env: Env,
-	tip: Addr,
+	info: MessageInfo,
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = decode_packet(&msg.data).map_err(ContractError::Protobuf)?;
+
+	ensure_anonymous(&packet.program)?;
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 	let execute_program =
 		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: packet.assets };
-	let msg = ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
+	let msg =
+		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
+}
+
+fn ensure_anonymous(program: &DefaultXCVMProgram) -> ContractResult<()> {
+	for ix in &program.instructions {
+		match ix {
+			xc_core::Instruction::Transfer { to, assets } => {},
+			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(&program)?,
+			_ => Err(ContractError::NotAuthorized)?,
+		}
+	}
+	Ok(())
 }

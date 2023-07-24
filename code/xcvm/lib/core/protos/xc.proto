@@ -39,6 +39,7 @@ message Instruction {
     Transfer transfer = 1;
     Spawn spawn = 2;
     Call call = 3;
+    // Buy buy = 4;
   }
 }
 

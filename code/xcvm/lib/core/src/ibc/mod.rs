@@ -8,7 +8,7 @@ use self::hook::IBCLifecycleComplete;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct WasmMemo {
 	pub contract: String,

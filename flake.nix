@@ -43,8 +43,7 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cosmos 
-    = {
+    cosmos = {
       url =
         "github:dzmitry-lahoda-forks/cosmos.nix/16f6aaf252d36505ab3333f9e82389b5f6c78a39";
       inputs.nixpkgs.follows = "nixpkgs";

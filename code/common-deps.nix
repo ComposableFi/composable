@@ -22,7 +22,7 @@
           cargoCheckCommand = "true";
           # Don't build any wasm as we do it ourselves
           SKIP_WASM_BUILD = "1";
-          NIX_BUILD_FLAKE = "true"; 
+          NIX_BUILD_FLAKE = "true";
         };
 
         common-test-deps-attrs = subnix.subattrs // {

@@ -1,4 +1,4 @@
-use crate::{cosmwasm::CosmwasmSubstrateError, prelude::*};
+use crate::prelude::*;
 
 #[derive(
 	Serialize,
