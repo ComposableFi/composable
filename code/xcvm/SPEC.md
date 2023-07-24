@@ -72,6 +72,8 @@ Commonly used terms in this document are described below.
 
 `Relayer`: Initiator of the destination side transaction, paying for the execution fees.
 
+`Tip`: Tip address for execution. 
+
 `Opaque Contract`: Any smart contract, module, or pallet.
 
 `Chain`: A blockchain with its consensus and execution environment, but may also refer to rollups.
@@ -236,7 +238,7 @@ sequenceDiagram
 Transfers funds within a chain between accounts.
 
 ```
-<Transfer>     ::= <Account> <Assets> | <Relayer> <Assets>
+<Transfer>     ::= <Account> <Assets> | <Tip> <Assets>
 
 <Account>      ::= bytes
 <Assets>       ::= { <AssetId> : <Balance> }
@@ -258,7 +260,7 @@ Executes a payload within the execution context of the chain, such as an extrins
 <Payload>      ::= bytes
 <Bindings>     ::= [ u16 <BindingValue> ]
 <AssetAmount>  ::= <AssetId> <Balance>
-<BindingValue> ::= <Self> | <Relayer> | <Result> | <AssetAmount> | <GlobalId>
+<BindingValue> ::= <Self> | <Tip> | <Result> | <AssetAmount> | <GlobalId>
 ```
 
 ### 2.2.2.1. Late Bindings
@@ -273,7 +275,7 @@ If the caller wants to swap funds from the interpreter account and receive the f
 
 On the executing instance, `BindingValue::Self` will be interpolated at byte index 13  of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side.
 
-Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
+Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of `AssetId` conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting `Ratio` to absolute `Balance` type.
 
 Indices in bindings must to be **sorted** in an ascending order and **unique**.
 
@@ -294,6 +296,8 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 Where the **salt** is used by the Router while instantiating the interpreter (see section 2.5.2.).
 
 `OriginNonce` is unique number generated once per program execution on originating consensus. Allows unique identify program invocation from origin to all child spawns. Combined with `Network` and `Program` can be considered `cross chain transaction identifier`.
+
+In case of escrow(reserver) transfer, `AssetId` in `Assets` are converted from as on sender to as on receiver network. 
 
 ### 2.2.3.1. IBC
 
@@ -349,7 +353,7 @@ Queries register values of an `XCVM` instance across chains. It sets the current
 
 ## 2.3. Balances
 
-Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller is aware of the number of decimals of the assets on the destination side: `Absolute`.
+Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller knows amount of the assets on the destination side: `Absolute`.
 
 ## 2.4. Abstract Virtual Machine
 
@@ -361,7 +365,7 @@ Each interpreter keeps track of persistent states during and across executions, 
 
 ```
 <RegisterValues> ::= {<RegisterValue>}
-<RegisterValue>  ::= <ResultRegister> | <IPRegister> | <RelayerRegister> | <SelfRegister> | <VersionRegister>
+<RegisterValue>  ::= <ResultRegister> | <IPRegister> | <TipRegister> | <SelfRegister> | <VersionRegister>
 ```
 
 #### 2.4.1.1 Result Register
@@ -397,12 +401,12 @@ The instruction pointer register contains the instruction pointer of the last ex
 <IPRegister> ::= u32
 ```
 
-#### 2.4.1.3 Relayer Register
+#### 2.4.1.3 Tip Register
 
-The relayer register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the relayer is the account paying the fees for interpreter execution.
+The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for interpreter execution.
 
 ```
-<RelayerRegister> ::= <Account>
+<TipRegister> ::= <Account>
 ```
 
 #### 2.4.1.4 Self Register
@@ -419,7 +423,7 @@ The version register contains the semantic version of the contract code, which c
 
 ### 2.4.5 Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section 2.6. for ownership semantics. Second, the RelayerRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section 2.6. for ownership semantics. Second, the TipRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
 
 If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
 
@@ -531,11 +535,11 @@ There are three different components to the fees charged for interacting with th
 
 ## 4.1. Execution Fees
 
-Gas and Bridging fees are handled during the invocation and at the `Router` level, however, Execution fees are opt-in and paid by the user by using the `Relayer` registry value. The following example program performs an operation, and rewards the relayer:
+Gas and Bridging fees are handled during the invocation and at the `Router` level, however, Execution fees are opt-in and paid by the user by using the `Tip` registry value. The following example program performs an operation, and rewards the tip address:
 
 ```
 <Call> 0x13371337...
-<Transfer> <Relayer> { USDC: 15000000000000 }
+<Transfer> <Tip> { USDC: 15000000000000 }
 ```
 
 This model is very much like Bitcoin's UTXOs, where the difference between inputs and outputs defines the tip. Here we are more explicit with the actual fee, which allows for more fine-grained control. Together with branching (to be implemented later), this fee model can be used to incentivize the relayer to precompute the outcome, and only submit the program if it were to succeed at the current state of the destination chain.
@@ -548,7 +552,7 @@ Assets can be identified using a global asset identifier.
 <AssetId> ::= u128
 ```
 
-Each chain contains a registry contract, which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
+Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
 
 Propagating updates across registries is handled by the `XCVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
@@ -610,13 +614,13 @@ In this case only trusted Swap contracts will be callable.
 
 ## A.
 ```rust
-fn execute(&mut self, sender: Account, relayer: Account, caller: Identity, instructions: Vec<u8>) {
+fn execute(&mut self, sender: Account, tip: Account, caller: Identity, instructions: Vec<u8>) {
     assert_eq!(sender, ROUTER::ACCOUNT);
     assert!(self.owners.contains(&caller))
 
     // reset the IP from the last execution
     self.IP = 0;
-    self.relayer = relayer;
+    self.TIP = tip;
 
     while let Some(instr) = take_next(&mut instructions).unwrap() {
         self.IP += 1;
@@ -654,13 +658,13 @@ sequenceDiagram
     Router XYZ->>Interpreter XYZ: Execute Spawn
     Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
     Lender->>Interpreter XYZ: Transfer USDC
-    Interpreter XYZ->>Relayer: Transfer USDC fee to Relayer
+    Interpreter XYZ->>Tip: Transfer USDC fee to Relayer
     Interpreter XYZ->>Router XYZ: Spawn Program
     Router XYZ->>Gateway XYZ: Submit Program
     Gateway XYZ->>Gateway ABC: Relay Program
     Gateway ABC->>Router ABC: Instantiate VM
     Router ABC->>Interpreter ABC: Execute Spawn
-    Interpreter ABC->>Relayer: Transfer USDC fee to Relayer
+    Interpreter ABC->>Tip: Transfer USDC fee to Relayer
     Interpreter ABC->>User: Transfer USDC
 ```
 
@@ -669,9 +673,9 @@ Although these operations are quite complicated to code by hand, using the XCVM 
 ```
 Spawn XYZ 0 [
     Call 0x1337,                                 // chain-specific encoding to make a smart contract call.
-    Transfer Relayer USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
+    Transfer Tip USDC Unit 50,               // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched.
     Spawn HOME 0 [
-        Transfer Relayer USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
+        Transfer Tip USDC Unit 50            // Another 50 bucks fee for the operation, but now reverse direction.
         Transfer USER { USDC: Ratio::ALL }       // On ABC, we transfer all USDC to the user.
     ] { USDC: ALL },                             // We send over all our USDC back to ABC.
 ] { DOT: UNIT 100 },                             // We send over 100 DOT from ABC to XYZ.

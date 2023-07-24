@@ -438,6 +438,7 @@ jobs:
         - build-all-docs-packages
         - build-all-misc-packages
         - build-all-production-deps
+        - build-cosmos-cosmwasm
         - dependency-review
         - nix-flake-check
         - devnet-integration-tests
@@ -451,14 +452,14 @@ jobs:
            echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
            echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
            echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-           echo "${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}"
-        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' }}
+           echo "build-cosmos-cosmwasm" ${{ needs.build-cosmos-cosmwasm.outputs.ok  }}
+        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true' }}
           run: |
             echo "All dependencies built well"
             exit 0
-        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true') }}
+        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true') }}
           run: |
-            echo "Some of dependencies (see jobs graph or needs attribute) failed to build"      
+            echo "Some of dependencies (see jobs graph, needs attributes, and output of this job) failed"      
             exit 42
 
   draft-release-artifacts:

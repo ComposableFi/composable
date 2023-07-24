@@ -5,12 +5,12 @@
       mkXcvmContract = name:
         let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
         in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
-          src = ./.;
+          src = systemCommonRust.rustSrc;
           version = "0.1";
           pnameSuffix = "-${name}";
           pname = name;
           cargoBuildCommand =
-            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
+            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
           RUSTFLAGS = "-C link-arg=-s";
           installPhaseCommand = ''
             mkdir -p $out/lib
@@ -28,13 +28,13 @@
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
-            src = systemCommonRust.mkRustSrc ./.;
+            src = systemCommonRust.rustSrc;
           });
 
         xcvm-mount = pkgs.stdenv.mkDerivation rec {
           name = "xcvm-mount";
           pname = "${name}";
-          src = systemCommonRust.mkRustSrc ./.;
+          src = systemCommonRust.rustSrc;
           patchPhase = "true";
 
           installPhase = ''
@@ -57,7 +57,8 @@
               mkdir --parents "$NIX_CARGO_OUT_DIR"
               cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
               export NIX_CARGO_OUT_DIR
-              cargo test --release --package xc-tests
+              # just build, will be moved to testing with host at hand
+              cargo build --release --package xc-tests --tests
             '';
             installPhase = ''
               mkdir --parents $out

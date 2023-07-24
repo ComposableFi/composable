@@ -18,12 +18,6 @@ Ideally, a protocol supports both in a single operation, although most bridges w
 3. Registration of routing.
 4. Egress of messages on the chain. 
 
-## Blacklist
-
-The blacklist is used to enact emergency operations in case of bridge fraud, which can be caused by hacks, or bugs within the system. The blacklist globally disables bridges based on `LAYR` governance.
-
-Note that the blacklist is not used to manage ecosystem specific risk, such as toxic assets. It only concerns itself with bridges where the message authenticity can no longer be guaranteed.
-
 ## XCVM Ingress
 
 A transport does not need to register itself to pass messages into the `XCVM`, it can do so directly, assuming that the interpreter instance accepting the transport's messages has whitelisted this transport. 

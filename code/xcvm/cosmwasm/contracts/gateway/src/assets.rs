@@ -1,6 +1,7 @@
 use crate::{
-	common,
+	auth,
 	error::{ContractError, ContractResult},
+	events::make_event,
 	msg, state,
 };
 use cosmwasm_std::{Deps, DepsMut, Response};
@@ -8,10 +9,10 @@ use xc_core::AssetId;
 
 /// Adds a new asset to the registry; errors out if asset already exists.
 pub(crate) fn handle_register_asset(
-	_: common::auth::Admin,
+	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
-	reference: msg::AssetReference,
+	reference: msg::Asset,
 ) -> ContractResult<Response> {
 	let key = state::ASSETS.key(asset_id);
 	if key.has(deps.storage) {
@@ -19,7 +20,7 @@ pub(crate) fn handle_register_asset(
 	}
 	key.save(deps.storage, &reference)?;
 	Ok(Response::new().add_event(
-		common::make_event("register")
+		make_event("register")
 			.add_attribute("asset_id", asset_id.to_string())
 			.add_attribute("denom", reference.denom()),
 	))
@@ -28,7 +29,7 @@ pub(crate) fn handle_register_asset(
 /// Removes an existing asset from the registry; errors out if asset doesn’t
 /// exist.
 pub(crate) fn handle_unregister_asset(
-	_: common::auth::Admin,
+	_: auth::Admin,
 	deps: DepsMut,
 	asset_id: AssetId,
 ) -> ContractResult<Response> {
@@ -37,9 +38,8 @@ pub(crate) fn handle_unregister_asset(
 		return Err(ContractError::UnsupportedAsset)
 	}
 	key.remove(deps.storage);
-	Ok(Response::new().add_event(
-		common::make_event("unregister").add_attribute("asset_id", asset_id.to_string()),
-	))
+	Ok(Response::new()
+		.add_event(make_event("unregister").add_attribute("asset_id", asset_id.to_string())))
 }
 
 /// Fetches information about given asset.
@@ -62,6 +62,10 @@ mod tests {
 		testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
 		Addr, Empty, Env, MessageInfo, Order, OwnedDeps, Response,
 	};
+	use xc_core::{
+		gateway::{Asset, RegisterAssetMsg},
+		Network,
+	};
 
 	fn instantiate(
 	) -> (OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>, Env, MessageInfo, Response) {
@@ -70,6 +74,7 @@ mod tests {
 			interpreter_code_id: 0,
 			network_id: 1.into(),
 			admin: sender.into(),
+			ibc_ics_20_sender: None,
 		};
 		let mut deps = mock_dependencies();
 		let env = mock_env();
@@ -89,31 +94,47 @@ mod tests {
 	fn register_unregister_assets() {
 		let (mut deps, env, info, _resp) = instantiate();
 
-		let addr1 = msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") };
-		let addr2 = msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr2") };
-		let addr3 = msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr3") };
-		let addr4 = msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr4") };
+		let addr1 = Asset {
+			network_id: xc_core::Picasso::ID,
+			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") },
+			bridged: None,
+		};
+		let addr2 = Asset {
+			network_id: xc_core::Picasso::ID,
+			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr2") },
+			bridged: None,
+		};
+		let addr3 = Asset {
+			network_id: xc_core::Picasso::ID,
+			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr3") },
+			bridged: None,
+		};
+		let addr4 = Asset {
+			network_id: xc_core::Picasso::ID,
+			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr4") },
+			bridged: None,
+		};
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
-			msg::ExecuteMsg::RegisterAsset { asset_id: 1.into(), reference: addr1.clone() },
+			msg::ExecuteMsg::RegisterAsset(RegisterAssetMsg { id: 1.into(), asset: addr1.clone() }),
 		)
 		.unwrap();
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
-			msg::ExecuteMsg::RegisterAsset { asset_id: 2.into(), reference: addr2.clone() },
+			msg::ExecuteMsg::RegisterAsset(RegisterAssetMsg { id: 2.into(), asset: addr2.clone() }),
 		)
 		.unwrap();
 
 		assert_eq!(state::ASSETS.load(&deps.storage, 1.into()).unwrap(), addr1);
 		assert_eq!(state::ASSETS.load(&deps.storage, 2.into()).unwrap(), addr2);
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
@@ -121,7 +142,7 @@ mod tests {
 		)
 		.unwrap();
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
@@ -129,19 +150,19 @@ mod tests {
 		)
 		.unwrap();
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
-			msg::ExecuteMsg::RegisterAsset { asset_id: 3.into(), reference: addr3.clone() },
+			msg::ExecuteMsg::RegisterAsset(RegisterAssetMsg { id: 3.into(), asset: addr3.clone() }),
 		)
 		.unwrap();
 
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
-			msg::ExecuteMsg::RegisterAsset { asset_id: 4.into(), reference: addr4.clone() },
+			msg::ExecuteMsg::RegisterAsset(RegisterAssetMsg { id: 4.into(), asset: addr4.clone() }),
 		)
 		.unwrap();
 
@@ -165,13 +186,18 @@ mod tests {
 	fn query_assets() {
 		let (mut deps, env, info, _resp) = instantiate();
 
-		let addr1 = msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") };
+		let addr1 = Asset {
+			network_id: xc_core::Picasso::ID,
+			local: msg::AssetReference::Virtual { cw20_address: Addr::unchecked("addr1") },
+			bridged: None,
+		};
+
 		let asset_id = AssetId::from(1);
-		execute(
+		execute::execute(
 			deps.as_mut(),
 			env.clone(),
 			info.clone(),
-			msg::ExecuteMsg::RegisterAsset { asset_id, reference: addr1.clone() },
+			msg::ExecuteMsg::RegisterAsset(RegisterAssetMsg { id: asset_id, asset: addr1.clone() }),
 		)
 		.unwrap();
 

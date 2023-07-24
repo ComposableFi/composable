@@ -1,6 +1,6 @@
 use cosmwasm_std::{IbcOrder, StdError};
 use thiserror::Error;
-use xc_proto::DecodingFailure;
+use xc_core::proto::DecodingFailure;
 
 pub type ContractResult<T, E = ContractError> = core::result::Result<T, E>;
 
@@ -38,4 +38,20 @@ pub enum ContractError {
 	UnknownChannel,
 	#[error("The asset is already registered.")]
 	AlreadyRegistered,
+	#[error("Route not found.")]
+	RouteNotFound,
+	#[error("{0}")]
+	Bech32(bech32_no_std::Error),
+	#[error("{0}")]
+	Serde(#[from] serde_json_wasm::ser::Error),
+	#[error("Assets non transferrable")]
+	AssetsNonTransferrable,
+	#[error("Program cannot be handled by destination")]
+	ProgramCannotBeHandledByDestination,
+}
+
+impl From<bech32_no_std::Error> for ContractError {
+	fn from(value: bech32_no_std::Error) -> Self {
+		Self::Bech32(value)
+	}
 }

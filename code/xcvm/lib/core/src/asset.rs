@@ -1,5 +1,8 @@
-use crate::abstraction::IndexOf;
-use alloc::vec::Vec;
+use crate::prelude::*;
+
+#[cfg(feature = "cw-storage-plus")]
+use cw_storage_plus::{Key, Prefixer};
+
 use core::ops::Add;
 use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
@@ -61,6 +64,14 @@ impl<'a> cw_storage_plus::PrimaryKey<'a> for AssetId {
 }
 
 #[cfg(feature = "cw-storage-plus")]
+impl<'a> Prefixer<'a> for AssetId {
+	fn prefix(&self) -> Vec<Key> {
+		use cw_storage_plus::IntKey;
+		vec![Key::Val128(self.0 .0.to_cw_bytes())]
+	}
+}
+
+#[cfg(feature = "cw-storage-plus")]
 impl cw_storage_plus::KeyDeserialize for AssetId {
 	type Output = <u128 as cw_storage_plus::KeyDeserialize>::Output;
 
@@ -73,82 +84,6 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 	fn from_slice(value: &[u8]) -> cosmwasm_std::StdResult<Self::Output> {
 		<u128 as cw_storage_plus::KeyDeserialize>::from_slice(value)
 	}
-}
-
-impl From<PICA> for AssetId {
-	fn from(_: PICA) -> Self {
-		PICA::ID
-	}
-}
-
-impl From<ETH> for AssetId {
-	fn from(_: ETH) -> Self {
-		ETH::ID
-	}
-}
-
-impl From<USDT> for AssetId {
-	fn from(_: USDT) -> Self {
-		USDT::ID
-	}
-}
-
-impl From<USDC> for AssetId {
-	fn from(_: USDC) -> Self {
-		USDC::ID
-	}
-}
-
-pub struct InvalidAsset;
-pub struct PICA;
-pub struct ETH;
-pub struct USDT;
-pub struct USDC;
-
-/// List of XCVM compatible assets.
-// /!\ The order matters and must not be changed, adding a network on the right is safe.
-pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
-
-/// Type implement network must be part of [`Networks`], otherwise invalid.
-pub trait Asset {
-	const ID: AssetId;
-	const DECIMALS: u8 = 12;
-}
-
-impl Asset for PICA {
-	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
-}
-
-impl Asset for ETH {
-	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
-}
-
-impl Asset for USDT {
-	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
-}
-
-impl Asset for USDC {
-	const ID: AssetId = AssetId(Displayed(<Assets as IndexOf<Self, _>>::INDEX as u128));
-}
-
-pub trait AssetSymbol {
-	const SYMBOL: &'static str;
-}
-
-impl AssetSymbol for PICA {
-	const SYMBOL: &'static str = "PICA";
-}
-
-impl AssetSymbol for ETH {
-	const SYMBOL: &'static str = "ETH";
-}
-
-impl AssetSymbol for USDT {
-	const SYMBOL: &'static str = "USDT";
-}
-
-impl AssetSymbol for USDC {
-	const SYMBOL: &'static str = "USDC";
 }
 
 /// A wrapper around a type which is serde-serialised as a string.
@@ -171,11 +106,40 @@ impl AssetSymbol for USDC {
 /// assert_eq!(Displayed(42), decoded.value);
 /// ```
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Encode, Decode, TypeInfo,
-)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, TypeInfo)]
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
+
+impl<T: Default> Default for Displayed<T> {
+	fn default() -> Self {
+		Self(Default::default())
+	}
+}
+
+impl<T> parity_scale_codec::WrapperTypeEncode for Displayed<T> {}
+impl<T> parity_scale_codec::WrapperTypeDecode for Displayed<T> {
+	type Wrapped = T;
+}
+
+impl From<Uint128> for Displayed<u128> {
+	fn from(value: Uint128) -> Self {
+		Self(value.u128())
+	}
+}
+
+impl From<Displayed<u128>> for Uint128 {
+	fn from(value: Displayed<u128>) -> Self {
+		value.into()
+	}
+}
+
+impl<T> core::ops::Deref for Displayed<T> {
+	type Target = T;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
 
 impl<T: core::fmt::Display> core::fmt::Display for Displayed<T> {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -253,6 +217,17 @@ pub struct Amount {
 	pub slope: Displayed<u128>,
 }
 
+/// Arithmetic errors.
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, Debug, TypeInfo, Serialize, Deserialize)]
+pub enum ArithmeticError {
+	/// Underflow.
+	Underflow,
+	/// Overflow.
+	Overflow,
+	/// Division by zero.
+	DivisionByZero,
+}
+
 impl Amount {
 	pub const MAX_PARTS: u128 = 1000000000000000000;
 
@@ -286,54 +261,52 @@ impl Amount {
 	}
 
 	/// `f(x) = a(x - b) + b where a = slope / MAX_PARTS, b = intercept`
-	pub fn apply(&self, value: u128) -> Result<u128, ()> {
+	pub fn apply(&self, value: u128) -> Result<u128, ArithmeticError> {
 		if value.is_zero() {
 			return Ok(0)
 		}
 		let amount = if self.slope.0.is_zero() {
 			self.intercept.0
+		} else if self.slope.0 == Self::MAX_PARTS {
+			value
 		} else {
-			if self.slope.0 == Self::MAX_PARTS {
-				value
-			} else {
-				let value =
-					Uint256::from(value).checked_sub(self.intercept.0.into()).map_err(|_| ())?;
-				let value =
-					value.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS).map_err(|_| ())?;
-				let value = value.checked_add(self.intercept.0.into()).map_err(|_| ())?;
-				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
-				value
-			}
+			let value = Uint256::from(value)
+				.checked_sub(self.intercept.0.into())
+				.map_err(|_| ArithmeticError::Underflow)?;
+			let value = value
+				.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+				.map_err(|_| ArithmeticError::Overflow)?;
+			let value = value
+				.checked_add(self.intercept.0.into())
+				.map_err(|_| ArithmeticError::Overflow)?;
+			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
 		};
 		Ok(u128::min(value, amount))
 	}
 
 	/// `f(x) = (a + b) * 10 ^ decimals where a = intercept, b = slope / MAX_PARTS`
-	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> Result<u128, ()> {
+	pub fn apply_with_decimals(&self, decimals: u8, value: u128) -> Result<u128, ArithmeticError> {
 		if value.is_zero() {
 			return Ok(0)
 		}
-		let unit = 10_u128.checked_pow(decimals as u32).ok_or(())?;
+		let unit = 10_u128.checked_pow(decimals as u32).ok_or(ArithmeticError::Overflow)?;
 		let amount = if self.slope.0.is_zero() {
-			self.intercept.0.checked_mul(unit).ok_or(())?
+			self.intercept.0.checked_mul(unit).ok_or(ArithmeticError::Overflow)?
+		} else if self.slope.0 == Self::MAX_PARTS {
+			value
 		} else {
-			if self.slope.0 == Self::MAX_PARTS {
-				value
-			} else {
-				let value = Uint256::from(self.intercept.0);
-				let value = value
-					.checked_add(
-						Uint256::one()
-							.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
-							.map_err(|_| ())?,
-					)
-					.map_err(|_| ())?;
-				let value = value
-					.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
-					.map_err(|_| ())?;
-				let value = Uint128::try_from(value).map_err(|_| ())?.u128();
-				value
-			}
+			let value = Uint256::from(self.intercept.0);
+			let value = value
+				.checked_add(
+					Uint256::one()
+						.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+						.map_err(|_| ArithmeticError::Overflow)?,
+				)
+				.map_err(|_| ArithmeticError::Overflow)?;
+			let value = value
+				.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
+				.map_err(|_| ArithmeticError::Overflow)?;
+			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
 		};
 		Ok(u128::min(value, amount))
 	}
@@ -367,6 +340,7 @@ impl From<u128> for Amount {
 	}
 }
 
+/// a set of assets with non zero balances
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
@@ -426,17 +400,5 @@ impl<T> From<Funds<T>> for Vec<(u128, T)> {
 			.into_iter()
 			.map(|(AssetId(Displayed(asset)), amount)| (asset, amount))
 			.collect()
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-	#[test]
-	fn asset_ids() {
-		assert_eq!(PICA::ID, AssetId::from(1));
-		assert_eq!(ETH::ID, AssetId::from(2));
-		assert_eq!(USDT::ID, AssetId::from(3));
-		assert_eq!(USDC::ID, AssetId::from(4));
 	}
 }

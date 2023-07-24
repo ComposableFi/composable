@@ -1,9 +1,10 @@
 extern crate alloc;
 
 use crate::{
-	assets, common,
+	assets, auth,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, ContractResult},
+	events::make_event,
 	msg, state,
 	state::Config,
 };
@@ -18,6 +19,55 @@ use cw_xc_interpreter::contract::{
 };
 use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 
+use super::ibc::one::handle_ibc_set_network_channel;
+
+#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
+pub fn execute(
+	deps: DepsMut,
+	env: Env,
+	info: MessageInfo,
+	msg: msg::ExecuteMsg,
+) -> ContractResult<Response> {
+	match msg {
+		msg::ExecuteMsg::IbcSetNetworkChannel { from, to, channel_id, gateway } => {
+			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
+			handle_ibc_set_network_channel(auth, deps, to, channel_id)
+		},
+
+		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
+			handle_execute_program(deps, env, info, execute_program, tip),
+
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip } => {
+			let auth = auth::Contract::authorise(&env, &info)?;
+			handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program, tip)
+		},
+
+		msg::ExecuteMsg::BridgeForward(msg) => {
+			let auth =
+				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
+			if msg.msg.assets.0.len() > 0 {
+				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg)
+			} else {
+				super::ibc::one::handle_bridge_forward_no_assets(auth, deps, info, msg)
+			}
+		},
+
+		msg::ExecuteMsg::RegisterAsset(msg) => {
+			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_register_asset(auth, deps, msg.id, msg.asset)
+		},
+
+		msg::ExecuteMsg::UnregisterAsset { asset_id } => {
+			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
+			assets::handle_unregister_asset(auth, deps, asset_id)
+		},
+		msg::ExecuteMsg::Ics20MessageHook(msg) => {
+			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
+			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
+		},
+	}
+}
+
 fn transfer_from_user(
 	deps: &DepsMut,
 	self_address: Addr,
@@ -28,7 +78,7 @@ fn transfer_from_user(
 	let mut transfers = Vec::with_capacity(assets.0.len());
 	for (asset_id, Displayed(amount)) in assets.0.iter() {
 		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
-		match reference {
+		match reference.local {
 			msg::AssetReference::Native { denom } => {
 				let Coin { amount: provided_amount, .. } = funds
 					.iter()
@@ -57,6 +107,7 @@ pub(crate) fn handle_execute_program(
 	env: Env,
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
+	tip: Addr,
 ) -> ContractResult<Response> {
 	let self_address = env.contract.address;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
@@ -69,7 +120,7 @@ pub(crate) fn handle_execute_program(
 	)?;
 	let msg = wasm_execute(
 		self_address,
-		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program },
+		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip },
 		Default::default(),
 	)?;
 	Ok(Response::default().add_messages(transfers).add_message(msg))
@@ -80,11 +131,12 @@ pub(crate) fn handle_execute_program(
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
 pub(crate) fn handle_execute_program_privilleged(
-	_: common::auth::Contract,
+	_: auth::Contract,
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
 	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
+	tip: Addr,
 ) -> ContractResult<Response> {
 	let config = Config::load(deps.storage)?;
 	let interpreter_origin =
@@ -96,16 +148,12 @@ pub(crate) fn handle_execute_program_privilleged(
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
-			&cw_xc_interpreter::msg::ExecuteMsg::Execute {
-				relayer: call_origin.relayer().clone(),
-				program,
-			},
+			&cw_xc_interpreter::msg::ExecuteMsg::Execute { tip, program },
 			vec![],
 		)?;
 		Ok(response
 			.add_event(
-				common::make_event("route.execute")
-					.add_attribute("interpreter", address.into_string()),
+				make_event("route.execute").add_attribute("interpreter", address.into_string()),
 			)
 			.add_message(wasm_msg))
 	} else {
@@ -130,19 +178,20 @@ pub(crate) fn handle_execute_program_privilleged(
 		// into `Ok` state and properly executes the interpreter
 		let self_call_message: CosmosMsg = wasm_execute(
 			env.contract.address,
-			&cw_xc_common::gateway::ExecuteMsg::ExecuteProgramPrivileged {
+			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
 				call_origin: call_origin.clone(),
-				execute_program: cw_xc_common::gateway::ExecuteProgramMsg {
+				execute_program: xc_core::gateway::ExecuteProgramMsg {
 					salt: interpreter_origin.salt,
 					program,
 					assets,
 				},
+				tip,
 			},
 			vec![],
 		)?
 		.into();
 		Ok(Response::new()
-			.add_event(common::make_event("route.create"))
+			.add_event(make_event("route.create"))
 			.add_submessage(interpreter_instantiate_submessage)
 			.add_message(self_call_message))
 	}
@@ -163,7 +212,7 @@ fn send_funds_to_interpreter(
 		}
 
 		let reference = assets::query_lookup(deps.clone(), asset_id)?.reference;
-		let msg: CosmosMsg = match reference {
+		let msg: CosmosMsg = match reference.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),
 				amount: vec![Coin::new(amount, denom)],
@@ -215,7 +264,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 		.value;
 	let interpreter_origin =
-		cw_xc_common::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
+		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
 
 	let interpreter = state::Interpreter { address: interpreter_address };
 	state::INTERPRETERS.save(deps.storage, interpreter_origin, &interpreter)?;
