@@ -357,7 +357,10 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program },
+			xc_core::gateway::ExecuteMsg::ExecuteProgram {
+				execute_program,
+				tip: self.xcvm_state.gateway.clone().into(),
+			},
 		)?;
 		Ok((data, events))
 	}
