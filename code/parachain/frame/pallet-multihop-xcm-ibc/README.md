@@ -1,3 +1,5 @@
+PLEASE REMOVE THIS README
+
 # Overview
 
 Allows to map remote assets to local and back(bidirectional). Mapping can be created only by privileged origin.
