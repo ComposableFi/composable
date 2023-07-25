@@ -1,5 +1,7 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Response, StdError};
 use thiserror::Error;
+
+pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
 
 #[derive(Error, Debug)]
 pub enum ContractError {

@@ -1,8 +1,8 @@
-use cosmwasm_std::{IbcOrder, StdError};
+use cosmwasm_std::{IbcOrder, Response, StdError};
 use thiserror::Error;
 use xc_core::proto::DecodingFailure;
 
-pub type ContractResult<T, E = ContractError> = core::result::Result<T, E>;
+pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
 
 #[derive(Error, Debug)]
 pub enum ContractError {

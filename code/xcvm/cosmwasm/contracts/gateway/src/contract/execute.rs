@@ -1,9 +1,7 @@
-extern crate alloc;
-
 use crate::{
 	assets, auth,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
-	error::{ContractError, ContractResult},
+	error::{ContractError, Result},
 	events::make_event,
 	msg, state,
 	state::Config,
@@ -22,14 +20,9 @@ use xc_core::{CallOrigin, Displayed, Funds, InterpreterOrigin};
 use super::ibc::one::handle_ibc_set_network_channel;
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn execute(
-	deps: DepsMut,
-	env: Env,
-	info: MessageInfo,
-	msg: msg::ExecuteMsg,
-) -> ContractResult<Response> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
 	match msg {
-		msg::ExecuteMsg::IbcSetNetworkChannel { from, to, channel_id, gateway } => {
+		msg::ExecuteMsg::IbcSetNetworkChannel { to, channel_id, .. } => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
 			handle_ibc_set_network_channel(auth, deps, to, channel_id)
 		},
@@ -74,7 +67,7 @@ fn transfer_from_user(
 	user: Addr,
 	funds: Vec<Coin>,
 	assets: &Funds<Displayed<u128>>,
-) -> ContractResult<Vec<CosmosMsg>> {
+) -> Result<Vec<CosmosMsg>> {
 	let mut transfers = Vec::with_capacity(assets.0.len());
 	for (asset_id, Displayed(amount)) in assets.0.iter() {
 		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
@@ -108,7 +101,7 @@ pub(crate) fn handle_execute_program(
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
 	tip: Addr,
-) -> ContractResult<Response> {
+) -> Result {
 	let self_address = env.contract.address;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
 	let transfers = transfer_from_user(
@@ -137,7 +130,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	call_origin: CallOrigin,
 	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
 	tip: Addr,
-) -> ContractResult<Response> {
+) -> Result {
 	let config = Config::load(deps.storage)?;
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
@@ -202,7 +195,7 @@ fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,
 	funds: Funds<Displayed<u128>>,
-) -> ContractResult<Response> {
+) -> Result {
 	let mut response = Response::new();
 	let interpreter_address = interpreter_address.into_string();
 	for (asset_id, Displayed(amount)) in funds.0 {

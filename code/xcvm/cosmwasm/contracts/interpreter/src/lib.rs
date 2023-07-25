@@ -1,3 +1,5 @@
+extern crate alloc;
+
 pub mod authenticate;
 pub mod contract;
 pub mod error;

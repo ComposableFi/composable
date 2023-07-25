@@ -1,5 +1,3 @@
-extern crate alloc;
-
 use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
 use xc_core::NetworkId;
