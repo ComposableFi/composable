@@ -118,6 +118,7 @@
         ./inputs/paritytech/subxt.nix
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
+        ./inputs/wynddao/flake-module.nix
         ./tools/devnet-tools.nix
         ./tools/pkgs.nix
         ./tools/rust.nix
