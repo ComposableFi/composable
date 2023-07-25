@@ -66,7 +66,7 @@ impl CommandRunner {
 			TxSubcommands::Instantiate2(WasmInstantiate2 {
 				salt,
 				instantiate:
-					WasmInstantiate { gas, code_id_int64, admin, label, amount, json_encoded_init_args },
+					WasmInstantiate { gas, code_id_int64, admin, label, funds, json_encoded_init_args },
 			}) => {
 				let events = do_signed_transaction(
 					chain_endpoint,
@@ -77,8 +77,7 @@ impl CommandRunner {
 						admin,
 						BoundedVec(label.into()),
 						BoundedBTreeMap(
-							amount
-								.unwrap_or_default()
+							funds
 								.into_iter()
 								.map(|(asset, amount)| (CurrencyId(asset), (amount, true)))
 								.collect(),
@@ -99,7 +98,6 @@ impl CommandRunner {
 						contract,
 						BoundedBTreeMap(
 							funds
-								.unwrap_or_default()
 								.into_iter()
 								.map(|(asset, amount)| (CurrencyId(asset), (amount, true)))
 								.collect(),

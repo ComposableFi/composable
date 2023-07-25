@@ -23,7 +23,7 @@
         xcvm-contract-gateway = mkXcvmContract "cw-xc-gateway";
         xcvm-contract-pingpong = mkXcvmContract "cw-xc-pingpong";
         xcvm-contracts = pkgs.symlinkJoin {
-          name = "xc-contracts";
+          name = "xcvm-contracts";
           paths = [ xcvm-contract-interpreter xcvm-contract-gateway ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs

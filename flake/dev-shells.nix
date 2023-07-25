@@ -18,11 +18,13 @@
           git
           git-lfs
           grpcurl
+          jq
           nix-tree
           nixfmt
           nodejs
           openssl
           process-compose
+          protobuf
           python3
           rnix-lsp
           sad

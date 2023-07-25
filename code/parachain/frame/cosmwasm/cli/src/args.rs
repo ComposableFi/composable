@@ -83,8 +83,8 @@ pub struct WasmInstantiate {
 	#[arg(short, long)]
 	pub label: String,
 	/// Funds to be moved prior to execution. Format is "ASSET-1:AMOUNT-1,ASSET-2:AMOUNT-2"
-	#[arg(long, value_parser = parse_funds)]
-	pub amount: Option<Vec<(u128, u128)>>,
+	#[arg(short, long, value_parser = parse_funds, default_value = "")]
+	pub funds: ::std::vec::Vec<(u128, u128)>,
 }
 
 #[derive(Args, Clone, Debug)]
@@ -98,8 +98,11 @@ pub struct WasmInstantiate2 {
 	pub salt: String,
 }
 
-pub fn parse_funds(funds_str: &str) -> Result<Option<Vec<(u128, u128)>>, String> {
+pub fn parse_funds(funds_str: &str) -> Result<Vec<(u128, u128)>, String> {
 	let mut funds = Vec::new();
+	if funds_str.is_empty() {
+		return Ok(funds)
+	}
 	for asset in funds_str.split(',') {
 		let asset: Vec<&str> = asset.split(':').collect();
 		if asset.len() != 2 {
@@ -110,7 +113,7 @@ pub fn parse_funds(funds_str: &str) -> Result<Option<Vec<(u128, u128)>>, String>
 			asset[1].parse().map_err(|_| Error::InvalidFundsFormat.to_string())?,
 		));
 	}
-	Ok(Some(funds))
+	Ok(funds)
 }
 
 #[derive(Args, Debug)]
@@ -119,8 +122,8 @@ pub struct Execute {
 	#[arg(short, long)]
 	pub contract: AccountId32,
 	/// Funds to be moved prior to execution. Format is "ASSET-1:AMOUNT-1,ASSET-2:AMOUNT-2"
-	#[arg(short, long, value_parser = parse_funds)]
-	pub funds: Option<Vec<(u128, u128)>>,
+	#[arg(short, long, value_parser = parse_funds, default_value = "")]
+	pub funds: ::std::vec::Vec<(u128, u128)>,
 	/// Execute message
 	#[arg(short, long)]
 	pub message: String,
