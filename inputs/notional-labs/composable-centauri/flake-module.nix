@@ -56,22 +56,29 @@
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
-          # centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-          # sleep 7
-          # centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" | jq '.account.base_account.address' --raw-output
-          # PROPOSAL_ID=1          
-          # centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
-          # sleep 20          
-          # centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
-          # jq '.status'
-          # sleep 7         
-          # centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
-
-          #centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
-          centaurid tx wasm store ${self'.packages.wyndex-pair}/lib/wyndex_pair.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
-          #centaurid tx wasm store ${self'.packages.wyndex-factory}/lib/wyndex_factory.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
-          #centaurid tx wasm store ${self'.packages.cw20_base}/lib/cw20_base.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
-          #centaurid tx wasm store ${self'.packages.cw4_stake}/lib/cw4_stake.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          BLOCK_SECONDS=5
+          centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
+          sleep $BLOCK_SECONDS
+          centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" | jq '.account.base_account.address' --raw-output
+          PROPOSAL_ID=1          
+          centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep 20          
+          centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
+          jq '.status'
+          sleep $BLOCK_SECONDS         
+          centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
+          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_interpreter.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.wyndex-pair} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.wyndex-factory} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.cw20_base} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.cw4_stake} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          centaurid query wasm list-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657
         '';
       };
 
