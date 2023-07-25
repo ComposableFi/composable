@@ -24,6 +24,7 @@
           nodejs
           openssl
           process-compose
+          protobuf
           python3
           rnix-lsp
           sad
