@@ -1,10 +1,10 @@
 //! Module with authorisation checks.
 use crate::{
-	error::{ContractError, ContractResult},
-	state::{self},
+	error::{ContractError, Result},
+	msg, state,
 };
-use cosmwasm_std::{ensure, Deps, Env, MessageInfo, Storage};
-use xc_core::{gateway::GatewayId, shared::DefaultXCVMProgram, NetworkId};
+use cosmwasm_std::{Deps, Env, MessageInfo, Storage};
+use xc_core::NetworkId;
 
 /// Authorisation token indicating call is authorised according to policy
 /// `T`.
@@ -32,7 +32,7 @@ pub(crate) type Admin = Auth<policy::Admin>;
 pub(crate) type WasmHook = Auth<policy::WasmHook>;
 
 impl Auth<policy::Contract> {
-	pub(crate) fn authorise(env: &Env, info: &MessageInfo) -> ContractResult<Self> {
+	pub(crate) fn authorise(env: &Env, info: &MessageInfo) -> Result<Self> {
 		Self::new(info.sender == env.contract.address)
 	}
 }
@@ -43,21 +43,19 @@ impl Auth<policy::WasmHook> {
 		env: &Env,
 		info: &MessageInfo,
 		network_id: NetworkId,
-	) -> ContractResult<Self> {
-		let sender = info.sender.clone();
+	) -> Result<Self> {
 		let this = state::Config::load(storage)?;
 		let channel = state::NETWORK_TO_NETWORK.load(storage, (this.network_id, network_id))?;
-		let sender: GatewayId = state::NETWORK
+		let sender = state::NETWORK
 			.load(storage, network_id)?
 			.gateway_to_send_to
 			.ok_or(ContractError::NotAuthorized)?;
 		let sender = match sender {
-			GatewayId::CosmWasm(addr) => addr.to_string(),
+			msg::GatewayId::CosmWasm(addr) => addr.to_string(),
 		};
 		let hash_of_channel_and_sender =
 			xc_core::ibc::hook::derive_intermediate_sender(&channel.ics_20_channel, &sender, "")?;
-		ensure!(hash_of_channel_and_sender == info.sender, ContractError::NotAuthorized);
-		Self::new(info.sender == env.contract.address)
+		Self::new(hash_of_channel_and_sender == info.sender && info.sender == env.contract.address)
 	}
 }
 
@@ -66,7 +64,7 @@ impl Auth<policy::Interpreter> {
 		deps: Deps,
 		info: &MessageInfo,
 		interpreter_origin: xc_core::InterpreterOrigin,
-	) -> ContractResult<Self> {
+	) -> Result<Self> {
 		let interpreter_address = state::INTERPRETERS
 			.may_load(deps.storage, interpreter_origin)?
 			.map(|int| int.address);
@@ -75,13 +73,13 @@ impl Auth<policy::Interpreter> {
 }
 
 impl Auth<policy::Admin> {
-	pub(crate) fn authorise(deps: Deps, info: &MessageInfo) -> ContractResult<Self> {
+	pub(crate) fn authorise(deps: Deps, info: &MessageInfo) -> Result<Self> {
 		Self::new(info.sender == state::Config::load(deps.storage)?.admin)
 	}
 }
 
 impl<T> Auth<T> {
-	fn new(authorised: bool) -> ContractResult<Self> {
+	fn new(authorised: bool) -> Result<Self> {
 		if authorised {
 			Ok(Self(Default::default()))
 		} else {

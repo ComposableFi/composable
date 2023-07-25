@@ -1,6 +1,8 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Response, StdError};
 use thiserror::Error;
 use xc_core::LateBindingError;
+
+pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
 
 impl From<xc_core::ArithmeticError> for ContractError {
 	fn from(_: xc_core::ArithmeticError) -> Self {

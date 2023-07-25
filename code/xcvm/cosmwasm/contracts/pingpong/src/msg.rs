@@ -1,5 +1,3 @@
-extern crate alloc;
-
 use serde::{Deserialize, Serialize};
 use xc_core::{NetworkId, UserOrigin};
 

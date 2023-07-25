@@ -1,6 +1,6 @@
 use crate::{
 	auth,
-	error::{ContractError, ContractResult},
+	error::{ContractError, Result},
 	events::make_event,
 	msg, state,
 };
@@ -13,7 +13,7 @@ pub(crate) fn handle_register_asset(
 	deps: DepsMut,
 	asset_id: AssetId,
 	reference: msg::Asset,
-) -> ContractResult<Response> {
+) -> Result {
 	let key = state::ASSETS.key(asset_id);
 	if key.has(deps.storage) {
 		return Err(ContractError::AlreadyRegistered)
@@ -28,11 +28,7 @@ pub(crate) fn handle_register_asset(
 
 /// Removes an existing asset from the registry; errors out if asset doesn’t
 /// exist.
-pub(crate) fn handle_unregister_asset(
-	_: auth::Admin,
-	deps: DepsMut,
-	asset_id: AssetId,
-) -> ContractResult<Response> {
+pub(crate) fn handle_unregister_asset(_: auth::Admin, deps: DepsMut, asset_id: AssetId) -> Result {
 	let key = state::ASSETS.key(asset_id);
 	if !key.has(deps.storage) {
 		return Err(ContractError::UnsupportedAsset)
@@ -43,7 +39,7 @@ pub(crate) fn handle_unregister_asset(
 }
 
 /// Fetches information about given asset.
-pub(crate) fn query_lookup(deps: Deps, asset_id: AssetId) -> ContractResult<msg::LookupResponse> {
+pub(crate) fn query_lookup(deps: Deps, asset_id: AssetId) -> Result<msg::LookupResponse> {
 	state::ASSETS
 		.may_load(deps.storage, asset_id)?
 		.map(|reference| msg::LookupResponse { reference })

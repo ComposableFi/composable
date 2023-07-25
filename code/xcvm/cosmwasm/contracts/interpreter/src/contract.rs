@@ -1,8 +1,6 @@
-extern crate alloc;
-
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
-	error::ContractError,
+	error::{ContractError, Result},
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
@@ -34,12 +32,7 @@ pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
 pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-	deps: DepsMut,
-	_env: Env,
-	info: MessageInfo,
-	msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
@@ -55,12 +48,7 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-	deps: DepsMut,
-	env: Env,
-	info: MessageInfo,
-	msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result {
 	// Only owners can execute entrypoints of the interpreter
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, info.sender.clone())?;
 	match msg {
@@ -78,7 +66,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
 	// Already only callable by the admin of the contract, so no need to `ensure_owner`
@@ -111,7 +99,7 @@ fn initiate_execution(
 	env: Env,
 	tip: Addr,
 	program: DefaultXCVMProgram,
-) -> Result<Response, ContractError> {
+) -> Result {
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default()
@@ -129,11 +117,7 @@ fn initiate_execution(
 }
 
 /// Add owners who can execute entrypoints other than `ExecuteStep`
-fn add_owners(
-	_: Authenticated,
-	deps: DepsMut,
-	owners: Vec<Addr>,
-) -> Result<Response, ContractError> {
+fn add_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Result {
 	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.add");
 	for owner in owners {
 		event = event.add_attribute("owner", owner.to_string());
@@ -166,7 +150,7 @@ pub fn handle_execute_step(
 	mut deps: DepsMut,
 	env: Env,
 	Step { tip, instruction_pointer, mut program }: Step,
-) -> Result<Response, ContractError> {
+) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
@@ -215,7 +199,7 @@ pub fn interpret_call(
 	payload: Vec<u8>,
 	instruction_pointer: u16,
 	tip: &Addr,
-) -> Result<Response, ContractError> {
+) -> Result {
 	// We don't know the type of the payload, so we use `serde_json::Value`
 	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_json::Value> = if !bindings
 		.is_empty()
@@ -301,7 +285,7 @@ pub fn interpret_spawn(
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: DefaultXCVMProgram,
-) -> Result<Response, ContractError> {
+) -> Result {
 	let Config { interpreter_origin, gateway_address, .. } = CONFIG.load(deps.storage)?;
 
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::default();
@@ -382,7 +366,7 @@ pub fn interpret_transfer(
 	tip: &Addr,
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
-) -> Result<Response, ContractError> {
+) -> Result {
 	let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
 
 	let recipient = match to {
@@ -484,14 +468,14 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 	balance: &Balance,
 	cw20_address: A,
 	self_address: A,
-) -> Result<u128, ContractError> {
+) -> Result<u128> {
 	let balance_response =
 		deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
 			contract_addr: cw20_address.clone().into(),
 			msg: to_binary(&Cw20QueryMsg::Balance { address: self_address.into() })?,
 		}))?;
 
-	let processed_amount = if balance.is_unit {
+	if balance.is_unit {
 		// If the balance is unit, we need to take `decimals` into account.
 		let token_info =
 			deps.querier.query::<TokenInfoResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
@@ -503,7 +487,6 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 			.apply_with_decimals(token_info.decimals, balance_response.balance.into())
 	} else {
 		balance.amount.apply(balance_response.balance.into())
-	}?;
-
-	Ok(processed_amount)
+	}
+	.map_err(ContractError::from)
 }

@@ -1,17 +1,10 @@
 use crate::msg;
 
 use cosmwasm_std::{Addr, IbcEndpoint, IbcTimeout, StdResult, Storage};
-use cw_storage_plus::{Item, Map, PrimaryKey, UniqueIndex};
-use ibc_rs_scale::{
-	applications::transfer::TracePrefix,
-	core::ics24_host::identifier::{ChannelId, ConnectionId},
-};
+use cw_storage_plus::{Item, Map};
+use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use serde::{Deserialize, Serialize};
-use xc_core::{
-	gateway::{Asset, GatewayId},
-	location::ForeignAssetId,
-	AssetId, Funds, IbcIcs20Sender, InterpreterOrigin, NetworkId,
-};
+use xc_core::{AssetId, IbcIcs20Sender, InterpreterOrigin, NetworkId};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -68,7 +61,7 @@ pub struct OtherNetworkItem {
 pub struct NetworkItem {
 	/// something which will be receiver on other side
 	/// case of network has XCVM deployed as contract, account address is stored here
-	pub gateway_to_send_to: Option<GatewayId>,
+	pub gateway_to_send_to: Option<msg::GatewayId>,
 	/// Cosmos bech32 prefix per network,
 	/// if there is prefix chain accounts are Cosmos SDK compatible chain
 	pub cosmos_prefix: Option<String>,

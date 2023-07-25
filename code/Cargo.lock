@@ -3293,7 +3293,6 @@ name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
  "bech32-no_std",
- "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
@@ -3301,7 +3300,6 @@ dependencies = [
  "cw2",
  "cw20",
  "ibc 0.41.0",
- "prost",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -3313,14 +3311,12 @@ dependencies = [
 name = "cw-xc-interpreter"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
  "cw20",
  "num",
- "prost",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -3339,7 +3335,6 @@ dependencies = [
  "cw2",
  "cw20",
  "num",
- "prost",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -19093,7 +19088,6 @@ dependencies = [
  "parity-scale-codec",
  "prost",
  "prost-build",
- "prost-types",
  "scale-info",
  "schemars",
  "serde",

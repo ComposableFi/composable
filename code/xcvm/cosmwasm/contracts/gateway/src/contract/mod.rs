@@ -1,30 +1,19 @@
 pub mod execute;
 pub mod ibc;
 
-extern crate alloc;
-
 use crate::{
-	assets, auth,
-	error::{ContractError, ContractResult},
+	assets,
+	error::{ContractError, Result},
 	events::make_event,
 	msg, state,
 };
 
 use cosmwasm_std::{
-	to_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Env, Ibc3ChannelOpenResponse,
-	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-	IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
-	Response, SubMsg, SubMsgResult,
+	to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsgResult,
 };
 use cw2::set_contract_version;
-use cw20::Cw20ExecuteMsg;
 use cw_utils::ensure_from_older_version;
-use xc_core::{
-	proto::{decode_packet, Encodable},
-	shared::XcPacket,
-	CallOrigin, Displayed, Funds, XCVMAck,
-};
+use xc_core::XCVMAck;
 
 use self::{execute::handle_instantiate_reply, ibc::make_ibc_failure_event};
 
@@ -41,7 +30,7 @@ pub fn instantiate(
 	_env: Env,
 	_info: MessageInfo,
 	msg: msg::InstantiateMsg,
-) -> ContractResult<Response> {
+) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	state::Config {
 		interpreter_code_id: msg.interpreter_code_id,
@@ -55,13 +44,13 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> ContractResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> Result {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> ContractResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> Result<Binary> {
 	match msg {
 		msg::QueryMsg::LookupAsset { asset_id } => assets::query_lookup(deps, asset_id)
 			.and_then(|resp| to_binary(&resp).map_err(ContractError::from)),
@@ -69,7 +58,7 @@ pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> ContractResult<Binary
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response> {
 	match msg.id {
 		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
 		INSTANTIATE_INTERPRETER_REPLY_ID =>
@@ -78,7 +67,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> ContractResult<Response> {
 	}
 }
 
-fn handle_exec_reply(msg: Reply) -> ContractResult<Response> {
+fn handle_exec_reply(msg: Reply) -> Result {
 	let (data, event) = match msg.result {
 		SubMsgResult::Ok(_) =>
 			(XCVMAck::OK, make_event("receive").add_attribute("result", "success")),
