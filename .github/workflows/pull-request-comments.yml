@@ -24,22 +24,22 @@ jobs:
             
             ```shell
             # run Composable node
-            nix run "github:ComposableFi/composable/${{ github.ref }}" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            nix run "github:ComposableFi/composable/${{ github.ref }}" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config 
             ````
 
             ```shell
             # run local Picasso DevNet (for CosmWasm development)
-            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-picasso" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-picasso" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config 
             ```
 
             ```shell
             # CosmWasm on Substrate CLI tool
-            nix run "github:ComposableFi/composable/${{ github.ref }}#ccw" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            nix run "github:ComposableFi/composable/${{ github.ref }}#ccw" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config 
             ```
 
             ```shell
             # run cross chain devnet with Dotsama and Cosmos nodes 
-            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-fresh" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox 
+            nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-fresh" --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config 
             ```
             
             [About nix](https://docs.composable.finance/nix.html)

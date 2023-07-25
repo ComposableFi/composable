@@ -47,37 +47,38 @@
           cp ${code-file} $out/ics10_grandpa_cw.wasm.json
         '';
       };
-
-      WYNDEX_PAIR_WASM = pkgs.fetchurl {
-        url =
-          "https://github.com/wynddao/wynddex/releases/download/v2.1.0/wyndex_pair.wasm";
-        hash = "sha256-GQh3SBVccriWhHNPe22VMGWJVqfJa7x3cWy67j6NFTg=";
-      };
-
-      WYNDEX_FACTORY_WASM = pkgs.fetchurl {
-        url =
-          "https://github.com/wynddao/wynddex/releases/download/v2.1.0/wyndex_factory.wasm";
-        hash = "sha256-2ZYILTelKNsuqfOisXhrg4TPLwocaVNp6UN+6LN51SQ=";
-      };
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq ];
+          ++ [ centaurid pkgs.jq self'.packages.xcvm-contracts ];
 
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CENTAURI_DATA/keyring-test"
+          BLOCK_SECONDS=5
           centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json
-          sleep 7
+          sleep $BLOCK_SECONDS
           centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" | jq '.account.base_account.address' --raw-output
           PROPOSAL_ID=1          
           centaurid tx gov vote $PROPOSAL_ID yes --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
           sleep 20          
           centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CENTAURI_DATA" |
           jq '.status'
-          sleep 7         
+          sleep $BLOCK_SECONDS         
           centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
+          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_interpreter.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.wyndex-pair} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.wyndex-factory} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.cw20_base} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          sleep $BLOCK_SECONDS
+          centaurid tx wasm store ${self'.packages.cw4_stake} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          centaurid query wasm list-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657
         '';
       };
 
@@ -92,6 +93,15 @@
           #KEYRING_TEST="$CENTAURI_DATA/keyring-test"
           centaurid query ibc connection connections --chain-id "$CHAIN_ID"
           #--from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST"  --yes --home "$CENTAURI_DATA" --output json
+        '';
+      };
+
+      centaurid-gen-fresh = pkgs.writeShellApplication {
+        name = "centaurid-gen-fresh";
+        runtimeInputs = [ centaurid-gen ];
+        text = ''
+          rm --force --recursive ${devnet-root-directory} 
+          centaurid-gen
         '';
       };
 
@@ -167,7 +177,7 @@
     in {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-dev
-          ics10-grandpa-cw-proposal;
+          centaurid-gen-fresh ics10-grandpa-cw-proposal;
       };
     };
 }

@@ -6,7 +6,7 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
-        hermes = self.inputs.cosmos.packages.${system}.hermes_1_5_1;
+        hermes = self.inputs.cosmos.packages.${system}.hermes;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-init";
