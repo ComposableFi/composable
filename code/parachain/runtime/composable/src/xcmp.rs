@@ -290,7 +290,13 @@ impl<
 			},
 			// unknown asset
 			_ => {
-				//TODO? should we try in case if asset is unknown?
+				frame_support::log::error!(
+					target: "xcmp",
+					"deposit_asset failed: {:?} {:?} {:?}",
+					AccountIdConvert::convert_ref(location),
+					CurrencyIdConvert::convert(asset.clone()),
+					Match::matches_fungible(asset),
+				);
 			},
 		}
 		result
