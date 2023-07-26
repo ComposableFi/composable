@@ -20,7 +20,7 @@ pub struct ChainInfo {
 	pub channel_id: u64,        //for packet or memo
 	pub timestamp: Option<u64>, //for packet
 	pub height: Option<u64>,    //for memo packet message forwarding
-	pub retries: Option<u64>,   //for memo packet message forwarding
+	pub retries: Option<u8>,    //for memo packet message forwarding
 	pub timeout: Option<u64>,   //for memo packet message forwarding
 	pub is_substrate_ibc: bool,
 	pub is_substrate_xcm: bool,

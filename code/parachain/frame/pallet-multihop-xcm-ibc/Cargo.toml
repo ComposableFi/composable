@@ -24,6 +24,7 @@ bech32-no_std = { workspace = true, default-features = false, features = [
   "strict",
 ] }
 composable-traits = { path = "../composable-traits", default-features = false }
+xc-core = { path = "../../../xcvm/lib/core", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
@@ -50,6 +51,12 @@ serde_json = { workspace = true, default-features = false, features = [
 orml-xtokens = { workspace = true, default-features = false }
 
 
+ibc-rs-scale = { workspace = true, default-features = false, features = [
+  "parity-scale-codec",
+  "serde",
+] }
+
+
 [dev-dependencies]
 frame-benchmarking = { default-features = false, workspace = true }
 pallet-balances = { workspace = true }
@@ -59,24 +66,26 @@ pallet-currency-factory = { path = "../currency-factory", default-features = fal
 default = ["std"]
 std = [
   "codec/std",
-  "log/std",
   "composable-traits/std",
-  "scale-info/std",
+  "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "xcm/std",
-  "pallet-currency-factory/std",
-  "frame-benchmarking/std",
-  "primitives/std",
-  "pallet-ibc/std",
-  "ibc-primitives/std",
-  "serde",
   "hex/std",
+  "ibc-primitives/std",
+  "ibc-rs-scale/std",
+  "log/std",
   "orml-xtokens/std",
+  "pallet-currency-factory/std",
+  "pallet-ibc/std",
+  "primitives/std",
+  "scale-info/std",
+  "serde",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xc-core/std",
+  "xcm/std",
 ]
 
 runtime-benchmarks = [

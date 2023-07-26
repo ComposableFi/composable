@@ -9352,6 +9352,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "ibc 0.41.0",
  "ibc-primitives",
  "log 0.4.19",
  "orml-xtokens",
@@ -9367,6 +9368,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
+ "xc-core",
  "xcm",
 ]
 
