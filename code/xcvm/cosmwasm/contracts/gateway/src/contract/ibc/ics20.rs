@@ -8,7 +8,7 @@ use cosmwasm_std::{
 };
 use xc_core::{
 	gateway::{Asset, ExecuteMsg, ExecuteProgramMsg, GatewayId},
-	ibc::{to_cw_message, IbcRoute, Ics20MessageHook, WasmMemo},
+	ibc::{ics20::hook::WasmMemo, to_cw_message, IbcRoute, Ics20MessageHook},
 	proto::{decode_packet, Encodable},
 	shared::{DefaultXCVMProgram, XcPacket},
 	AssetId, CallOrigin, Funds,
@@ -71,7 +71,8 @@ pub(crate) fn handle_bridge_forward(
 		msg: to_binary(&Ics20MessageHook {
 			from_network_id: route.from_network,
 			data: Binary::from(packet.encode()),
-		})?,
+		})?
+		.to_vec(),
 		ibc_callback: None,
 	})?;
 

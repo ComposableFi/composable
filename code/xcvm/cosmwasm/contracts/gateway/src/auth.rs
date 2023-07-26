@@ -53,8 +53,11 @@ impl Auth<policy::WasmHook> {
 		let sender = match sender {
 			msg::GatewayId::CosmWasm(addr) => addr.to_string(),
 		};
-		let hash_of_channel_and_sender =
-			xc_core::ibc::hook::derive_intermediate_sender(&channel.ics_20_channel, &sender, "")?;
+		let hash_of_channel_and_sender = xc_core::ibc::ics20::hook::derive_intermediate_sender(
+			&channel.ics_20_channel,
+			&sender,
+			"",
+		)?;
 		Self::new(hash_of_channel_and_sender == info.sender && info.sender == env.contract.address)
 	}
 }
