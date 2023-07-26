@@ -1,4 +1,4 @@
-// mapping of proper CW/Cosmos enabled types to Centauri
+//! mapping of proper CW/Cosmos enabled types to Centauri
 
 use crate::prelude::*;
 use xc_core::ibc::ics20::MemoData;

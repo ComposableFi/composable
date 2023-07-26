@@ -50,12 +50,10 @@ serde_json = { workspace = true, default-features = false, features = [
 ] }
 orml-xtokens = { workspace = true, default-features = false }
 
-
 ibc-rs-scale = { workspace = true, default-features = false, features = [
   "parity-scale-codec",
   "serde",
 ] }
-
 
 [dev-dependencies]
 frame-benchmarking = { default-features = false, workspace = true }
