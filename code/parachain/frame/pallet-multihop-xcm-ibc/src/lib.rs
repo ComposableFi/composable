@@ -45,12 +45,12 @@ pub mod pallet {
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
 	use composable_traits::xcm::memo::ChainHop;
-	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
 		centauri::Map,
 		prelude::{String, Vec},
 		xcm::assets::MultiCurrencyCallback,
 	};
+	use bech32_no_std::u5;
 	use frame_system::ensure_root;
 	use xc_core::ibc::ics20::{
 		pfm::{Forward, IbcSubstrate},
@@ -63,6 +63,8 @@ pub mod pallet {
 	use frame_support::BoundedVec;
 
 	type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
+	type RouteBoundedVec<T> = BoundedVec<(ChainInfo, BoundedVec<u8, <T as Config>::ChainNameVecLimit>), <T as Config>::MaxMultihopCount>;
+	type ListChainNameAddress = Vec<(ChainInfo, Vec<u8>, [u8; 32])>;
 	use frame_system::pallet_prelude::OriginFor;
 
 	/// ## Configuration
@@ -78,6 +80,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxMultihopCount: Get<u32>;
 
+		/// The maximum length of chain name
 		#[pallet::constant]
 		type ChainNameVecLimit: Get<u32>;
 	}
@@ -141,32 +144,26 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn route_id_to_miltihop_path)]
-	pub type ChainIdToMiltihopRoutePath<T: Config> = StorageMap<
+	pub type RouteIdToRoutePath<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u128, /* chain id */
-		BoundedVec<(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>), T::MaxMultihopCount>, /* route to forward */
-		ValueQuery,
+		u128, /* route id */
+		RouteBoundedVec<T>, /* route to forward */
+		OptionQuery,
 	>;
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	// The pallet's dispatchable functions.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(1000)]
+		#[pallet::weight(100_000)]
 		pub fn add_route(
 			origin: OriginFor<T>,
 			route_id: u128,
-			route: BoundedVec<
-				(ChainInfo, BoundedVec<u8, T::ChainNameVecLimit>),
-				T::MaxMultihopCount,
-			>,
+			route: RouteBoundedVec<T>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			ChainIdToMiltihopRoutePath::<T>::insert(route_id, route);
+			RouteIdToRoutePath::<T>::insert(route_id, route);
 			Ok(())
 		}
 	}
@@ -177,6 +174,7 @@ pub mod pallet {
 		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
 	{
 		type AccountId = T::AccountId;
+		//this is used in pallet-ibc deliver extrinsic in execute memo to send xcm to other parachain
 		fn transfer_xcm(
 			from: T::AccountId,
 			to: T::AccountId,
@@ -187,6 +185,9 @@ pub mod pallet {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
 			let Ok(id) = acc_bytes.try_into() else{
+				//we need to emit event when error or succseed for front-end becase 
+				//this function is called from pallet-ibc 
+				//deliver extrinsic and only relayer will get the error. 
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 					reason: 0,
 					from: from.clone(),
@@ -197,14 +198,6 @@ pub mod pallet {
 				});
 				return None;
 			};
-			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
-				reason: 1,
-				from: from.clone(),
-				to: to.clone(),
-				amount,
-				asset_id: currency,
-				is_error: false,
-			});
 			//if para id is none then parent is 1 if para id is some then parent is 0
 			let parent = if para_id.is_some() { 0 } else { 1 };
 			let result = orml_xtokens::Pallet::<T>::transfer(
@@ -223,6 +216,19 @@ pub mod pallet {
 				),
 				WeightLimit::Unlimited,
 			);
+
+			if let Err(e) = result {
+				frame_support::log::info!(
+					"transfer_xcm from: {:?}, to: {:?}, para_id: {:?}, amount: {:?}, currency: {:?}, error: {:?}",
+					from,
+					to,
+					para_id,
+					amount,
+					currency,
+					e
+				);
+			}
+			
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 				reason: 2,
@@ -232,15 +238,17 @@ pub mod pallet {
 				asset_id: currency,
 				is_error: result.is_err(),
 			});
-			Some(())
+
+			result.ok()
 		}
 	}
+	
 	impl<T: Config> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
-			mut vec: Vec<(ChainInfo, Vec<u8>, [u8; 32])>,
+			mut list_chain_name_address: ListChainNameAddress,
 		) -> Result<Option<MemoData>, DispatchError> {
-			vec.reverse(); // reverse to create memo from the end
+			list_chain_name_address.reverse(); // reverse to create memo from the end
 
 			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to
 			//picasso with memo substrate(xcm) hop can be only the last one
@@ -249,7 +257,7 @@ pub mod pallet {
 
 			let mut last_memo_data: Option<MemoData> = None;
 
-			for (i, name, address) in vec {
+			for (i, name, address) in list_chain_name_address {
 				let mut forward = if i.chain_hop == ChainHop::Xcm {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, IbcSubstrate::new(i.para_id))
@@ -257,22 +265,15 @@ pub mod pallet {
 					let memo_receiver = if i.chain_hop == ChainHop::SubstrateIbc {
 						scale_info::prelude::format!("0x{}", hex::encode(&address))
 					} else {
-						let result: core::result::Result<
-							Vec<bech32_no_std::u5>,
-							bech32_no_std::Error,
-						> = address.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
-						let data =
-							// result.map_err(|_| Error::<T>::IncorrectAddress { chain_id: i.chain_id as u8 })?;
-							result.map_err(|_| DispatchError::Other("()"))?;
+						let data: Vec<u5> = address
+							.into_iter()
+							.map(|byte| u5::try_from_u8(byte).map_err(|_| DispatchError::Other("Failed to convert u8 into u5")))
+							.collect::<Result<_, _>>()?;
 
 						let name = String::from_utf8(name.into())
-							// .map_err(|_| Error::<T>::IncorrectChainName { chain_id: i.chain_id as
-							// u8 })?;
-							.map_err(|_| DispatchError::Other("()"))?;
+							.map_err(|_| DispatchError::Other("Failed to convert chain name from utf8"))?;
 						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
-							// Error::<T>::FailedToEncodeBech32Address { chain_id: i.chain_id as u8
-							// }
-							DispatchError::Other("()")
+							DispatchError::Other("Failed to convert chain name and address into bech32")
 						})?
 					};
 
@@ -280,8 +281,8 @@ pub mod pallet {
 						memo_receiver,
 						PortId::transfer(),
 						ChannelId::new(i.channel_id),
-						i.timeout.unwrap_or_default().to_string(),
-						i.retries.unwrap_or_default(),
+						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?.to_string(),
+						i.retries.ok_or(DispatchError::Other("Retries is none"))?,
 					)
 				};
 				if let Some(memo_memo) = last_memo_data {
@@ -324,9 +325,7 @@ pub mod pallet {
 							AccountId32 { id: ibc1, network: _ },
 						),
 				} => {
-					let mut vec = sp_std::vec::Vec::new();
-					vec.push(ibc1.clone());
-					(pallet_id, *current_network_address, *route_id, vec)
+					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1])
 				},
 				MultiLocation {
 					parents: 0,
@@ -339,10 +338,7 @@ pub mod pallet {
 							AccountId32 { id: ibc2, network: _ },
 						),
 				} => {
-					let mut vec = sp_std::vec::Vec::new();
-					vec.push(ibc1.clone());
-					vec.push(ibc2.clone());
-					(pallet_id, *current_network_address, *route_id, vec)
+					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2])
 				},
 				MultiLocation {
 					parents: 0,
@@ -356,11 +352,7 @@ pub mod pallet {
 							AccountId32 { id: ibc3, network: _ },
 						),
 				} => {
-					let mut vec = sp_std::vec::Vec::new();
-					vec.push(ibc1.clone());
-					vec.push(ibc2.clone());
-					vec.push(ibc3.clone());
-					(pallet_id, *current_network_address, *route_id, vec)
+					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3])
 				},
 				MultiLocation {
 					parents: 0,
@@ -375,12 +367,7 @@ pub mod pallet {
 							AccountId32 { id: ibc4, network: _ },
 						),
 				} => {
-					let mut vec = sp_std::vec::Vec::new();
-					vec.push(ibc1.clone());
-					vec.push(ibc2.clone());
-					vec.push(ibc3.clone());
-					vec.push(ibc4.clone());
-					(pallet_id, *current_network_address, *route_id, vec)
+					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4])
 				},
 				MultiLocation {
 					parents: 0,
@@ -396,13 +383,7 @@ pub mod pallet {
 							AccountId32 { id: ibc5, network: _ },
 						),
 				} => {
-					let mut vec = sp_std::vec::Vec::new();
-					vec.push(ibc1.clone());
-					vec.push(ibc2.clone());
-					vec.push(ibc3.clone());
-					vec.push(ibc4.clone());
-					vec.push(ibc5.clone());
-					(pallet_id, *current_network_address, *route_id, vec)
+					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4, *ibc5])
 				},
 				_ => {
 					//emit event
@@ -422,16 +403,10 @@ pub mod pallet {
 				return None
 			}
 
-			// return None;
-
-			//deposit does not executed propertly. nothing todo. assets will stay in the account id
-			// deposit_result.map_err(|_| Error::<T>::XcmDepositFailed)?;
 			deposit_result.ok()?;
 
 			//route does not exist
-			// let route = ChainIdToMiltihopRoutePath::<T>::try_get(chain_id)
-			// 	.map_err(|_| Error::<T>::MultiHopRouteDoesNotExist)?;
-			let Ok(mut route) = ChainIdToMiltihopRoutePath::<T>::try_get(route_id) else{
+			let Ok(mut route) = RouteIdToRoutePath::<T>::try_get(route_id) else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
@@ -442,12 +417,10 @@ pub mod pallet {
 
 			let route_len = route.len();
 			//order route by chain_id
-			route.sort_by(|a, b| a.0.order.cmp(&b.0.order));
+			route.sort_by_key(|item| item.0.order);
 			let mut chain_info_iter = route.into_iter();
 
 			//route does not exist
-			// let (next_chain_info, _) =
-			// 	chain_info_iter.next().ok_or(Error::<T>::MultiHopRouteDoesNotExist)?;
 			let Some((next_chain_info, chain_name)) = chain_info_iter.next() else{
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
@@ -459,7 +432,6 @@ pub mod pallet {
 
 			if addresses.len() != route_len {
 				//wrong XCM MultiLocation. route len does not match addresses list in XCM call.
-				// return Err(Error::<T>::IncorrectCountOfAddresses)
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
@@ -515,7 +487,6 @@ pub mod pallet {
 				};
 				MultiAddress::<AccoindIdOf<T>>::Id(account_id_from)
 			};
-			// let accunt_id = MultiAddress::<AccoindIdOf<T>>::Id();
 			let transfer_params = TransferParams::<AccoindIdOf<T>> {
 				to: account_id,
 				source_channel: next_chain_info.channel_id,
@@ -545,7 +516,6 @@ pub mod pallet {
 					reason: 8,
 				});
 				return None;
-				// return Err(Error::<T>::DoesNotSupportNonFungible);
 			};
 
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
