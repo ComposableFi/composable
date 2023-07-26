@@ -9,9 +9,27 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(bad_style, trivial_numeric_casts)]
+#![deny(
+	bare_trait_objects,
+	improper_ctypes,
+	no_mangle_generic_items,
+	non_shorthand_field_patterns,
+	overflowing_literals,
+	path_statements,
+	patterns_in_fns_without_body,
+	private_in_public,
+	trivial_casts,
+	unconditional_recursion,
+	unused_allocation,
+	unused_comparisons,
+	unused_extern_crates,
+	unused_imports,
+	unused_parens,
+	while_true
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![doc = include_str!("../README.md")]
 pub use pallet::*;
 
 mod prelude;
@@ -26,6 +44,7 @@ pub mod pallet {
 	use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
+	use composable_traits::xcm::memo::ChainHop;
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
 		centauri::Map,
@@ -231,11 +250,11 @@ pub mod pallet {
 			let mut last_memo_data: Option<MemoData> = None;
 
 			for (i, name, address) in vec {
-				let mut forward = if i.is_substrate_xcm {
+				let mut forward = if i.chain_hop == ChainHop::Xcm {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
 					Forward::new_xcm_memo(memo_receiver, IbcSubstrate::new(i.para_id))
 				} else {
-					let memo_receiver = if i.is_substrate_ibc {
+					let memo_receiver = if i.chain_hop == ChainHop::SubstrateIbc {
 						scale_info::prelude::format!("0x{}", hex::encode(&address))
 					} else {
 						let result: core::result::Result<
@@ -450,13 +469,7 @@ pub mod pallet {
 			}
 
 			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
-			let mut account_id = MultiAddress::<AccoindIdOf<T>>::Raw(raw_address_to.to_vec());
-			//account_id 32 bytes to MultiAddress does not work. need convert with bech32 into IBC
-			// string address and then convert into MultiAddress raw address
-			if !next_chain_info.is_substrate_ibc {
-				//does not support not substrate ibc
-				//to support IBC chain need to convert address to IBC address using bech32(the same
-				// as in memo::new function)
+			let account_id = if next_chain_info.chain_hop == ChainHop::CosmosIbc {
 
 				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 					raw_address_to.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
@@ -488,7 +501,7 @@ pub mod pallet {
 					return None;
 				};
 
-				account_id = MultiAddress::<AccoindIdOf<T>>::Raw(name.into_bytes());
+				MultiAddress::<AccoindIdOf<T>>::Raw(name.into_bytes())
 			} else {
 				let account_from = sp_runtime::AccountId32::new(raw_address_to);
 				let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
@@ -500,8 +513,8 @@ pub mod pallet {
 					});
 					return None;
 				};
-				account_id = MultiAddress::<AccoindIdOf<T>>::Id(account_id_from);
-			}
+				MultiAddress::<AccoindIdOf<T>>::Id(account_id_from)
+			};
 			// let accunt_id = MultiAddress::<AccoindIdOf<T>>::Id();
 			let transfer_params = TransferParams::<AccoindIdOf<T>> {
 				to: account_id,
@@ -599,7 +612,7 @@ pub mod pallet {
 						memo_size: memo_bytes.len() as u128,
 					});
 				},
-				Err(e) => {
+				Err(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
