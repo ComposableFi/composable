@@ -1,4 +1,5 @@
 pub use alloc::{
+	boxed::Box,
 	collections::VecDeque,
 	string::{String, ToString},
 	vec,
