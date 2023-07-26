@@ -19,24 +19,26 @@ mod prelude;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use super::*;
+	use super::{prelude::*, *};
 	use frame_support::pallet_prelude::*;
 	use frame_system::RawOrigin;
 	use ibc_primitives::Timeout as IbcTimeout;
+	use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
 	use pallet_ibc::{MultiAddress, TransferParams};
 	use xcm::latest::prelude::*;
 	// use prelude::{MultiCurrencyCallback, MemoData};
 	use composable_traits::{
+		centauri::Map,
 		prelude::{String, Vec},
 		xcm::assets::MultiCurrencyCallback,
 	};
 	use frame_system::ensure_root;
-
-	use composable_traits::{
-		ibc::{Forward, MemoData},
-		prelude::ToString,
-		xcm::memo::ChainInfo,
+	use xc_core::ibc::ics20::{
+		pfm::{Forward, IbcSubstrate},
+		MemoData,
 	};
+
+	use composable_traits::{prelude::ToString, xcm::memo::ChainInfo};
 	use sp_std::boxed::Box;
 
 	use frame_support::BoundedVec;
@@ -231,7 +233,7 @@ pub mod pallet {
 			for (i, name, address) in vec {
 				let mut forward = if i.is_substrate_xcm {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
-					Forward::new_xcm_memo(memo_receiver, i.para_id)
+					Forward::new_xcm_memo(memo_receiver, IbcSubstrate::new(i.para_id))
 				} else {
 					let memo_receiver = if i.is_substrate_ibc {
 						scale_info::prelude::format!("0x{}", hex::encode(&address))
@@ -257,8 +259,8 @@ pub mod pallet {
 
 					Forward::new_ibc_memo(
 						memo_receiver,
-						String::from("transfer"),
-						String::from(scale_info::prelude::format!("channel-{}", i.channel_id)),
+						PortId::transfer(),
+						ChannelId::new(i.channel_id),
 						i.timeout.unwrap_or_default().to_string(),
 						i.retries.unwrap_or_default(),
 					)
@@ -266,7 +268,7 @@ pub mod pallet {
 				if let Some(memo_memo) = last_memo_data {
 					forward.next = Some(Box::new(memo_memo));
 				};
-				let new_memo = MemoData::new(forward);
+				let new_memo = MemoData::forward(forward);
 				last_memo_data = Some(new_memo);
 			}
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
@@ -555,7 +557,7 @@ pub mod pallet {
 			match memo_data {
 				Some(memo_data) => {
 					let memo_result =
-						<T as pallet_ibc::Config>::MemoMessage::try_from(memo_data.into());
+						<T as pallet_ibc::Config>::MemoMessage::try_from(Map::from_cw(memo_data));
 
 					let Ok(memo_result) = memo_result else{
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {

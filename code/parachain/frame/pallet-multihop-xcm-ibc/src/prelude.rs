@@ -1,3 +1,4 @@
+pub use codec::{Decode, Encode, FullCodec};
 pub use composable_traits::{
 	assets::Asset,
 	currency::{
@@ -7,5 +8,4 @@ pub use composable_traits::{
 	defi::Ratio,
 	xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 };
-
-pub use codec::{Decode, Encode, FullCodec};
+pub use sp_std::str::FromStr;

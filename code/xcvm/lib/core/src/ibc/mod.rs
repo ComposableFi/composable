@@ -1,21 +1,12 @@
-pub mod hook;
+pub mod ics20;
 pub mod picasso;
 
 use crate::{prelude::*, AssetId, IbcIcs20Sender, NetworkId};
 use cosmwasm_std::{to_binary, CosmosMsg, IbcTimeout, StdResult, WasmMsg};
 
-use self::hook::IBCLifecycleComplete;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
-/// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct WasmMemo {
-	pub contract: String,
-	pub msg: Binary,
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub ibc_callback: Option<String>,
-}
+use self::ics20::hook::IBCLifecycleComplete;
 
 /// This message should be send as part of wasm termination memo.
 /// So that can match it to sender hash and know what channel and origin was used to send message.
