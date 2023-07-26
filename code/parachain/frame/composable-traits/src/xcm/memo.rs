@@ -18,12 +18,12 @@ pub enum ChainHop {
 	// SubstrateIbc is used to indicate whether the chain is a substrate chain
 	/// if it is a substrate chain, it will use substrate address to send packet
 	SubstrateIbc,
-	/// CosmosIbc is used to indicate 
+	/// CosmosIbc is used to indicate
 	/// whether the chain address should be converted with bech32 + chain name
 	CosmosIbc,
 	/// SubstrateXcm is used to indicate whether the chain is a substrate chain
 	/// if it is none, it means send to relay-chain(polkadot/kusama/rococo)
-	Xcm
+	Xcm,
 }
 
 #[derive(
@@ -46,15 +46,15 @@ pub struct ChainInfo {
 	/// Order is used to sort chains to compose routes in correct order
 	pub order: u8,
 	/// channel_id is used to indicate the channel id of chain
-	pub channel_id: u64,        
+	pub channel_id: u64,
 	/// timestamp is used to indicate the timestamp of packet
 	pub timestamp: Option<u64>,
 	/// height is used to indicate the height of packet
 	pub height: Option<u64>,
 	/// retries is used to indicate the retries of packet
-	pub retries: Option<u8>,    
+	pub retries: Option<u8>,
 	/// timeout is used to indicate the timeout of packet (seconds)
-	pub timeout: Option<u64>,   
+	pub timeout: Option<u64>,
 
 	/// chain_hop is used to indicate the chain hop of chain
 	pub chain_hop: ChainHop,

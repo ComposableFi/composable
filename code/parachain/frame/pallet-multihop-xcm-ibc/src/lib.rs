@@ -38,24 +38,22 @@ mod prelude;
 pub mod pallet {
 
 	use super::{prelude::*, *};
-	use frame_support::pallet_prelude::*;
-	use frame_system::RawOrigin;
-	use ibc_primitives::Timeout as IbcTimeout;
-	use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
-	use pallet_ibc::{MultiAddress, TransferParams};
-	use xcm::latest::prelude::*;
-	use composable_traits::xcm::memo::ChainHop;
+	use bech32_no_std::u5;
 	use composable_traits::{
 		centauri::Map,
 		prelude::{String, Vec},
-		xcm::assets::MultiCurrencyCallback,
+		xcm::{assets::MultiCurrencyCallback, memo::ChainHop},
 	};
-	use bech32_no_std::u5;
-	use frame_system::ensure_root;
+	use frame_support::pallet_prelude::*;
+	use frame_system::{ensure_root, RawOrigin};
+	use ibc_primitives::Timeout as IbcTimeout;
+	use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
+	use pallet_ibc::{MultiAddress, TransferParams};
 	use xc_core::ibc::ics20::{
 		pfm::{Forward, IbcSubstrate},
 		MemoData,
 	};
+	use xcm::latest::prelude::*;
 
 	use composable_traits::{prelude::ToString, xcm::memo::ChainInfo};
 	use sp_std::boxed::Box;
@@ -63,7 +61,10 @@ pub mod pallet {
 	use frame_support::BoundedVec;
 
 	type AccoindIdOf<T> = <T as frame_system::Config>::AccountId;
-	type RouteBoundedVec<T> = BoundedVec<(ChainInfo, BoundedVec<u8, <T as Config>::ChainNameVecLimit>), <T as Config>::MaxMultihopCount>;
+	type RouteBoundedVec<T> = BoundedVec<
+		(ChainInfo, BoundedVec<u8, <T as Config>::ChainNameVecLimit>),
+		<T as Config>::MaxMultihopCount,
+	>;
 	type ListChainNameAddress = Vec<(ChainInfo, Vec<u8>, [u8; 32])>;
 	use frame_system::pallet_prelude::OriginFor;
 
@@ -147,7 +148,7 @@ pub mod pallet {
 	pub type RouteIdToRoutePath<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u128, /* route id */
+		u128,               /* route id */
 		RouteBoundedVec<T>, /* route to forward */
 		OptionQuery,
 	>;
@@ -174,7 +175,8 @@ pub mod pallet {
 		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
 	{
 		type AccountId = T::AccountId;
-		//this is used in pallet-ibc deliver extrinsic in execute memo to send xcm to other parachain
+		//this is used in pallet-ibc deliver extrinsic in execute memo to send xcm to other
+		// parachain
 		fn transfer_xcm(
 			from: T::AccountId,
 			to: T::AccountId,
@@ -228,7 +230,7 @@ pub mod pallet {
 					e
 				);
 			}
-			
+
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 				reason: 2,
@@ -242,7 +244,7 @@ pub mod pallet {
 			result.ok()
 		}
 	}
-	
+
 	impl<T: Config> Pallet<T> {
 		/// Support only addresses from cosmos ecosystem based on bech32.
 		pub fn create_memo(
@@ -267,13 +269,20 @@ pub mod pallet {
 					} else {
 						let data: Vec<u5> = address
 							.into_iter()
-							.map(|byte| u5::try_from_u8(byte).map_err(|_| DispatchError::Other("Failed to convert u8 into u5")))
+							.map(|byte| {
+								u5::try_from_u8(byte).map_err(|_| {
+									DispatchError::Other("Failed to convert u8 into u5")
+								})
+							})
 							.collect::<Result<_, _>>()?;
 
-						let name = String::from_utf8(name.into())
-							.map_err(|_| DispatchError::Other("Failed to convert chain name from utf8"))?;
+						let name = String::from_utf8(name.into()).map_err(|_| {
+							DispatchError::Other("Failed to convert chain name from utf8")
+						})?;
 						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
-							DispatchError::Other("Failed to convert chain name and address into bech32")
+							DispatchError::Other(
+								"Failed to convert chain name and address into bech32",
+							)
 						})?
 					};
 
@@ -324,9 +333,7 @@ pub mod pallet {
 							AccountId32 { id: current_network_address, network: _ },
 							AccountId32 { id: ibc1, network: _ },
 						),
-				} => {
-					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1])
-				},
+				} => (pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1]),
 				MultiLocation {
 					parents: 0,
 					interior:
@@ -337,9 +344,7 @@ pub mod pallet {
 							AccountId32 { id: ibc1, network: _ },
 							AccountId32 { id: ibc2, network: _ },
 						),
-				} => {
-					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2])
-				},
+				} => (pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2]),
 				MultiLocation {
 					parents: 0,
 					interior:
@@ -351,9 +356,12 @@ pub mod pallet {
 							AccountId32 { id: ibc2, network: _ },
 							AccountId32 { id: ibc3, network: _ },
 						),
-				} => {
-					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3])
-				},
+				} => (
+					pallet_id,
+					*current_network_address,
+					*route_id,
+					sp_std::vec![*ibc1, *ibc2, *ibc3],
+				),
 				MultiLocation {
 					parents: 0,
 					interior:
@@ -366,9 +374,12 @@ pub mod pallet {
 							AccountId32 { id: ibc3, network: _ },
 							AccountId32 { id: ibc4, network: _ },
 						),
-				} => {
-					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4])
-				},
+				} => (
+					pallet_id,
+					*current_network_address,
+					*route_id,
+					sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4],
+				),
 				MultiLocation {
 					parents: 0,
 					interior:
@@ -382,9 +393,12 @@ pub mod pallet {
 							AccountId32 { id: ibc4, network: _ },
 							AccountId32 { id: ibc5, network: _ },
 						),
-				} => {
-					(pallet_id, *current_network_address, *route_id, sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4, *ibc5])
-				},
+				} => (
+					pallet_id,
+					*current_network_address,
+					*route_id,
+					sp_std::vec![*ibc1, *ibc2, *ibc3, *ibc4, *ibc5],
+				),
 				_ => {
 					//emit event
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedMatchLocation {});
@@ -442,7 +456,6 @@ pub mod pallet {
 
 			let raw_address_to = addresses.remove(0); //remove first element and put into transfer_params.
 			let account_id = if next_chain_info.chain_hop == ChainHop::CosmosIbc {
-
 				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 					raw_address_to.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
 
