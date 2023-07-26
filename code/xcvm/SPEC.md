@@ -9,9 +9,6 @@ Karel L. Kubat, Hussein Ait Lahcen
 Cross-chain Virtual Machine (XCVM) is a specification outlining an application-level messaging protocol between state machines and other execution environments. It allows for a more sophisticated mechanism for cross-chain communication compared to message passing, by defining an interpreter-based communication interface between chains.
 
 - Turing-Complete Interactions: Complicated business logic can be dynamically dispatched to other chains, without the need for developers to deploy contracts on the destination chain.
-- Configurable Bridges Levels: Developers can opt-in to use less secure transports, with the advantage of cheaper and faster execution.
-
-Most of all, `XCVM` has been designed in a very extensible way, building up small functionalities and by combining them, allowing for immense complexity.
 
 # 1. Overview
 
@@ -82,85 +79,6 @@ Commonly used terms in this document are described below.
 
 `Implementor`: An entity implementing technology according to the XCVM specification.
 
-
-## 1.3.  Notational Conventions
-
-This document makes ample usage of a pseudo-Backus-Naur form to describe the format of messages and instructions without yet specifying the exact encoding.
-
-### 1.3.1. Types
-A type is defined using `::=` and referenced using angle brackets `<>`, unless it is a primitive type:
-
-```
-<T> ::= u128
-<A> ::= bytes
-```
-
-### 1.3.2. Unions
-```
-<T> ::= <A> | <B>
-```
-
-The above defines the message `T`, which is either `A` or `B` through the union `|` operator. In the Rust programming language, this would be modeled as
-
-```
-enum T {
-    A(A),
-    B(B)
-}
-```
-
-### 1.3.3. Sums
-Sum types are defined without any operators.
-
-```
-<A> ::= <C> <D>
-```
-
-The above defines the message `A`, consisting of `C` and `D`. In Rust, this would be
-
-```
-struct A (C, D)
-```
-
-### 1.3.4. Mappings
-Mappings are defined using braces:
-
-```
-<Map> ::= {K: V}
-```
-
-The above defines a message `Map`, which is a map of `K -> V`. In Rust, this would be
-
-```
-struct Map(HashMap<K, V>)
-```
-
-### 1.3.5. Sequences
-Sequences (lists) are defined using square brackets:
-
-```
-<T> ::= [<A>]
-```
-
-The above defines the message `T`, which consists of 0 or more `A`s
-
-### 1.3.6. Sets
-Sequences containing unique items are defined using braces, omitting the key definition:
-
-```
-<T> ::= {<A>}
-```
-
-### 1.3.7. Primitive types
-Different primitive types are used:
-
-| Type  | Description      | Rust type |
-|-------|------------------|-----------|
-| u128  | Unsigned Integer | u128      |
-| bytes | Sequence of bits | Vec<u8>   |
-| u32   | Unsigned Integer | u32       |
-
-
 # 2. XCVM
 
 The `XCVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain, and how implementors MUST execute messages and maintain state.
@@ -209,15 +127,14 @@ sequenceDiagram
 
 Messages executed by the `XCVM` follow the `Program` format.
 
-```
-<Program> ::= <Tag> [<Instruction>]
+```typescript
+interface Program {
+    tag : Tag
+    ix: Instruction[]
+}
+type Tag = Uint8Array
 
-<Tag> ::= bytes
-<Instruction> ::=
-    <Transfer>
-    | <Call>
-    | <Spawn>
-    | <Query>
+type Instruction = Transfer | Call | Spawn | Query | Exchange
 ```
 
 Each instruction is executed by the on-chain interpreter in sequence. The execution semantics are defined in section 2.4.5.
@@ -351,6 +268,19 @@ Queries register values of an `XCVM` instance across chains. It sets the current
 <QueryResult>  ::= {<RegisterValues>}
 ```
 
+### Exchange
+
+If underlying state machine and configuration of state machine support `Exchange` it can be executed.
+
+```typescript
+interface Exchange {
+    in: AssetAmount[]
+    min_out: AssetAmount[]
+}
+```
+
+`ResultRegister` is set after execution.
+
 ## 2.3. Balances
 
 Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller knows amount of the assets on the destination side: `Absolute`.
@@ -392,6 +322,8 @@ The result register contains the result of the last executed instruction.
 <SpawnError> ::= bytes
 <QueryError> ::= bytes
 ```
+
+If `ResultRegister` was set to `Error` and there is `Restoration` register contains XCVM program it will be executed.
 
 #### 2.4.1.2 IP Register
 
@@ -576,13 +508,46 @@ We will later elaborate on using alternative name registries such as [`ENS`](htt
 
 Ensuring that the caller is an owner is an incredibly important check, as the owner can delegate calls through the interpreter, directly owning all state, funds, and possible (financial) positions associated with the interpreter account. Since each interpreter has their own `Identity`, they might own other accounts as well. Thus the owners control more accounts than just the contract storing the owners.
 
-The Call instruction has the same security risks as calling any arbitrary smart contract, such as setting unlimited allowances.
+The `Call` instruction has the same security risks as calling any arbitrary smart contract, such as setting unlimited allowances.
 
 Adding an owner to the set of owners grants them the ability to evict other owners.
 
 Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the interpreter account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
 
 Using bridges is equivalent to adding them as owners on your interpreter instance.
+
+## Security layers
+
+In general different security can be applied to different programs.
+
+### Anonymous programs
+
+These programs operating only on funds inside program and with limited set of instructions can be executed without sender authentication. 
+
+Specific case is program consist of `Transfer`, `Spawn`, `Exchange` only on assets transferred.
+
+
+### Cross protocol verification
+
+**Example**
+
+When program needs to transfer assets in IBC use ICS20 protocol.
+In order to execute remote  transaction on behalf of account, it can use ICS27.
+In both packets same program can be sent as part of batch and verified on other end to be exact same when assembled for execution.
+For this if one protocol compromised we still validate via second one.
+
+
+### Trusted topology
+
+Program can be executed iff these where send only from some subset of of trusted channels.
+
+### Cross chain multisignatures
+
+In this case program can be executed if it was send by several chains.
+
+### Signatures
+
+For operations of high importance EDSCA signature of program can be propagated from sending chain and verified on target chain.  
 
 # 8. Limited instruction support
 

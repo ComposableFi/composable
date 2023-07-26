@@ -2,16 +2,17 @@
 //! Allows to map asset identifiers, contracts, networks, channels, denominations from, to and on
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
+use crate::prelude::*;
 use cosmwasm_std::{
-	ensure_eq, to_binary, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage,
+	ensure, ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage,
 	SubMsg,
 };
 use xc_core::{
-	gateway::{Asset, ExecuteMsg, ExecuteProgramMsg, GatewayId},
-	ibc::{ics20::hook::WasmMemo, to_cw_message, IbcRoute, Ics20MessageHook},
-	proto::{decode_packet, Encodable},
+	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
+	proto::decode_packet,
 	shared::{DefaultXCVMProgram, XcPacket},
-	AssetId, CallOrigin, Funds,
+	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
+	AssetId, CallOrigin,
 };
 
 use crate::{
@@ -19,23 +20,22 @@ use crate::{
 	contract::EXEC_PROGRAM_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
+	network::load_this,
 	state,
-	state::{NetworkItem, OtherNetworkItem},
 };
 
 pub(crate) fn handle_bridge_forward(
 	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
-	msg: xc_core::gateway::BridgeMsg,
+	msg: xc_core::gateway::BridgeForwardMsg,
 ) -> Result {
-	let packet: xc_core::Packet<
-		xc_core::Program<
-			std::collections::VecDeque<
-				xc_core::Instruction<Vec<u8>, cosmwasm_std::CanonicalAddr, Funds>,
-			>,
-		>,
-	> = XcPacket {
+	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
+	// algorithm to handle for multihop
+	// 1. recurse on program until can with memo
+	// 2. as soon as see no Spawn/Transfer, stop memo and do Wasm call with remaining Packet
+
+	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
 		salt: msg.msg.salt,
@@ -43,12 +43,12 @@ pub(crate) fn handle_bridge_forward(
 		assets: msg.msg.assets,
 	};
 
-	ensure_eq!(packet.assets.0.len(), 0, ContractError::ProgramCannotBeHandledByDestination);
 	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
-	let route = get_route(deps.storage, msg.network_id, *local_asset)?;
+
+	let route = get_route(deps.storage, msg.to, *local_asset)?;
 
 	let mut event = make_event("bridge")
-		.add_attribute("to_network_id", msg.network_id.to_string())
+		.add_attribute("to_network_id", msg.to.to_string())
 		.add_attribute(
 			"assets",
 			serde_json_wasm::to_string(&packet.assets)
@@ -64,19 +64,10 @@ pub(crate) fn handle_bridge_forward(
 		event = event.add_attribute("salt", salt_attr);
 	}
 
-	let coin = Coin::new(amount.0.into(), route.local_native_denom.clone());
+	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let memo = serde_json_wasm::to_string(&WasmMemo {
-		contract: route.gateway_to_send_to.clone(),
-		msg: to_binary(&Ics20MessageHook {
-			from_network_id: route.from_network,
-			data: Binary::from(packet.encode()),
-		})?
-		.to_vec(),
-		ibc_callback: None,
-	})?;
-
-	let msg = to_cw_message(memo, coin, route)?;
+	deps.api.debug(&route.channel_to_send_over.to_string());
+	let msg = to_cw_message(coin, route, packet)?;
 
 	Ok(Response::default().add_event(event).add_message(msg))
 }
@@ -89,30 +80,40 @@ pub fn get_route(
 	to: xc_core::NetworkId,
 	asset_id: AssetId,
 ) -> Result<IbcRoute, ContractError> {
-	let this = state::Config::load(storage)?;
+	let this = load_this(storage)?;
 	let other: NetworkItem = state::NETWORK.load(storage, to)?;
-	let this_to_other: OtherNetworkItem =
-		state::NETWORK_TO_NETWORK.load(storage, (this.network_id, to))?;
-	let asset: Asset = state::ASSETS.load(storage, asset_id)?;
-	let to_asset: AssetId = state::NETWORK_ASSET.load(storage, (asset_id, to))?;
+	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK.load(storage, (this.id, to))?;
+	let asset: AssetItem = state::assets::ASSETS.load(storage, asset_id)?;
+	let to_asset: AssetId = state::assets::NETWORK_ASSET.load(storage, (asset_id, to))?;
 	let gateway_to_send_to = other.gateway_to_send_to.ok_or(ContractError::UnsupportedNetwork)?;
 	let gateway_to_send_to = match gateway_to_send_to {
-		GatewayId::CosmWasm(addr) => addr.to_string(),
+		GatewayId::CosmWasm(addr) => addr,
 	};
+	let sender_gateway = match this.gateway_to_send_to.expect("we execute here") {
+		GatewayId::CosmWasm(addr) => addr,
+	};
+	ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
+	let channel = this_to_other.ics_20.expect("ensured").source;
+
 	Ok(IbcRoute {
-		from_network: this.network_id,
+		from_network: this.id,
 		local_native_denom: asset.local.denom(),
-		channel_to_send_to: this_to_other.ics_20_channel,
+		channel_to_send_over: channel,
 		gateway_to_send_to,
+		sender_gateway,
 		counterparty_timeout: this_to_other.counterparty_timeout,
-		ibc_ics_20_sender: this.ibc_ics_20_sender.ok_or(ContractError::UnsupportedNetwork)?,
+		ibc_ics_20_sender: this
+			.ibc
+			.expect("has ibc if has connection")
+			.ics_20_sender
+			.ok_or(ContractError::ICS20NotFound)?,
 		on_remote_asset: to_asset,
 	})
 }
 
 pub(crate) fn ics20_message_hook(
 	_: auth::WasmHook,
-	msg: Ics20MessageHook,
+	msg: XcMessageData,
 	env: Env,
 	info: MessageInfo,
 ) -> Result<Response, ContractError> {
@@ -132,7 +133,7 @@ fn ensure_anonymous(program: &DefaultXCVMProgram) -> Result<()> {
 	for ix in &program.instructions {
 		match ix {
 			xc_core::Instruction::Transfer { .. } => {},
-			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(&program)?,
+			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(program)?,
 			_ => Err(ContractError::NotAuthorized)?,
 		}
 	}

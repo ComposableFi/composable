@@ -42,13 +42,14 @@ pub fn derive_intermediate_sender(
 }
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
-#[derive(
-	Serialize, Deserialize, Clone, Debug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode,
-)]
+/// Information about which contract to call when the crosschain CW spawn finishes
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct WasmMemo {
-	pub contract: String,
-	pub msg: Vec<u8>,
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub ibc_callback: Option<String>,
+// Encode, Decode, scale_info::TypeInfo, to be manually implemented for subset of know messages
+pub struct Callback {
+	// really Addr, but it does not have scale, I guess we need to impl `type XcAddr = SS58 |
+	// Bech32` with signer inside for serde
+	pub contract: Addr,
+	/// really serde_cw_value::Value, but it has not scale
+	pub msg: serde_cw_value::Value,
 }

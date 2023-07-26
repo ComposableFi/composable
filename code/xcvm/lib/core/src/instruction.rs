@@ -1,4 +1,4 @@
-use crate::{AssetId, Balance, Program};
+use crate::{service::dex::ExchangeId, AssetId, Balance, Program};
 use alloc::{
 	borrow::Cow,
 	collections::{BTreeMap, VecDeque},
@@ -54,7 +54,10 @@ pub enum Destination<Account> {
 #[serde(rename_all = "snake_case")]
 pub enum Instruction<Payload, Account, Assets> {
 	/// Transfer some [`Assets`] from the current program to the [`to`] account.
-	Transfer { to: Destination<Account>, assets: Assets },
+	Transfer {
+		to: Destination<Account>,
+		assets: Assets,
+	},
 	/// Arbitrary payload representing a raw call inside the current network.
 	///
 	/// On picasso, this will be a SCALE encoded dispatch call.
@@ -64,7 +67,10 @@ pub enum Instruction<Payload, Account, Assets> {
 	/// Depending on the network, the payload might be more structured than the base call.
 	/// For most of the network in fact, we need to provide the target address along the payload,
 	/// which can be encoded inside this single payload.
-	Call { bindings: Bindings, encoded: Payload },
+	Call {
+		bindings: Bindings,
+		encoded: Payload,
+	},
 	/// Spawn a sub-program on the target `network`.
 	///
 	/// The program will be spawned with the desired [`Assets`].
@@ -75,7 +81,11 @@ pub enum Instruction<Payload, Account, Assets> {
 		assets: Assets,
 		program: Program<VecDeque<Self>>,
 	},
-	// Buy
+	Exchange {
+		id: ExchangeId,
+		give: Assets,
+		want: Assets,
+	},
 }
 
 /// Error types for late binding operation

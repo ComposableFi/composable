@@ -2,14 +2,13 @@ use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
 
 use crate::prelude::*;
 
-use super::MemoData;
+use super::Memo;
 
-#[derive(
-	Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo,
-)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Forward {
+// Encode, Decode, scale_info::TypeInfo, to be manually implemented for subset of know messages
+pub struct ForwardingMemo {
 	pub receiver: String,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub port: Option<PortId>,
@@ -21,10 +20,10 @@ pub struct Forward {
 	pub retries: Option<u8>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub substrate: Option<IbcSubstrate>,
+	pub substrate: Option<XcmHop>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub next: Option<Box<MemoData>>,
+	pub next: Option<Box<Memo>>,
 }
 
 #[derive(
@@ -42,7 +41,7 @@ pub struct Forward {
 )]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct IbcSubstrate {
+pub struct XcmHop {
 	/// since other parachain does not support ibc memo
 	/// there is only two option: send to parachain or send to relay-chain
 	/// if para id is none, it means send to relay-chain
@@ -50,13 +49,13 @@ pub struct IbcSubstrate {
 	pub para_id: Option<u32>, //if para id is none, it means send to relay-chain
 }
 
-impl IbcSubstrate {
+impl XcmHop {
 	pub fn new(para_id: Option<u32>) -> Self {
 		Self { para_id }
 	}
 }
 
-impl Forward {
+impl ForwardingMemo {
 	pub fn new_ibc_memo(
 		receiver: String,
 		port: PortId,
@@ -75,7 +74,7 @@ impl Forward {
 		}
 	}
 
-	pub fn new_xcm_memo(receiver: String, substrate: IbcSubstrate) -> Self {
+	pub fn new_xcm_memo(receiver: String, substrate: XcmHop) -> Self {
 		Self {
 			receiver,
 			port: None,

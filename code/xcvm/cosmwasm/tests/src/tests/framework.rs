@@ -10,7 +10,7 @@ use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{
-	gateway::{Asset, RegisterAssetMsg},
+	gateway::{AssetItem, ConfigSubMsg, NetworkItem},
 	shared::{DefaultXCVMProgram, Salt},
 	AssetId, Funds, Network, NetworkId,
 };
@@ -127,12 +127,14 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin.info.clone(),
 			gas,
-			xc_core::gateway::ExecuteMsg::IbcSetNetworkChannel {
-				from: vm.network_id,
-				to: vm_counterparty.network_id,
-				channel_id: todo!("restore"),
-				gateway: None,
-			},
+			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceNetwork(NetworkItem {
+				id: vm_counterparty.network_id,
+				gateway_to_send_to: todo!(),
+				prefix: todo!(),
+				interpreter_code_id: todo!(),
+				admin: todo!(),
+				ibc: todo!(),
+			})),
 		)?;
 		TestApi::execute(
 			&mut vm_counterparty.vm_state,
@@ -145,12 +147,14 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin_counterparty.info.clone(),
 			gas,
-			xc_core::gateway::ExecuteMsg::IbcSetNetworkChannel {
-				from: vm_counterparty.network_id,
-				to: vm.network_id,
-				channel_id: todo!("restore"),
-				gateway: None,
-			},
+			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceNetwork(NetworkItem {
+				id: vm_counterparty.network_id,
+				gateway_to_send_to: todo!(),
+				prefix: todo!(),
+				interpreter_code_id: todo!(),
+				admin: todo!(),
+				ibc: todo!(),
+			})),
 		)?;
 		Ok(Self { channel_id: channel_id.into(), handshake })
 	}
@@ -232,12 +236,7 @@ impl TestVM<()> {
 				tx.transaction,
 				tx.info.clone(),
 				tx.gas,
-				xc_core::gateway::InstantiateMsg {
-					interpreter_code_id: XCVM_INTERPRETER_CODE,
-					network_id: self.network_id,
-					admin: tx.info.sender.into_string(),
-					ibc_ics_20_sender: todo!("restore"),
-				},
+				xc_core::gateway::InstantiateMsg { this: self.network_id },
 			)?;
 		Ok((
 			TestVM {
@@ -284,16 +283,16 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			xc_core::gateway::ExecuteMsg::RegisterAsset(RegisterAssetMsg {
-				id: asset_id,
-				asset: Asset {
-					network_id: todo!("restore"),
+			xc_core::gateway::ExecuteMsg::Config(
+				(ConfigSubMsg::ForceAsset(AssetItem {
+					id: asset_id,
+					from_network_id: todo!("restore"),
 					local: xc_core::gateway::AssetReference::Virtual {
 						cw20_address: asset_address.clone().into(),
 					},
 					bridged: None,
-				},
-			}),
+				})),
+			),
 		)?;
 		self.xcvm_state.insert_asset(asset_id, asset_address.clone());
 		Ok((

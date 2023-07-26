@@ -13,23 +13,20 @@
               isREADME = name: type:
                 type == "regular"
                 && pkgs.lib.strings.hasSuffix "README.md" name;
-              isDir = name: type: type == "directory";
               isCargo = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".toml" name
                 || type == "regular" && pkgs.lib.strings.hasSuffix ".lock" name;
               isRust = name: type:
                 type == "regular" && pkgs.lib.strings.hasSuffix ".rs" name;
-              isNotNix = name: type:
-                !(type == "regular" && pkgs.lib.strings.hasSuffix ".nix" name);
+              isNotNix = name: type: !(pkgs.lib.strings.hasSuffix ".nix" name);
               customFilter = name: type:
                 builtins.any (fun: fun name type) [
+                  isNotNix
                   isCargo
                   isRust
-                  isDir
                   isREADME
                   isJSON
                   isProto
-                  isNotNix
                 ];
             in pkgs.nix-gitignore.gitignoreFilterPure customFilter
             [ ../.gitignore ] root;

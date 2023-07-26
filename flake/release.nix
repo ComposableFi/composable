@@ -3,7 +3,7 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }: {
       packages = let
         nix-config = ''
-          --allow-import-from-derivation --print-build-logs --option sandbox relaxed --show-trace --extra-experimental-features "flakes nix-command" --accept-flake-config'';
+          --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed'';
         packages = self'.packages;
         make-bundle = type: package:
           self.inputs.bundlers.bundlers."${system}"."${type}" package;

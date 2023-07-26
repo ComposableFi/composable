@@ -26,6 +26,16 @@
           '';
         };
 
+        devnet-xc-cosmos-fresh = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          name = "devnet-xc-cosmos-fresh";
+          text = ''
+            rm --force --recursive /tmp/composable-devnet             
+            mkdir --parents /tmp/composable-devnet
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos}
+          '';
+        };
+
         devnet-xc-fresh = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
@@ -223,6 +233,68 @@
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
                 };
+                availability = { restart = relay; };
+              };
+            };
+          };
+        };
+
+        devnet-xc-cosmos = {
+          debug = true;
+          settings = {
+            processes = {
+              centauri = {
+                command = self'.packages.centaurid-gen;
+                readiness_probe.http_get = {
+                  host = "127.0.0.1";
+                  port = 26657;
+                };
+                log_location = "/tmp/composable-devnet/centauri.log";
+                availability = { restart = "on_failure"; };
+              };
+              centauri-init = {
+                command = self'.packages.centaurid-init;
+                depends_on."centauri".condition = "process_healthy";
+                log_location = "/tmp/composable-devnet/centauri-init.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              osmosis = {
+                command = self'.packages.osmosisd-gen;
+                readiness_probe.http_get = {
+                  host = "127.0.0.1";
+                  port = 36657;
+                };
+                log_location = "/tmp/composable-devnet/osmosis.log";
+              };
+              osmosis-init = {
+                command = self'.packages.osmosisd-init;
+                depends_on."osmosis".condition = "process_healthy";
+                log_location = "/tmp/composable-devnet/osmosis-init.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              osmosis-centauri-hermes-init = {
+                command = self'.packages.osmosis-centauri-hermes-init;
+                depends_on = {
+                  "centauri-init".condition = "process_completed_successfully";
+                  "picasso-centauri-ibc-channels-init".condition =
+                    "process_completed_successfully";
+                  "osmosis".condition = "process_healthy";
+                };
+                log_location =
+                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              osmosis-centauri-hermes-relay = {
+                command = self'.packages.osmosis-centauri-hermes-relay;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
               };
             };

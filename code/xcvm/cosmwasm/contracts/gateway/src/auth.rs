@@ -3,7 +3,7 @@ use crate::{
 	error::{ContractError, Result},
 	msg, state,
 };
-use cosmwasm_std::{Deps, Env, MessageInfo, Storage};
+use cosmwasm_std::{ensure, Deps, Env, MessageInfo, Storage};
 use xc_core::NetworkId;
 
 /// Authorisation token indicating call is authorised according to policy
@@ -44,8 +44,8 @@ impl Auth<policy::WasmHook> {
 		info: &MessageInfo,
 		network_id: NetworkId,
 	) -> Result<Self> {
-		let this = state::Config::load(storage)?;
-		let channel = state::NETWORK_TO_NETWORK.load(storage, (this.network_id, network_id))?;
+		let this = state::load(storage)?;
+		let this_to_other = state::NETWORK_TO_NETWORK.load(storage, (this.id, network_id))?;
 		let sender = state::NETWORK
 			.load(storage, network_id)?
 			.gateway_to_send_to
@@ -53,11 +53,13 @@ impl Auth<policy::WasmHook> {
 		let sender = match sender {
 			msg::GatewayId::CosmWasm(addr) => addr.to_string(),
 		};
-		let hash_of_channel_and_sender = xc_core::ibc::ics20::hook::derive_intermediate_sender(
-			&channel.ics_20_channel,
-			&sender,
-			"",
-		)?;
+
+		ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
+		let channel = this_to_other.ics_20.expect("ensured").source;
+		let hash_of_channel_and_sender =
+			xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(
+				&channel, &sender, "",
+			)?;
 		Self::new(hash_of_channel_and_sender == info.sender && info.sender == env.contract.address)
 	}
 }
@@ -68,7 +70,7 @@ impl Auth<policy::Interpreter> {
 		info: &MessageInfo,
 		interpreter_origin: xc_core::InterpreterOrigin,
 	) -> Result<Self> {
-		let interpreter_address = state::INTERPRETERS
+		let interpreter_address = state::interpreter::INTERPRETERS
 			.may_load(deps.storage, interpreter_origin)?
 			.map(|int| int.address);
 		Self::new(Some(&info.sender) == interpreter_address.as_ref())
@@ -77,7 +79,8 @@ impl Auth<policy::Interpreter> {
 
 impl Auth<policy::Admin> {
 	pub(crate) fn authorise(deps: Deps, info: &MessageInfo) -> Result<Self> {
-		Self::new(info.sender == state::Config::load(deps.storage)?.admin)
+		let this = state::load(deps.storage)?;
+		Self::new(info.sender == this.admin)
 	}
 }
 

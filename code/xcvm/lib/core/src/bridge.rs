@@ -2,14 +2,6 @@ use crate::prelude::*;
 
 use crate::{NetworkId, UserOrigin};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub enum IbcIcs20Sender {
-	SubstratePrecompile(Addr),
-	OsmosisModule,
-	CosmWasmStd,
-}
-
 /// The Origin that executed the XCVM operation.
 /// Origin was verified to satisfy security semantics for execution.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

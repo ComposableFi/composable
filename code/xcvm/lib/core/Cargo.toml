@@ -25,6 +25,8 @@ serde-json-wasm = { workspace = true, default-features = false }
 sha2 = { workspace = true }
 strum.workspace = true
 thiserror = { workspace = true }
+serde-cw-value = { workspace = true, default-features = false}
+ibc-proto = { workspace = true, default-features = false, features = ["serde", "parity-scale-codec"]}
 
 [build-dependencies]
 prost-build = { workspace = true }
@@ -34,6 +36,9 @@ default = ["std"]
 cosmwasm = ["cw-storage-plus", "cw20"]
 std = [
   "cosmwasm-std/std",
+  "ibc-rs-scale/std",
+  "ibc-rs-scale/schema",
+  "serde-cw-value/schema",
   "cw-storage-plus/std",
   "dep:cosmwasm-schema",
   "dep:schemars",

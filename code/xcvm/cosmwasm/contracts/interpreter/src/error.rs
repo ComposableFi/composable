@@ -59,4 +59,7 @@ pub enum ContractError {
 
 	#[error("An error occured while doing arithmetic operations.")]
 	ArithmeticError,
+
+	#[error("Not implemented")]
+	NotImplemented,
 }

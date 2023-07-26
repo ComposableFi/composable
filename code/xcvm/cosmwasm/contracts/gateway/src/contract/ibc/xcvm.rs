@@ -1,24 +1,28 @@
 //! custom ibc channel, cannot directly transfer ics20 assets
-//! name take from ics999 port name, just to say it same idea
+
+use std::str::FromStr;
 
 use crate::{
 	auth,
 	contract::EXEC_PROGRAM_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
-	msg, state,
+	msg,
+	network::load_other,
+	state,
 };
 
 use cosmwasm_std::{
 	ensure_eq, wasm_execute, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
 	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
 	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-	IbcTimeout, IbcTimeoutBlock, MessageInfo, Response, SubMsg,
+	MessageInfo, Response, SubMsg,
 };
-use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
+use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId};
 use xc_core::{
 	proto::{decode_packet, Encodable},
 	shared::XcPacket,
+	transport::ibc::ChannelInfo,
 	CallOrigin, XCVMAck,
 };
 
@@ -53,13 +57,13 @@ pub fn ibc_channel_connect(
 	msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse> {
 	let channel = msg.channel();
-	state::IBC_CHANNEL_INFO.save(
+	state::xcvm::IBC_CHANNEL_INFO.save(
 		deps.storage,
 		channel.endpoint.channel_id.clone(),
-		&state::ChannelInfo {
-			id: channel.endpoint.channel_id.to_string(),
+		&ChannelInfo {
+			id: ChannelId::from_str(&channel.endpoint.channel_id)?,
 			counterparty_endpoint: channel.counterparty_endpoint.clone(),
-			connection_id: channel.connection_id.to_string(),
+			connection_id: ConnectionId::from_str(&channel.connection_id)?,
 		},
 	)?;
 	Ok(IbcBasicResponse::new().add_event(
@@ -74,15 +78,9 @@ pub fn ibc_channel_close(
 	msg: IbcChannelCloseMsg,
 ) -> Result<IbcBasicResponse> {
 	let channel = msg.channel();
-	match state::IBC_CHANNEL_NETWORK.load(deps.storage, channel.endpoint.channel_id.clone()) {
-		Ok(channel_network) => {
-			state::IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
-			state::IBC_NETWORK_CHANNEL.remove(deps.storage, channel_network);
-		},
-		// Nothing to do, the channel might have never been registered to a network.
-		Err(_) => {},
-	}
-	state::IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
+	state::xcvm::IBC_CHANNEL_INFO.remove(deps.storage, channel.endpoint.channel_id.clone());
+
+	state::xcvm::IBC_CHANNEL_NETWORK.remove(deps.storage, channel.endpoint.channel_id.clone());
 	Ok(IbcBasicResponse::new().add_event(
 		make_event("ibc_close").add_attribute("channel_id", channel.endpoint.channel_id.clone()),
 	))
@@ -144,12 +142,15 @@ pub(crate) fn handle_bridge_forward_no_assets(
 	_: auth::Interpreter,
 	deps: DepsMut,
 	info: MessageInfo,
-	msg: msg::BridgeMsg,
+	msg: msg::BridgeForwardMsg,
 ) -> Result<Response> {
-	ensure_eq!(msg.msg.assets.0.len(), 0, ContractError::AssetsNonTransferrable);
-	let channel_id = state::IBC_NETWORK_CHANNEL
-		.load(deps.storage, msg.network_id)
-		.map_err(|_| ContractError::UnknownChannel)?;
+	ensure_eq!(msg.msg.assets.0.len(), 0, ContractError::CannotTransferAssets);
+	let other = load_other(deps.storage, msg.to)?;
+	let channel_id = other
+		.connection
+		.xcvm_channel
+		.map(|x| x.id)
+		.ok_or(ContractError::UnknownChannel)?;
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
@@ -158,7 +159,7 @@ pub(crate) fn handle_bridge_forward_no_assets(
 		assets: msg.msg.assets,
 	};
 	let mut event = make_event("bridge")
-		.add_attribute("network_id", msg.network_id.to_string())
+		.add_attribute("network_id", msg.to.to_string())
 		.add_attribute(
 			"assets",
 			serde_json_wasm::to_string(&packet.assets)
@@ -174,26 +175,9 @@ pub(crate) fn handle_bridge_forward_no_assets(
 		event = event.add_attribute("salt", salt_attr);
 	}
 	Ok(Response::default().add_event(event).add_message(IbcMsg::SendPacket {
-		channel_id,
+		channel_id: channel_id.to_string(),
 		data: Binary::from(packet.encode()),
 		// TODO: should be a parameter or configuration
-		timeout: IbcTimeout::with_block(IbcTimeoutBlock { revision: 0, height: 10000 }),
+		timeout: other.connection.counterparty_timeout,
 	}))
-}
-
-pub(crate) fn handle_ibc_set_network_channel(
-	_: auth::Admin,
-	deps: DepsMut,
-	network_id: xc_core::NetworkId,
-	channel_id: ChannelId,
-) -> Result<Response> {
-	state::IBC_CHANNEL_INFO
-		.load(deps.storage, channel_id.to_string())
-		.map_err(|_| ContractError::UnknownChannel)?;
-	state::IBC_NETWORK_CHANNEL.save(deps.storage, network_id, &channel_id.to_string())?;
-	Ok(Response::default().add_event(
-		make_event("set_network_channel")
-			.add_attribute("network_id", network_id.to_string())
-			.add_attribute("channel_id", channel_id.to_string()),
-	))
 }

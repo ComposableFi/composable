@@ -1,4 +1,5 @@
 use cosmwasm_std::{IbcOrder, Response, StdError};
+use ibc_rs_scale::core::ics24_host::identifier::IdentifierError;
 use thiserror::Error;
 use xc_core::proto::DecodingFailure;
 
@@ -18,6 +19,8 @@ pub enum ContractError {
 	InvalidIbcXcvmPacket,
 	#[error("No IBC channel is opened to the target network.")]
 	UnsupportedNetwork,
+	#[error("Ics20 not found")]
+	ICS20NotFound,
 	#[error("Could not serialize to JSON")]
 	FailedToSerialize,
 	#[error("The asset is not yet supported.")]
@@ -46,12 +49,24 @@ pub enum ContractError {
 	Serde(#[from] serde_json_wasm::ser::Error),
 	#[error("Assets non transferrable")]
 	AssetsNonTransferrable,
+	#[error("Cannot transfer assets")]
+	CannotTransferAssets,
 	#[error("Program cannot be handled by destination")]
 	ProgramCannotBeHandledByDestination,
+	#[error("Not implemented")]
+	NotImplemented,
+	#[error("{0}")]
+	IbcIdentifier(IdentifierError),
 }
 
 impl From<bech32_no_std::Error> for ContractError {
 	fn from(value: bech32_no_std::Error) -> Self {
 		Self::Bech32(value)
+	}
+}
+
+impl From<IdentifierError> for ContractError {
+	fn from(value: IdentifierError) -> Self {
+		Self::IbcIdentifier(value)
 	}
 }

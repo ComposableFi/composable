@@ -1,5 +1,6 @@
 pub mod execute;
 pub mod ibc;
+pub mod sudo;
 
 use crate::{
 	assets,
@@ -32,13 +33,7 @@ pub fn instantiate(
 	msg: msg::InstantiateMsg,
 ) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-	state::Config {
-		interpreter_code_id: msg.interpreter_code_id,
-		network_id: msg.network_id,
-		admin: deps.api.addr_validate(&msg.admin)?,
-		ibc_ics_20_sender: msg.ibc_ics_20_sender,
-	}
-	.save(deps.storage)?;
+	state::save(deps.storage, &msg.0)?;
 
 	Ok(Response::default().add_event(make_event("instantiated")))
 }

@@ -44,9 +44,7 @@ impl cosmwasm::Config for Runtime {
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = ConstU32<{ 64 * 1024 }>;
 	type AccountToAddr = common::cosmwasm::CosmwasmToSubstrateAccount;
-
 	type AssetToDenom = common::cosmwasm::CosmwasmToSubstrateAssetId;
-
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type Assets = AssetsTransactorRouter;
