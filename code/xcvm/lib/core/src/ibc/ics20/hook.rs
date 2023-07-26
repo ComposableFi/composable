@@ -40,3 +40,15 @@ pub fn derive_intermediate_sender(
 	let sender = sender_hash_32.to_base32();
 	bech32_no_std::encode(bech32_prefix, sender)
 }
+
+/// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
+#[derive(
+	Serialize, Deserialize, Clone, Debug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode,
+)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct WasmMemo {
+	pub contract: String,
+	pub msg: Vec<u8>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub ibc_callback: Option<String>,
+}
