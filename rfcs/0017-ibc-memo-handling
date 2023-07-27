@@ -54,3 +54,6 @@ This way most automatic and cheapset way of execution happens,
 and the only option to reach chains which cannot be extended with arbitrary contracts.
 
 `memo` can be used to organize several packets into one transactions.
+Well defiend and consisten rules about transactionality of single packets,
+allow to define common consisten rules of assembling packets into high level flow
+(multi chain program), and resonably cancel out program in case of failure of some of its parts.
