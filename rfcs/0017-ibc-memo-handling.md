@@ -66,4 +66,6 @@ so party sending message can rely on multi hop IBC.
 Also in case of success or fully fail, XCM can rely on fact that if XCM message was stored into output queue and tracked,
 both ICS20 receive and memo handling succeded, and XCM can resonably sends funds foward from chain origin.
 
-If Substrate does not try to parse 
+If Substrate does not try to parse all memo parts is not up to, but only relevant for processing part, 
+it will not fail when some protocols intorduce new parts, like batching.
+
