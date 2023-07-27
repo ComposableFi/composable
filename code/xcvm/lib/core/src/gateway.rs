@@ -24,6 +24,7 @@ pub struct InstantiateMsg {
 	pub network_id: NetworkId,
 	/// The admin which is allowed to update the bridge list.
 	pub admin: String,
+	/// Address to send ICS 20 messages.
 	pub ibc_ics_20_sender: Option<IbcIcs20Sender>,
 }
 
