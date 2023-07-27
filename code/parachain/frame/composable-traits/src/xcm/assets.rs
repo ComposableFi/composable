@@ -97,6 +97,6 @@ pub trait MultiCurrencyCallback {
 		location: &xcm::latest::MultiLocation,
 		context: &xcm::latest::XcmContext,
 		deposit_result: xcm::latest::Result,
-		asset_id: Option<Self::AssetId>,
+		asset_id: Self::AssetId,
 	) -> Option<()>;
 }
