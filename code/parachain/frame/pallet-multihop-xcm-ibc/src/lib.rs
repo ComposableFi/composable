@@ -345,7 +345,7 @@ pub mod pallet {
 			location: &xcm::latest::MultiLocation,
 			_context: &xcm::latest::XcmContext,
 			deposit_result: xcm::latest::Result,
-			asset_id: Option<Self::AssetId>,
+			asset_id: Self::AssetId,
 		) -> Option<()> {
 			let location_info = match location {
 				MultiLocation {
@@ -595,7 +595,7 @@ pub mod pallet {
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				transfer_params,
-				asset_id.unwrap(), //TODO remove unwrap
+				asset_id,
 				(*amount).into(),
 				memo.clone(),
 			);
@@ -608,7 +608,7 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
-						asset_id: asset_id.unwrap(),
+						asset_id,
 						memo,
 						bytes: memo_bytes.clone(),
 						memo_size: memo_bytes.len() as u128,
@@ -619,7 +619,7 @@ pub mod pallet {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
 						amount: *amount,
-						asset_id: asset_id.unwrap(),
+						asset_id,
 						memo,
 					});
 					return None

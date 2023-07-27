@@ -280,13 +280,8 @@ impl<
 		) {
 			// known asset
 			(Ok(_), Some(currency_id), Some(_)) => {
-				let _ = DepositCallback::deposit_asset(
-					asset,
-					location,
-					context,
-					result,
-					Some(currency_id),
-				);
+				let _ =
+					DepositCallback::deposit_asset(asset, location, context, result, currency_id);
 			},
 			// unknown asset
 			_ => {
