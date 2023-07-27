@@ -201,8 +201,37 @@ pub mod pallet {
 		u128: Into<<T as orml_xtokens::Config>::CurrencyId>,
 	{
 		type AccountId = T::AccountId;
-		//this is used in pallet-ibc deliver extrinsic in execute memo to send xcm to other
-		// parachain
+		/// Transfer asset from current chain to another chain(relay-chain or parachain).
+		/// The function is part of multihop execution.
+		/// In case when ibc memo includes `Xcm` hop, the function will be called from pallet-ibc
+		/// 'execute memo' function.
+		///
+		/// This function return Some(()) if transfer is successful and None if transfer failed.
+		/// The failure of `transfer_xcm` does not affect the current IBC transfer process. This is
+		/// why we return None instead of Result.
+		///
+		/// This function emit event for front-end to track the process because this is the only way
+		/// to give some feedback to the user about Multihop execution.
+		///
+		/// There is no reason to return Result with error because `process-memo' in pallet-ibc is
+		/// the part of execution of `deliver` extrinsic called by relayer. Because of origin of the
+		/// extrinsic is relayer, the error will be returned to relayer and not to the user. This is
+		/// why we emit event and return None instead of Result. Event needs to notify front-end
+		/// about the execution.
+		///
+		/// This function aslo emit event about failed execution with `reason` to provide why it
+		/// failed. This events with a reason also help to trace the multihop execution and find
+		/// where it failed without looking into the logs.
+		///
+		/// # Arguments
+		/// * `from` - account id of the sender. This is account thet recieved IBC transfer and need
+		///   to initiate XCM hop accuding to multihop logic
+		/// * `to` - account id of the receiver. This is an destination account of the XCM hop that
+		///   was specified in ibc memo
+		/// * `para_id` - para id of the receiver. If para id is none then xcm to relay-chain. if
+		///   para is some then xcm to parachain
+		/// * `amount` - amount of the asset to transfer
+		/// * `currency` - currency id of the asset to transfer
 		fn transfer_xcm(
 			from: T::AccountId,
 			to: T::AccountId,
@@ -272,7 +301,34 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Support only addresses from cosmos ecosystem based on bech32.
+		/// Create memo from the route configuration using chain info, name and address
+		///
+		/// This function is called from deposit_asset XCM callback function in
+		/// pallet-multihop-xcm-ibc
+		///
+		/// # Arguments
+		/// - `list_chain_name_address` - list of chain info, name and address to create memo
+		///
+		/// # Returns
+		/// * `Option<MemoData>` - return none if failed to create memo
+		///
+		/// # Errors
+		/// 	* `DispatchError` - if failed to create memo. Failed to create memo can happen if:
+		/// 	* Failed to convert u8 into u5
+		/// 	* Failed to convert chain name from utf8
+		/// 	* Failed to convert chain name and address into bech32
+		/// 	* Timeout is none
+		/// 	* Retries is none
+		///
+		/// # Example
+		/// ```ignore
+		/// Pallet::create_memo(
+		/// 	list_chain_name_address: ListChainNameAddress,
+		/// )
+		/// ```
+		///
+		/// # Note
+		/// Return Ok(None) if `list_chain_name_address` is empty
 		pub fn create_memo(
 			mut list_chain_name_address: ListChainNameAddress,
 		) -> Result<Option<MemoData>, DispatchError> {
@@ -338,6 +394,62 @@ pub mod pallet {
 	{
 		type AssetId = T::AssetId;
 
+		/// Create memo if need and call pallet-ibc `transfer` function to initiate IBC transfer
+		///
+		/// This function is called from `MultiCurrencyAdapter` (xcmp.rs) deposit function after XCM
+		/// execution. The function does not return error to revert XCM deposit execution because
+		/// the failure of multihop deposit should not affect the current XCM deposit process. This
+		/// is why we return None instead of Result
+		///
+		/// This function emit event for front-end to track the error because this is the only way
+		/// to give some feedback to the user about Multihop execution
+		///
+		/// This function aslo emit event about failed execution with `reason` to provide why it
+		/// failed. This events with a reason also help to trace the multihop execution and find
+		/// where it failed without looking into the logs
+		///
+		/// # Arguments
+		/// * `asset` - asset to deposit. Support only fungible assets
+		/// * `location` - location of the chain to deposit, should be in format: X4, X5, X6, X7 or
+		///   X8
+		/// Example:
+		/// 			X4(
+		///					PalletInstance(pallet_id),
+		///					GeneralIndex(route_id),
+		///					AccountId32 { id: current_network_address, network: _ },
+		///					AccountId32 { id: ibc1, network: _ },
+		///				)
+		/// * `context` - context of the chain to deposit. ingnored
+		/// * `deposit_result` - result of the deposit, should be ok to continue
+		/// * `asset_id` - asset id, asset id of the asset to deposit
+		///
+		/// # Returns
+		/// * `Option<()>` - return none if deposit failed. There is no reason to return Result.
+		///   because the failure of multihop deposit should not affect the current XCM deposit
+		///   process that is why we return None
+		///
+		/// # Errors
+		/// * `None` - if deposit failed. Deposit can fail if:
+		/// 	* `location` is not in format X4, X5, X6, X7 or X8 for example X.(PalletInsance,
+		///    GeneralIndex, AccountId32, AccountId32, ......)
+		/// 	* `location` does not match with the route
+		/// 	* `location` does not match with the pallet id
+		/// 	* `deposit_result` is not ok
+		/// 	* `asset_id` is not supported
+		/// 	* incorrect count of addresses compared to count of chain in route configuration
+		/// 	* `location` does not match with the chain name
+		/// 	* failed to create memo from the route
+		///
+		/// # Example
+		/// ```ignore
+		/// MultiCurrencyCallback::deposit_asset(
+		/// 	asset: &xcm::latest::MultiAsset,
+		/// 	location: &xcm::latest::MultiLocation,
+		/// 	context: &xcm::latest::XcmContext,
+		/// 	deposit_result: xcm::latest::Result,
+		/// 	asset_id: Self::AssetId,
+		/// )
+		/// ```
 		fn deposit_asset(
 			asset: &xcm::latest::MultiAsset,
 			location: &xcm::latest::MultiLocation,
@@ -345,6 +457,7 @@ pub mod pallet {
 			deposit_result: xcm::latest::Result,
 			asset_id: Self::AssetId,
 		) -> Option<()> {
+			deposit_result.ok()?;
 			let location_info = match location {
 				MultiLocation {
 					parents: 0,
@@ -438,8 +551,6 @@ pub mod pallet {
 				});
 				return None
 			}
-
-			deposit_result.ok()?;
 
 			//route does not exist
 			let Ok(mut route) = RouteIdToRoutePath::<T>::try_get(route_id) else{
@@ -608,7 +719,7 @@ pub mod pallet {
 						memo,
 					});
 				},
-				Err(_) => {
+				Err(e) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
 						to: raw_address_to.clone(),
@@ -616,6 +727,12 @@ pub mod pallet {
 						asset_id,
 						memo,
 					});
+					frame_support::log::error!(
+						"Failed to deposit asset: {:?} to location: {:?}, with error: {:?}",
+						asset,
+						location,
+						e
+					);
 					return None
 				},
 			}
