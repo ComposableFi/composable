@@ -109,14 +109,10 @@ pub mod pallet {
 		FailedCallback {
 			origin_address: [u8; 32],
 			route_id: u128,
-			reason: u8,
-		},
-		MultihopMemo {
-			reason: u8,
-			memo_none: bool,
+			reason: MultihopEventReason,
 		},
 		MultihopXcmMemo {
-			reason: u8,
+			reason: MultihopEventReason,
 			from: T::AccountId,
 			to: T::AccountId,
 			amount: u128,
@@ -137,6 +133,38 @@ pub mod pallet {
 		DoesNotSupportNonFungible,
 		IncorrectCountOfAddresses,
 		FailedToConstructMemo,
+		FailedToDecodeAccountId,
+	}
+
+	#[derive(
+		Copy,
+		Clone,
+		PartialEq,
+		Eq,
+		Hash,
+		codec::Encode,
+		codec::Decode,
+		scale_info::TypeInfo,
+		Ord,
+		PartialOrd,
+		MaxEncodedLen,
+		Debug,
+	)]
+	pub enum MultihopEventReason {
+		FailedToConvertAddressToBytes,
+		XcmTransferInitiated,
+		IncorrectPalletId,
+		MultiHopRouteDoesNotExist,
+		MultiHopRouteExistButNotConfigured,
+		IncorrectCountOfAddresses,
+		FailedToDeriveCosmosAddressFromBytes,
+		FailedToDeriveChainNameFromUtf8,
+		FailedToEncodeBech32Address,
+		FailedToDecodeDestAccountId,
+		FailedToDecodeSenderAccountId,
+		DoesNotSupportNonFungible,
+		FailedCreateMemo,
+		FailedToConvertMemoIntoPalletIbcMemoMessageType,
 	}
 
 	#[pallet::pallet]
@@ -191,7 +219,7 @@ pub mod pallet {
 				//this function is called from pallet-ibc 
 				//deliver extrinsic and only relayer will get the error. 
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
-					reason: 0,
+					reason: MultihopEventReason::FailedToConvertAddressToBytes,
 					from: from.clone(),
 					to: to.clone(),
 					amount: amount,
@@ -233,7 +261,7 @@ pub mod pallet {
 
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
-				reason: 2,
+				reason: MultihopEventReason::XcmTransferInitiated,
 				from: from.clone(),
 				to: to.clone(),
 				amount,
@@ -300,10 +328,6 @@ pub mod pallet {
 				let new_memo = MemoData::forward(forward);
 				last_memo_data = Some(new_memo);
 			}
-			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
-				reason: 255,
-				memo_none: last_memo_data.is_none(),
-			});
 			Ok(last_memo_data)
 		}
 	}
@@ -412,7 +436,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 1,
+					reason: MultihopEventReason::IncorrectPalletId,
 				});
 				return None
 			}
@@ -424,7 +448,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 2,
+					reason: MultihopEventReason::MultiHopRouteDoesNotExist,
 				});
 				return None;
 			};
@@ -439,7 +463,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 3,
+					reason: MultihopEventReason::MultiHopRouteExistButNotConfigured,
 				});
 				return None;
 			};
@@ -449,7 +473,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 4,
+					reason: MultihopEventReason::IncorrectCountOfAddresses,
 				});
 				return None
 			}
@@ -463,7 +487,7 @@ pub mod pallet {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
-						reason: 41,
+						reason: MultihopEventReason::FailedToDeriveCosmosAddressFromBytes,
 					});
 					return None;
 				};
@@ -472,7 +496,7 @@ pub mod pallet {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
-						reason: 42,
+						reason: MultihopEventReason::FailedToDeriveChainNameFromUtf8,
 					});
 					return None;
 				};
@@ -481,7 +505,7 @@ pub mod pallet {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
-						reason: 43,
+						reason: MultihopEventReason::FailedToEncodeBech32Address,
 					});
 					return None;
 				};
@@ -494,7 +518,7 @@ pub mod pallet {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
-						reason: 6,
+						reason: MultihopEventReason::FailedToDecodeDestAccountId,
 					});
 					return None;
 				};
@@ -515,7 +539,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 7,
+					reason: MultihopEventReason::FailedToDecodeSenderAccountId,
 				});
 				return None;
 			};
@@ -526,7 +550,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 8,
+					reason: MultihopEventReason::DoesNotSupportNonFungible,
 				});
 				return None;
 			};
@@ -546,7 +570,7 @@ pub mod pallet {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
-					reason: 9,
+					reason: MultihopEventReason::FailedCreateMemo,
 				});
 				return None;
 			};
@@ -559,7 +583,7 @@ pub mod pallet {
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 							origin_address: address_from,
 							route_id,
-							reason: 10,
+							reason: MultihopEventReason::FailedToConvertMemoIntoPalletIbcMemoMessageType,
 						});
 						return None;
 					};
@@ -567,11 +591,6 @@ pub mod pallet {
 				},
 				_ => {},
 			}
-
-			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopMemo {
-				reason: 11,
-				memo_none: memo.is_none(),
-			});
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
