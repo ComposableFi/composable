@@ -1,3 +1,5 @@
+SPELLING 
+
 # Overview
 
 Describes how ICS20 memo is used in IBC ecosystem to do arbitrary anonymous execution of cross chain code with multihop.  
@@ -64,8 +66,23 @@ allow to define common consisten rules of assembling packets into high level flo
 so party sending message can rely on multi hop IBC.
 
 Also in case of success or fully fail, XCM can rely on fact that if XCM message was stored into output queue and tracked,
-both ICS20 receive and memo handling succeded, and XCM can resonably sends funds foward from chain origin.
+both ICS20 receive and memo handling succeded, and XCM can resonably sends funds foward from chain origin (so we need to be sure that memo invoked iff ISC20).
+This is good for restoration and clean up procduers  as it can handled on one and only one chain with final state,
+no that states partially set on several chains.
 
 If Substrate does not try to parse all memo parts is not up to, but only relevant for processing part, 
 it will not fail when some protocols intorduce new parts, like batching.
+
+### CoswasmWasm IBC integration
+
+CosmWasm can be called by middleware, do some operation, like Swap, and send IBC messages to transfer swapped futher.
+
+Only after messages was send, packet is aknoledges. So we did maximal procesing on behalf of users.
+If local store of packet into queue fails, whole ICS 20 rollbaks.
+
+With lack of transaction and asycn semantics, whole infrastucutre to do transaction in transcation should be handled,
+with high cost not fully automatic rollbacks.  
+So basically reimlement part of IBC infra in CW, and also retaining existing IBC infra not compatible with other chains for other use cases.
+Because CW need to operate with pure IBC infa chains, with no contracts, it is already hanling all chains protocol accordingly.
+
 
