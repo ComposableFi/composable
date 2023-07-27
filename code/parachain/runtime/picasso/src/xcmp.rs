@@ -269,17 +269,18 @@ impl<
 		) {
 			// known asset
 			(Ok(_), Some(currency_id), Some(_)) => {
-				let _ = DepositCallback::deposit_asset(
-					asset,
-					location,
-					context,
-					result,
-					Some(currency_id),
-				);
+				let _ =
+					DepositCallback::deposit_asset(asset, location, context, result, currency_id);
 			},
 			// unknown asset
 			_ => {
-				//TODO? should we try in case if asset is unknown?
+				frame_support::log::error!(
+					target: "xcmp",
+					"deposit_asset failed: {:?} {:?} {:?}",
+					AccountIdConvert::convert_ref(location),
+					CurrencyIdConvert::convert(asset.clone()),
+					Match::matches_fungible(asset),
+				);
 			},
 		}
 		result
