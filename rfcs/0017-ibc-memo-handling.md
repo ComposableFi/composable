@@ -57,3 +57,13 @@ and the only option to reach chains which cannot be extended with arbitrary cont
 Well defiend and consisten rules about transactionality of single packets,
 allow to define common consisten rules of assembling packets into high level flow
 (multi chain program), and resonably cancel out program in case of failure of some of its parts.
+
+### XCM integration
+
+[XCM-IBC](../0016-permissionless-assets-for-ibc-and-cw.md) can stably operation iff `memo` handling is part of packet transaction
+so party sending message can rely on multi hop IBC.
+
+Also in case of success or fully fail, XCM can rely on fact that if XCM message was stored into output queue and tracked,
+both ICS20 receive and memo handling succeded, and XCM can resonably sends funds foward from chain origin.
+
+If Substrate does not try to parse 
