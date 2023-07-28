@@ -1,4 +1,6 @@
-#![allow(clippy::derive_partial_eq_without_eq)] // for ChainSpecGroup
+#![allow(clippy::derive_partial_eq_without_eq)] use std::str::FromStr;
+
+// for ChainSpecGroup
 use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
 use once_cell::sync::Lazy;
@@ -7,7 +9,7 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{traits::IdentifyAccount, MultiSigner};
+use sp_runtime::{traits::IdentifyAccount, MultiSigner, AccountId32};
 
 pub mod composable;
 
@@ -79,8 +81,9 @@ pub fn picasso() -> picasso::ChainSpec {
 
 /// Composable (Polkadot parachain)
 pub fn composable() -> composable::ChainSpec {
-	composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
-		.expect("chain spec not found")
+	composable_dev()
+	// composable::ChainSpec::from_json_bytes(include_bytes!("./res/composable.json").to_vec())
+	// 	.expect("chain spec not found")
 }
 
 pub fn picasso_rococo() -> picasso::ChainSpec {
@@ -139,20 +142,29 @@ pub fn composable_dev() -> composable::ChainSpec {
 		"composable",
 		ChainType::Development,
 		move || {
+
+			let sudo = AccountId32::from_str("64SqfT2rPHMYL5Lb9wCY13qtJXP5VzoNsLzYPge5yenN7wLu").unwrap();
+			let x1 = AccountId32::from_str("65BAu2Rh1AzJZQFjdjRX9wnfr2F9QPypkNs4YMoDQbepnyf5").unwrap();
+			let x2 = AccountId32::from_str("61znp1xVJCqZgBqqaMymji8VoNCfAWweUJezr86NBfAi1VJ9").unwrap();
+
+			let public1 = sr25519::Public::from_str("65BAu2Rh1AzJZQFjdjRX9wnfr2F9QPypkNs4YMoDQbepnyf5").unwrap();
+			let public2 = sr25519::Public::from_str("61znp1xVJCqZgBqqaMymji8VoNCfAWweUJezr86NBfAi1VJ9").unwrap();
+
 			composable::genesis_config(
-				account_id_from_seed::<sr25519::Public>("Alice"),
+				sudo.clone(),
 				vec![
 					(
-						account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
+						x1.clone(),
+						public1.into()
 					),
 					(
-						account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
+						x2.clone(),
+						public2.into()
 					),
 				],
-				dev_accounts(),
-				*PARACHAIN_ID,
+				// dev_accounts(),
+				vec![sudo, x1, x2],
+				2019.into(),
 				composable_runtime::ExistentialDeposit::get(),
 				composable_runtime::TreasuryAccount::get(),
 			)

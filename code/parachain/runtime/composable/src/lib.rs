@@ -19,7 +19,9 @@
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
 #[cfg(not(feature = "builtin-wasm"))]
-pub const WASM_BINARY_V2: Option<&[u8]> = None;
+// pub const WASM_BINARY_V2: Option<&[u8]> = None;
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!("/Users/mykyta/development/composable/composable/code/target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm"));
+
 
 extern crate alloc;
 
