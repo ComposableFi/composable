@@ -2,8 +2,7 @@
   perSystem =
     { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }:
     let
-      devnet-root-directory = "/home/dz";
-      #devnet-root-directory = "/tmp/composable-devnet";
+      devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
     in {
       packages = rec {
@@ -22,14 +21,13 @@
           text = ''
             HOME=${devnet-root-directory}
             export HOME
-            OSMOSIS_DATA="$HOME/.osmosisd"
-            #if test "$1" == "clean" ; then
-             # pkill --exact osmosisd
-             rm --force --recursive "$OSMOSIS_DATA" 
-            #fi           
-
-            KEYRING_TEST=$OSMOSIS_DATA
+            OSMOSIS_DATA="$HOME/.osmosisd"             
             CHAIN_ID="osmosis-dev"
+            REUSE=true
+            export REUSE
+            if [[ $REUSE == false ]]; then
+              rm --force --recursive "$OSMOSIS_DATA" 
+            fi
 
             VALIDATOR_MONIKER="validator"
             VALIDATOR_MNEMONIC="bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort"
@@ -40,7 +38,7 @@
             mkdir --parents "$OSMOSIS_DATA/data/cs.wal"
 
             echo "$VALIDATOR_MNEMONIC" | osmosisd init --chain-id="$CHAIN_ID" --home "$OSMOSIS_DATA" --recover "$VALIDATOR_MONIKER"
-          
+
             function dasel-genesis() {
               dasel put --type string --file "$GENESIS" --value "$2" "$1"   
             }             
@@ -91,16 +89,17 @@
             dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].denom' "uosmo"
             dasel-genesis '.app_state.gamm.params.pool_creation_fee.[0].amount' "10000000"
             dasel-genesis '.app_state.txfees.basedenom' "uosmo"
-            dasel-genesis '.app_state.wasm.params.code_upload_access.permission' "Everybody"            
-            
+            dasel-genesis '.app_state.wasm.params.code_upload_access.permission' "Everybody"
+            dasel-genesis '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled' true
+
             function add-genesis-account() {
-              echo "$1" | osmosisd keys add "$2" --recover --keyring-backend test --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
+              echo "$1" | osmosisd keys add "$2" --recover --keyring-backend test --home "$OSMOSIS_DATA" 
               ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$OSMOSIS_DATA" )
               echo "===================================="
               echo "$ACCOUNT"
               osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake --home "$OSMOSIS_DATA"
             }
-            
+
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
@@ -135,7 +134,7 @@
             dasel put --type string --file $CONFIG_FOLDER/client.toml --value "json" '.output'
 
 
-            osmosisd start --home "$OSMOSIS_DATA" --rpc.unsafe --rpc.laddr tcp://0.0.0.0:36657 --pruning=nothing --grpc.address localhost:19090   --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:36656" --p2p.pex false --p2p.upnp  false  --p2p.seed_mode true --log_level trace
+            osmosisd start --home "$OSMOSIS_DATA" --rpc.unsafe --rpc.laddr tcp://0.0.0.0:36657 --pruning=nothing --grpc.address localhost:19090   --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:36656" --p2p.pex false --p2p.upnp  false  --p2p.seed_mode true
           '';
         };
 
@@ -147,11 +146,10 @@
             HOME=${devnet-root-directory}
             export HOME
             OSMOSIS_DATA="$HOME/.osmosisd"             
-            KEYRING_TEST=$OSMOSIS_DATA
-            CHAIN_ID="osmosis-dev"            
-            #osmosisd keys show validator --output json --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST"
-            #osmosisd tx bank send osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj 100000000000osmo --yes --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uatom --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --keyring-dir "$KEYRING_TEST" --from validator
-            osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
+            CHAIN_ID="osmosis-dev"
+
+            set +e
+            osmosisd tx wasm store  "${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uatom --dry-run --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator
           '';
         };
       };

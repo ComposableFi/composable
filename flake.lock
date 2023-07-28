@@ -98,17 +98,17 @@
     "centauri-src_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1690568395,
-        "narHash": "sha256-GfJ+re4On+IZ1gKyS5dGbVDPmbdXfhMCzuNL8v1D0U4=",
+        "lastModified": 1689966429,
+        "narHash": "sha256-261WaCEsgB/4o6pyXFqtkoCA6L8SOJ+avUxyAArgGQc=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "composable-centauri",
-        "rev": "09ae53e32847fbd9234f24afd140b6a3f2122b54",
+        "rev": "e5dbaa5bbcd7b758b0c71bfaabbc67acfcb20f72",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "composable-centauri",
-        "rev": "09ae53e32847fbd9234f24afd140b6a3f2122b54",
+        "rev": "e5dbaa5bbcd7b758b0c71bfaabbc67acfcb20f72",
         "type": "github"
       }
     },
@@ -180,17 +180,17 @@
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1690571566,
-        "narHash": "sha256-FZaRX0L6b4o1Jxogw2WdJ4sY/k8a1RnAX+lqHunRJZ0=",
+        "lastModified": 1689967083,
+        "narHash": "sha256-GaWN0Wgjs8T3ZJwK96K47TFM/kvxff21jL9mdmwdBmo=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "00fccea13af8142c7abee42b6ff75d05338d29f7",
+        "rev": "a1c3a29a067388878839b6638c4d4f1c698995f9",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "00fccea13af8142c7abee42b6ff75d05338d29f7",
+        "rev": "a1c3a29a067388878839b6638c4d4f1c698995f9",
         "type": "github"
       }
     },
@@ -1050,16 +1050,16 @@
     "ibc-go-v7-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1687464721,
-        "narHash": "sha256-UsCzjLKyedW2h3PQDNUNNL7KZiD23MM6kPQSnKS8FNs=",
+        "lastModified": 1686298823,
+        "narHash": "sha256-8ModVWpRWbwWQLj5BCCopn7vpOJjFp4ISESCCp4pqWQ=",
         "owner": "cosmos",
         "repo": "ibc-go",
-        "rev": "d02ab9db8fc80eb5e55041d3d6416370c33441f7",
+        "rev": "000e9d20b15b3c6939cefc0e26daa4b64c1be8fb",
         "type": "github"
       },
       "original": {
         "owner": "cosmos",
-        "ref": "v7.2.0",
+        "ref": "v7.1.0",
         "repo": "ibc-go",
         "type": "github"
       }
@@ -1629,16 +1629,16 @@
     "osmosis-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1689430935,
-        "narHash": "sha256-HTXFitKRuxSM6U2Sq7kgLxZhduPA+MofdWaISe//2kg=",
+        "lastModified": 1687920590,
+        "narHash": "sha256-nzNUf55ZgWUuaEJ25hvGi34zzqTuWOGm3j72BtldGxs=",
         "owner": "osmosis-labs",
         "repo": "osmosis",
-        "rev": "0dcae3392f23e44b8de436ff372c1373dc831b04",
+        "rev": "4a4a94585872e3196b9c83286979cda11d4889e3",
         "type": "github"
       },
       "original": {
         "owner": "osmosis-labs",
-        "ref": "v16.1.1",
+        "ref": "v15.2.0",
         "repo": "osmosis",
         "type": "github"
       }
