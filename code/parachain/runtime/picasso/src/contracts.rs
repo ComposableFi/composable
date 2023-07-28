@@ -40,15 +40,9 @@ impl cosmwasm::Config for Runtime {
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = ConstU16<64>;
-	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
+	type MaxCodeSize = ConstU32<{ 1024 * 1024 }>;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
-
-	#[cfg(feature = "testnet")]
-	type MaxMessageSize = ConstU32<{ 128 * 1024 }>;
-
-	#[cfg(not(feature = "testnet"))]
-	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
-
+	type MaxMessageSize = ConstU32<{ 64 * 1024 }>;
 	type AccountToAddr = common::cosmwasm::CosmwasmToSubstrateAccount;
 
 	type AssetToDenom = common::cosmwasm::CosmwasmToSubstrateAssetId;
