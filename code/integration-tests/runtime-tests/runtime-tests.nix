@@ -24,9 +24,13 @@
           START_RESULT=1
           while test $TRIES -le 64; do
             set +o errexit
-            curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
+            curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32200
             START_RESULT=$?
-            set -o errexit
+            if test $START_RESULT -eq 0; then
+              curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
+              START_RESULT=$?
+            fi
+            set -o errexit            
             if test $START_RESULT -eq 0; then
               process-compose-stop
               break
