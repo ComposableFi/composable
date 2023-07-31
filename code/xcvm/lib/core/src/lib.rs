@@ -4,11 +4,13 @@
 extern crate alloc;
 
 mod abstraction;
+pub mod accounts;
 mod asset;
 mod bridge;
 pub mod cosmos;
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm;
+pub mod escrow;
 pub mod gateway;
 pub mod ibc;
 mod instruction;

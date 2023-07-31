@@ -1,14 +1,16 @@
-use cosmwasm_schema::cw_serde;
+use alloc::{string::String, vec::Vec};
+
 use parity_scale_codec::{Decode, Encode};
-use xc_core::NetworkId;
+use serde::{Deserialize, Serialize};
+
+use crate::NetworkId;
 
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.escrow";
 
 /// Kinds of events escrow contract can generate.
-#[derive(Copy, strum::AsRefStr)]
+#[derive(Clone, Copy, Debug, PartialEq, strum::AsRefStr)]
 #[strum(serialize_all = "lowercase")]
-#[cw_serde]
 pub enum Action {
 	/// Contract has been instantiated.
 	Instantiated,
@@ -20,7 +22,9 @@ pub enum Action {
 	DepositDone,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct InstantiateMsg {
 	/// Network ID of this network
 	pub network_id: NetworkId,
@@ -28,17 +32,23 @@ pub struct InstantiateMsg {
 	pub admins: Vec<String>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct MigrateMsg {}
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum ExecuteMsg {
 	DepositAssets(DepositAssetsRequest),
 	Relay(RelayRequest),
 	BreakGlass,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum QueryMsg {}
 
 /// Deposits assets onto the virtual wallet.
@@ -50,7 +60,9 @@ pub enum QueryMsg {}
 ///
 /// If the `account` doesn’t exist on the accounts contract, the deposit is
 /// aborted and assets are returned to the sender of the message.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DepositAssetsRequest {
 	/// Name of the account in the virtual wallet to deposit funds to.
 	pub account: String,
@@ -59,7 +71,9 @@ pub struct DepositAssetsRequest {
 }
 
 /// An asset with its amount.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct LocalAssetAmount {
 	/// Local asset identifier.
 	pub asset_id: LocalAssetId,
@@ -68,7 +82,9 @@ pub struct LocalAssetAmount {
 }
 
 /// Local asset identifier.  XXX TODO
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum LocalAssetId {
 	Native { denom: String },
 	Path { path: String },
@@ -83,7 +99,9 @@ impl LocalAssetId {
 }
 
 /// Response to asset deposit request.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DepositAssetsResponse {
 	/// Identifier of the deposit unique on given chain.
 	pub deposit_id: u128,
@@ -99,8 +117,9 @@ pub struct DepositAssetsResponse {
 /// Because this is a cross-chain request, its failure or success is delayed
 /// (by having to propagate the message) and user has to monitor the wallet
 /// contract to see the result.
-#[cw_serde]
-#[derive(Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct RelayRequest {
 	/// Wallet account this request affects.
 	pub account: String,

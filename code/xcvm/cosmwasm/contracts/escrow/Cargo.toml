@@ -16,11 +16,10 @@ library = []
 cosmwasm-schema.workspace = true
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
 cw-storage-plus.workspace = true
-cw-utils.workspace = true
+cw-utils = { workspace = true, features = ["std"] }
 cw2.workspace = true
 parity-scale-codec.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 
 xc-core = { path = "../../../lib/core", features = ["std"] }
-cw-xc-common = { path = "../common" }
