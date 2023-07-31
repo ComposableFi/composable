@@ -769,7 +769,7 @@ mod cross_chain {
 
 		// The relayer must obtain a successful ack on the destination, and nothing on the source
 		// after relaying the ack itself.
-		assert_eq!(relay_data, vec![Some(XCVMAck::OK.into()), None]);
+		assert_eq!(relay_data, vec![Some(XCVMAck::Ok.into()), None]);
 
 		// We don't dispatch any information in the data field.
 		assert_eq!(dispatch_data, None);

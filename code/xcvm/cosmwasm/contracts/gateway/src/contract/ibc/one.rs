@@ -112,9 +112,10 @@ pub fn ibc_packet_receive(
 		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
 	})();
 	Ok(match msg {
-		Ok(msg) => response.set_ack(XCVMAck::OK).add_submessage(msg),
-		Err(err) =>
-			response.add_event(make_ibc_failure_event(err.to_string())).set_ack(XCVMAck::KO),
+		Ok(msg) => response.set_ack(XCVMAck::Ok).add_submessage(msg),
+		Err(err) => response
+			.add_event(make_ibc_failure_event(err.to_string()))
+			.set_ack(XCVMAck::Fail),
 	})
 }
 
@@ -123,14 +124,7 @@ pub fn ibc_packet_ack(_deps: DepsMut, _env: Env, msg: IbcPacketAckMsg) -> Result
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
 	let _: XcPacket = decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
-	match ack {
-		// https://github.com/cosmos/ibc/pull/998
-		XCVMAck::OK => (),
-		XCVMAck::KO => (),
-		_ => return Err(ContractError::InvalidAck),
-	};
-	Ok(IbcBasicResponse::default()
-		.add_event(make_event("ack").add_attribute("ack", ack.value().to_string())))
+	Ok(IbcBasicResponse::default().add_event(make_event("ack").add_attribute("ack", ack)))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]

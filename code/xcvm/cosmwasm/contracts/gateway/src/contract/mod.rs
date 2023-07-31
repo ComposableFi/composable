@@ -70,8 +70,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response> {
 fn handle_exec_reply(msg: Reply) -> Result {
 	let (data, event) = match msg.result {
 		SubMsgResult::Ok(_) =>
-			(XCVMAck::OK, make_event("receive").add_attribute("result", "success")),
-		SubMsgResult::Err(err) => (XCVMAck::KO, make_ibc_failure_event(err.to_string())),
+			(XCVMAck::Ok, make_event("receive").add_attribute("result", "success")),
+		SubMsgResult::Err(err) => (XCVMAck::Fail, make_ibc_failure_event(err.to_string())),
 	};
 	Ok(Response::default().add_event(event).set_data(data))
 }

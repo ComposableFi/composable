@@ -1,34 +1,50 @@
 use crate::{Displayed, Funds, UserOrigin};
-use alloc::{vec, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Binary;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct XCVMAck(u8);
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum XCVMAck {
+	Ok,
+	Fail,
+}
 
 impl XCVMAck {
-	pub const KO: XCVMAck = XCVMAck(0);
-	pub const OK: XCVMAck = XCVMAck(1);
-	pub fn into_vec(self) -> Vec<u8> {
-		self.into()
+	fn into_byte(self) -> u8 {
+		match self {
+			Self::Ok => 0,
+			Self::Fail => 1,
+		}
 	}
-	pub fn value(self) -> u8 {
-		self.0
+
+	fn try_from_byte(value: u8) -> Result<Self, ()> {
+		match value {
+			0 => Ok(Self::Ok),
+			1 => Ok(Self::Fail),
+			_ => Err(()),
+		}
 	}
 }
 
 impl From<XCVMAck> for Binary {
 	fn from(value: XCVMAck) -> Self {
-		Binary::from(value.into_vec())
+		Binary::from(Vec::from(value))
 	}
 }
 
 impl From<XCVMAck> for Vec<u8> {
-	fn from(XCVMAck(x): XCVMAck) -> Self {
-		vec![x]
+	fn from(value: XCVMAck) -> Self {
+		[value.into_byte()].to_vec()
+	}
+}
+
+impl From<XCVMAck> for String {
+	fn from(ack: XCVMAck) -> Self {
+		let digit = [b'0' + ack.into_byte()];
+		// SAFETY: digit is always an ASCII digit
+		Self::from(unsafe { core::str::from_utf8_unchecked(&digit[..]) })
 	}
 }
 
@@ -36,8 +52,7 @@ impl TryFrom<&[u8]> for XCVMAck {
 	type Error = ();
 	fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
 		match value {
-			[0] => Ok(XCVMAck::KO),
-			[1] => Ok(XCVMAck::OK),
+			[byte] => Self::try_from_byte(*byte),
 			_ => Err(()),
 		}
 	}
