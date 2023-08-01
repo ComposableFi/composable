@@ -5,8 +5,8 @@
       mkXcvmContract = name:
         let
           binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
-          rustWithWasiTarget = pkgs.rust-bin.nightly.latest.default.override {
-            channel = "nightly-2023-01-10"; # Version 1.66.1 (2023-01-10)
+          # Version 1.66.1 (2023-01-10)
+          rustWithWasiTarget = pkgs.rust-bin.nightly."2023-01-10".default.override {
             targets = [ "wasm32-unknown-unknown" ];
           };
           craneLib =
