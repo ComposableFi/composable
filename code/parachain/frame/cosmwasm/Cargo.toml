@@ -37,6 +37,7 @@ frame-benchmarking = { default-features = false, workspace = true, optional = tr
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+vec1 = { version = "*", default-features = false, features = ["smallvec-v1"] }
 
 ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false, optional = false }

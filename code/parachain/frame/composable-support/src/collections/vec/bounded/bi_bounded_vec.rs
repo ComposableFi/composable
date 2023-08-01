@@ -55,6 +55,16 @@ pub enum BiBoundedVecOutOfBounds {
 	},
 }
 
+impl<T, const U: usize> BiBoundedVec<T, 1, U> {
+	pub fn new(first: T) -> Self {
+		BiBoundedVec::from_vec(vec![first]).expect("compile time verified")
+	}
+
+	pub fn first_mut(&mut self) -> &mut T {
+		self.inner.first_mut().expect("verified by compiler")
+	}
+}
+
 impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 	/// Creates new BiBoundedVec or returns error if items count is out of bounds
 	///

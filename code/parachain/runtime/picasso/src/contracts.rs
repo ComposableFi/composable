@@ -1,3 +1,5 @@
+use core::num::NonZeroU16;
+
 use crate::prelude::*;
 use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
@@ -36,10 +38,10 @@ parameter_types! {
 }
 
 impl cosmwasm::Config for Runtime {
+	const MAX_FRAMES: NonZeroU16 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = ConstU16<64>;
 	type MaxCodeSize = ConstU32<{ 1024 * 1024 }>;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = ConstU32<{ 64 * 1024 }>;

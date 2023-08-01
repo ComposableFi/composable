@@ -496,10 +496,10 @@ impl PalletHook<Test> for MockHook {
 }
 
 impl Config for Test {
+	const MAX_FRAMES: u16 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = MaxMessageSize;
