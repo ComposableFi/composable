@@ -1,5 +1,4 @@
 use crate::prelude::*;
-#[cfg(feature="ibc")]
 use ibc_rs_scale::applications::transfer::{BaseDenom, TracePath};
 use thiserror::Error;
 
@@ -7,17 +6,15 @@ use thiserror::Error;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum ForeignAssetId {
-	#[cfg(feature="ibc")]
 	IbcIcs20(PrefixedDenom),
 }
 
-#[cfg(feature="ibc")]
 impl From<PrefixedDenom> for ForeignAssetId {
 	fn from(this: PrefixedDenom) -> Self {
 		Self::IbcIcs20(this)
 	}
 }
-#[cfg(feature="ibc")]
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct PrefixedDenom {

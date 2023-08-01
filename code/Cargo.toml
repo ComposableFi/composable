@@ -134,7 +134,7 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173
 
 log = { version = "0.4.14", default-features = false }
 
-ibc-rs-scale = { package = "ibc", git = "https://github.com/dzmitry-lahoda-forks/ibc-rs.git", rev = "3589353927cef8a52f610d842bd0f5ab8a2e1a1e", default-features = false }
+ibc-rs-scale = { package = "ibc", git = "https://github.com/dzmitry-lahoda-forks/ibc-rs.git", rev = "67e99e4b7b7d2a0ac58abef7e4ab9d681cb12771", default-features = false }
 democracy = { package = "pallet-democracy", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 indices = { package = "pallet-indices", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
