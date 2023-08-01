@@ -118,7 +118,7 @@ impl Gas {
 	/// at the current checkpoint and if so creates a new checkpoint with
 	/// requested limit.
 	pub fn push(&mut self, checkpoint: VmGasCheckpoint) -> Result<GasOutcome, TooManyCheckpoints> {
-		if self.checkpoints.len() == self.checkpoints.capacity() {
+		if self.checkpoints.len() >= self.checkpoints.capacity() {
 			return Err(TooManyCheckpoints)
 		}
 		let parent = self.current_mut();
