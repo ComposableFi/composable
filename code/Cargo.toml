@@ -42,6 +42,8 @@ members = [
   "utils/collator-sidecar",
   "utils/price-feed",
   "xcvm/lib/core/",
+  "xcvm/cosmwasm/contracts/accounts",
+  "xcvm/cosmwasm/contracts/escrow",
   "xcvm/cosmwasm/contracts/gateway",
   "xcvm/cosmwasm/contracts/interpreter",
   "xcvm/cosmwasm/contracts/pingpong",
@@ -356,10 +358,12 @@ cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "45
 cw20 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false, features = ["std"]}
 cw20-base = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", features = ["library"]}
 
+derive_more = { version = "0.99.17", default-features = false }
 hex = { version = "0.4.3", default-features = false, features = [
   "alloc",
   "serde",
 ] }
+strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
   "iterator",
