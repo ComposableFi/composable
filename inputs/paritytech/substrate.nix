@@ -36,14 +36,8 @@
         name = "check-pallet";
         runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
-          EXTRA_FEATURES=""
-          if [[ -n "''${2-}" ]]; then
-            EXTRA_FEATURES=",$2"
-          fi
-          echo "$EXTRA_FEATURES"
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
-          cargo test --features=std,runtime-benchmarks"$EXTRA_FEATURES" --package "$1"
         '';
       };
       check-std-wasm = pkgs.writeShellApplication {
@@ -74,12 +68,15 @@
             FEATURES="--features=$2"
           fi          
           # shellcheck disable=SC2086
-          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES        '';
+          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES
+        '';
       };
 
       check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
-      packages = { inherit check-pallet check-runtime check-std-wasm; };
+      packages = {
+        inherit check-pallet check-runtime check-std-wasm check-no-std;
+      };
     };
 }

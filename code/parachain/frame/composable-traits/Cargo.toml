@@ -29,7 +29,6 @@ plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-serde = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
 
 cosmwasm-std = { workspace = true, default-features = false, features = [
@@ -38,10 +37,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-serde_json = { workspace = true, default-features = false, features = [
-  "alloc",
-] }
-
+serde = { workspace = true, default-features = false, features = ["alloc"]}
 
 sha2 = { workspace = true, default-features = false }
 
@@ -51,8 +47,6 @@ cosmwasm-schema = { workspace = true, default-features = false, optional = true}
 
 thiserror = { workspace = true, default-features = false }
 
-[dev-dependencies]
-proptest = { version = "1.0.0" }
 
 [dependencies.codec]
 default-features = false
@@ -60,29 +54,32 @@ features = ["derive"]
 package = "parity-scale-codec"
 version = "3.0.0"
 
+[dev-dependencies]
+proptest = { version = "1.0.0" }
+
 [features]
-default = ["std"]
+default = ["std", "centauri"]
 std = [
   "codec/std",
   "composable-support/std",
+  "cosmwasm-schema",
+  "cosmwasm-std/std",
   "frame-support/std",
   "frame-system/std",
-  "serde_json/std",
+  "pallet-ibc/std",
   "polkadot-parachain/std",
   "proxy/std",
   "scale-info/std",
+  "schemars",
   "sp-core/std",
   "sp-runtime/std",
   "sp-std/std",
-  "xcm/std",
   "xc-core/std",
-  "cosmwasm-std/std",
-  "pallet-ibc/std",
-  "cosmwasm-schema",
-  "schemars",
+  "xcm/std",
 ]
 test-utils = []
 visualization = ["plotters"]
+centauri = []
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["plotters"]

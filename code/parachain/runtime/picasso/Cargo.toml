@@ -134,9 +134,10 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
-pallet-ibc-ping = { workspace = true, default-features = false }
 
 invarch-xcm-builder = { workspace = true, default-features = false }
+
+serde-json-wasm = { workspace = true, default-features = false }
 
 cosmwasm-vm = { workspace = true, default-features = false, features = [
   "ibc3",
@@ -147,8 +148,6 @@ cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
   "iterator",
   "stargate",
 ] }
-
-serde_json = { workspace = true, default-features = false }
 
 [features]
 builtin-wasm = []
@@ -249,6 +248,7 @@ std = [
   "pablo-runtime-api/std",
   "pablo/std",
   "pallet-ibc/std",
+  "pallet-multihop-xcm-ibc/std",
   "parachain-info/std",
   "preimage/std",
   "primitives/std",
@@ -257,6 +257,7 @@ std = [
   "reward/std",
   "scale-info/std",
   "scheduler/std",
+  "serde-json-wasm/std",
   "session/std",
   "sp-api/std",
   "sp-block-builder/std",
@@ -280,5 +281,4 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
-  "pallet-multihop-xcm-ibc/std",
 ]

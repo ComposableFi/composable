@@ -200,8 +200,8 @@ pub fn interpret_call(
 	instruction_pointer: u16,
 	tip: &Addr,
 ) -> Result {
-	// We don't know the type of the payload, so we use `serde_json::Value`
-	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_json::Value> = if !bindings
+	// we hacky using json, but we always know ABI encoding dependng on chain we run on send to
+	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_cw_value::Value> = if !bindings
 		.is_empty()
 	{
 		let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
@@ -267,7 +267,6 @@ pub fn interpret_call(
 		serde_json_wasm::from_slice(&formatted_call)
 			.map_err(|_| ContractError::InvalidCallPayload)?
 	} else {
-		// We don't have any binding, just deserialize the data
 		serde_json_wasm::from_slice(&payload).map_err(|_| ContractError::InvalidCallPayload)?
 	};
 

@@ -109,7 +109,7 @@ impl Gas {
 	}
 
 	fn current_mut(&mut self) -> &mut u64 {
-		self.checkpoints.last_mut().unwrap()
+		self.checkpoints.last_mut().expect("account by external caller")
 	}
 
 	/// Pushes a new gas checkpoint.
@@ -148,7 +148,7 @@ impl Gas {
 		if self.checkpoints.len() < 2 {
 			return Err(NoCheckpointToPop)
 		}
-		let child = self.checkpoints.pop().unwrap();
+		let child = self.checkpoints.pop().expect("account by external caller");
 		let parent = self.current_mut();
 		*parent += child;
 		Ok(())

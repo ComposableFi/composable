@@ -443,7 +443,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
-		let message = ibc_to_cw_channel_open::<T>(
+		let message = ibc_to_cw_channel_open(
 			channel_id,
 			port_id,
 			counterparty,
@@ -475,7 +475,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<IbcVersion, IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
-		let message = ibc_open_try_to_cw_open::<T>(
+		let message = ibc_open_try_to_cw_open(
 			channel_id,
 			port_id,
 			counterparty,
