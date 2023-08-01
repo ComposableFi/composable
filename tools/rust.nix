@@ -4,6 +4,16 @@
     let
       rust-toolchain =
         pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
+      cargo-no-std-check = pname:
+        crane.nightly.cargoBuild (systemCommonRust.common-attrs // {
+          cargoArtifacts = self'.packages.common-deps-nightly;
+          buildPhase = ''
+            cargo check --no-default-features --target wasm32-unknown-unknown --package ${pname} 
+            cargo clippy --package ${pname} -- --deny warnings --allow deprecated
+          '';
+          installPhase = "mkdir --parents $out";
+        });
+
     in {
       _module.args.crane = rec {
         lib = self.inputs.crane.mkLib pkgs;
@@ -35,6 +45,10 @@
           buildPhaseCargoCommand =
             "cargo-deny --manifest-path ./parachain/frame/composable-support/Cargo.toml check bans";
         };
+
+        cargo-no-std-core-check = cargo-no-std-check "composable-traits";
+        cargo-no-std-cosmwasm = cargo-no-std-check "pallet-cosmwasm";
+        cargo-no-std-xcm-ibc = cargo-no-std-check "pallet-multihop-xcm-ibc";
 
         cargo-udeps-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {

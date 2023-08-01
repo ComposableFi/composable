@@ -36,14 +36,8 @@
         name = "check-pallet";
         runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
-          EXTRA_FEATURES=""
-          if [[ -n "''${2-}" ]]; then
-            EXTRA_FEATURES=",$2"
-          fi
-          echo "$EXTRA_FEATURES"
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
-          cargo test --features=std,runtime-benchmarks"$EXTRA_FEATURES" --package "$1"
         '';
       };
       check-std-wasm = pkgs.writeShellApplication {

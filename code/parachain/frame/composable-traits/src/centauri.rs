@@ -14,7 +14,7 @@ impl Map {
 			channel: value.channel.map(|x| x.to_string()),
 			timeout: value.timeout,
 			retries: value.retries.map(Into::into),
-			para_id: value.substrate.map(|x| x.para_id).flatten(),
+			para_id: value.substrate.and_then(|x| x.para_id),
 			substrate: value.substrate.map(|_| true),
 			next,
 		};
