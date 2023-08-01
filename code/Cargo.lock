@@ -3349,8 +3349,8 @@ dependencies = [
  "num",
  "schemars",
  "serde",
+ "serde-cw-value",
  "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
- "serde_json",
  "thiserror-core",
  "xc-core",
 ]
@@ -14810,6 +14810,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e91f70896d6720bc714a4a57d22fc91f1db634680e65c8efe13323f1fa38d53f"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-cw-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

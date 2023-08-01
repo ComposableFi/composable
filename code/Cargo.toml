@@ -352,6 +352,7 @@ cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc4
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
+serde-cw-value = { version = "0.7.0", default-features = false }
 cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "d0a2cf126cae3e3960c787ebcfc9baa54f59f71c", default-features = false }
 cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false}
 cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false}

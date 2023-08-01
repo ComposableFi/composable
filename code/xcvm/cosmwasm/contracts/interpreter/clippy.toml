@@ -3,10 +3,7 @@ disallowed-types = [
     { path = "f64", resdason = "harware dependant" },
     { path = "f32", reason = "harware dependant" },
     { path = "num_traits::float::*", reason = "harware dependant" },
-    { path = "serde_json::to_string", reason = "use serde_json_wasm::*" },
-    { path = "serde_json::to_vec", reason = "use serde_json_wasm::*" },
-    { path = "serde_json::from_str", reason = "use serde_json_wasm::*" },
-    { path = "serde_json::from_slice", reason = "use serde_json_wasm::*" },
+    { path = "serde_json::to_string", reason = "use serde_json_wasm::* and serde_cw_value::*" },
 ]
 
 disallowed-methods = [
