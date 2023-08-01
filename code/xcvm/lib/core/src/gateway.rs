@@ -1,11 +1,16 @@
 //! we do not care modifying assets nor metadata, it is up to source chain to handle
 
-use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{location::ForeignAssetId, prelude::*, IbcIcs20Sender};
 
-use crate::{
-	ibc::Ics20MessageHook, AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
+
+#[cfg(feature="ibc")]
+use crate::ibc::Ics20MessageHook;
+#[cfg(feature="ibc")]
+use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
+
+use crate::{	
+	 AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin, NetworkId,
 };
 
 /// Prefix used for all events attached to gateway responses.
@@ -37,6 +42,7 @@ pub struct MigrateMsg {}
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum ExecuteMsg {
+	#[cfg(feature="ibc")]
 	IbcSetNetworkChannel {
 		from: NetworkId,
 		to: NetworkId,
@@ -76,6 +82,7 @@ pub enum ExecuteMsg {
 		asset_id: AssetId,
 	},
 
+	#[cfg(feature="ibc")]
 	Ics20MessageHook(Ics20MessageHook),
 }
 

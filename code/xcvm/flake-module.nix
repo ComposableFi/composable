@@ -2,19 +2,40 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
+
+        #    in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        #   src = systemCommonRust.rustSrc;
+        #   version = "0.1";
+        #   pnameSuffix = "-${name}";
+        #   pname = name;
+        #   cargoBuildCommand =
+        #     "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
+        #   RUSTFLAGS = "-C link-arg=-s";
+        #   nativeBuildInputs = [ pkgs.binaryen ];
+        #   installPhaseCommand = ''
+        #     mkdir --parents $out/lib
+        #     # --signext-lowering is needed to support blockchains runnning CosmWasm < 1.3. It can be removed eventually
+        #     wasm-opt target/wasm32-unknown-unknown/cosmwasm-contracts/${binaryName} -o $out/lib/${binaryName} -Os --signext-lowering
+        #   '';
+        # });
+
       mkXcvmContract = name:
         let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
         in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           src = systemCommonRust.rustSrc;
           version = "0.1";
           pnameSuffix = "-${name}";
+          nativeBuildInputs = [ pkgs.binaryen self.inputs.cosmos.packages.${system}.cosmwasm-check];
           pname = name;
           cargoBuildCommand =
             "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
           RUSTFLAGS = "-C link-arg=-s";
           installPhaseCommand = ''
-            mkdir -p $out/lib
-            mv target/wasm32-unknown-unknown/cosmwasm-contracts/${binaryName} $out/lib/${binaryName}
+            mkdir --parents $out/lib
+            # from CosmWasm/rust-optimizer
+            # --signext-lowering is needed to support blockchains runnning CosmWasm < 1.3. It can be removed eventually
+            wasm-opt target/wasm32-unknown-unknown/cosmwasm-contracts/${binaryName} -o $out/lib/${binaryName} -Os --signext-lowering
+            cosmwasm-check $out/lib/${binaryName}
           '';
         });
     in {

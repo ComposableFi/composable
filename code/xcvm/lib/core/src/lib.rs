@@ -6,10 +6,12 @@ extern crate alloc;
 mod abstraction;
 mod asset;
 mod bridge;
+#[cfg(feature="cosmos")]
 pub mod cosmos;
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm;
 pub mod gateway;
+#[cfg(feature="ibc")]
 pub mod ibc;
 mod instruction;
 pub mod location;
