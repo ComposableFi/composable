@@ -163,7 +163,7 @@ impl Gas {
 	}
 
 	pub fn remaining(&self) -> u64 {
-		// oh, this PANICS !!!
+		// always less than `initial_value`, it will not panic
 		self.checkpoints.iter().sum()
 	}
 }
