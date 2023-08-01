@@ -2068,7 +2068,6 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde_json",
  "sha2 0.10.7",
  "sp-arithmetic",
  "sp-core",
@@ -14815,8 +14814,7 @@ dependencies = [
 [[package]]
 name = "serde-cw-value"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
+source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=fe16466caee886908645de5a8e0518dbac6d98df#fe16466caee886908645de5a8e0518dbac6d98df"
 dependencies = [
  "serde",
 ]

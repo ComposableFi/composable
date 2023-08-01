@@ -74,12 +74,15 @@
             FEATURES="--features=$2"
           fi          
           # shellcheck disable=SC2086
-          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES        '';
+          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES
+        '';
       };
 
       check-runtime = check-pallet;
     in {
       _module.args.subnix = rec { inherit subenv subattrs; };
-      packages = { inherit check-pallet check-runtime check-std-wasm; };
+      packages = {
+        inherit check-pallet check-runtime check-std-wasm check-no-std;
+      };
     };
 }
