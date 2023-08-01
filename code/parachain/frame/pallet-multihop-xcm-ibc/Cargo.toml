@@ -23,7 +23,7 @@ version = "3.0.0"
 bech32-no_std = { workspace = true, default-features = false, features = [
   "strict",
 ] }
-composable-traits = { path = "../composable-traits", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false, features = ["centauri"]}
 xc-core = { path = "../../../xcvm/lib/core", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
@@ -44,10 +44,6 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
-serde = { version = "1.0.136", features = ["derive"], optional = true }
-serde_json = { workspace = true, default-features = false, features = [
-  "alloc",
-] }
 orml-xtokens = { workspace = true, default-features = false }
 
 ibc-rs-scale = { workspace = true, default-features = false, features = [
@@ -77,7 +73,6 @@ std = [
   "pallet-ibc/std",
   "primitives/std",
   "scale-info/std",
-  "serde",
   "sp-core/std",
   "sp-io/std",
   "sp-runtime/std",

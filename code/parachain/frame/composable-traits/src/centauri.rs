@@ -1,8 +1,8 @@
 //! mapping of proper CW/Cosmos enabled types to Centauri
 
 use crate::prelude::*;
-use xc_core::ibc::ics20::MemoData;
 
+use xc_core::ibc::ics20::MemoData;
 pub struct Map;
 impl Map {
 	pub fn from_cw(mut value: MemoData) -> pallet_ibc::ics20::MemoData {
@@ -14,7 +14,7 @@ impl Map {
 			channel: value.channel.map(|x| x.to_string()),
 			timeout: value.timeout,
 			retries: value.retries.map(Into::into),
-			para_id: value.substrate.map(|x| x.para_id).flatten(),
+			para_id: value.substrate.and_then(|x| x.para_id),
 			substrate: value.substrate.map(|_| true),
 			next,
 		};

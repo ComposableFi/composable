@@ -38,7 +38,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
 ] }
 
 serde = { workspace = true, default-features = false }
-#serde-json-wasm = { workspace = true, default-features = false}
+serde-json-wasm = { workspace = true, default-features = false}
 
 sha2 = { workspace = true, default-features = false }
 
@@ -58,7 +58,7 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [features]
-default = ["std"]
+default = ["std", "centauri"]
 std = [
   "codec/std",
   "composable-support/std",
@@ -79,6 +79,7 @@ std = [
 ]
 test-utils = []
 visualization = ["plotters"]
+centauri = []
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["plotters"]
