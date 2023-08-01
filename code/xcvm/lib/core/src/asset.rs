@@ -99,10 +99,10 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 ///     value: Displayed<u64>
 /// }
 ///
-/// let encoded = serde_json::to_string(&Foo { value: Displayed(42) }).unwrap();
+/// let encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap();
 /// assert_eq!(r#"{"value":"42"}"#, encoded);
 ///
-/// let decoded = serde_json::from_str::<Foo>(r#"{"value":"42"}"#).unwrap();
+/// let decoded = serde_json_wasm::from_str::<Foo>(r#"{"value":"42"}"#).unwrap();
 /// assert_eq!(Displayed(42), decoded.value);
 /// ```
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
