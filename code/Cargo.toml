@@ -59,14 +59,17 @@ inherits = "release"
 lto = true
 
 [profile.cosmwasm-contracts]
-codegen-units = 1
+inherits = "release"
+codegen-units = 16 # 1
+lto = true # false
 debug = false
 debug-assertions = false
-inherits = "production"
-opt-level = "s"
+opt-level = 1 #"s"
 overflow-checks = true
 panic = "abort"
 rpath = false
+soft-float = true
+
 
 
 [workspace.dependencies]
