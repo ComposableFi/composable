@@ -61,14 +61,14 @@ lto = true
 [profile.cosmwasm-contracts]
 inherits = "release"
 codegen-units = 16 # 1
-lto = true # false
+lto = false # false
 debug = false
 debug-assertions = false
-opt-level = 1 #"s"
+opt-level = 0 #"s"
 overflow-checks = true
 panic = "abort"
 rpath = false
-soft-float = true
+soft-float = false
 
 
 

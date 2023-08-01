@@ -17,22 +17,25 @@ scale-info = { workspace = true, features = ["derive"] }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, features = ["alloc"] }
 serde_json = { workspace = true }
-bech32-no_std = { workspace = true, features = ["strict"] }
+#bech32-no_std = { workspace = true, features = ["strict"] }
 sha2 = { workspace = true }
 #ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"], optional = true}
 thiserror = { workspace = true }
-cosmwasm-schema = { workspace = true, optional = true}
+#cosmwasm-schema = { workspace = true, optional = true}
 
 [build-dependencies]
 prost-build = { workspace = true }
 
 [features]
 default = ["std"]
-cosmwasm = ["cw-storage-plus"]
+cosmwasm = [
+  "cw-storage-plus"
+  ]
+cosmos = []
 #ibc = ["ibc-rs-scale"]
 std = [
-  "dep:schemars",
-  "dep:cosmwasm-schema",
+  #"dep:schemars",
+  #"dep:cosmwasm-schema",
   "cosmwasm-std/std",
   #"ibc-rs-scale/std",
   #"ibc-rs-scale/schema",
