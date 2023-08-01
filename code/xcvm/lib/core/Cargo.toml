@@ -23,7 +23,7 @@ sha2 = { workspace = true }
 ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
 thiserror = { workspace = true }
 cosmwasm-schema = { workspace = true, optional = true }
-serde-json-wasm = { workspace = true }
+serde-json-wasm = { workspace = true, default-features = false }
 
 [build-dependencies]
 prost-build = { workspace = true }
@@ -32,10 +32,11 @@ prost-build = { workspace = true }
 default = ["std"]
 cosmwasm = ["cw-storage-plus"]
 std = [
-  "dep:schemars",
-  "dep:cosmwasm-schema",
   "cosmwasm-std/std",
-  "ibc-rs-scale/std",
-  "ibc-rs-scale/schema",
   "cw-storage-plus/std",
+  "dep:cosmwasm-schema",
+  "dep:schemars",
+  "ibc-rs-scale/schema",
+  "ibc-rs-scale/std",
+  "serde-json-wasm/std",
 ]
