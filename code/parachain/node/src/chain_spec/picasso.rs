@@ -31,10 +31,7 @@ pub fn genesis_config(
 		contracts.push(contract);
 	}
 	if let Some(_contract) = option_env!("CW_XC_INTERPRETER_WASM_PATH") {
-		// not sure what is going on, but it is weird
-		// Thread 'main' panicked at 'contracts in genesis are valid: Module(ModuleError { index:
-		// 180, error: [4, 0, 0, 0], message: Some("CodeValidation") })',
-		// /build/source/parachain/frame/cosmwasm/src/lib.rs:406 contracts.push(contract);
+		contracts.push(contract);
 	}
 
 	let contracts = contracts
