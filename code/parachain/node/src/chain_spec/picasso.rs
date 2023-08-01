@@ -30,7 +30,7 @@ pub fn genesis_config(
 	if let Some(contract) = option_env!("CW_XC_GATEWAY_WASM_PATH") {
 		contracts.push(contract);
 	}
-	if let Some(_contract) = option_env!("CW_XC_INTERPRETER_WASM_PATH") {
+	if let Some(contract) = option_env!("CW_XC_INTERPRETER_WASM_PATH") {
 		contracts.push(contract);
 	}
 

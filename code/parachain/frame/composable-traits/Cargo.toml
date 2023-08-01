@@ -37,8 +37,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-serde = { workspace = true, default-features = false }
-serde-json-wasm = { workspace = true, default-features = false}
+serde = { workspace = true, default-features = false, features = ["alloc"]}
 
 sha2 = { workspace = true, default-features = false }
 
@@ -48,14 +47,15 @@ cosmwasm-schema = { workspace = true, default-features = false, optional = true}
 
 thiserror = { workspace = true, default-features = false }
 
-[dev-dependencies]
-proptest = { version = "1.0.0" }
 
 [dependencies.codec]
 default-features = false
 features = ["derive"]
 package = "parity-scale-codec"
 version = "3.0.0"
+
+[dev-dependencies]
+proptest = { version = "1.0.0" }
 
 [features]
 default = ["std", "centauri"]

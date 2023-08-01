@@ -901,7 +901,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -924,7 +924,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more",
@@ -1787,7 +1787,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "smallvec 1.11.0",
  "sp-consensus-aura",
  "sp-core",
@@ -2068,7 +2068,6 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "sha2 0.10.7",
  "sp-arithmetic",
  "sp-core",
@@ -2345,7 +2344,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "sha2 0.10.7",
  "thiserror-core",
  "uint",
@@ -3332,7 +3331,7 @@ dependencies = [
  "ibc 0.43.1",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "thiserror-core",
  "xc-core",
 ]
@@ -3350,7 +3349,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-cw-value",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "thiserror-core",
  "xc-core",
 ]
@@ -3367,7 +3366,7 @@ dependencies = [
  "num",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "serde_json",
  "thiserror-core",
  "xc-core",
@@ -5056,7 +5055,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5078,7 +5077,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5516,7 +5515,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "derive_more",
  "flex-error",
@@ -5545,7 +5544,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.43.1"
-source = "git+https://github.com/dzmitry-lahoda-forks/ibc-rs.git?rev=67e99e4b7b7d2a0ac58abef7e4ab9d681cb12771#67e99e4b7b7d2a0ac58abef7e4ab9d681cb12771"
+source = "git+https://github.com/dzmitry-lahoda-forks/ibc-rs.git?rev=c305fb9a7f3750e6daa0d9aefa84d53d64cd4fee#c305fb9a7f3750e6daa0d9aefa84d53d64cd4fee"
 dependencies = [
  "bytes 1.4.0",
  "derive_more",
@@ -5561,7 +5560,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde-json-wasm",
  "serde_derive",
  "sha2 0.10.7",
  "subtle-encoding",
@@ -5576,7 +5575,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5600,7 +5599,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "base58",
  "blake2",
@@ -5624,7 +5623,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5653,7 +5652,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5680,7 +5679,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5692,7 +5691,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5714,7 +5713,7 @@ dependencies = [
 [[package]]
 name = "ics08-wasm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "hex",
  "ibc 0.15.0",
@@ -5726,7 +5725,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -5752,7 +5751,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -7214,7 +7213,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9193,7 +9192,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -9246,7 +9245,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10559,7 +10558,6 @@ dependencies = [
  "pallet-democracy",
  "pallet-governance-registry",
  "pallet-ibc",
- "pallet-ibc-ping",
  "pallet-identity",
  "pallet-indices",
  "pallet-membership",
@@ -10586,7 +10584,7 @@ dependencies = [
  "reward",
  "reward-rpc-runtime-api",
  "scale-info",
- "serde_json",
+ "serde-json-wasm",
  "smallvec 1.11.0",
  "sp-api",
  "sp-block-builder",
@@ -12065,7 +12063,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -14821,15 +14819,6 @@ dependencies = [
 [[package]]
 name = "serde-json-wasm"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16a62a1fad1e1828b24acac8f2b468971dade7b8c3c2e672bcadefefb1f8c137"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-json-wasm"
-version = "0.5.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
 dependencies = [
  "serde",
@@ -15109,7 +15098,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fd0a4911d86a531513547bbcc1f98df0a276fa79#fd0a4911d86a531513547bbcc1f98df0a276fa79"
+source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.10.0",
@@ -19217,7 +19206,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "sha2 0.10.7",
  "strum 0.25.0",
  "thiserror-core",
