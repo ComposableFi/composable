@@ -16,7 +16,6 @@
           cargoBuildCommand =
             "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
           RUSTFLAGS = "-C link-arg=-s";
-          nativeBuildInputs = [ pkgs.binaryen ];
           installPhaseCommand = ''
             mkdir --parents $out/lib
             # from CosmWasm/rust-optimizer

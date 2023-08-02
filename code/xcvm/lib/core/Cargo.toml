@@ -6,25 +6,25 @@ name = "xc-core"
 version = "0.1.0"
 
 [dependencies]
-bech32-no_std = { workspace = true, features = ["strict"] }
-cosmwasm-schema = { workspace = true, optional = true }
-cosmwasm-std = { workspace = true, features = ["ibc3"] }
-cw-storage-plus = { workspace = true, optional = true }
-cw20 = { workspace = true, optional = true }
-derive_more.workspace = true
-fixed = { workspace = true }
-hex = { workspace = true, features = ["alloc"] }
-ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
-num = { workspace = true }
-parity-scale-codec = { workspace = true }
-prost = { workspace = true, features = ["prost-derive"] }
-scale-info = { workspace = true, features = ["derive"] }
-schemars = { workspace = true, optional = true }
-serde = { workspace = true, features = ["alloc"] }
+bech32-no_std = { workspace = true, features = ["strict"], default-features = false }
+cosmwasm-schema = { workspace = true, optional = true, default-features = false}
+cosmwasm-std = { workspace = true, features = ["ibc3"], default-features = false}
+cw-storage-plus = { workspace = true, optional = true, default-features = false }
+cw20 = { workspace = true, optional = true, default-features = false}
+derive_more = {workspace = true, default-features = false}
+fixed = { workspace = true, default-features = false }
+hex = { workspace = true, features = ["alloc"], default-features = false}
+ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"], default-features = false}
+num = { workspace = true, default-features = false}
+parity-scale-codec = { workspace = true, default-features = false}
+prost = { workspace = true, features = ["prost-derive"], default-features = false}
+scale-info = { workspace = true, features = ["derive"], default-features = false}
+schemars = { workspace = true, optional = true, default-features = false}
+serde = { workspace = true, features = ["alloc"], default-features = false}
 serde-json-wasm = { workspace = true, default-features = false }
-sha2 = { workspace = true }
-strum.workspace = true
-thiserror = { workspace = true }
+sha2 = { workspace = true, default-features = false  }
+strum = { workspace = true, default-features = false }
+thiserror = { workspace = true, default-features = false  }
 serde-cw-value = { workspace = true, default-features = false}
 ibc-proto = { workspace = true, default-features = false, features = ["serde", "parity-scale-codec"]}
 
@@ -36,13 +36,12 @@ default = ["std"]
 cosmwasm = ["cw-storage-plus", "cw20"]
 std = [
   "cosmwasm-std/std",
-  "ibc-rs-scale/std",
-  "ibc-rs-scale/schema",
-  "serde-cw-value/schema",
   "cw-storage-plus/std",
   "dep:cosmwasm-schema",
   "dep:schemars",
+  "ibc-proto/std",
   "ibc-rs-scale/schema",
   "ibc-rs-scale/std",
+  "serde-cw-value/schema",
   "serde-json-wasm/std",
 ]

@@ -113,7 +113,7 @@ pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdRes
 			.into())
 		},
 
-		IbcIcs20Sender::CosmWasmStd_1_3 =>
+		IbcIcs20Sender::CosmWasmStd1_3 =>
 			Err(cosmwasm_std::StdError::GenericErr { msg: "NotSupported".to_string() }),
 	}
 }
@@ -135,5 +135,5 @@ pub struct ChannelInfo {
 pub enum IbcIcs20Sender {
 	SubstratePrecompile(Addr),
 	OsmosisModule,
-	CosmWasmStd_1_3,
+	CosmWasmStd1_3,
 }

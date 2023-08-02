@@ -14839,6 +14839,7 @@ name = "serde-cw-value"
 version = "0.7.0"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=fe16466caee886908645de5a8e0518dbac6d98df#fe16466caee886908645de5a8e0518dbac6d98df"
 dependencies = [
+ "schemars",
  "serde",
 ]
 
@@ -19226,6 +19227,7 @@ dependencies = [
  "fixed",
  "hex",
  "ibc 0.43.1",
+ "ibc-proto 0.32.0",
  "num",
  "parity-scale-codec",
  "prost",
@@ -19233,6 +19235,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "serde-cw-value",
  "serde-json-wasm",
  "sha2 0.10.7",
  "strum 0.25.0",
