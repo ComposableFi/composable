@@ -38,7 +38,7 @@ parameter_types! {
 }
 
 impl cosmwasm::Config for Runtime {
-	const MAX_FRAMES: u16 = 64;
+	const MAX_FRAMES: NonZeroU16 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
