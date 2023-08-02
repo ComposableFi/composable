@@ -10,7 +10,7 @@ use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{
-	gateway::{AssetItem, ConfigSubMsg, NetworkItem},
+	gateway::{AssetItem, ConfigSubMsg, HereItem, NetworkItem},
 	shared::{DefaultXCVMProgram, Salt},
 	AssetId, Funds, Network, NetworkId,
 };
@@ -127,14 +127,7 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin.info.clone(),
 			gas,
-			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceNetwork(NetworkItem {
-				id: vm_counterparty.network_id,
-				gateway_to_send_to: todo!(),
-				prefix: todo!(),
-				interpreter_code_id: todo!(),
-				admin: todo!(),
-				ibc: todo!(),
-			})),
+			todo!(),
 		)?;
 		TestApi::execute(
 			&mut vm_counterparty.vm_state,
@@ -147,14 +140,7 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin_counterparty.info.clone(),
 			gas,
-			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceNetwork(NetworkItem {
-				id: vm_counterparty.network_id,
-				gateway_to_send_to: todo!(),
-				prefix: todo!(),
-				interpreter_code_id: todo!(),
-				admin: todo!(),
-				ibc: todo!(),
-			})),
+			todo!(),
 		)?;
 		Ok(Self { channel_id: channel_id.into(), handshake })
 	}
@@ -236,7 +222,10 @@ impl TestVM<()> {
 				tx.transaction,
 				tx.info.clone(),
 				tx.gas,
-				xc_core::gateway::InstantiateMsg { this: self.network_id },
+				xc_core::gateway::InstantiateMsg(HereItem {
+					here_id: self.network_id,
+					admin: todo!(),
+				}),
 			)?;
 		Ok((
 			TestVM {
@@ -285,7 +274,7 @@ impl<T> TestVM<XCVMState<T>> {
 			tx.gas,
 			xc_core::gateway::ExecuteMsg::Config(
 				(ConfigSubMsg::ForceAsset(AssetItem {
-					id: asset_id,
+					asset_id,
 					from_network_id: todo!("restore"),
 					local: xc_core::gateway::AssetReference::Virtual {
 						cw20_address: asset_address.clone().into(),
