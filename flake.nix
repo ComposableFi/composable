@@ -99,6 +99,7 @@
         ./flake/ibc.nix
         ./flake/live.nix
         ./flake/osmosis.nix
+        ./flake/cosmos.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix

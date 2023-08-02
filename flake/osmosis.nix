@@ -157,64 +157,62 @@
             export HOME
             OSMOSIS_DATA="$HOME/.osmosisd"             
             KEYRING_TEST=$OSMOSIS_DATA
-            BLOCK_SECONDS=5
             CHAIN_ID="osmosis-dev"            
 
-
-            # 1. gateway and interpreter contracts 
             # 2. config need centauri, osmo to centauri connection, pica token, osmo token 
 
-            #osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
+            #BLOCK_SECONDS=5
+            # #osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
             GATEWAY_CODE_ID=1
             
-            sleep $BLOCK_SECONDS
-            #osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
+            # sleep $BLOCK_SECONDS
+            # #osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
             INTERPRETER_CODE_ID=2
 
             
-            sleep $BLOCK_SECONDS
-            #osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
-            CW20_BASE_CODE_ID=3
+            # sleep $BLOCK_SECONDS
+            # #osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
+            # CW20_BASE_CODE_ID=3
             
-            echo $INTERPRETER_CODE_ID         
-            echo $CW20_BASE_CODE_ID
-            osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID '{"admin" : "${validator-key}", "id" : 4}' "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --admin "${validator-key}"
-            #GATEWAY="osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj"
-            sleep $BLOCK_SECONDS
-            GATEWAY_CONTRACT_ADDRESS=$(osmosisd query wasm list-contract-by-code $GATEWAY_CODE_ID --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$OSMOSIS_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+            # echo $INTERPRETER_CODE_ID         
+            # echo $CW20_BASE_CODE_ID
+            # osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID '{"admin" : "${validator-key}", "id" : 4}' "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --admin "${validator-key}"
+            # #GATEWAY="osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj"
+            # sleep $BLOCK_SECONDS
+
+            GATEWAY_CONTRACT_ADDRESS=$(osmosisd query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$OSMOSIS_DATA" | dasel --read json '.contracts.[0]' --write yaml)
             echo "$GATEWAY_CONTRACT_ADDRESS"
             
-            # FORCE_NETWORK_OSMOSIS=$(cat << EOF
-            #   { 
-            #     "force_network" : 
-            #       { 
-            #         "id": 3,  
-            #         "interpreter_code_id" : "$INTERPRETER", 
-            #         "admin" : "${validator-key}",
-            #         "prefix" : {
-            #           "bech" : "osmo",
-            #         },
+            FORCE_NETWORK_OSMOSIS=$(cat << EOF
+              {
+                "config": {
+                    "force_network": {
+                      "id": 4,
+                      "interpreter_code_id": $INTERPRETER_CODE_ID,
+                      "admin": "${validator-key}",
+                      "prefix": {
+                          "bech": "osmo"
+                      },
+                      "gateway_to_send_to": {
+                          "cosm_wasm": "$GATEWAY_CONTRACT_ADDRESS"
+                      },
+                      "ibc": {
+                          "ics_20_sender": "OsmosisModule",                      
+                          "ics_20_features": {
+                            "pfm": {},
+                            "wasm_hooks": {
+                                "callback": true
+                            }
+                          }
+                      }
+                    }
+                }
+              }                                      
+            EOF
+            )
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
 
-            #         "gateway_to_send_to" : {
-            #           "cosm_wasm" : "$GATEWAY"
-            #         },
-            #         "ibc" : {
-            #           "ics_20_sender" : { 
-            #             "osmosis_module" : {
-            #             }
-            #           }
-            #           "ics_20_features": {
-            #             "pfm" : {},
-            #             "wasm_hooks" : {
-            #               "callback" : true,
-            #             }
-            #           }
-            #         }                    
-            #       }
-            #   }
-            # EOF
-            # )
-            # osmosisd tx wasm execute "${validator-key}" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"            
+            osmosisd query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$OSMOSIS_DATA"
           '';
         };
       };
