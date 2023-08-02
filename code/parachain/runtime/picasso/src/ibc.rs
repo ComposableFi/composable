@@ -33,7 +33,7 @@ pub struct IbcDenomToAssetIdConversion;
 impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
-	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+	fn from_denom_to_asset_id(denom: &core::primitive::str) -> Result<CurrencyId, Self::Error> {
 		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
 
@@ -74,7 +74,7 @@ parameter_types! {
 	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
 }
 
-use pallet_ibc::ics20::{IbcMemoHandler, IbcModule, Ics20RateLimiter};
+use pallet_ibc::ics20::{IbcMemoHandler, Ics20RateLimiter};
 
 pub struct ConstantAny;
 
@@ -177,7 +177,7 @@ impl pallet_ibc::Config for Runtime {
 	type WeightInfo = weights::pallet_ibc::WeightInfo<Self>;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type HandleMemo = IbcMemoHandler<xcvm_memo_processing::XcvmMemoHandle<(), Runtime>, Runtime>;
+	type HandleMemo = IbcMemoHandler<xcvm_memo_processing::XcvmMemoHandler<(), Runtime>, Runtime>;
 	type MemoMessage = alloc::string::String;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type Ics20RateLimiter = ConstantAny;
@@ -205,19 +205,22 @@ impl pallet_ibc::Config for Runtime {
 
 pub mod xcvm_memo_processing {
 	use super::*;
+	use pallet_ibc::ics20::HandleMemo;
+	use ::ibc::applications::transfer::error::Error as ICS20Error;
+	use ::ibc::core::ics04_channel::packet::Packet;
 
 	pub struct XcvmMemoHandler<H, T> {
 		pub inner: H,
-		pub _phantom: PhantomData<T>,
+		pub _phantom: core::marker::PhantomData<T>,
 	}
 	impl<T, H: HandleMemo<T>> HandleMemo<T> for XcvmMemoHandler<H, T>
 	where
-		T: Config + Send + Sync + pallet_timestamp::Config,
+		T: pallet_ibc::Config + Send + Sync ,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 		u128: From<T::AssetId>,
 	{
-		fn execute_memo(&self, packet: &Packet) -> Result<(), Ics20Error> {
+		fn execute_memo(&self, packet: &Packet) -> Result<(), ICS20Error> {
 			self.inner.execute_memo(packet)?;
 			// TODO: handle XCVM
 			Ok(())
@@ -226,7 +229,7 @@ pub mod xcvm_memo_processing {
 
 	impl<H: Default, T> Default for XcvmMemoHandler<H, T> {
 		fn default() -> Self {
-			Self { inner: H::default(), _phantom: PhantomData }
+			Self { inner: H::default(), _phantom: core::marker::PhantomData }
 		}
 	}
 }
