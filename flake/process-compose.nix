@@ -278,8 +278,6 @@
                 command = self'.packages.osmosis-centauri-hermes-init;
                 depends_on = {
                   "centauri-init".condition = "process_completed_successfully";
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
                   "osmosis".condition = "process_healthy";
                 };
                 log_location =

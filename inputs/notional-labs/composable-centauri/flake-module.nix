@@ -7,7 +7,7 @@
       validator-mnemonic =
         "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
       gov = {
-        account = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
+        account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
         voting_period = "20s";
         max_deposit_period = "10s";
       };

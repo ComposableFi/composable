@@ -343,7 +343,7 @@ pub mod pallet {
 
 			for (i, name, address) in list_chain_name_address {
 				let mut forward = if i.chain_hop == ChainHop::Xcm {
-					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
+					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(address));
 					ForwardingMemo::new_xcm_memo(memo_receiver, XcmHop::new(i.para_id))
 				} else {
 					let memo_receiver = if i.chain_hop == ChainHop::SubstrateIbc {
