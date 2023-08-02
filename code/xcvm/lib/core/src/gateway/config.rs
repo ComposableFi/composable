@@ -72,24 +72,33 @@ pub struct NetworkItem {
 	pub id: NetworkId,
 	/// something which will be receiver on other side
 	/// case of network has XCVM deployed as contract, account address is stored here
-	pub gateway_to_send_to: Option<GatewayId>,
-	/// Cosmos bech32 prefix per network,
-	/// if there is prefix chain accounts are Cosmos SDK compatible chain
-	pub prefix: Option<Prefix>,
-	/// Address of the XCVM interpreter contract code
-	pub interpreter_code_id: u64,
+	pub gateway: Option<GatewayId>,
+	/// Account encoding type
+	pub accounts: Option<Prefix>,
 	pub ibc: Option<IbcEnabled>,
-	/// The admin which is allowed to update the bridge list.
-	pub admin: Addr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Ics20Channel {
+	/// specific per chain way to send IBC ICS 20 assets
+	pub sender: IbcIcs20Sender,
+	pub features: Option<Ics20Features>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct IbcChannels {
+	pub ics20: Option<Ics20Channel>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct IbcEnabled {
-	/// specific per chain way to send IBC ICS 20 assets
-	pub ics_20_sender: Option<IbcIcs20Sender>,
-	pub ics_20_features: Option<Ics20Features>,
+	pub channels: Option<IbcChannels>,
 }
 
 /// we need both, so we can unwrap
@@ -156,7 +165,13 @@ pub struct HereItem {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum GatewayId {
-	CosmWasm(Addr),
+	CosmWasm {
+		contract: Addr,
+		/// Address of the XCVM interpreter contract code
+		interpreter_code_id: u64,
+		/// admin of everything
+		admin: Addr,
+	},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

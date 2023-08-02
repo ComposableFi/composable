@@ -85,13 +85,15 @@ pub fn get_route(
 	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK.load(storage, (this.id, to))?;
 	let asset: AssetItem = state::assets::ASSETS.load(storage, asset_id)?;
 	let to_asset: AssetId = state::assets::NETWORK_ASSET.load(storage, (asset_id, to))?;
-	let gateway_to_send_to = other.gateway_to_send_to.ok_or(ContractError::UnsupportedNetwork)?;
+	let gateway_to_send_to = other.gateway.ok_or(ContractError::UnsupportedNetwork)?;
 	let gateway_to_send_to = match gateway_to_send_to {
-		GatewayId::CosmWasm(addr) => addr,
+		GatewayId::CosmWasm { contract, .. } => contract,
 	};
-	let sender_gateway = match this.gateway_to_send_to.expect("we execute here") {
-		GatewayId::CosmWasm(addr) => addr,
+
+	let sender_gateway = match this.gateway.expect("we execute here") {
+		GatewayId::CosmWasm { contract, .. } => contract,
 	};
+
 	ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
 	let channel = this_to_other.ics_20.expect("ensured").source;
 
@@ -104,9 +106,12 @@ pub fn get_route(
 		counterparty_timeout: this_to_other.counterparty_timeout,
 		ibc_ics_20_sender: this
 			.ibc
-			.expect("has ibc if has connection")
-			.ics_20_sender
-			.ok_or(ContractError::ICS20NotFound)?,
+			.ok_or(ContractError::ICS20NotFound)?
+			.channels
+			.ok_or(ContractError::ICS20NotFound)?
+			.ics20
+			.ok_or(ContractError::ICS20NotFound)?
+			.sender,
 		on_remote_asset: to_asset,
 	})
 }

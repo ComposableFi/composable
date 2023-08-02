@@ -48,10 +48,10 @@ impl Auth<policy::WasmHook> {
 		let this_to_other = state::NETWORK_TO_NETWORK.load(storage, (this.id, network_id))?;
 		let sender = state::NETWORK
 			.load(storage, network_id)?
-			.gateway_to_send_to
+			.gateway
 			.ok_or(ContractError::NotAuthorized)?;
 		let sender = match sender {
-			msg::GatewayId::CosmWasm(addr) => addr.to_string(),
+			msg::GatewayId::CosmWasm { contract, .. } => contract.to_string(),
 		};
 
 		ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);

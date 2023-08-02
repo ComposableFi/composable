@@ -55,6 +55,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 }
 
 fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg) -> Result {
+	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
 			network::force_network_to_network(auth, deps, msg),
@@ -167,10 +168,14 @@ pub(crate) fn handle_execute_program_privilleged(
 	} else {
 		// First, add a callback to instantiate an interpreter (which we later get the result
 		// and save it)
+		let interpreter_code_id = match config.gateway.expect("expected setup") {
+			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
+		};
+
 		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
 			// router is the default admin of a contract
 			admin: Some(env.contract.address.clone().into_string()),
-			code_id: config.interpreter_code_id,
+			code_id: interpreter_code_id,
 			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
 				gateway_address: env.contract.address.clone().into_string(),
 				interpreter_origin: interpreter_origin.clone(),

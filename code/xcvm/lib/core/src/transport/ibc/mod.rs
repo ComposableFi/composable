@@ -76,7 +76,7 @@ pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdRes
 			}
 			.into())
 		},
-		IbcIcs20Sender::OsmosisModule => {
+		IbcIcs20Sender::CosmosStargateIbcApplicationsTransferV1MsgTransfer => {
 			// really
 			// https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std-derive/src/lib.rs
 			// https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/proto.rs
@@ -134,6 +134,6 @@ pub struct ChannelInfo {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum IbcIcs20Sender {
 	SubstratePrecompile(Addr),
-	OsmosisModule,
+	CosmosStargateIbcApplicationsTransferV1MsgTransfer,
 	CosmWasmStd1_3,
 }

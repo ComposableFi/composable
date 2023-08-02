@@ -36,7 +36,8 @@ pub(crate) fn force_network_to_network(
 		IBC_CHANNEL_NETWORK.save(deps.storage, ibc.id.to_string(), &msg.to)?;
 	}
 	Ok(Response::new()
-		.add_event(make_event("network_to_network.forced").add_attribute("to", msg.to.to_string())))
+		.add_event(make_event("network_to_network.forced").add_attribute("to", msg.to.to_string()))
+		.add_attribute("from", msg.from.to_string()))
 }
 
 pub(crate) fn force_network(
