@@ -16,7 +16,7 @@ impl Map {
 				timeout: value.timeout,
 				retries: value.retries.map(Into::into),
 				para_id: value.substrate.and_then(|x| x.para_id),
-				substrate: value.substrate.map(|_| true),
+				substrate: Some(value.substrate.is_some()),
 				next,
 			};
 

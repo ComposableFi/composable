@@ -684,8 +684,9 @@ pub mod pallet {
 				return None;
 			};
 			if let Some(memo_data) = memo_data {
-				let memo_result =
-					<T as pallet_ibc::Config>::MemoMessage::try_from(Map::from_cw(memo_data));
+				let memo_result = <T as pallet_ibc::Config>::MemoMessage::try_from(
+					Map::try_from_xc_memo(memo_data)?,
+				);
 
 				let Ok(memo_result) = memo_result else{
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {

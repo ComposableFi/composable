@@ -26,24 +26,17 @@ pub fn genesis_config(
 	existential_deposit: Balance,
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
-	let mut contracts = Vec::new();
-	[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("CW_XC_INTERPRETER_WASM_PATH")]
-		.into_iter()
-		.for_each(|x| {
-			if let Some(x) = x {
-				contracts.push(x);
-			}
-		});
-
-	let contracts = contracts
-		.into_iter()
-		.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
-			Ok(Ok(data)) => data,
-			Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),
-			Err(err) => panic!("{path}: {err}"),
-		})
-		.map(|contract| (root.clone(), contract))
-		.collect();
+	let contracts =
+		[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("CW_XC_INTERPRETER_WASM_PATH")]
+			.into_iter()
+			.filter_map(core::convert::identity)
+			.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
+				Ok(Ok(data)) => data,
+				Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),
+				Err(err) => panic!("{path}: {err}"),
+			})
+			.map(|contract| (root.clone(), contract))
+			.collect();
 
 	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts };
 	let dex = picasso_runtime::PabloConfig {

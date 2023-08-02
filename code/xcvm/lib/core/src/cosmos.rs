@@ -20,9 +20,6 @@ pub fn addess_hash(typ: &str, key: &[u8]) -> [u8; 32] {
 // https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
 // so can infer for some chain denom on hops
 pub fn hash_denom_trace(unwrapped: &str) -> String {
-	let mut hasher = Sha256::new();
-	hasher.update(unwrapped.as_bytes());
-	let result = hasher.finalize();
-	let hash = hex::encode(result);
-	["ibc/{}", &hash.to_uppercase()].concat()
+	let digest = Sha256::digest(unwrapped.as_bytes());
+	["ibc/", &hex::encode_upper(digest)].concat()
 }
