@@ -102,7 +102,7 @@ pub struct TooManyCheckpoints;
 pub struct NoCheckpointToPop;
 
 impl Gas {
-	pub fn new(max_frames: u16, initial_value: u64) -> Self {
+	pub fn new(max_frames: u8, initial_value: u64) -> Self {
 		let max_frames = usize::from(max_frames).max(1);
 		Gas { checkpoints: Vec1::with_capacity(initial_value, max_frames) }
 	}
