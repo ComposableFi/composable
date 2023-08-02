@@ -148,7 +148,8 @@ pub(crate) fn handle_execute_program_privilleged(
 	tip: Addr,
 ) -> Result {
 	let config = load_this(deps.storage)?;
-	let interpreter_origin = InterpreterOrigin { user_origin: call_origin.user(config.id), salt };
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
 	let interpreter =
 		state::interpreter::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
 	if let Some(state::interpreter::Interpreter { address }) = interpreter {

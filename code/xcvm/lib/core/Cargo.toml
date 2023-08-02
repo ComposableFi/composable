@@ -26,7 +26,6 @@ sha2 = { workspace = true }
 strum.workspace = true
 thiserror = { workspace = true }
 ibc-proto = { workspace = true, default-features = false, features = ["serde", "parity-scale-codec"]}
-
 serde-cw-value = { workspace = true, default-features = false}
 
 [build-dependencies]

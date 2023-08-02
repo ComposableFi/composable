@@ -8,7 +8,7 @@ use crate::error::Result;
 
 pub fn load_this(storage: &dyn Storage) -> Result<NetworkItem> {
 	let this = state::load(storage)?;
-	let this = NETWORK.load(storage, this.id)?;
+	let this = NETWORK.load(storage, this.here_id)?;
 	Ok(this)
 }
 
@@ -21,8 +21,8 @@ pub struct OtherNetwork {
 
 pub fn load_other(storage: &dyn Storage, _other: NetworkId) -> Result<OtherNetwork> {
 	let this = state::load(storage)?;
-	let other = NETWORK.load(storage, this.id)?;
-	let connection = NETWORK_TO_NETWORK.load(storage, (this.id, other.id))?;
+	let other = NETWORK.load(storage, this.here_id)?;
+	let connection = NETWORK_TO_NETWORK.load(storage, (this.here_id, other.network_id))?;
 	Ok(OtherNetwork { network: other, connection })
 }
 
@@ -45,7 +45,8 @@ pub(crate) fn force_network(
 	deps: cosmwasm_std::DepsMut,
 	msg: NetworkItem,
 ) -> std::result::Result<cosmwasm_std::Response, crate::error::ContractError> {
-	NETWORK.save(deps.storage, msg.id, &msg)?;
-	Ok(Response::new()
-		.add_event(make_event("network.forced").add_attribute("id", msg.id.to_string())))
+	NETWORK.save(deps.storage, msg.network_id, &msg)?;
+	Ok(Response::new().add_event(
+		make_event("network.forced").add_attribute("network_id", msg.network_id.to_string()),
+	))
 }

@@ -69,7 +69,7 @@ pub struct ForceNetworkToNetworkMsg {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct NetworkItem {
-	pub id: NetworkId,
+	pub network_id: NetworkId,
 	/// something which will be receiver on other side
 	/// case of network has XCVM deployed as contract, account address is stored here
 	pub gateway: Option<GatewayId>,

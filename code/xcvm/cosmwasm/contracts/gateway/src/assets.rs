@@ -13,10 +13,10 @@ use crate::state::assets::*;
 
 /// Adds a new asset to the registry; errors out if asset already exists.
 pub(crate) fn force_asset(_: auth::Admin, deps: DepsMut, msg: AssetItem) -> Result {
-	state::assets::ASSETS.save(deps.storage, msg.id, &msg)?;
+	state::assets::ASSETS.save(deps.storage, msg.asset_id, &msg)?;
 	Ok(Response::new().add_event(
 		make_event("assets.forced")
-			.add_attribute("id", msg.id.to_string())
+			.add_attribute("asset_id", msg.asset_id.to_string())
 			.add_attribute("denom", msg.denom()),
 	))
 }

@@ -81,7 +81,8 @@ pub fn get_route(
 ) -> Result<IbcRoute, ContractError> {
 	let this = load_this(storage)?;
 	let other: NetworkItem = state::NETWORK.load(storage, to)?;
-	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK.load(storage, (this.id, to))?;
+	let this_to_other: OtherNetworkItem =
+		state::NETWORK_TO_NETWORK.load(storage, (this.network_id, to))?;
 	let asset: AssetItem = state::assets::ASSETS.load(storage, asset_id)?;
 	let to_asset: AssetId = state::assets::NETWORK_ASSET.load(storage, (asset_id, to))?;
 	let gateway_to_send_to = other.gateway.ok_or(ContractError::UnsupportedNetwork)?;
@@ -96,7 +97,7 @@ pub fn get_route(
 	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
 	Ok(IbcRoute {
-		from_network: this.id,
+		from_network: this.network_id,
 		local_native_denom: asset.local.denom(),
 		channel_to_send_over: channel,
 		gateway_to_send_to,

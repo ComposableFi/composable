@@ -46,7 +46,7 @@ impl Auth<policy::WasmHook> {
 	) -> Result<Self> {
 		let this = state::load(storage)?;
 		let this_to_other: OtherNetworkItem =
-			state::NETWORK_TO_NETWORK.load(storage, (this.id, network_id))?;
+			state::NETWORK_TO_NETWORK.load(storage, (this.here_id, network_id))?;
 		let sender = state::NETWORK
 			.load(storage, network_id)?
 			.gateway
