@@ -1029,6 +1029,8 @@ pub mod pallet {
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
+					// remove old prices from answer in transit
+					Self::remove_price_in_transit(&p.who.clone(), asset_info);
 					Self::deposit_event(Event::AnswerPruned(p.who.clone(), p.price));
 				}
 				PrePrices::<T>::insert(
