@@ -1,5 +1,3 @@
-use core::num::NonZeroU16;
-
 use crate::prelude::*;
 use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
