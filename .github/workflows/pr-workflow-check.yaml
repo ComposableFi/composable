@@ -14,6 +14,7 @@ on:
 
 jobs:
   pr-workflow-check:
+    if: ${{ !contains('#WIP', github.event.pull_request.title) && !contains('#wip', github.event.pull_request.title) }}
     uses: ./.github/workflows/pr-workflow.yml
     with:
       github_event_name: ${{ github.event_name }}
