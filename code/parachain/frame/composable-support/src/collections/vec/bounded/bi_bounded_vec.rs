@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	slice::{Iter, IterMut},
-	vec::{self, Vec},
+	vec::{self, Vec, vec},
 };
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items
