@@ -205,9 +205,10 @@ impl pallet_ibc::Config for Runtime {
 
 pub mod xcvm_memo_processing {
 	use super::*;
+	use ::ibc::{
+		applications::transfer::error::Error as ICS20Error, core::ics04_channel::packet::Packet,
+	};
 	use pallet_ibc::ics20::HandleMemo;
-	use ::ibc::applications::transfer::error::Error as ICS20Error;
-	use ::ibc::core::ics04_channel::packet::Packet;
 
 	pub struct XcvmMemoHandler<H, T> {
 		pub inner: H,
@@ -215,7 +216,7 @@ pub mod xcvm_memo_processing {
 	}
 	impl<T, H: HandleMemo<T>> HandleMemo<T> for XcvmMemoHandler<H, T>
 	where
-		T: pallet_ibc::Config + Send + Sync ,
+		T: pallet_ibc::Config + Send + Sync,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 		u128: From<T::AssetId>,
