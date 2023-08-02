@@ -172,7 +172,7 @@
             osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST"
 
             sleep $BLOCK_SECONDS
-            osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID '{"admin" : "${validator-key}", "id" : 4}' "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --admin "${validator-key}"
+            osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID '{"admin" : "${validator-key}", "here_id" : 4}' "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --admin "${validator-key}"
 
             sleep $BLOCK_SECONDS
             GATEWAY_CONTRACT_ADDRESS=$(osmosisd query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$OSMOSIS_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
@@ -181,7 +181,7 @@
               {
                 "config": {
                     "force_network": {
-                      "id": 4,
+                      "network_id": 4,
                       "accounts": {
                           "bech": "osmo"
                       },
@@ -217,7 +217,7 @@
               {
                 "config": {
                     "force_network": {
-                      "id": 2,
+                      "network_id": 2,
                       "accounts": {
                           "bech": "centauri"
                       },
