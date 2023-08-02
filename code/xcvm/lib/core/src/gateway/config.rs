@@ -155,7 +155,7 @@ pub struct InstantiateMsg(pub HereItem);
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct HereItem {
 	/// Network ID of this network
-	pub id: NetworkId,
+	pub here_id: NetworkId,
 	/// The admin which is allowed to update the bridge list.
 	pub admin: Addr,
 }
@@ -179,7 +179,7 @@ pub enum GatewayId {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 
 pub struct AssetItem {
-	pub id: AssetId,
+	pub asset_id: AssetId,
 	pub from_network_id: NetworkId,
 	pub local: AssetReference,
 	pub bridged: Option<BridgeAsset>,
