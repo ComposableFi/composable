@@ -1119,6 +1119,9 @@ pub mod pallet {
 				};
 			}
 
+
+
+			
 			(staled_prices, fresh_prices)
 		}
 
