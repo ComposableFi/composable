@@ -209,7 +209,7 @@ pub mod pallet {
 		frame_system::Config<AccountId = AccountIdOf<Self>> + Send + Sync + Debug
 	{
 		/// Max number of frames a contract is able to push, a.k.a recursive calls.
-		const MAX_FRAMES: u16;
+		const MAX_FRAMES: u8;
 
 		#[allow(missing_docs)]
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
