@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_types)] // tells f32, weird, but works
+
 pub mod hook;
 pub mod pfm;
 

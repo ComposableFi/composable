@@ -52,7 +52,7 @@ pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdRes
 			wasm: Some(Callback {
 				contract: route.gateway_to_send_to.clone(),
 
-				msg: serde_cw_value::to_value(&memo).expect("can always serde"),
+				msg: serde_cw_value::to_value(memo).expect("can always serde"),
 			}),
 			forward: None,
 		},
@@ -109,8 +109,7 @@ pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdRes
 			Ok(CosmosMsg::Stargate {
 				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
 				value,
-			}
-			.into())
+			})
 		},
 
 		IbcIcs20Sender::CosmWasmStd1_3 =>
