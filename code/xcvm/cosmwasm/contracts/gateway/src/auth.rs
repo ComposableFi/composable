@@ -3,8 +3,8 @@ use crate::{
 	error::{ContractError, Result},
 	msg, state,
 };
-use cosmwasm_std::{ensure, Deps, Env, MessageInfo, Storage};
-use xc_core::NetworkId;
+use cosmwasm_std::{Deps, Env, MessageInfo, Storage};
+use xc_core::{gateway::OtherNetworkItem, NetworkId};
 
 /// Authorisation token indicating call is authorised according to policy
 /// `T`.
@@ -45,7 +45,8 @@ impl Auth<policy::WasmHook> {
 		network_id: NetworkId,
 	) -> Result<Self> {
 		let this = state::load(storage)?;
-		let this_to_other = state::NETWORK_TO_NETWORK.load(storage, (this.id, network_id))?;
+		let this_to_other: OtherNetworkItem =
+			state::NETWORK_TO_NETWORK.load(storage, (this.id, network_id))?;
 		let sender = state::NETWORK
 			.load(storage, network_id)?
 			.gateway
@@ -54,8 +55,7 @@ impl Auth<policy::WasmHook> {
 			msg::GatewayId::CosmWasm { contract, .. } => contract.to_string(),
 		};
 
-		ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
-		let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound).source;
+		let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 		let hash_of_channel_and_sender =
 			xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(
 				&channel, &sender, "",

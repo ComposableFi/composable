@@ -4,8 +4,7 @@
 //! handles PFM and IBC wasm hooks
 use crate::prelude::*;
 use cosmwasm_std::{
-	ensure, ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage,
-	SubMsg,
+	ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage, SubMsg,
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
