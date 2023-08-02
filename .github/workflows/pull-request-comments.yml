@@ -41,5 +41,5 @@ jobs:
             # run cross chain devnet with Dotsama and Cosmos nodes 
             nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-fresh" --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed 
             ```
-                        
+            
             [About nix](https://docs.composable.finance/nix.html)
