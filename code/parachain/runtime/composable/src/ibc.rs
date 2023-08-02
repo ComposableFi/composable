@@ -10,7 +10,7 @@ use common::{
 use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use pallet_ibc::{
-	ics20::{IbcModule, MODULE_ID_STR, PORT_ID_STR},
+	ics20::{IbcMemoHandler, MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
 	routing::ModuleRouter,
 	DenomToAssetId, IbcAssetIds, IbcAssets,
@@ -36,7 +36,7 @@ pub struct IbcDenomToAssetIdConversion;
 impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
-	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+	fn from_denom_to_asset_id(denom: &str) -> Result<CurrencyId, Self::Error> {
 		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
 
@@ -218,7 +218,7 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
-	type HandleMemo = IbcModule<Runtime>;
+	type HandleMemo = IbcMemoHandler<(), Runtime>;
 	type MemoMessage = alloc::string::String;
 	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
