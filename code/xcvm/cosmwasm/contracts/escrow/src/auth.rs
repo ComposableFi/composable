@@ -1,6 +1,7 @@
 //! Module with authorisation checks.
 
 use crate::{
+	assets,
 	error::{ContractError, Result},
 	state,
 };
@@ -31,17 +32,18 @@ const ADMINS: Map<Addr, u8> = Map::new(state::ADMINS_NS);
 const BREAK_GLASS: Item<BrokenGlassState> = Item::new(state::BREAK_GLASS_NS);
 
 /// Authorisation token indicating call is authorised according to policy
-/// `T`.
+/// `P`.
 ///
 /// Intended usage of this object is to have functions which require certain
-/// authorisation level to take `Auth<T>` as an argument where `T` indicates
-/// the authorisation level.  Then, caller has to use `Auth::<T>::authorise`
+/// authorisation level to take `Auth<P>` as an argument where `P` indicates
+/// the authorisation level.  Then, caller has to use `Auth::<P>::authorise`
 /// method to construct such object and be able to call the function.  The
 /// `authorise` method will verify caller’s authorisation level.
 ///
 /// For convenience, type aliases are provided for the different
 /// authorisation levels: [`Contract`], [`Interpreter`] and [`Admin`].
-pub(crate) struct Auth<T>(core::marker::PhantomData<T>);
+#[derive(Clone, derive_more::Deref)]
+pub(crate) struct Auth<P>(P);
 
 /// Authorisation token for messages which come from a regular user.
 ///
@@ -51,6 +53,12 @@ pub(crate) type User = Auth<policy::User>;
 
 /// Authorisation token for messages which come from contract’s admin.
 pub(crate) type Admin = Auth<policy::Admin>;
+
+/// Authorisation token for messages coming from a known CW20 contract.
+///
+/// The token allows accessing address of the CW20 contract as well as asset id
+/// we’re using for the asset.
+pub(crate) type Cw20Contract = Auth<policy::Cw20Contract>;
 
 impl Auth<policy::User> {
 	/// Checks whether the break glass feature hasn’t been used or has expired.
@@ -76,6 +84,7 @@ impl Auth<policy::User> {
 }
 
 impl Auth<policy::Admin> {
+	/// Checks that the sender of the message is an admin.
 	pub(crate) fn authorise(storage: &dyn Storage, info: &MessageInfo) -> Result<Self> {
 		Self::new(ADMINS.has(storage, info.sender.clone()))
 	}
@@ -102,17 +111,31 @@ impl Admin {
 	}
 }
 
-impl<T> Auth<T> {
+impl Auth<policy::Cw20Contract> {
+	/// Verifies that given address is address of a known CW20 contract.
+	pub(crate) fn authorise(storage: &dyn Storage, address: Addr) -> Result<Self> {
+		policy::Cw20Contract::new(storage, address).map(Self)
+	}
+}
+
+impl<P> Auth<P> {
 	/// Constructs `Auth` object if user is `authorised`.
 	///
 	/// If `authorised` argument is true, returns `Ok(Self)` object; otherwise
 	/// returns an error indicating that sender is not authorised.
-	fn new(authorised: bool) -> Result<Self> {
+	fn new(authorised: bool) -> Result<Self>
+	where
+		P: Default,
+	{
 		if authorised {
 			Ok(Self(Default::default()))
 		} else {
 			Err(ContractError::NotAuthorized)
 		}
+	}
+
+	pub fn into_inner(self) -> P {
+		self.0
 	}
 }
 
@@ -126,6 +149,28 @@ pub(crate) fn handle_break_glass(_: Admin, deps: DepsMut, env: Env, _info: Messa
 }
 
 pub(crate) mod policy {
-	pub(crate) enum User {}
-	pub(crate) enum Admin {}
+	use super::*;
+
+	#[derive(Clone, Default)]
+	pub(crate) struct User;
+
+	#[derive(Clone, Default)]
+	pub(crate) struct Admin;
+
+	#[derive(Clone)]
+	pub(crate) struct Cw20Contract {
+		pub asset_id: xc_core::AssetId,
+		pub address: cw20::Cw20Contract,
+	}
+
+	impl Cw20Contract {
+		/// Creates a new `Cw20Contract` if the address corresponds to a known
+		/// asset.
+		///
+		/// If it doesn’t, returns [`ContractError::UnknownAsset`] error.
+		pub fn new(storage: &dyn Storage, address: Addr) -> Result<Self> {
+			let (asset_id, address) = assets::resolve_cw20(storage, address)?;
+			Ok(Self { asset_id, address })
+		}
+	}
 }

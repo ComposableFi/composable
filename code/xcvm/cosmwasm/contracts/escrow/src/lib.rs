@@ -1,3 +1,4 @@
+mod assets;
 mod auth;
 pub mod contract;
 mod deposits;

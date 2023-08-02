@@ -12,5 +12,5 @@ pub(crate) fn make_message(packet: &crate::msg::accounts::Packet) -> IbcMsg {
 }
 
 pub(crate) fn decode<T: Decode>(data: Binary) -> Result<T> {
-	T::decode(&mut data.as_slice()).map_err(|_| ContractError::InvalidPacket)
+	T::decode(&mut data.as_slice()).map_err(|_| ContractError::InvalidIbcPacket)
 }
