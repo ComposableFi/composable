@@ -55,7 +55,7 @@ impl Auth<policy::WasmHook> {
 		};
 
 		ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
-		let channel = this_to_other.ics_20.expect("ensured").source;
+		let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound).source;
 		let hash_of_channel_and_sender =
 			xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(
 				&channel, &sender, "",

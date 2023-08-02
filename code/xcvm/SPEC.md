@@ -130,7 +130,7 @@ Messages executed by the `XCVM` follow the `Program` format.
 ```typescript
 interface Program {
     tag : Tag
-    ix: Instruction[]
+    instructions: Instruction[]
 }
 type Tag = Uint8Array
 

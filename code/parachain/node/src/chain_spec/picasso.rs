@@ -27,12 +27,13 @@ pub fn genesis_config(
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
 	let mut contracts = Vec::new();
-	if let Some(contract) = option_env!("CW_XC_GATEWAY_WASM_PATH") {
-		contracts.push(contract);
-	}
-	if let Some(contract) = option_env!("CW_XC_INTERPRETER_WASM_PATH") {
-		contracts.push(contract);
-	}
+	[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("CW_XC_INTERPRETER_WASM_PATH")]
+		.into_iter()
+		.for_each(|x| {
+			if let Some(x) = x {
+				contracts.push(x);
+			}
+		});
 
 	let contracts = contracts
 		.into_iter()

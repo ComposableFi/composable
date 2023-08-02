@@ -94,8 +94,7 @@ pub fn get_route(
 		GatewayId::CosmWasm { contract, .. } => contract,
 	};
 
-	ensure!(this_to_other.ics_20.is_some(), ContractError::ICS20NotFound);
-	let channel = this_to_other.ics_20.expect("ensured").source;
+	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
 	Ok(IbcRoute {
 		from_network: this.id,
