@@ -222,8 +222,10 @@ impl system::Config for Runtime {
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
-	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	// pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	// pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
+	pub FlatFeeUSDTAmount: Balance = 0;
 	pub const PicassoNetworkId: u32 = 0;
 }
 

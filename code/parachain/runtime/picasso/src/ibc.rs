@@ -74,7 +74,10 @@ parameter_types! {
 	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
 }
 
-use pallet_ibc::ics20::{IbcModule, Ics20RateLimiter};
+use pallet_ibc::{
+	ics20::{IbcModule, Ics20RateLimiter},
+	ics20_fee::NonFlatFeeConverter,
+};
 
 pub struct ConstantAny;
 
@@ -200,5 +203,6 @@ impl pallet_ibc::Config for Runtime {
 	type ServiceChargeOut = IbcIcs20ServiceCharge;
 	type FlatFeeAssetId = AssetIdUSDT;
 	type FlatFeeAmount = FlatFeeUSDTAmount;
-	type FlatFeeConverter = Pablo;
+	// type FlatFeeConverter = Pablo
+	type FlatFeeConverter = NonFlatFeeConverter<Runtime>;
 }
