@@ -156,19 +156,8 @@ pub struct DepositNotificationPacket {
 	pub deposit_id: u128,
 	/// The account whose balances are affected.
 	pub account: String,
-	/// List of changes to balances.
-	pub deposits: Vec<DepositAmount>,
-}
-
-/// Description of a change of a single asset balance.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct DepositAmount {
-	/// Affected asset.
-	pub asset_id: AssetId,
-	/// Deposited amount.
-	pub amount: u128,
+	/// List of credits to balances.
+	pub deposits: Vec<(AssetId, u128)>,
 }
 
 /// Message from escrow contract to accounts contract relaying user request.

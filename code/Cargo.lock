@@ -905,7 +905,7 @@ source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
- "derive_more",
+ "derive_more 0.99.17",
  "frame-support",
  "light-client-common",
  "pallet-beefy-mmr",
@@ -927,7 +927,7 @@ version = "0.1.0"
 source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
- "derive_more",
+ "derive_more 0.99.17",
  "light-client-common",
  "parity-scale-codec",
  "rs_merkle",
@@ -1769,7 +1769,7 @@ dependencies = [
  "cosmwasm-std",
  "cumulus-pallet-xcm",
  "cumulus-primitives-core",
- "derive_more",
+ "derive_more 0.99.17",
  "frame-support",
  "frame-system",
  "ibc 0.43.1",
@@ -3311,7 +3311,11 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "cw20",
+ "derive_more 1.0.0-beta.2",
  "parity-scale-codec",
+ "serde",
+ "serde-json-wasm",
  "strum 0.25.0",
  "thiserror-core",
  "xc-core",
@@ -3667,6 +3671,28 @@ dependencies = [
  "quote 1.0.31",
  "rustc_version 0.4.0",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive_more"
+version = "1.0.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d79dfbcc1f34f3b3a0ce7574276f6f198acb811d70dd19d9dcbfe6263a83d983"
+dependencies = [
+ "derive_more-impl",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "1.0.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "395aee42a456ecfd4c7034be5011e1a98edcbab2611867c8988a0f40d0bb242a"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro2 1.0.66",
+ "quote 1.0.31",
+ "syn 2.0.26",
+ "unicode-xid 0.2.4",
 ]
 
 [[package]]
@@ -5058,7 +5084,7 @@ version = "0.1.0"
 source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
- "derive_more",
+ "derive_more 0.99.17",
  "finality-grandpa",
  "frame-support",
  "hash-db",
@@ -5517,7 +5543,7 @@ name = "ibc"
 version = "0.15.0"
 source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "flex-error",
  "hex",
  "ibc-derive 0.1.0",
@@ -5547,7 +5573,7 @@ version = "0.43.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/ibc-rs.git?rev=c305fb9a7f3750e6daa0d9aefa84d53d64cd4fee#c305fb9a7f3750e6daa0d9aefa84d53d64cd4fee"
 dependencies = [
  "bytes 1.4.0",
- "derive_more",
+ "derive_more 0.99.17",
  "displaydoc",
  "ibc-derive 0.2.0",
  "ibc-proto 0.32.0",
@@ -5728,7 +5754,7 @@ version = "0.1.0"
 source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc06e7fa039f3766fd933#ae2730ecb7ac0aee674cc06e7fa039f3766fd933"
 dependencies = [
  "anyhow",
- "derive_more",
+ "derive_more 0.99.17",
  "finality-grandpa",
  "grandpa-light-client-primitives",
  "grandpa-light-client-verifier",
@@ -5757,7 +5783,7 @@ dependencies = [
  "beefy-light-client",
  "beefy-light-client-primitives",
  "bytes 1.4.0",
- "derive_more",
+ "derive_more 0.99.17",
  "ibc 0.15.0",
  "ibc-proto 0.18.0",
  "light-client-common",
@@ -6149,7 +6175,7 @@ version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2b99d4207e2a04fb4581746903c2bb7eb376f88de9c699d0f3e10feeac0cd3a"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "futures 0.3.28",
  "hyper 0.14.27",
  "hyper-tls",
@@ -7217,7 +7243,7 @@ source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc
 dependencies = [
  "anyhow",
  "async-trait",
- "derive_more",
+ "derive_more 0.99.17",
  "hash-db",
  "ibc 0.15.0",
  "ibc-proto 0.18.0",
@@ -9196,7 +9222,7 @@ source = "git+https://github.com/ComposableFi/centauri?rev=ae2730ecb7ac0aee674cc
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
- "derive_more",
+ "derive_more 0.99.17",
  "finality-grandpa",
  "frame-benchmarking",
  "frame-support",
@@ -10778,7 +10804,7 @@ name = "polkadot-availability-distribution"
 version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "fatality",
  "futures 0.3.28",
  "lru 0.9.0",
@@ -10927,7 +10953,7 @@ name = "polkadot-dispute-distribution"
 version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "fatality",
  "futures 0.3.28",
  "futures-timer",
@@ -11029,7 +11055,7 @@ version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bitvec",
- "derive_more",
+ "derive_more 0.99.17",
  "futures 0.3.28",
  "futures-timer",
  "kvdb",
@@ -11323,7 +11349,7 @@ version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
- "derive_more",
+ "derive_more 0.99.17",
  "fatality",
  "futures 0.3.28",
  "hex",
@@ -11379,7 +11405,7 @@ version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
- "derive_more",
+ "derive_more 0.99.17",
  "futures 0.3.28",
  "orchestra",
  "polkadot-node-jaeger",
@@ -11402,7 +11428,7 @@ version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "async-trait",
- "derive_more",
+ "derive_more 0.99.17",
  "fatality",
  "futures 0.3.28",
  "futures-channel",
@@ -11458,7 +11484,7 @@ version = "0.9.39-1"
 source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d1980f4299f7abe836f0c1#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
 dependencies = [
  "bounded-collections",
- "derive_more",
+ "derive_more 0.99.17",
  "frame-support",
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -11714,7 +11740,7 @@ source = "git+https://github.com/ComposableFi/polkadot?rev=c22e1c4173bf6966f5d19
 dependencies = [
  "bitflags 1.3.2",
  "bitvec",
- "derive_more",
+ "derive_more 0.99.17",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -12078,7 +12104,7 @@ checksum = "382698e48a268c832d0b181ed438374a6bb708a82a8ca273bb0f61c74cf209c4"
 dependencies = [
  "coarsetime",
  "crossbeam-queue",
- "derive_more",
+ "derive_more 0.99.17",
  "futures 0.3.28",
  "futures-timer",
  "nanorand",
@@ -12683,7 +12709,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bd8f48b2066e9f69ab192797d66da804d1935bf22763204ed3675740cb0f221"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "fs-err",
  "itertools",
  "static_init 0.5.2",
@@ -14531,7 +14557,7 @@ checksum = "35c0a159d0c45c12b20c5a844feb1fe4bea86e28f17b92a5f0c42193634d3782"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
- "derive_more",
+ "derive_more 0.99.17",
  "parity-scale-codec",
  "scale-info-derive",
  "serde",
@@ -16733,7 +16759,7 @@ name = "tendermint-light-client-verifier"
 version = "0.28.0"
 source = "git+https://github.com/informalsystems/tendermint-rs?rev=e81f7bf23d63ffbcd242381d1ce5e35da3515ff1#e81f7bf23d63ffbcd242381d1ce5e35da3515ff1"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "flex-error",
  "serde",
  "tendermint 0.28.0",
@@ -16746,7 +16772,7 @@ version = "0.32.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9875dce5c1b08201152eb0860f8fb1dce96c53e37532c310ffc4956d20f90def"
 dependencies = [
- "derive_more",
+ "derive_more 0.99.17",
  "flex-error",
  "serde",
  "tendermint 0.32.2",
@@ -17806,7 +17832,7 @@ name = "utils-common"
 version = "0.1.0"
 dependencies = [
  "composable-runtime",
- "derive_more",
+ "derive_more 0.99.17",
  "frame-system",
  "pallet-transaction-payment 4.0.0-dev",
  "picasso-runtime",
@@ -19195,7 +19221,8 @@ dependencies = [
  "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",
- "derive_more",
+ "cw20",
+ "derive_more 1.0.0-beta.2",
  "fixed",
  "hex",
  "ibc 0.43.1",
