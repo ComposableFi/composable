@@ -1115,7 +1115,7 @@ pub mod pallet {
 				// max_answers is confirmed to be less than the len in the condition of the if
 				// block (in a block due to https://github.com/rust-lang/rust/issues/15701)
 				{
-					fresh_prices = fresh_prices[pruned..pruned + max_answers as usize].to_vec();
+					fresh_prices.drain(..pruned);
 				};
 			}
 
