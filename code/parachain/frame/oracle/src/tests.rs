@@ -2088,6 +2088,66 @@ fn on_init_prune_scenarios() {
 }
 
 #[test]
+fn test_max_oracle_index() {
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+
+		let root_account = get_root_account();
+		let account_1 = get_account_1();
+		let account_2 = get_root_account();
+		let account_3 = get_account_3();
+		let account_4 = get_account_4();
+		let account_5 = get_account_5();
+		let account_6 = get_account_6();
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(root_account),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(2).unwrap(),
+			Validated::new(6).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			1,
+			false,
+		));
+		//set signer
+		Balances::make_free_balance_be(&account_1, 2 * MinStake::get());
+		Balances::make_free_balance_be(&account_2, 2 * MinStake::get());
+		Balances::make_free_balance_be(&account_3, 2 * MinStake::get());
+		Balances::make_free_balance_be(&account_4, 2 * MinStake::get());
+		Balances::make_free_balance_be(&account_5, 2 * MinStake::get());
+		Balances::make_free_balance_be(&account_6, 2 * MinStake::get());
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_1, account_1));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_2, account_2));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_3, account_3));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_4, account_4));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_5, account_5));
+		assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), account_6, account_6));
+		// set prices into storage
+		System::set_block_number(6);
+		Timestamp::set_timestamp(6);
+		Oracle::on_initialize(6);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_1), 100_u128, 0_u128));
+		System::set_block_number(100);
+		Timestamp::set_timestamp(100);
+		Oracle::on_initialize(100);
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_2), 200_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_3), 300_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_4), 400_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_5), 500_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(RuntimeOrigin::signed(account_6), 600_u128, 0_u128));
+
+		System::set_block_number(101);
+		Timestamp::set_timestamp(101);
+		Oracle::on_initialize(101);
+		// price prunes all but last 2 answers, median went from 103
+		let price = Price { price: 400, block: 101 };
+		assert_eq!(Oracle::prices(0), price);
+		assert_eq!(Oracle::pre_prices(0).len(), 0);
+	});
+}
+
+#[test]
 fn on_init_over_max_answers() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
@@ -2114,8 +2174,8 @@ fn on_init_over_max_answers() {
 
 		// all pruned
 		Oracle::on_initialize(0);
-		// price prunes all but first 2 answers, median went from 102 to 100
-		let price = Price { price: 100, block: 0 };
+		// price prunes all but last 2 answers, median went from 103
+		let price = Price { price: 103, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
