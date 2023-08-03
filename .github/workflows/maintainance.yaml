@@ -21,7 +21,7 @@ jobs:
           stale-pr-message: 'stale-pr'
           close-issue-message: 'close-issue'
           close-pr-message: 'close-pr'
-          days-before-issue-stale: 16
+          days-before-issue-stale: 32 # if no progress for month, not sure we really doing it
           days-before-pr-stale: 4
           days-before-issue-close: 4
           days-before-pr-close: 4          
@@ -40,7 +40,7 @@ jobs:
         uses: crs-k/stale-branches@v3.0.0
         with:
           days-before-stale: 16
-          days-before-delete: 32
+          days-before-delete: 16 # avoid issue to hang in list too long
           comment-updates: false
           max-issues: 30
           tag-committer: false
