@@ -403,6 +403,9 @@ impl<T> From<Funds<T>> for Vec<(u128, T)> {
 	}
 }
 
+// `protocol_id` - namespace like thing, default is 0, but can be used for example other consensus
+// to create known ahead
+/// `nonce` - local consensus atomic number, usually increasing monotonic increment
 pub fn generate_asset_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> AssetId {
 	AssetId::from(
 		(u128::from(network_id.0) << 96) | (u128::from(protocol_id) << 64) | (u128::from(nonce)),
