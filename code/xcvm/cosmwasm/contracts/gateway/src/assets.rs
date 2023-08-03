@@ -38,5 +38,5 @@ pub(crate) fn force_remove_asset(
 ) -> std::result::Result<Response, ContractError> {
 	ASSETS.remove(deps.storage, asset_id);
 	Ok(Response::new()
-		.add_event(make_event("unregister").add_attribute("asset_id", asset_id.to_string())))
+		.add_event(make_event("assets.removed").add_attribute("asset_id", asset_id.to_string())))
 }

@@ -7,3 +7,6 @@ Hides custom entry points and messaging  under unified security, routing, assets
 
 Is Entrypoint and exit for Programs. Also handles interactions with [OTP](otp.md).
 Book keeps per-chain state. Holds the address mappings for cross-chain accounts and instantiates new interpreters.
+
+
+## Handling cases when there is no contract 
