@@ -1,4 +1,4 @@
-use cosmwasm_std::IbcTimeout;
+use cosmwasm_std::{IbcTimeout, HexBinary};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{
@@ -34,6 +34,7 @@ pub struct Ics20Features {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub enum ForeignAssetId {
 	IbcIcs20(PrefixedDenom),
@@ -205,12 +206,14 @@ pub struct BridgeAsset {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum AssetReference {
 	Native { denom: String },
-	Virtual { cw20_address: Addr },
+	ADR001 { sha256: HexBinary },
+	Cw20 { contract: Addr },
 }
 
 impl AssetReference {
 	pub fn denom(&self) -> String {
 		match self {
+			AssetReference::ADR001 { sha256 } => ["ibc/", sha256].concat().to_owned(),
 			AssetReference::Native { denom } => denom.clone(),
 			AssetReference::Virtual { cw20_address } => ["cw20:", cw20_address.as_str()].concat(),
 		}
