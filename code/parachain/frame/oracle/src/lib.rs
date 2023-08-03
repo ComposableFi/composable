@@ -1105,18 +1105,9 @@ pub mod pallet {
 				};
 
 			// check max answer
-			let max_answers = asset_info.max_answers;
-			if fresh_prices.len() as u32 > max_answers {
-				let pruned = fresh_prices.len() - max_answers as usize;
-				for price in fresh_prices.iter().take(pruned) {
-					Self::remove_price_in_transit(&price.who, asset_info);
-				}
-				#[allow(clippy::indexing_slicing)]
-				// max_answers is confirmed to be less than the len in the condition of the if
-				// block (in a block due to https://github.com/rust-lang/rust/issues/15701)
-				{
-					fresh_prices = fresh_prices[pruned..pruned + max_answers as usize].to_vec();
-				};
+			let pruned = fresh_prices.len().saturating_sub(asset_info.max_answers as usize);
+			for price in fresh_prices.drain(..pruned) {
+				Self::remove_price_in_transit(&price.who, asset_info);
 			}
 
 			(staled_prices, fresh_prices)
