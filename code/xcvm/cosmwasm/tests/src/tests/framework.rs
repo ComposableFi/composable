@@ -276,8 +276,8 @@ impl<T> TestVM<XCVMState<T>> {
 				(ConfigSubMsg::ForceAsset(AssetItem {
 					asset_id,
 					from_network_id: todo!("restore"),
-					local: xc_core::gateway::AssetReference::Virtual {
-						cw20_address: asset_address.clone().into(),
+					local: xc_core::gateway::AssetReference::Cw20 {
+						contract: asset_address.clone().into(),
 					},
 					bridged: None,
 				})),

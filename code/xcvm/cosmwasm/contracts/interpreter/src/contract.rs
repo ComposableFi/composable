@@ -230,8 +230,8 @@ pub fn interpret_call(
 						asset_id,
 					)?;
 					match reference.local {
-						AssetReference::Virtual { cw20_address } =>
-							Cow::Owned(cw20_address.into_string().into()),
+						AssetReference::Cw20 { contract } =>
+							Cow::Owned(contract.into_string().into()),
 						AssetReference::Native { denom } => Cow::Owned(denom.into()),
 					}
 				},
@@ -242,10 +242,10 @@ pub fn interpret_call(
 						asset_id,
 					)?;
 					let amount = match reference.local {
-						AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+						AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
 							deps,
 							&balance,
-							&cw20_address,
+							&contract,
 							&env.contract.address,
 						),
 						AssetReference::Native { denom } =>
@@ -308,10 +308,10 @@ pub fn interpret_spawn(
 					.apply(coin.amount.into())
 					.map_err(|_| ContractError::ArithmeticError)
 			},
-			AssetReference::Virtual { cw20_address } => apply_amount_to_cw20_balance(
+			AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
 				&balance,
-				cw20_address,
+				contract,
 				&env.contract.address,
 			),
 		}?;
@@ -324,12 +324,11 @@ pub fn interpret_spawn(
 					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Virtual { cw20_address } => response.add_message(
-					Cw20Contract(cw20_address).call(Cw20ExecuteMsg::Transfer {
+				AssetReference::Cw20 { contract } =>
+					response.add_message(Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
 						recipient: gateway_address.clone().into(),
 						amount: transfer_amount.into(),
-					})?,
-				),
+					})?),
 			};
 		}
 	}
@@ -396,12 +395,12 @@ pub fn interpret_transfer(
 					amount: vec![coin],
 				})
 			},
-			AssetReference::Virtual { cw20_address } => {
-				let contract = Cw20Contract(cw20_address.clone());
+			AssetReference::Cw20 { contract } => {
+				let contract = Cw20Contract(contract.clone());
 				let transfer_amount = apply_amount_to_cw20_balance(
 					deps.as_ref(),
 					&balance,
-					&cw20_address,
+					&contract.0,
 					&env.contract.address,
 				)?;
 				response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
@@ -463,17 +462,17 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 /// Calculates and returns the actual balance to process
 ///
 /// * `balance`: Balance to be transformed into the actual balance
-/// * `cw20_address`: Address of the corresponding cw20 contract
+/// * `contract`: Address of the corresponding cw20 contract
 /// * `self_address`: This interpreter's address
 fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 	deps: Deps,
 	balance: &Balance,
-	cw20_address: A,
+	contract: A,
 	self_address: A,
 ) -> Result<u128> {
 	let balance_response =
 		deps.querier.query::<BalanceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
-			contract_addr: cw20_address.clone().into(),
+			contract_addr: contract.clone().into(),
 			msg: to_binary(&Cw20QueryMsg::Balance { address: self_address.into() })?,
 		}))?;
 
@@ -481,7 +480,7 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 		// If the balance is unit, we need to take `decimals` into account.
 		let token_info =
 			deps.querier.query::<TokenInfoResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
-				contract_addr: cw20_address.into(),
+				contract_addr: contract.into(),
 				msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
 			}))?;
 		balance

@@ -117,7 +117,7 @@
       ],
       "properties": {
         "message_hook": {
-          "$ref": "#/definitions/MessageHookMsg"
+          "$ref": "#/definitions/XcMessageData"
         }
       },
       "additionalProperties": false
@@ -155,11 +155,14 @@
     "AssetItem": {
       "type": "object",
       "required": [
+        "asset_id",
         "from_network_id",
-        "id",
         "local"
       ],
       "properties": {
+        "asset_id": {
+          "$ref": "#/definitions/AssetId"
+        },
         "bridged": {
           "anyOf": [
             {
@@ -172,9 +175,6 @@
         },
         "from_network_id": {
           "$ref": "#/definitions/NetworkId"
-        },
-        "id": {
-          "$ref": "#/definitions/AssetId"
         },
         "local": {
           "$ref": "#/definitions/AssetReference"
@@ -207,16 +207,36 @@
         {
           "type": "object",
           "required": [
-            "virtual"
+            "a_d_r001"
           ],
           "properties": {
-            "virtual": {
+            "a_d_r001": {
               "type": "object",
               "required": [
-                "cw20_address"
+                "sha256"
               ],
               "properties": {
-                "cw20_address": {
+                "sha256": {
+                  "$ref": "#/definitions/HexBinary"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "cw20"
+          ],
+          "properties": {
+            "cw20": {
+              "type": "object",
+              "required": [
+                "contract"
+              ],
+              "properties": {
+                "contract": {
                   "$ref": "#/definitions/Addr"
                 }
               }
@@ -423,20 +443,10 @@
       }
     },
     "ConfigSubMsg": {
+      "description": "cross cross chain routing requires a lot of configuration, about chain executing this contract, about connectivity to and of other chains (even if not connected directly) and about assets and services on these chains (in future block hooks and some set of host extensions/precompiles would help to get some info automatically) `Force` message sets the data unconditionally.",
       "oneOf": [
         {
-          "type": "object",
-          "required": [
-            "force_network_to_network"
-          ],
-          "properties": {
-            "force_network_to_network": {
-              "$ref": "#/definitions/ForceNetworkToNetworkMsg"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
+          "description": "Permissioned message (gov or admin) to force set information about network contract is executed. Network can be any network or this network (so it overrides some this network parameters too)",
           "type": "object",
           "required": [
             "force_network"
@@ -449,7 +459,20 @@
           "additionalProperties": false
         },
         {
-          "description": "Message sent by an admin to register a new asset.",
+          "description": "Sets network to network connectivity/routing information",
+          "type": "object",
+          "required": [
+            "force_network_to_network"
+          ],
+          "properties": {
+            "force_network_to_network": {
+              "$ref": "#/definitions/ForceNetworkToNetworkMsg"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Permissioned message (gov or admin) to force set asset information.",
           "type": "object",
           "required": [
             "force_asset"
@@ -510,7 +533,7 @@
       ]
     },
     "Displayed_for_uint128": {
-      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
+      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
       "type": "integer",
       "format": "uint128",
       "minimum": 0.0
@@ -580,10 +603,10 @@
         {
           "type": "object",
           "required": [
-            "IbcIcs20"
+            "ibc_ics20"
           ],
           "properties": {
-            "IbcIcs20": {
+            "ibc_ics20": {
               "$ref": "#/definitions/PrefixedDenom"
             }
           },
@@ -635,31 +658,63 @@
           ],
           "properties": {
             "cosm_wasm": {
-              "$ref": "#/definitions/Addr"
+              "type": "object",
+              "required": [
+                "admin",
+                "contract",
+                "interpreter_code_id"
+              ],
+              "properties": {
+                "admin": {
+                  "description": "admin of everything",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  ]
+                },
+                "contract": {
+                  "$ref": "#/definitions/Addr"
+                },
+                "interpreter_code_id": {
+                  "description": "Address of the XCVM interpreter contract code",
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              }
             }
           },
           "additionalProperties": false
         }
       ]
     },
-    "IbcEnabled": {
+    "HexBinary": {
+      "description": "This is a wrapper around Vec<u8> to add hex de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is similar to `cosmwasm_std::Binary` but uses hex. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "IbcChannels": {
       "type": "object",
       "properties": {
-        "ics_20_features": {
+        "ics20": {
           "anyOf": [
             {
-              "$ref": "#/definitions/Ics20Features"
+              "$ref": "#/definitions/Ics20Channel"
             },
             {
               "type": "null"
             }
           ]
-        },
-        "ics_20_sender": {
-          "description": "specific per chain way to send IBC ICS 20 assets",
+        }
+      }
+    },
+    "IbcEnabled": {
+      "type": "object",
+      "properties": {
+        "channels": {
           "anyOf": [
             {
-              "$ref": "#/definitions/IbcIcs20Sender"
+              "$ref": "#/definitions/IbcChannels"
             },
             {
               "type": "null"
@@ -688,8 +743,8 @@
         {
           "type": "string",
           "enum": [
-            "OsmosisModule",
-            "CosmWasmStd"
+            "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+            "CosmWasmStd1_3"
           ]
         },
         {
@@ -754,7 +809,34 @@
         }
       }
     },
+    "Ics20Channel": {
+      "type": "object",
+      "required": [
+        "sender"
+      ],
+      "properties": {
+        "features": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Ics20Features"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sender": {
+          "description": "specific per chain way to send IBC ICS 20 assets",
+          "allOf": [
+            {
+              "$ref": "#/definitions/IbcIcs20Sender"
+            }
+          ]
+        }
+      }
+    },
     "Ics20Features": {
+      "description": "what features/modules/version enabled/installed/configured",
       "type": "object",
       "properties": {
         "pfm": {
@@ -777,6 +859,22 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "IcsPair": {
+      "description": "we need both, so we can unwrap",
+      "type": "object",
+      "required": [
+        "sink",
+        "source"
+      ],
+      "properties": {
+        "sink": {
+          "$ref": "#/definitions/ChannelId"
+        },
+        "source": {
+          "$ref": "#/definitions/ChannelId"
         }
       }
     },
@@ -939,22 +1037,6 @@
         }
       }
     },
-    "MessageHookMsg": {
-      "description": "This message should be send as part of wasm termination memo. So that can match it to sender hash and know what channel and origin was used to send message. All information here is not secured until compared with existing secured data.",
-      "type": "object",
-      "required": [
-        "data",
-        "from_network_id"
-      ],
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/Binary"
-        },
-        "from_network_id": {
-          "$ref": "#/definitions/NetworkId"
-        }
-      }
-    },
     "NetworkId": {
       "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
       "type": "integer",
@@ -964,20 +1046,21 @@
     "NetworkItem": {
       "type": "object",
       "required": [
-        "admin",
-        "id",
-        "interpreter_code_id"
+        "network_id"
       ],
       "properties": {
-        "admin": {
-          "description": "The admin which is allowed to update the bridge list.",
-          "allOf": [
+        "accounts": {
+          "description": "Account encoding type",
+          "anyOf": [
             {
-              "$ref": "#/definitions/Addr"
+              "$ref": "#/definitions/Prefix"
+            },
+            {
+              "type": "null"
             }
           ]
         },
-        "gateway_to_send_to": {
+        "gateway": {
           "description": "something which will be receiver on other side case of network has XCVM deployed as contract, account address is stored here",
           "anyOf": [
             {
@@ -998,25 +1081,8 @@
             }
           ]
         },
-        "id": {
+        "network_id": {
           "$ref": "#/definitions/NetworkId"
-        },
-        "interpreter_code_id": {
-          "description": "Address of the XCVM interpreter contract code",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "prefix": {
-          "description": "Cosmos bech32 prefix per network, if there is prefix chain accounts are Cosmos SDK compatible chain",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Prefix"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       }
     },
@@ -1034,11 +1100,10 @@
             }
           ]
         },
-        "ics_20_channel": {
-          "description": "channel to use to send ics 20 tokens",
+        "ics_20": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ChannelId"
+              "$ref": "#/definitions/IcsPair"
             },
             {
               "type": "null"
@@ -1258,6 +1323,22 @@
       "properties": {
         "callback": {
           "type": "boolean"
+        }
+      }
+    },
+    "XcMessageData": {
+      "description": "This message should be send as part of wasm termination memo. So that can match it to sender hash and know what channel and origin was used to send message. All information here is not secured until compared with existing secured data.",
+      "type": "object",
+      "required": [
+        "data",
+        "from_network_id"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/Binary"
+        },
+        "from_network_id": {
+          "$ref": "#/definitions/NetworkId"
         }
       }
     }

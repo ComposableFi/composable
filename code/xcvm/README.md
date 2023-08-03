@@ -57,6 +57,22 @@ Can be considered as 3 layers,
 
 For each chain and protocol it makes pragmatics hacks to use existing liquidity and execution primitives.
 
+### Examples 
+
+#### Stake on Strides
+
+Program to `Stake` on Stride and transfer staked token to Osmosis
+is detected as pattern expressed in XCVM.
+
+That part of program is translated to IBC calls to Stride without contracts deployed.
+
+So this program is possible
+```
+Osmosis ATOM -> 
+Spawn(Stride, ATOM) -> Stake(ATOM) + Spawn(Osmosis, stATOM) 
+-> Spawn(Centauri, stATOM)  
+```
+
 ### ICS-20 Memo as `Spawn` carrier
 
 `Spawn` forms `ICS-20` packet with `memo`.
@@ -70,3 +86,13 @@ For each chain and protocol it makes pragmatics hacks to use existing liquidity 
 `xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. 
 
 Approach is needed because there is no `amount` information can be securely transferred in `memo`.
+
+### Asset id encoding
+
+Each asset id is 128 bit number with 4 first bytes are network id, means that numbers never overlap.
+
+So it will not be the case that on one chain 123213 means PEPA and on other chain 123213 means SHIB.
+
+Prefix allows to find network to look at for asset info.
+
+For security reasons when assets sent from chain to chain, asset id changes.

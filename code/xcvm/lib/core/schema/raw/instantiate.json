@@ -15,7 +15,7 @@
       "type": "object",
       "required": [
         "admin",
-        "id"
+        "here_id"
       ],
       "properties": {
         "admin": {
@@ -26,7 +26,7 @@
             }
           ]
         },
-        "id": {
+        "here_id": {
           "description": "Network ID of this network",
           "allOf": [
             {

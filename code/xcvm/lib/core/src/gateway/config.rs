@@ -33,10 +33,27 @@ pub struct Ics20Features {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "std", derive(JsonSchema))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(all(feature = "std", not(feature = "substrate")), derive(JsonSchema))]
 pub enum ForeignAssetId {
 	IbcIcs20(PrefixedDenom),
+	#[cfg(feature = "substrate")]
+	Xcm(xcm::VersionedMultiLocation),
+}
+
+#[cfg(feature = "substrate")]
+impl parity_scale_codec::MaxEncodedLen for ForeignAssetId {
+	fn max_encoded_len() -> usize {
+		2048
+	}
+}
+
+#[cfg(feature = "substrate")]
+impl From<xcm::VersionedMultiLocation> for ForeignAssetId {
+	fn from(this: xcm::VersionedMultiLocation) -> Self {
+		Self::Xcm(this)
+	}
 }
 
 impl From<PrefixedDenom> for ForeignAssetId {
@@ -127,6 +144,7 @@ pub struct OtherNetworkItem {
 /// and about assets and services on these chains
 /// (in future block hooks and some set of host extensions/precompiles would help to get some info
 /// automatically)
+/// `Force` message sets the data unconditionally.  
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -204,14 +222,17 @@ pub struct BridgeAsset {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum AssetReference {
 	Native { denom: String },
-	Virtual { cw20_address: Addr },
+	Cw20 { contract: Addr },
+	// ADR001 { sha256: cosmwasm_std::HexBinary },
 }
 
 impl AssetReference {
 	pub fn denom(&self) -> String {
 		match self {
+			// AssetReference::ADR001 { sha256 } => ["ibc/",
+			// &sha256.to_string()].concat().to_string(),
 			AssetReference::Native { denom } => denom.clone(),
-			AssetReference::Virtual { cw20_address } => ["cw20:", cw20_address.as_str()].concat(),
+			AssetReference::Cw20 { contract } => ["cw20:", contract.as_str()].concat(),
 		}
 	}
 }
