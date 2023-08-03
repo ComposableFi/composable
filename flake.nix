@@ -45,7 +45,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/a1c3a29a067388878839b6638c4d4f1c698995f9";
+        "github:dzmitry-lahoda-forks/cosmos.nix/00fccea13af8142c7abee42b6ff75d05338d29f7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     centauri-src.flake = false;
@@ -99,6 +99,7 @@
         ./flake/ibc.nix
         ./flake/live.nix
         ./flake/osmosis.nix
+        ./flake/cosmos.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix

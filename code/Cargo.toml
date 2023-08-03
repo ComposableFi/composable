@@ -134,6 +134,8 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", rev = "c22e1c4173
 log = { version = "0.4.14", default-features = false }
 
 ibc-rs-scale = { package = "ibc", git = "https://github.com/dzmitry-lahoda-forks/ibc-rs.git", rev = "c305fb9a7f3750e6daa0d9aefa84d53d64cd4fee", default-features = false }
+ibc-proto = { git = "https://github.com/cosmos/ibc-proto-rs.git", rev = "af385af", default-features = false }
+
 democracy = { package = "pallet-democracy", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 indices = { package = "pallet-indices", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
@@ -333,8 +335,10 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 
 schemars = { version = "0.8.12", default-feautes = false }
 
-prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
-prost-types = {version = "0.11.1", default-features = false}
+prost = { version = "0.11.0", default-features = false, features = [
+  "prost-derive",
+] }
+prost-types = { version = "0.11.1", default-features = false }
 prost-build = "0.11.9"
 
 
@@ -351,12 +355,17 @@ cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc4
 cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77", default-features = false }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "1cc47415577d67448ff483ad530b889cceafde77" }
 serde-json-wasm = { git = "https://github.com/dzmitry-lahoda-forks/serde-json-wasm", rev = "8a7e522c0e4de36a6dfb535766f26a9941017d81", default-features = false }
-serde-cw-value = { git = "https://github.com/dzmitry-lahoda-forks/serde-cw-value", rev = "fe16466caee886908645de5a8e0518dbac6d98df", default-features = false }
+serde-cw-value = { git = "https://github.com/dzmitry-lahoda-forks/serde-cw-value", rev = "b91ac6d797fd24c00758ad3995a55dc820279595", default-features = false }
 cw-storage-plus = { git = "https://github.com/dzmitry-lahoda-forks/cw-storage-plus", rev = "d0a2cf126cae3e3960c787ebcfc9baa54f59f71c", default-features = false }
-cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false}
-cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false}
-cw20 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false, features = ["std"]}
-cw20-base = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", features = ["library"]}
+cosmwasm-schema = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false }
+
+cw-utils = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus", rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false }
+cw20 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus", rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false, features = [
+  "std",
+] }
+cw20-base = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus", rev = "458e2eb014253d2131219e518c64475a8348c5a3", features = [
+  "library",
+] }
 
 derive_more = { version = "1.0.0-beta.2", default-features = false, features = ["full"] }
 hex = { version = "0.4.3", default-features = false, features = [
@@ -369,7 +378,7 @@ cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev =
   "iterator",
   "cosmwasm_1_2",
 ] }
-cw2 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus",  rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false}
+cw2 = { git = "https://github.com/dzmitry-lahoda-forks/cw-plus", rev = "458e2eb014253d2131219e518c64475a8348c5a3", default-features = false }
 
 serde = { version = '1.0.136', default-features = false, features = ["derive"] }
 

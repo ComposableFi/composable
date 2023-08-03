@@ -21,27 +21,21 @@ Note that for the `github:` locations, you do not need to clone the repository. 
 
 Packages are defined in a repository's `flake.nix`. For example, a **package** can be:
 
-- `frontend-pablo-server` which runs a server serving the `pablo` frontend.
 - `composable-book` which builds this book (so meta!).
 
 If you want to see all packages defined by a repository's flake, run `nix flake show "LOCATION"`, for example: `nix flake show "github:ComposableFi/composable"`.
 
-
-## Running
-
 Once you know which **location** and **package** you want, simply run:
 
 ```bash
-nix run "location#package" -L
+nix run "location#package"
 ```
-
-For example, if you want to run `frontend-server-pablo` for the current `main` composable branch, run:
 
 ```bash
-nix run "github:ComposableFi/composable#frontend-server-pablo" -L
+nix run "github:ComposableFi/composable#devnet-picasso"
 ```
 
-_Note: the `-L` is optional, but provides you with full logs which is useful for debugging._
+In case of error, append `--print-build-logs --show-trace --debug --keep-derivations --keep-outputs` to command.
 
 ## Running in Docker
 
@@ -60,7 +54,7 @@ docker volume create nix
 Make sure you replace `location#package` with your desired **location** and **package**.
 
 ```bash
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run location#package -L --extra-experimental-features nix-command --extra-experimental-features flakes --no-sandbox"
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix-env -iA nixpkgs.cachix && cachix use composable-community && nix run location#package --print-build-logs --extra-experimental-features nix-command --extra-experimental-features flakes" --no-sandbox"
 ```
 
 ---

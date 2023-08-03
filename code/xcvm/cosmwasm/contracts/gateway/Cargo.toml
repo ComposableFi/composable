@@ -26,4 +26,6 @@ serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 
 cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
-xc-core = { path = "../../../lib/core", features = ["cosmwasm"], default-features = false }
+xc-core = { path = "../../../lib/core", features = [
+  "cosmwasm",
+], default-features = false }

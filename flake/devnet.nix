@@ -19,7 +19,7 @@
         devnet-xc-image = devnetTools.buildDevnetImage {
           name = "devnet-xc";
           container-tools = devnetTools.withDevNetContainerTools;
-          devNet = self'.packages.devnet-xc;
+          devNet = self'.packages.devnet-xc-background;
         };
       };
     };

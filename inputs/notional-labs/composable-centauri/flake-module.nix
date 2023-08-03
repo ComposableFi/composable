@@ -50,7 +50,7 @@
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq self'.packages.xcvm-contracts ];
+          ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
 
         text = ''
           CENTAURI_DATA="${devnet-root-directory}/.centaurid"
@@ -67,9 +67,9 @@
           jq '.status'
           sleep $BLOCK_SECONDS         
           centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CENTAURI_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CENTAURI_DATA/code_id"
-          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_gateway.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          centaurid tx wasm store ${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
           sleep $BLOCK_SECONDS
-          centaurid tx wasm store ${self'.packages.xcvm-contracts}/lib/cw_xc_interpreter.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
+          centaurid tx wasm store ${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
           sleep $BLOCK_SECONDS
           centaurid tx wasm store ${self'.packages.wyndex-pair} --from "${validator}"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CENTAURI_DATA" --output json          
           sleep $BLOCK_SECONDS

@@ -1558,7 +1558,7 @@ checksum = "c688fc74432808e3eb684cae8830a86be1d66a2bd58e1f248ed0960a590baf6f"
 dependencies = [
  "glob",
  "libc",
- "libloading 0.7.4",
+ "libloading",
 ]
 
 [[package]]
@@ -3804,7 +3804,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330c60081dcc4c72131f8eb70510f1ac07223e5d4163db481a04a0befcffa412"
 dependencies = [
- "libloading 0.8.0",
+ "libloading",
 ]
 
 [[package]]
@@ -6685,16 +6685,6 @@ checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
 dependencies = [
  "cfg-if 1.0.0",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "libloading"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d580318f95776505201b28cf98eb1fa5e4be3b689633ba6a3e6cd880ff22d8cb"
-dependencies = [
- "cfg-if 1.0.0",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -14837,8 +14827,9 @@ dependencies = [
 [[package]]
 name = "serde-cw-value"
 version = "0.7.0"
-source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=fe16466caee886908645de5a8e0518dbac6d98df#fe16466caee886908645de5a8e0518dbac6d98df"
+source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595#b91ac6d797fd24c00758ad3995a55dc820279595"
 dependencies = [
+ "schemars",
  "serde",
 ]
 
@@ -15111,9 +15102,9 @@ dependencies = [
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.5"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "238abfbb77c1915110ad968465608b68e869e0772622c9656714e73e5a1a522f"
+checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
 name = "simdutf8"
@@ -19226,6 +19217,7 @@ dependencies = [
  "fixed",
  "hex",
  "ibc 0.43.1",
+ "ibc-proto 0.32.0",
  "num",
  "parity-scale-codec",
  "prost",
@@ -19233,6 +19225,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "serde-cw-value",
  "serde-json-wasm",
  "sha2 0.10.7",
  "strum 0.25.0",

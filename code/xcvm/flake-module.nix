@@ -26,12 +26,12 @@
         });
     in {
       packages = rec {
-        xcvm-contract-interpreter = mkXcvmContract "cw-xc-interpreter";
-        xcvm-contract-gateway = mkXcvmContract "cw-xc-gateway";
-        xcvm-contract-pingpong = mkXcvmContract "cw-xc-pingpong";
-        xcvm-contracts = pkgs.symlinkJoin {
-          name = "xcvm-contracts";
-          paths = [ xcvm-contract-interpreter xcvm-contract-gateway ];
+        cw-xc-interpreter = mkXcvmContract "cw-xc-interpreter";
+        cw-xc-gateway = mkXcvmContract "cw-xc-gateway";
+        cw-xc-pingpong = mkXcvmContract "cw-xc-pingpong";
+        xc-cw-contracts = pkgs.symlinkJoin {
+          name = "xc-cw-contracts";
+          paths = [ cw-xc-interpreter cw-xc-gateway ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
@@ -48,8 +48,8 @@
             mkdir --parents $out
             mkdir --parents $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
             cp --recursive --no-preserve=mode,ownership $src/. $out/
-            cp  "${xcvm-contracts}/lib/cw_xc_interpreter.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
-            cp  "${xcvm-contracts}/lib/cw_xc_gateway.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
+            cp  "${xc-cw-contracts}/lib/cw_xc_interpreter.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
+            cp  "${xc-cw-contracts}/lib/cw_xc_gateway.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
           '';
           dontFixup = true;
           dontStrip = true;

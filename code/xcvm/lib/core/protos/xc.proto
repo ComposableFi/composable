@@ -39,7 +39,7 @@ message Instruction {
     Transfer transfer = 1;
     Spawn spawn = 2;
     Call call = 3;
-    // Buy buy = 4;
+    Exchange exchange = 4;
   }
 }
 
@@ -71,7 +71,11 @@ message Account {
 }
 
 message AssetId {
-  Uint128 assetId = 1;
+  Uint128 id = 1;
+}
+
+message ExchangeId {
+  Uint128 id = 1;
 }
 
 message Asset {
@@ -127,6 +131,12 @@ message Transfer {
     Tip tip = 2;
   }
   repeated Asset assets = 3;
+}
+
+message Exchange {      
+  ExchangeId id = 1; 
+  repeated Asset give = 5;
+  repeated Asset want = 6;
 }
 
 message Salt {

@@ -1,10 +1,10 @@
+use crate::prelude::*;
 use core::fmt::Display;
 
 use crate::abstraction::IndexOf;
 use alloc::vec::Vec;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
 
 /// The interpreter origin, composite of a user origin and a salt.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

@@ -23,7 +23,7 @@ RUN usermod --append --groups sudo ${USER} --shell /bin/bash && \
     sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers
 
 RUN mkdir --parents /etc/nix/ && \
-    echo "sandbox = false" >> /etc/nix/nix.conf && \
+    echo "sandbox = relaxed" >> /etc/nix/nix.conf && \
     echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf && \
     echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf  && \
     echo "trusted-users = root vscode" >> /etc/nix/nix.conf  && \

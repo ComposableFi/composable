@@ -1,7 +1,26 @@
 use core::fmt::Display;
 
+pub use alloc::{
+	boxed::Box,
+	collections::VecDeque,
+	string::{String, ToString},
+	vec,
+	vec::Vec,
+};
+pub use core::str::FromStr;
+pub use cosmwasm_std::{Addr, Binary, Coin};
+pub use serde::{Deserialize, Serialize};
+
+pub use parity_scale_codec::{Decode, Encode};
+
+#[cfg(feature = "std")]
+pub use cosmwasm_schema::{cw_serde, QueryResponses};
+
+#[cfg(feature = "std")]
+pub use schemars::JsonSchema;
+
 use crate::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
-use alloc::{collections::VecDeque, format, vec::Vec};
+use alloc::format;
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
 
@@ -144,7 +163,7 @@ impl TryFrom<PacketAsset> for (crate::AssetId, Displayed<u128>) {
 	type Error = ();
 	fn try_from(value: PacketAsset) -> core::result::Result<Self, Self::Error> {
 		Ok((
-			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.asset_id.ok_or(())?)),
+			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.id.ok_or(())?)),
 			Displayed(value.amount.ok_or(())?.into()),
 		))
 	}
@@ -238,6 +257,7 @@ where
 			instruction::Instruction::Transfer(t) => t.try_into(),
 			instruction::Instruction::Spawn(s) => s.try_into(),
 			instruction::Instruction::Call(c) => c.try_into(),
+			instruction::Instruction::Exchange(x) => x.try_into(),
 		}
 	}
 }
@@ -360,6 +380,34 @@ where
 	}
 }
 
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<Exchange>
+	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
+where
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	type Error = ();
+
+	fn try_from(value: Exchange) -> core::result::Result<Self, Self::Error> {
+		Ok(crate::Instruction::Exchange {
+			id: value.id.and_then(|x| x.id).map(TryInto::try_into).ok_or(())?.map_err(|_| ())?,
+			give: value
+				.give
+				.into_iter()
+				.map(|asset| asset.try_into())
+				.collect::<core::result::Result<Vec<_>, _>>()?
+				.into(),
+			want: value
+				.want
+				.into_iter()
+				.map(|asset| asset.try_into())
+				.collect::<core::result::Result<Vec<_>, _>>()?
+				.into(),
+		})
+	}
+}
+
 impl<TAccount> TryFrom<transfer::AccountType> for Destination<TAccount>
 where
 	TAccount: for<'a> TryFrom<&'a [u8]>,
@@ -390,7 +438,7 @@ impl TryFrom<AssetId> for crate::AssetId {
 	type Error = ();
 
 	fn try_from(asset_id: AssetId) -> core::result::Result<Self, Self::Error> {
-		Ok(crate::AssetId(Displayed(asset_id.asset_id.ok_or(())?.into())))
+		Ok(crate::AssetId(Displayed(asset_id.id.ok_or(())?.into())))
 	}
 }
 
@@ -474,7 +522,7 @@ impl From<crate::Balance> for Balance {
 
 impl From<crate::AssetId> for AssetId {
 	fn from(asset_id: crate::AssetId) -> Self {
-		AssetId { asset_id: Some(asset_id.0 .0.into()) }
+		AssetId { id: Some(asset_id.0 .0.into()) }
 	}
 }
 
@@ -564,6 +612,12 @@ where
 					program: Some(program.into()),
 					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
 				}),
+			crate::Instruction::Exchange { id, give, want } =>
+				instruction::Instruction::Exchange(Exchange {
+					id: Some(ExchangeId { id: Some(id.into()) }),
+					give: give.into().into_iter().map(|asset| asset.into()).collect(),
+					want: want.into().into_iter().map(|asset| asset.into()).collect(),
+				}),
 		}
 	}
 }
@@ -610,7 +664,7 @@ fn calc_nom(nom: u128, denom: u128, max: u128) -> u128 {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::Displayed;
+	use crate::{proto::Uint128 as ProtoUint128, Displayed};
 
 	#[test]
 	fn balance_to_amount_works() {
@@ -634,8 +688,8 @@ mod tests {
 		let real_value = 1231231231231231233123123123123123_u128;
 		let high_bits = u64::from_be_bytes(real_value.to_be_bytes()[0..8].try_into().unwrap());
 		let low_bits = u64::from_be_bytes(real_value.to_be_bytes()[8..].try_into().unwrap());
-		let uint128 = Uint128 { high_bits, low_bits };
+		let uint128 = ProtoUint128 { high_bits, low_bits };
 		assert_eq!(u128::from(uint128.clone()), real_value);
-		assert_eq!(Uint128::from(real_value), uint128)
+		assert_eq!(ProtoUint128::from(real_value), uint128)
 	}
 }

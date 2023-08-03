@@ -61,11 +61,6 @@
           };
         in zombieTools.writeZombienetShellApplication name config;
 
-      picasso-dev-ops = (zombieTools.zombienet-to-ops picasso-dev-config) // {
-        script = zombienet-rococo-local-picasso-dev;
-        chain-spec = "picasso-dev";
-      };
-
       picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;
@@ -111,12 +106,13 @@
         }];
       };
 
-      zombienet-rococo-local-picasso-dev =
-        zombieTools.writeZombienetShellApplication
-        "zombienet-rococo-local-picasso-dev" picasso-dev-config;
+      zombienet-rococo-local-picasso-dev = zombieTools.writeZombienet {
+        name = "zombienet-rococo-local-picasso-dev";
+        config = picasso-dev-config;
+        dir = "/tmp/composable-devnet/picasso-rococo";
+      };
 
     in with prelude; {
-      _module.args.this = rec { inherit picasso-dev-ops; };
 
       packages = rec {
         devnet-picasso = zombienet-rococo-local-picasso-dev;

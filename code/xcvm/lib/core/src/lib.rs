@@ -13,16 +13,16 @@ pub mod cosmos;
 pub mod cosmwasm;
 pub mod escrow;
 pub mod gateway;
-pub mod ibc;
 mod instruction;
-pub mod location;
 mod network;
 mod packet;
 mod prelude;
 mod program;
 pub mod proto;
 mod protocol;
+pub mod service;
 pub mod shared;
+pub mod transport;
 
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,

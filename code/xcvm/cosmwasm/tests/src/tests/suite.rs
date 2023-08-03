@@ -13,7 +13,7 @@ use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{
-	gateway::{Asset, EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX},
+	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX,
 	shared::{DefaultXCVMProgram, Salt},
 	AssetId, Balance, Centauri, Destination, Funds, Network, Picasso, ProgramBuilder,
 };

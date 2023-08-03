@@ -18,7 +18,9 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{Asset, AssetReference, BridgeMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg},
+	gateway::{
+		AssetItem, AssetReference, BridgeForwardMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg,
+	},
 	shared::{encode_base64, DefaultXCVMProgram},
 	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
 	Register,
@@ -79,7 +81,7 @@ fn external_query_lookup_asset(
 	querier: QuerierWrapper,
 	gateway_addr: Addr,
 	asset_id: AssetId,
-) -> StdResult<Asset> {
+) -> StdResult<AssetItem> {
 	let query = xc_core::gateway::QueryMsg::LookupAsset { asset_id };
 	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
 	querier
@@ -159,6 +161,7 @@ pub fn handle_execute_step(
 				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
+			Instruction::Exchange { .. } => Err(ContractError::NotImplemented)?,
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -251,7 +254,7 @@ pub fn interpret_call(
 							} else {
 								let coin = deps
 									.querier
-									.query_balance(env.contract.address.clone(), denom.clone())?;
+									.query_balance(env.contract.address.clone(), denom)?;
 								balance
 									.amount
 									.apply(coin.amount.into())
@@ -335,10 +338,10 @@ pub fn interpret_spawn(
 	Ok(response
 		.add_message(wasm_execute(
 			gateway_address,
-			&GWExecuteMsg::BridgeForward(BridgeMsg {
+			&GWExecuteMsg::BridgeForward(BridgeForwardMsg {
 				interpreter_origin: interpreter_origin.clone(),
 				msg: execute_program,
-				network_id: network,
+				to: network,
 			}),
 			Default::default(),
 		)?)
@@ -445,7 +448,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			let ip = IP_REGISTER.load(deps.storage)?.to_string();
 			let event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
 				.add_attribute("action", "execution.failure")
-				.add_attribute("reason", e.to_string());
+				.add_attribute("reason", e);
 			Ok(Response::default().add_event(event).add_attribute("ip", ip))
 		}
 	}
@@ -453,7 +456,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 
 fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	RESULT_REGISTER.save(deps.storage, &Ok(response.clone()))?;
+	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
 	Ok(Response::default())
 }
 

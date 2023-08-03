@@ -8,7 +8,7 @@ use codec::Output;
 use input::*;
 use output::*;
 use prelude::*;
-use sp_core::{Pair};
+use sp_core::Pair;
 use std::{
 	alloc::System,
 	collections::{HashMap, HashSet},

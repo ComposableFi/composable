@@ -1,6 +1,5 @@
-use cosmwasm_std::IbcTimeout;
-
 use crate::prelude::*;
+use cosmwasm_std::IbcTimeout;
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 pub const IBC_PRECOMPILE: &str = "5EYCAe5g89aboD4c8naVbgG6izsMBCgtoCB9TUHiJiH2yVow";
 
@@ -20,7 +19,7 @@ pub enum IbcMsg {
 		/// exisiting channel to send the tokens over
 		channel_id: ChannelId,
 		/// address on the remote chain to receive these tokens
-		to_address: String,
+		to_address: Addr,
 		/// packet data only supports one coin
 		/// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
 		amount: Coin,

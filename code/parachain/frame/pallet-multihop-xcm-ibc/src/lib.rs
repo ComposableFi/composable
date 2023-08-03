@@ -49,9 +49,9 @@ pub mod pallet {
 	use ibc_primitives::Timeout as IbcTimeout;
 	use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, PortId};
 	use pallet_ibc::{MultiAddress, TransferParams};
-	use xc_core::ibc::ics20::{
-		pfm::{Forward, IbcSubstrate},
-		MemoData,
+	use xc_core::transport::ibc::ics20::{
+		pfm::{ForwardingMemo, XcmHop},
+		Memo,
 	};
 	use xcm::latest::prelude::*;
 
@@ -331,7 +331,7 @@ pub mod pallet {
 		/// Return Ok(None) if `list_chain_name_address` is empty
 		pub fn create_memo(
 			mut list_chain_name_address: ListChainNameAddress,
-		) -> Result<Option<MemoData>, DispatchError> {
+		) -> Result<Option<Memo>, DispatchError> {
 			list_chain_name_address.reverse(); // reverse to create memo from the end
 
 			//osmosis(ibc) <- huahua(ibc) <- centauri(ibc)  =  ibc transfer from composable to
@@ -339,12 +339,12 @@ pub mod pallet {
 			//moonriver(xcm) = ibc transfer from composable to picasso
 			//polkadot(xcm) = ibc transfer from picasso to composable
 
-			let mut last_memo_data: Option<MemoData> = None;
+			let mut last_memo_data: Option<Memo> = None;
 
 			for (i, name, address) in list_chain_name_address {
 				let mut forward = if i.chain_hop == ChainHop::Xcm {
 					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(address));
-					Forward::new_xcm_memo(memo_receiver, IbcSubstrate::new(i.para_id))
+					ForwardingMemo::new_xcm_memo(memo_receiver, XcmHop::new(i.para_id))
 				} else {
 					let memo_receiver = if i.chain_hop == ChainHop::SubstrateIbc {
 						scale_info::prelude::format!("0x{}", hex::encode(address))
@@ -368,7 +368,7 @@ pub mod pallet {
 						})?
 					};
 
-					Forward::new_ibc_memo(
+					ForwardingMemo::new_ibc_memo(
 						memo_receiver,
 						PortId::transfer(),
 						ChannelId::new(i.channel_id),
@@ -379,7 +379,7 @@ pub mod pallet {
 				if let Some(memo_memo) = last_memo_data {
 					forward.next = Some(Box::new(memo_memo));
 				};
-				let new_memo = MemoData::forward(forward);
+				let new_memo = Memo::forward(forward);
 				last_memo_data = Some(new_memo);
 			}
 			Ok(last_memo_data)
@@ -684,8 +684,9 @@ pub mod pallet {
 				return None;
 			};
 			if let Some(memo_data) = memo_data {
-				let memo_result =
-					<T as pallet_ibc::Config>::MemoMessage::try_from(Map::from_cw(memo_data));
+				let memo_result = <T as pallet_ibc::Config>::MemoMessage::try_from(
+					Map::try_from_xc_memo(memo_data)?,
+				);
 
 				let Ok(memo_result) = memo_result else{
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
