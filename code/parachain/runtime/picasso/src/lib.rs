@@ -222,8 +222,10 @@ impl system::Config for Runtime {
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
-	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	// pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	// pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
+	pub FlatFeeUSDTAmount: Balance = 0;
 	pub const PicassoNetworkId: u32 = 0;
 }
 
@@ -323,7 +325,7 @@ parameter_types! {
 
 	// TODO
 	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
-	pub const MinAnswerBound: u32 = 7;
+	pub const MinAnswerBound: u32 = 3;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
