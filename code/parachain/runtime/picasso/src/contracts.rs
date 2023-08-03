@@ -36,10 +36,10 @@ parameter_types! {
 }
 
 impl cosmwasm::Config for Runtime {
+	const MAX_FRAMES: u8 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = ConstU16<64>;
 	type MaxCodeSize = ConstU32<{ 1024 * 1024 }>;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = ConstU32<{ 64 * 1024 }>;

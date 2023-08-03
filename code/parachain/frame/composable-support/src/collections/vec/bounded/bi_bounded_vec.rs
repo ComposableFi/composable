@@ -1,25 +1,45 @@
 //! https://github.com/ergoplatform/bounded-vec/issues/13
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	slice::{Iter, IterMut},
-	vec::{self, Vec},
+	vec,
+	vec::Vec,
 };
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items
 /// quantity
-#[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord, Encode, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize), serde(transparent))]
-pub struct BiBoundedVec<T, const L: usize, const U: usize>
-// enable when feature(const_evaluatable_checked) is stable
-// where
-//     Assert<{ L > 0 }>: IsTrue,
-{
+/// ```rust
+/// use composable_support::collections::vec::bounded::BiBoundedVec;
+/// use sp_std::convert::TryInto;
+///
+/// let data: BiBoundedVec<_, { 2u8 as usize }, 8> = vec![1u8, 2].try_into().unwrap();
+/// ```
+#[derive(
+	PartialEq,
+	Eq,
+	Debug,
+	Clone,
+	Hash,
+	PartialOrd,
+	Ord,
+	Encode,
+	TypeInfo,
+	serde::Serialize,
+	serde::Deserialize,
+)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(transparent)]
+pub struct BiBoundedVec<T, const L: usize, const U: usize> {
 	inner: Vec<T>,
 }
+
+pub enum ConstAssert<const CONDITION: bool> {}
+
+pub trait ConstTrue {}
+
+impl ConstTrue for ConstAssert<true> {}
 
 impl<T: Decode, const L: usize, const U: usize> Decode for BiBoundedVec<T, L, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
@@ -55,7 +75,65 @@ pub enum BiBoundedVecOutOfBounds {
 	},
 }
 
+impl<T, const U: usize> BiBoundedVec<T, 1, U> {
+	pub fn new(first: T) -> Self {
+		BiBoundedVec::from_vec(vec![first]).expect("compile time verified")
+	}
+}
+
+impl<T, const U: usize> BiBoundedVec<T, 0, U> {
+	pub fn first(&self) -> Option<&T> {
+		self.inner.first()
+	}
+}
+
+impl<T, const U: usize> BiBoundedVec<T, 2, U> {
+	pub fn new(first: T, second: T) -> Self {
+		BiBoundedVec::from_vec(vec![first, second]).expect("compile time verified")
+	}
+}
+
+impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U>
+where
+	ConstAssert<{ L > 0 }>: ConstTrue,
+{
+	pub fn first_mut(&mut self) -> &mut T {
+		self.inner.get_mut(0).expect("verified by compiler")
+	}
+
+	/// Returns the first element of non-empty Vec
+	///
+	/// # Example
+	/// ```rust
+	/// use composable_support::collections::vec::bounded::BiBoundedVec;
+	/// use sp_std::convert::TryInto;
+	///
+	/// let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+	/// assert_eq!(data.first(), &1);
+	/// ```
+	pub fn first(&self) -> &T {
+		self.inner.get(0).expect("verified by compiler")
+	}
+}
+
+impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U>
+where
+	ConstAssert<{ L > 1 }>: ConstTrue,
+{
+	pub fn second_mut(&mut self) -> &mut T {
+		self.inner.get_mut(1).expect("verified by compiler")
+	}
+}
+
 impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
+	pub fn pop(&mut self) -> Option<T> {
+		if self.len() == L {
+			None
+		} else {
+			self.inner.pop()
+		}
+	}
+
 	/// Creates new BiBoundedVec or returns error if items count is out of bounds
 	///
 	/// # Example
@@ -136,22 +214,6 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 	/// ```
 	pub fn as_slice(&self) -> &[T] {
 		self.inner.as_slice()
-	}
-
-	/// Returns the first element of non-empty Vec
-	///
-	/// # Example
-	/// ```
-	/// use composable_support::collections::vec::bounded::BiBoundedVec;
-	/// use sp_std::convert::TryInto;
-	///
-	/// let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-	/// assert_eq!(data.first(), Some(&1));
-	/// ```
-	pub fn first(&self) -> Option<&T> {
-		// can make conditional depending on `const_evaluatable_checked` in nightly so that  in case
-		// of at least 1 element, never option
-		self.inner.first()
 	}
 
 	/// Returns the last element of non-empty Vec
@@ -439,7 +501,7 @@ mod tests {
 	#[test]
 	fn first() {
 		let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-		assert_eq!(data.first(), Some(&1u8));
+		assert_eq!(data.first(), &1u8);
 	}
 
 	#[test]

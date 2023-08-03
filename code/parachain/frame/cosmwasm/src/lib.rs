@@ -208,6 +208,9 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config<AccountId = AccountIdOf<Self>> + Send + Sync + Debug
 	{
+		/// Max number of frames a contract is able to push, a.k.a recursive calls.
+		const MAX_FRAMES: u8;
+
 		#[allow(missing_docs)]
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
@@ -228,10 +231,6 @@ pub mod pallet {
 		/// Current chain ID. Provided to the contract via the [`Env`].
 		#[pallet::constant]
 		type ChainId: Get<&'static str>;
-
-		/// Max number of frames a contract is able to push, a.k.a recursive calls.
-		#[pallet::constant]
-		type MaxFrames: Get<u16>;
 
 		/// Max accepted code size in bytes.
 		#[pallet::constant]
@@ -672,7 +671,7 @@ impl<T: Config> Pallet<T> {
 				InitialStorageMutability::ReadWrite => 0,
 			},
 			depth: 0,
-			gas: Gas::new(T::MaxFrames::get(), gas),
+			gas: Gas::new(T::MAX_FRAMES, gas),
 			cache: CosmwasmVMCache { code: Default::default() },
 		}
 	}
@@ -1071,7 +1070,7 @@ impl<T: Config> Pallet<T> {
 		funds: Vec<Coin>,
 	) -> Result<OwnedWasmiVM<DefaultCosmwasmVM<T>>, CosmwasmVMError<T>> {
 		shared.depth = shared.depth.checked_add(1).ok_or(Error::<T>::VMDepthOverflow)?;
-		ensure!(shared.depth <= T::MaxFrames::get(), Error::<T>::StackOverflow);
+		ensure!(shared.depth <= T::MAX_FRAMES, Error::<T>::StackOverflow);
 
 		let contract_address: CosmwasmAccount<T> = CosmwasmAccount::new(contract.clone());
 		let env = Self::cosmwasm_env(contract_address.clone());

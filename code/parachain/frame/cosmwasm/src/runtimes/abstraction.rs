@@ -5,6 +5,7 @@ use core::marker::PhantomData;
 use cosmwasm_std::{Addr, CanonicalAddr};
 use cosmwasm_vm::vm::VmGasCheckpoint;
 use scale_info::TypeInfo;
+use vec1::Vec1;
 
 pub trait VMPallet {
 	type VmError;
@@ -86,7 +87,7 @@ pub struct Gas {
 	/// When a new checkpoint is created, gas from the current one is moved to
 	/// the new one (see [`Self::push`]) such that total remaining gas is the
 	/// sum of gas on all checkpoints.
-	checkpoints: Vec<u64>,
+	checkpoints: Vec1<u64>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -101,15 +102,13 @@ pub struct TooManyCheckpoints;
 pub struct NoCheckpointToPop;
 
 impl Gas {
-	pub fn new(max_frames: u16, initial_value: u64) -> Self {
+	pub fn new(max_frames: u8, initial_value: u64) -> Self {
 		let max_frames = usize::from(max_frames).max(1);
-		let mut checkpoints = Vec::with_capacity(max_frames);
-		checkpoints.push(initial_value);
-		Gas { checkpoints }
+		Gas { checkpoints: Vec1::with_capacity(initial_value, max_frames) }
 	}
 
 	fn current_mut(&mut self) -> &mut u64 {
-		self.checkpoints.last_mut().expect("account by external caller")
+		self.checkpoints.last_mut()
 	}
 
 	/// Pushes a new gas checkpoint.
@@ -119,7 +118,7 @@ impl Gas {
 	/// at the current checkpoint and if so creates a new checkpoint with
 	/// requested limit.
 	pub fn push(&mut self, checkpoint: VmGasCheckpoint) -> Result<GasOutcome, TooManyCheckpoints> {
-		if self.checkpoints.len() == self.checkpoints.capacity() {
+		if self.checkpoints.len() >= self.checkpoints.capacity() {
 			return Err(TooManyCheckpoints)
 		}
 		let parent = self.current_mut();
@@ -138,20 +137,18 @@ impl Gas {
 			_ => GasOutcome::Halt,
 		})
 	}
-
 	/// Pops the last gas checkpoint.
 	///
 	/// Any gas limit remaining in the checkpoint is added back to the parent
 	/// checkpoint.  Returns an error if function tries to pop the final
 	/// checkpoint.
 	pub fn pop(&mut self) -> Result<(), NoCheckpointToPop> {
-		if self.checkpoints.len() < 2 {
-			return Err(NoCheckpointToPop)
-		}
-		let child = self.checkpoints.pop().expect("account by external caller");
-		let parent = self.current_mut();
-		*parent += child;
-		Ok(())
+		self.checkpoints
+			.pop()
+			.map(|child| {
+				*self.current_mut() += child;
+			})
+			.or(Err(NoCheckpointToPop))
 	}
 
 	pub fn charge(&mut self, value: u64) -> GasOutcome {
@@ -166,6 +163,7 @@ impl Gas {
 	}
 
 	pub fn remaining(&self) -> u64 {
+		// always less than `initial_value`, it will not panic
 		self.checkpoints.iter().sum()
 	}
 }
