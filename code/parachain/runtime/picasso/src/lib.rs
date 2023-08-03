@@ -325,7 +325,7 @@ parameter_types! {
 
 	// TODO
 	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
-	pub const MinAnswerBound: u32 = 7;
+	pub const MinAnswerBound: u32 = 3;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
