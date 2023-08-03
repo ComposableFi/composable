@@ -247,9 +247,9 @@ pub mod pallet {
 				//deliver extrinsic and only relayer will get the error. 
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 					reason: MultihopEventReason::FailedToConvertAddressToBytes,
-					from: from.clone(),
-					to: to.clone(),
-					amount: amount,
+					from,
+					to,
+					amount,
 					asset_id: currency,
 					is_error: true,
 				});
@@ -289,8 +289,8 @@ pub mod pallet {
 			//track the error as event and return none
 			<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 				reason: MultihopEventReason::XcmTransferInitiated,
-				from: from.clone(),
-				to: to.clone(),
+				from,
+				to,
 				amount,
 				asset_id: currency,
 				is_error: result.is_err(),
@@ -343,11 +343,11 @@ pub mod pallet {
 
 			for (i, name, address) in list_chain_name_address {
 				let mut forward = if i.chain_hop == ChainHop::Xcm {
-					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(&address));
+					let memo_receiver = scale_info::prelude::format!("0x{}", hex::encode(address));
 					Forward::new_xcm_memo(memo_receiver, IbcSubstrate::new(i.para_id))
 				} else {
 					let memo_receiver = if i.chain_hop == ChainHop::SubstrateIbc {
-						scale_info::prelude::format!("0x{}", hex::encode(&address))
+						scale_info::prelude::format!("0x{}", hex::encode(address))
 					} else {
 						let data: Vec<u5> = address
 							.into_iter()
@@ -358,7 +358,7 @@ pub mod pallet {
 							})
 							.collect::<Result<_, _>>()?;
 
-						let name = String::from_utf8(name.into()).map_err(|_| {
+						let name = String::from_utf8(name).map_err(|_| {
 							DispatchError::Other("Failed to convert chain name from utf8")
 						})?;
 						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
@@ -610,7 +610,7 @@ pub mod pallet {
 					return None;
 				};
 
-				let Ok(name) = bech32_no_std::encode(&name, data.clone()) else {
+				let Ok(name) = bech32_no_std::encode(&name, data) else {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
@@ -671,7 +671,7 @@ pub mod pallet {
 
 			let vec: sp_std::vec::Vec<_> = chain_info_iter
 				.zip(addresses.into_iter())
-				.map(|(i, address)| (i.0, i.1.into_inner(), address.clone()))
+				.map(|(i, address)| (i.0, i.1.into_inner(), address))
 				.collect();
 
 			let memo_data = Pallet::<T>::create_memo(vec);
@@ -683,12 +683,11 @@ pub mod pallet {
 				});
 				return None;
 			};
-			match memo_data {
-				Some(memo_data) => {
-					let memo_result =
-						<T as pallet_ibc::Config>::MemoMessage::try_from(Map::from_cw(memo_data));
+			if let Some(memo_data) = memo_data {
+				let memo_result =
+					<T as pallet_ibc::Config>::MemoMessage::try_from(Map::from_cw(memo_data));
 
-					let Ok(memo_result) = memo_result else{
+				let Ok(memo_result) = memo_result else{
 						<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 							origin_address: address_from,
 							route_id,
@@ -696,9 +695,7 @@ pub mod pallet {
 						});
 						return None;
 					};
-					memo = Some(memo_result)
-				},
-				_ => {},
+				memo = Some(memo_result)
 			}
 
 			let result = pallet_ibc::Pallet::<T>::transfer(
@@ -713,7 +710,7 @@ pub mod pallet {
 				Ok(_) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::SuccessXcmToIbc {
 						origin_address: account_id_from,
-						to: raw_address_to.clone(),
+						to: raw_address_to,
 						amount: *amount,
 						asset_id,
 						memo,
@@ -722,7 +719,7 @@ pub mod pallet {
 				Err(e) => {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedXcmToIbc {
 						origin_address: account_id_from,
-						to: raw_address_to.clone(),
+						to: raw_address_to,
 						amount: *amount,
 						asset_id,
 						memo,

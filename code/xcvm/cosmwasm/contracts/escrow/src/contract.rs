@@ -24,15 +24,18 @@ pub fn instantiate(
 	for admin in msg.admins {
 		auth::Admin::add(deps.storage, deps.api.addr_validate(&admin)?)?;
 	}
+	deposits::init_state(deps.storage)?;
 	Ok(Response::default().add_event(msg::make_event(msg::Action::Instantiated)))
 }
 
 #[cosmwasm_std::entry_point]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
 	match msg {
-		msg::ExecuteMsg::DepositAssets(req) => {
-			let auth = auth::User::authorise(deps.storage, &env)?;
-			deposits::handle_deposit_assets(auth, deps, env, info, req)
+		msg::ExecuteMsg::DepositAssets(msg) =>
+			deposits::handle_deposit_request(deps, env, info, msg),
+		msg::ExecuteMsg::Receive(msg) => {
+			let auth = auth::Cw20Contract::authorise(deps.storage, info.sender)?;
+			deposits::handle_receive(auth, deps, env, msg)
 		},
 		msg::ExecuteMsg::Relay(req) => {
 			let auth = auth::User::authorise(deps.storage, &env)?;

@@ -296,7 +296,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::<()>::Bank(send_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::<()>::Bank(send_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -312,7 +312,7 @@ impl LateCall {
 	pub fn bank_burn(amount: Vec<Coin>) -> Result<Self, ()> {
 		Ok(LateCall::new(
 			Bindings::new(),
-			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn { amount }))
+			serde_json_wasm::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn { amount }))
 				.map_err(|_| ())?,
 		))
 	}
@@ -336,7 +336,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(execute_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::Wasm(execute_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -379,7 +379,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(instantiate_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::Wasm(instantiate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -416,7 +416,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -446,7 +446,7 @@ impl LateCall {
 		};
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::Wasm(migrate_msg)).map_err(|_| ())?;
 
 		let mut total_bindings = Bindings::new();
 
@@ -467,7 +467,7 @@ impl LateCall {
 		let clear_admin_msg = FlatWasmMsg::<()>::ClearAdmin { contract_addr };
 
 		let serialized_data =
-			serde_json::to_string(&FlatCosmosMsg::Wasm(clear_admin_msg)).map_err(|_| ())?;
+			serde_json_wasm::to_string(&FlatCosmosMsg::Wasm(clear_admin_msg)).map_err(|_| ())?;
 
 		Ok(LateCall::new(Bindings::new(), serialized_data.into()))
 	}
@@ -477,20 +477,20 @@ impl<T> TryInto<CosmosMsg> for FlatCosmosMsg<T>
 where
 	T: Serialize + Clone + Debug,
 {
-	type Error = serde_json::Error;
+	type Error = serde_json_wasm::ser::Error;
 	fn try_into(self) -> Result<CosmosMsg, Self::Error> {
 		let m = match self {
 			FlatCosmosMsg::Wasm(FlatWasmMsg::Execute { contract_addr, msg, funds }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
 					contract_addr,
-					msg: cosmwasm_std::Binary(serde_json::to_vec(&msg)?),
+					msg: cosmwasm_std::Binary(serde_json_wasm::to_vec(&msg)?),
 					funds,
 				}),
 			FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate { admin, code_id, msg, funds, label }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Instantiate {
 					admin,
 					code_id,
-					msg: cosmwasm_std::Binary(serde_json::to_vec(&msg)?),
+					msg: cosmwasm_std::Binary(serde_json_wasm::to_vec(&msg)?),
 					funds,
 					label,
 				}),
@@ -498,7 +498,7 @@ where
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Migrate {
 					contract_addr,
 					new_code_id,
-					msg: cosmwasm_std::Binary(serde_json::to_vec(&msg)?),
+					msg: cosmwasm_std::Binary(serde_json_wasm::to_vec(&msg)?),
 				}),
 			FlatCosmosMsg::Wasm(FlatWasmMsg::UpdateAdmin { contract_addr, admin }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::UpdateAdmin { contract_addr, admin }),
@@ -562,7 +562,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Execute {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Execute {
 				contract_addr: String::new(),
 				msg: test_msg,
 				funds: Vec::new()
@@ -594,7 +594,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate {
 				admin: Some(Default::default()),
 				code_id: 1,
 				msg: test_msg,
@@ -620,7 +620,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Migrate {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Migrate {
 				contract_addr: "migrate_addr".into(),
 				new_code_id: 2,
 				msg: test_msg
@@ -641,7 +641,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::UpdateAdmin {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::UpdateAdmin {
 				contract_addr: "contract_addr".into(),
 				admin: Default::default()
 			}))
@@ -657,7 +657,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::ClearAdmin {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::<()>::Wasm(FlatWasmMsg::ClearAdmin {
 				contract_addr: "contract_addr".into(),
 			}))
 			.unwrap()
@@ -676,7 +676,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Send {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Send {
 				to_address: Default::default(),
 				amount: Default::default()
 			}))
@@ -692,7 +692,7 @@ mod tests {
 
 		assert_eq!(
 			msg.encoded_call,
-			serde_json::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn {
+			serde_json_wasm::to_vec(&FlatCosmosMsg::<()>::Bank(BankMsg::Burn {
 				amount: Default::default()
 			}))
 			.unwrap()

@@ -1180,8 +1180,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Read an entry from the executing contract storage, charging the according gas prior to
 	/// actually reading the entry.
-	pub(crate) fn do_db_read<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_db_read(
+		vm: &mut DefaultCosmwasmVM<T>,
 		key: &[u8],
 	) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
 		let price = Self::do_db_read_gas(&vm.contract_info.trie_id, key);
@@ -1193,8 +1193,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Read an entry from an arbitrary contract, charging the according gas prior to actually
 	/// reading the entry.
-	pub(crate) fn do_db_read_other_contract<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_db_read_other_contract(
+		vm: &mut DefaultCosmwasmVM<T>,
 		trie_id: &ContractTrieIdOf<T>,
 		key: &[u8],
 	) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
@@ -1221,8 +1221,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Write an entry from the executing contract, charging the according gas prior to actually
 	/// writing the entry.
-	pub(crate) fn do_db_write<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_db_write(
+		vm: &mut DefaultCosmwasmVM<T>,
 		key: &[u8],
 		value: &[u8],
 	) -> Result<(), CosmwasmVMError<T>> {
@@ -1267,7 +1267,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Remove an entry from the executing contract, no gas is charged for this operation.
-	pub(crate) fn do_db_remove<'a>(vm: &'a mut DefaultCosmwasmVM<T>, key: &[u8]) {
+	pub(crate) fn do_db_remove(vm: &mut DefaultCosmwasmVM<T>, key: &[u8]) {
 		let trie_id = &vm.contract_info.trie_id;
 		Self::with_db_entry(trie_id, key, |child_trie, entry| {
 			storage::child::kill(&child_trie, &entry)
@@ -1311,8 +1311,8 @@ impl<T: Config> Pallet<T> {
 		}
 		Ok(())
 	}
-	pub(crate) fn do_continue_instantiate<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_continue_instantiate(
+		vm: &mut DefaultCosmwasmVM<T>,
 		CosmwasmContractMeta { code_id, admin, label }: CosmwasmContractMeta<CosmwasmAccount<T>>,
 		funds: Vec<Coin>,
 		salt: &[u8],
@@ -1334,8 +1334,8 @@ impl<T: Config> Pallet<T> {
 		.sub_call(vm.shared, funds, message, event_handler)
 	}
 
-	pub(crate) fn do_continue_execute<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_continue_execute(
+		vm: &mut DefaultCosmwasmVM<T>,
 		contract: AccountIdOf<T>,
 		funds: Vec<Coin>,
 		message: &[u8],
@@ -1349,8 +1349,8 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	pub(crate) fn do_continue_reply<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_continue_reply(
+		vm: &mut DefaultCosmwasmVM<T>,
 		reply: cosmwasm_std::Reply,
 		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
 	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>> {
@@ -1366,8 +1366,8 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	pub(crate) fn do_continue_migrate<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_continue_migrate(
+		vm: &mut DefaultCosmwasmVM<T>,
 		contract: AccountIdOf<T>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
@@ -1428,8 +1428,8 @@ impl<T: Config> Pallet<T> {
 		Ok(code_info_response)
 	}
 
-	pub(crate) fn do_continue_query<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_continue_query(
+		vm: &mut DefaultCosmwasmVM<T>,
 		contract: AccountIdOf<T>,
 		message: &[u8],
 	) -> Result<cosmwasm_vm::executor::QueryResult, CosmwasmVMError<T>> {
@@ -1451,8 +1451,8 @@ impl<T: Config> Pallet<T> {
 		result
 	}
 
-	pub(crate) fn do_query_raw<'a>(
-		vm: &'a mut DefaultCosmwasmVM<T>,
+	pub(crate) fn do_query_raw(
+		vm: &mut DefaultCosmwasmVM<T>,
 		address: AccountIdOf<T>,
 		key: &[u8],
 	) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {

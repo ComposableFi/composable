@@ -41,7 +41,17 @@ pub struct MigrateMsg {}
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum ExecuteMsg {
+	/// Request to deposit any attached coins to the account.
 	DepositAssets(DepositAssetsRequest),
+
+	/// Tokens received from CW-20 contract.
+	///
+	/// Just like [`ExecuteMsg::DepositAssets`] this triggers a message to the
+	/// accounts contract.  The account to credit is specified in the messages
+	/// `msg` which is JSON-serialised [`ReceiveMsgBody`].
+	#[cfg(feature = "cw20")]
+	Receive(cw20::Cw20ReceiveMsg),
+
 	Relay(RelayRequest),
 	BreakGlass,
 }
@@ -51,51 +61,41 @@ pub enum ExecuteMsg {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum QueryMsg {}
 
-/// Deposits assets onto the virtual wallet.
-///
-/// This triggers a message to the accounts contract on the Centauri chain
-/// which updates user balances.  Because this is a cross-chain operation,
-/// there is a delay between this operation succeeding and funds showing up
-/// on user account.
+/// Message attached to [`::cw20::Cw20ReceiveMsg`] sent when receiving CW20
+/// funds.
 ///
 /// If the `account` doesn’t exist on the accounts contract, the deposit is
 /// aborted and assets are returned to the sender of the message.
+#[cfg(feature = "cw20")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct ReceiveMsgBody {
+	/// Name of the account in the virtual wallet to deposit funds to.
+	pub account: String,
+}
+
+/// Request to deposit assets to the account.
+///
+/// This triggers a message to the accounts contract which updates user
+/// balances.  Because this is a cross-chain operation, there is a delay between
+/// this operation succeeding and funds showing up on user account.
+///
+/// Responses with [`DepositAssetsResponse`] message.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DepositAssetsRequest {
 	/// Name of the account in the virtual wallet to deposit funds to.
 	pub account: String,
-	/// Funds attached to this message to deposit to the user.
-	pub deposits: Vec<LocalAssetAmount>,
-}
 
-/// An asset with its amount.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct LocalAssetAmount {
-	/// Local asset identifier.
-	pub asset_id: LocalAssetId,
-	/// Amount of the asset.
-	pub amount: u128,
-}
-
-/// Local asset identifier.  XXX TODO
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub enum LocalAssetId {
-	Native { denom: String },
-	Path { path: String },
-}
-
-impl LocalAssetId {
-	/// Normalises local asset id so that equivalent asset identifiers are
-	/// mapped to a single representative value.
-	pub fn normalize(&mut self) {
-		todo!()
-	}
+	/// List of CW20 tokens with amount to include in the deposit.
+	///
+	/// The contract must have allowance from the sender on the CW20 contract
+	/// for given amount of the token.  The contract will attempt to transfer
+	/// the funds to its account to get the funds.
+	#[cfg(feature = "cw20")]
+	pub tokens: Vec<(String, u128)>,
 }
 
 /// Response to asset deposit request.

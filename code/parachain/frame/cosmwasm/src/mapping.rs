@@ -10,9 +10,9 @@ use ibc::core::{
 	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
-use crate::{prelude::*, Config};
+use crate::prelude::*;
 
-pub fn ibc_to_cw_channel_open<T: Config + Send + Sync>(
+pub fn ibc_to_cw_channel_open(
 	channel_id: &ChannelId,
 	port_id: &PortId,
 	counterparty: &Counterparty,
@@ -54,7 +54,7 @@ pub fn to_cosmwasm_timestamp(timestamp: ibc::timestamp::Timestamp) -> cosmwasm_s
 	cosmwasm_std::Timestamp::from_nanos(timestamp.nanoseconds())
 }
 
-pub fn ibc_open_try_to_cw_open<T: Config + Send + Sync>(
+pub fn ibc_open_try_to_cw_open(
 	channel_id: &ChannelId,
 	port_id: &PortId,
 	counterparty: &Counterparty,

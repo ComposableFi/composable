@@ -66,7 +66,7 @@ fn calculate_weight<T: Config>(weight_fn: WeightFn, n_additional_instrs: u32) ->
 
 /// Calculates a weight that is dependent on other weight. Eg. `else` because it cannot
 /// exist without an `if`
-fn calculate_weight_custom<T: Config>(weight_fn: WeightFn, custom_fn: WeightFn) -> u32 {
+fn calculate_weight_custom(weight_fn: WeightFn, custom_fn: WeightFn) -> u32 {
 	(weight_fn(1)
 		.saturating_sub(weight_fn(0))
 		.saturating_sub(custom_fn(1).saturating_sub(custom_fn(0)).saturating_div(2)))
@@ -204,7 +204,7 @@ impl<T: Config> Default for CostRules<T> {
 			f64copysign: calculate_weight::<T>(T::WeightInfo::instruction_F64Copysign, 3),
 			select: calculate_weight::<T>(T::WeightInfo::instruction_Select, 4),
 			if_: calculate_weight::<T>(T::WeightInfo::instruction_If, 2),
-			else_: calculate_weight_custom::<T>(
+			else_: calculate_weight_custom(
 				T::WeightInfo::instruction_Else,
 				T::WeightInfo::instruction_If,
 			),

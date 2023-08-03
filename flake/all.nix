@@ -39,6 +39,9 @@
         deadnix-check
         taplo-check
         cargo-deny-check
+        cargo-no-std-core-check
+        cargo-no-std-cosmwasm
+        cargo-no-std-xcm-ibc
       ]);
 
       all-benchmarks = pkgs.linkFarmFromDrvs "all-benchmarks"

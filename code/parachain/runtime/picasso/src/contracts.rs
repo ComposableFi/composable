@@ -136,7 +136,7 @@ impl PalletHook<Runtime> for Precompiles {
 		match contract_address {
 			address if address == dex => {
 				let message: composable_traits::dex::ExecuteMsg =
-					serde_json::from_slice(message)
+					serde_json_wasm::from_slice(message)
 						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 
 				let result = common::dex::DexPrecompile::<Pablo>::execute(
@@ -171,8 +171,9 @@ impl PalletHook<Runtime> for Precompiles {
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
 		match contract_address {
 			address if address == dex => {
-				let message: composable_traits::dex::QueryMsg = serde_json::from_slice(message)
-					.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+				let message: composable_traits::dex::QueryMsg =
+					serde_json_wasm::from_slice(message)
+						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 				let result = common::dex::DexPrecompile::<Pablo>::query(
 					vm.0.data().cosmwasm_message_info.sender.as_str(),
 					message,

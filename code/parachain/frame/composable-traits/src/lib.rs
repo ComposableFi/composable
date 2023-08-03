@@ -44,6 +44,7 @@ pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
 pub mod bounded;
+#[cfg(feature = "centauri")]
 pub mod centauri;
 pub mod cosmwasm;
 pub mod currency;

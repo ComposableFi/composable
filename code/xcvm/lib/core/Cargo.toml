@@ -6,36 +6,38 @@ name = "xc-core"
 version = "0.1.0"
 
 [dependencies]
+bech32-no_std = { workspace = true, features = ["strict"] }
+cosmwasm-schema = { workspace = true, optional = true }
 cosmwasm-std = { workspace = true, features = ["ibc3"] }
 cw-storage-plus = { workspace = true, optional = true }
-fixed = { workspace = true }
+cw20 = { workspace = true, optional = true }
 derive_more.workspace = true
+fixed = { workspace = true }
 hex = { workspace = true, features = ["alloc"] }
-parity-scale-codec = { workspace = true }
+ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
 num = { workspace = true }
+parity-scale-codec = { workspace = true }
 prost = { workspace = true, features = ["prost-derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, features = ["alloc"] }
-serde_json = { workspace = true }
-strum.workspace = true
-bech32-no_std = { workspace = true, features = ["strict"] }
+serde-json-wasm = { workspace = true, default-features = false }
 sha2 = { workspace = true }
-ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
+strum.workspace = true
 thiserror = { workspace = true }
-cosmwasm-schema = { workspace = true, optional = true}
 
 [build-dependencies]
 prost-build = { workspace = true }
 
 [features]
 default = ["std"]
-cosmwasm = ["cw-storage-plus"]
+cosmwasm = ["cw-storage-plus", "cw20"]
 std = [
-  "dep:schemars",
-  "dep:cosmwasm-schema",
   "cosmwasm-std/std",
-  "ibc-rs-scale/std",
-  "ibc-rs-scale/schema",
   "cw-storage-plus/std",
+  "dep:cosmwasm-schema",
+  "dep:schemars",
+  "ibc-rs-scale/schema",
+  "ibc-rs-scale/std",
+  "serde-json-wasm/std",
 ]

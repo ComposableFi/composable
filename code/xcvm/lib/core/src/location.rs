@@ -14,6 +14,7 @@ impl From<PrefixedDenom> for ForeignAssetId {
 		Self::IbcIcs20(this)
 	}
 }
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct PrefixedDenom {

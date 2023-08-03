@@ -194,9 +194,9 @@ mod tests {
 		where
 			T: for<'a> Deserialize<'a> + Serialize + core::fmt::Debug + PartialEq,
 		{
-			let serialised = serde_json::to_string(&value).unwrap();
+			let serialised = serde_json_wasm::to_string(&value).unwrap();
 			assert_eq!(want, serialised);
-			let deserialised = serde_json::from_str::<T>(&serialised).unwrap();
+			let deserialised = serde_json_wasm::from_str::<T>(&serialised).unwrap();
 			assert_eq!(value, deserialised);
 		}
 
