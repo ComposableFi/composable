@@ -127,6 +127,7 @@ pub struct OtherNetworkItem {
 /// and about assets and services on these chains
 /// (in future block hooks and some set of host extensions/precompiles would help to get some info
 /// automatically)
+/// `Force` message sets the data unconditionally.  
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

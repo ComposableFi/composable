@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, NetworkId};
 
 #[cfg(feature = "cw-storage-plus")]
 use cw_storage_plus::{Key, Prefixer};
@@ -400,5 +400,39 @@ impl<T> From<Funds<T>> for Vec<(u128, T)> {
 			.into_iter()
 			.map(|(AssetId(Displayed(asset)), amount)| (asset, amount))
 			.collect()
+	}
+}
+
+pub fn generate_asset_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> AssetId {
+	[
+		network_id.0.to_be_bytes().to_vec(),
+		protocol_id.to_be_bytes().to_vec(),
+		nonce.to_be_bytes().to_vec(),
+	]
+	.concat()
+	.try_into()
+	.map(u128::from_be_bytes)
+	.expect("[u8; 8] + bytes(u64) = [u8; 16]")
+	.into()
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	#[test]
+	fn devnet() {
+		let pica = generate_asset_id(0.into(), 0, 1);
+		assert_eq!(pica, 1.into());
+		let pica = generate_asset_id(1.into(), 0, 1);
+		assert_eq!(pica, 79228162514264337593543950337.into());	
+		let pica = generate_asset_id(2.into(), 0, 1);
+		assert_eq!(pica, 158456325028528675187087900673.into());	
+		let pica = generate_asset_id(3.into(), 0, 1);
+		assert_eq!(pica, 237684487542793012780631851009.into());		
+
+		let atom = generate_asset_id(2.into(), 0, 2);
+		assert_eq!(atom, 158456325028528675187087900674.into());	
+		let atom = generate_asset_id(3.into(), 0, 2);
+		assert_eq!(atom, 237684487542793012780631851010.into());		
 	}
 }
