@@ -404,9 +404,9 @@ impl<T> From<Funds<T>> for Vec<(u128, T)> {
 }
 
 pub fn generate_asset_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> AssetId {
-	AssetId::from((u128::from(network_id) << 96) |
-		(u128::from(protocol_id) << 64) |
-		(u128::from(nonce))
+	AssetId::from(
+		(u128::from(network_id.0) << 96) | (u128::from(protocol_id) << 64) | (u128::from(nonce)),
+	)
 }
 
 #[cfg(test)]
