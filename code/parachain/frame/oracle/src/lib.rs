@@ -1097,8 +1097,7 @@ pub mod pallet {
 			let stale_block = block.saturating_sub(T::StalePrice::get());
 			let (staled_prices, mut fresh_prices) =
 				match pre_prices.iter().enumerate().find(|(_, p)| p.block >= stale_block) {
-					Some((index, pre_price)) => {
-						Self::remove_price_in_transit(&pre_price.who, asset_info);
+					Some((index, _)) => {
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -1109,14 +1108,14 @@ pub mod pallet {
 			let max_answers = asset_info.max_answers;
 			if fresh_prices.len() as u32 > max_answers {
 				let pruned = fresh_prices.len() - max_answers as usize;
-				for price in fresh_prices.iter().skip(pruned) {
+				for price in fresh_prices.iter().take(pruned) {
 					Self::remove_price_in_transit(&price.who, asset_info);
 				}
 				#[allow(clippy::indexing_slicing)]
 				// max_answers is confirmed to be less than the len in the condition of the if
 				// block (in a block due to https://github.com/rust-lang/rust/issues/15701)
 				{
-					fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
+					fresh_prices = fresh_prices[pruned..pruned + max_answers as usize].to_vec();
 				};
 			}
 
