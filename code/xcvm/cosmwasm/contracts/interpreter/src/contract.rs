@@ -324,12 +324,11 @@ pub fn interpret_spawn(
 					to_address: gateway_address.clone().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Cw20 { contract } => response.add_message(
-					Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
+				AssetReference::Cw20 { contract } =>
+					response.add_message(Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
 						recipient: gateway_address.clone().into(),
 						amount: transfer_amount.into(),
-					})?,
-				),
+					})?),
 			};
 		}
 	}

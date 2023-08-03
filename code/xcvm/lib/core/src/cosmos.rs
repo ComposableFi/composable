@@ -35,20 +35,17 @@ mod tests {
 		assert_eq!(pica, "ibc/B62D63F2BD5A7B70AB15F84BCB70EAC88222D3A8E8E0B22793EE788068EA22BA");
 		let pica = hash_denom_trace("/transfer/channel-0/1");
 		assert_eq!(pica, "ibc/F2B6EF5B6F86990A3863B78687ADE3D95E412657AAEB7CF2B3B8131B8055C1F1");
-		
+
 		let pica: String = hash_denom_trace("/transfer/channel-1/ppica");
 		assert_eq!(pica, "ibc/661BD30059657725608DF36907F06B70C1FA7A1772FF92AEE1844A3E35A80D63");
 
 		let pica: String = hash_denom_trace("/transfer/channel-0/ppica");
 		assert_eq!(pica, "ibc/F0E228914E0E69E7B5E9231282FE6B7595CF90CB76E7193C6AFDCACDF5E83821");
-		
+
 		let osmo: String = hash_denom_trace("/transfer/channel-1/uosmo");
 		assert_eq!(osmo, "ibc/BCACECE44E39A9009D793D68CC5DF76B402607B1C574379DCB4F3A5D24BC1936");
-		
+
 		let osmo: String = hash_denom_trace("/transfer/channel-0/uosmo");
 		assert_eq!(osmo, "ibc/B4511F40A2844906F5940444691EE3AE877E8E0DD8354C8C4D36670A46C5680D");
-
 	}
 }
-
-

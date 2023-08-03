@@ -275,6 +275,53 @@
 
 
             sleep $BLOCK_SECONDS
+            FORCE_PICA=$(cat << EOF
+            {
+              "config": {
+                "force_asset": {
+                  "asset_id": "158456325028528675187087900673",
+                  "from_network_id": 2,
+                  "local": {
+                    "native": {
+                      "denom": "ppica"
+                    }
+                  },
+                  "bridged": {
+                    "location_on_network": {
+                      "ibc_ics20": {
+                        "base_denom" : "ppica",
+                        "trace_path" : "transfer/channel-0"
+                      }
+                    }
+                  }
+                }
+              }
+            }                               
+            EOF
+            )
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+            sleep $BLOCK_SECONDS
+            FORCE_UATOM=$(cat << EOF
+              {
+                "config": {
+                    "force_asset": {
+                      "asset_id": "237684487542793012780631851010",
+                      "from_network_id": 3,
+                      "local": {
+                        "native": {
+                          "denom" : "uatom"
+                        }
+                      }
+                    }
+                }
+              }                                 
+            EOF
+            )
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$OSMOSIS_DATA" --from validator --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+            sleep $BLOCK_SECONDS
             osmosisd query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$OSMOSIS_DATA"
           '';
         };

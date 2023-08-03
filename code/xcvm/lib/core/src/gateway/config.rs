@@ -35,11 +35,11 @@ pub struct Ics20Features {
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(all(feature = "std",not(feature="substrate")), derive(JsonSchema))]
+#[cfg_attr(all(feature = "std", not(feature = "substrate")), derive(JsonSchema))]
 pub enum ForeignAssetId {
 	IbcIcs20(PrefixedDenom),
 	#[cfg(feature = "substrate")]
-	Xcm(xcm::VersionedMultiLocation)
+	Xcm(xcm::VersionedMultiLocation),
 }
 
 #[cfg(feature = "substrate")]
@@ -229,7 +229,8 @@ pub enum AssetReference {
 impl AssetReference {
 	pub fn denom(&self) -> String {
 		match self {
-			// AssetReference::ADR001 { sha256 } => ["ibc/", &sha256.to_string()].concat().to_string(),
+			// AssetReference::ADR001 { sha256 } => ["ibc/",
+			// &sha256.to_string()].concat().to_string(),
 			AssetReference::Native { denom } => denom.clone(),
 			AssetReference::Cw20 { contract } => ["cw20:", contract.as_str()].concat(),
 		}

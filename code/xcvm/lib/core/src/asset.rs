@@ -424,15 +424,15 @@ mod tests {
 		let pica = generate_asset_id(0.into(), 0, 1);
 		assert_eq!(pica, 1.into());
 		let pica = generate_asset_id(1.into(), 0, 1);
-		assert_eq!(pica, 79228162514264337593543950337.into());	
+		assert_eq!(pica, 79228162514264337593543950337.into());
 		let pica = generate_asset_id(2.into(), 0, 1);
-		assert_eq!(pica, 158456325028528675187087900673.into());	
+		assert_eq!(pica, 158456325028528675187087900673.into());
 		let pica = generate_asset_id(3.into(), 0, 1);
-		assert_eq!(pica, 237684487542793012780631851009.into());		
+		assert_eq!(pica, 237684487542793012780631851009.into());
 
 		let atom = generate_asset_id(2.into(), 0, 2);
-		assert_eq!(atom, 158456325028528675187087900674.into());	
+		assert_eq!(atom, 158456325028528675187087900674.into());
 		let atom = generate_asset_id(3.into(), 0, 2);
-		assert_eq!(atom, 237684487542793012780631851010.into());		
+		assert_eq!(atom, 237684487542793012780631851010.into());
 	}
 }
