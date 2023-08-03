@@ -2,11 +2,13 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, ... }:
     let
-      buildPolkadotNode = { name, repo, owner, rev, hash, cargoSha256 }:
+      buildPolkadotNode = { name, repo, owner, rev, hash, outputHashes, }:
         pkgs.rustPlatform.buildRustPackage (subnix.subenv // rec {
-          inherit name cargoSha256;
-          # git may be different locally and remotely, so we freeze for determinism (because node builds wasm)
-          buildPackage = [ pkgs.git ];
+          inherit name;
+          cargoLock = {
+            lockFile = "${src}/Cargo.lock";
+            inherit outputHashes;
+          };
           src = pkgs.fetchgit {
             url = "https://github.com/${owner}/${repo}.git";
             inherit rev;
@@ -61,7 +63,12 @@
           owner = "paritytech";
           rev = rococo-runtime-commit;
           hash = "sha256-uoz3x0I0608aak/g/UZRjnmH3r08ffURzgxQfvZpmMs=";
-          cargoSha256 = "sha256-spWZNd4GzFZP1fRQHFr+9LB7Z2KigvQ8DQhBAWb26Vg=";
+          outputHashes = {
+            "beefy-gadget-4.0.0-dev" =
+              "sha256-3zOEG4ER0UQK3GRctZw6TgkX/8Ydk1ynU8N6vlepnHw=";
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+          };
         };
 
         polkadot-node-on-parity-rococo = buildPolkadotNode rec {
@@ -70,7 +77,12 @@
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
           hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
-          cargoSha256 = "sha256-AfjUJmgZStiG/yCRGYbWzXYS4N1KthZ/3/zj25E2T5s=";
+          outputHashes = {
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
+          };
         };
 
         polkadot-node-on-parity-westend = buildPolkadotNode rec {
@@ -79,7 +91,12 @@
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
           hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
-          cargoSha256 = "sha256-x57uL7ltcuZ6AkTC4z6HNuc3lONQG3YLAh1R+aarZE8=";
+          outputHashes = {
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
+          };
         };
 
         polkadot-node-on-parity-kusama = buildPolkadotNode rec {
@@ -88,7 +105,12 @@
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
           hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
-          cargoSha256 = "sha256-uqO2s0+rL89lSE/FcejemupPjTfy5/4GWVzQC7WMDm8=";
+          outputHashes = {
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
+          };
         };
 
         polkadot-node-on-parity-polkadot = buildPolkadotNode rec {
@@ -97,7 +119,12 @@
           owner = "paritytech";
           rev = "e203bfb396ed949f102720debf32fb98166787af";
           hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
-          cargoSha256 = "sha256-PqYXskT7pL2eRswCArTNZb3yAQKusL9NM1dbprNPxm0=";
+          outputHashes = {
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
+          };
         };
 
         polkadot-live-runtime-node = buildPolkadotNode rec {
@@ -106,7 +133,12 @@
           owner = "paritytech";
           rev = "645723987cf9662244be8faf4e9b63e8b9a1b3a3";
           hash = "sha256-TTi4cKqQT/2ZZ/acGvcilqTlh2D9t4cfAtQQyVZWdmg=";
-          cargoSha256 = "sha256-1N+zMDcaj2MmFki1Ju3KzHRtYR6581AqVwiIqqFmyrA=";
+          outputHashes = {
+            "beefy-gadget-4.0.0-dev" =
+              "sha256-MUUH5v6CKuzDBIXYlJLDFVz6WfaVllzxO9afvWeUZXY=";
+            "sub-tokens-0.1.0" =
+              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+          };
         };
       };
     };
