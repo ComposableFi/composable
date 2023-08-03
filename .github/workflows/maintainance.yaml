@@ -40,7 +40,7 @@ jobs:
         uses: crs-k/stale-branches@v3.0.0
         with:
           days-before-stale: 16
-          days-before-delete: 32
+          days-before-delete: 17
           comment-updates: false
           max-issues: 30
           tag-committer: false
