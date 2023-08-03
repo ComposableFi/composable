@@ -52,10 +52,18 @@ jobs:
     runs-on:
       - ubuntu-latest
     steps:
-      - name: 'Checkout Repository'
+      - name: checkout
         uses: actions/checkout@v3
         if: ${{ inputs.github_event_name != 'merge_group' && inputs.github_event_name != 'push' }}
-      - name: 'Dependency Review'
+      - uses: amannn/action-semantic-pull-request@v5
+        if: ${{ inputs.github_event_name != 'merge_group' && inputs.github_event_name != 'push' }}
+        with:
+          requireScope: false
+          subjectPattern: (.*[a-zA-Z].*){16,}
+          subjectPatternError: |
+            https://regexper.com/#%28.*%5Ba-zA-Z%5D.*%29%7B16%2C%7D
+
+      - name: dependency-review
         if: ${{ inputs.github_event_name != 'merge_group' && inputs.github_event_name != 'push' }}
         uses: actions/dependency-review-action@v3
         with:
