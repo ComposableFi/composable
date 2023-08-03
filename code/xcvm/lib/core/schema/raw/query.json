@@ -34,7 +34,7 @@
       ]
     },
     "Displayed_for_uint128": {
-      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
+      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
       "type": "integer",
       "format": "uint128",
       "minimum": 0.0

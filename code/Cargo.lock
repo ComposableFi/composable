@@ -19230,6 +19230,7 @@ dependencies = [
  "sha2 0.10.7",
  "strum 0.25.0",
  "thiserror-core",
+ "xcm",
 ]
 
 [[package]]

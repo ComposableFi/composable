@@ -26,11 +26,14 @@
     "AssetItem": {
       "type": "object",
       "required": [
+        "asset_id",
         "from_network_id",
-        "id",
         "local"
       ],
       "properties": {
+        "asset_id": {
+          "$ref": "#/definitions/AssetId"
+        },
         "bridged": {
           "anyOf": [
             {
@@ -43,9 +46,6 @@
         },
         "from_network_id": {
           "$ref": "#/definitions/NetworkId"
-        },
-        "id": {
-          "$ref": "#/definitions/AssetId"
         },
         "local": {
           "$ref": "#/definitions/AssetReference"
@@ -78,16 +78,36 @@
         {
           "type": "object",
           "required": [
-            "virtual"
+            "a_d_r001"
           ],
           "properties": {
-            "virtual": {
+            "a_d_r001": {
               "type": "object",
               "required": [
-                "cw20_address"
+                "sha256"
               ],
               "properties": {
-                "cw20_address": {
+                "sha256": {
+                  "$ref": "#/definitions/HexBinary"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "cw20"
+          ],
+          "properties": {
+            "cw20": {
+              "type": "object",
+              "required": [
+                "contract"
+              ],
+              "properties": {
+                "contract": {
                   "$ref": "#/definitions/Addr"
                 }
               }
@@ -109,7 +129,7 @@
       }
     },
     "Displayed_for_uint128": {
-      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
+      "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
       "type": "integer",
       "format": "uint128",
       "minimum": 0.0
@@ -119,16 +139,20 @@
         {
           "type": "object",
           "required": [
-            "IbcIcs20"
+            "ibc_ics20"
           ],
           "properties": {
-            "IbcIcs20": {
+            "ibc_ics20": {
               "$ref": "#/definitions/PrefixedDenom"
             }
           },
           "additionalProperties": false
         }
       ]
+    },
+    "HexBinary": {
+      "description": "This is a wrapper around Vec<u8> to add hex de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is similar to `cosmwasm_std::Binary` but uses hex. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
     },
     "NetworkId": {
       "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",

@@ -97,8 +97,8 @@ fn transfer_from_user(
 					return Err(ContractError::InsufficientFunds)?
 				}
 			},
-			msg::AssetReference::Virtual { cw20_address } =>
-				transfers.push(Cw20Contract(cw20_address).call(Cw20ExecuteMsg::TransferFrom {
+			msg::AssetReference::Cw20 { contract } =>
+				transfers.push(Cw20Contract(contract).call(Cw20ExecuteMsg::TransferFrom {
 					owner: user.to_string(),
 					recipient: self_address.to_string(),
 					amount: (*amount).into(),
@@ -232,8 +232,8 @@ fn send_funds_to_interpreter(
 				amount: vec![Coin::new(amount, denom)],
 			}
 			.into(),
-			msg::AssetReference::Virtual { cw20_address } => {
-				let contract = Cw20Contract(cw20_address);
+			msg::AssetReference::Cw20 { contract } => {
+				let contract = Cw20Contract(contract);
 				contract.call(Cw20ExecuteMsg::Transfer {
 					recipient: interpreter_address.clone(),
 					amount: amount.into(),
