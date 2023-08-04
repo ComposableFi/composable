@@ -35,6 +35,11 @@ sandbox = relaxed
 allow-import-from-derivation = true
 ```
 
+Append to `/etc/nix/nix.conf`:
+```ini
+trusted-users = <your user>
+```
+
 ### Using flags
 
 If you cannot edit these config files, then you can pass the following flags to `nix`. 
