@@ -281,15 +281,12 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}       
     name: build-all-rust-qa-packages
-    strategy:
-      matrix:
-        arch: [x64-monster]
     needs: 
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-rust-qa-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-all-rust-qa-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:     
       - name: Set up Cachix
@@ -319,15 +316,12 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}     
     continue-on-error: false
-    strategy:
-      matrix:
-        arch: [x64-monster]
     needs: 
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-misc-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-all-misc-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
@@ -356,9 +350,6 @@ jobs:
     name: build-all-deps-packages
     outputs:
       ok: ${{ steps.ok.outputs.ok }}        
-    strategy:
-      matrix:
-        runner: [x64-cute]
     needs: 
       - privilege-check
       - lfs-check
@@ -394,15 +385,12 @@ jobs:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}    
     name: build-all-docs-packages
-    strategy:
-      matrix:
-        arch: [x64-cute]
     needs: 
       - lfs-check
     runs-on:
       - ubuntu-latest
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-all-docs-packages-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-all-docs-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Nix
@@ -589,13 +577,10 @@ jobs:
       ok: ${{ steps.ok.outputs.ok }}       
     needs: 
       - build-all-ci-packages
-    strategy:
-      matrix:
-        arch: [x64-cute]
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps: 
       - name: Set up Cachix

@@ -17,6 +17,7 @@ installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-
 ## Sudo
 
 ```bash
+set -o errexit
 adduser actions-runner --disabled-password && passwd --delete actions-runner
 sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 cat > /etc/nix/nix.conf << EOF
@@ -42,7 +43,7 @@ service nix-daemon restart
 apt-get update && apt-get install apt-transport-https qemu-system-x86 ca-certificates curl gnupg software-properties-common --yes
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --yes
+apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --yes
 usermod --append --groups docker actions-runner && service docker restart
 usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm
 service nix-daemon restart && service docker restart
@@ -53,20 +54,24 @@ su actions-runner
 
 ## User
 
-```
-nix profile install nixpkgs#git && nix profile install nixpkgs#git-lfs && nix profile install nixpkgs#cachix nixpkgs#process-compose
+```bash
+nix profile install "nixpkgs#git" "nixpkgs#git-lfs" "nixpkgs#cachix" "nixpkgs#process-compose" "nixpkgs#dasel"
 ```
 
+### x84_64
+
 ```bash
-curl -o actions-runner-linux-x64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-x64-2.304.0.tar.gz
-tar xzf ./actions-runner-linux-x64-2.304.0.tar.gz
+curl -o actions-runner-linux-x64-2.307.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.307.1/actions-runner-linux-x64-2.307.1.tar.gz
+tar xzf ./actions-runner-linux-x64-2.307.1.tar.gz
 
 ./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-ax161-$MACHINE_ID --labels x86_64-linux-32C-128GB-2TB --work _work
 ```
 
+### aarch64
+
 ```bash
-curl -o actions-runner-linux-arm64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-arm64-2.304.0.tar.gz
-tar xzf ./actions-runner-linux-arm64-2.304.0.tar.gz
+curl -o actions-runner-linux-arm64-2.307.1.tar.gz -L https://github.com/actions/runner/releases/download/v2.307.1/actions-runner-linux-arm64-2.307.1.tar.gz
+tar xzf ./actions-runner-linux-arm64-2.307.1.tar.gz
 
 ./config.sh --url https://github.com/ComposableFi/composable --token $TOKEN --name hetzner-rx170-$MACHINE_ID --labels aarch64-linux-80C-128GB-2048GB --work _work
 ```
