@@ -40,6 +40,9 @@ jobs:
             ```shell
             # run cross chain devnet with Dotsama and Cosmos nodes 
             nix run "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-fresh" --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed 
+            # or same with docker
+            nix build "github:ComposableFi/composable/${{ github.ref }}#devnet-xc-image" --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed \
+            && docker load --input result && docker run -it --entrypoint bash devnet-xc:latest -c /bin/devnet-xc-fresh 
             ```
             
             [About nix](https://docs.composable.finance/nix.html)
