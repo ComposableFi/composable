@@ -29,6 +29,7 @@
           rnix-lsp
           sad
           self.inputs.cosmos.packages.${system}.gex
+          self.inputs.bech32.packages.${system}.bech32
           subwasm
           terraform
           terraform-ls
