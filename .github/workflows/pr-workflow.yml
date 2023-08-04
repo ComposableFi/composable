@@ -173,7 +173,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-production-deps --keep-going
+          command: nix -- build .#all-production-deps
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
@@ -208,7 +208,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#devnet-xc-image --keep-going
+          command: nix -- build .#devnet-xc-image
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"        
 
@@ -239,7 +239,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#xcvm-tests --keep-going
+          command: nix -- build .#xcvm-tests
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
@@ -272,7 +272,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-ci-packages --keep-going
+          command: nix -- build .#all-ci-packages
       - name: build-home-configuration
         uses: "./.github/templates/watch-exec"
         with:
@@ -311,7 +311,7 @@ jobs:
         if: ${{ inputs.flow != 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-benchmarks --keep-going
+          command: nix -- build .#all-benchmarks
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
@@ -346,7 +346,7 @@ jobs:
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-misc --keep-going       
+          command: nix -- build .#all-misc       
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"   
 
@@ -381,7 +381,7 @@ jobs:
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-deps --keep-going   
+          command: nix -- build .#all-deps   
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"              
 
@@ -425,7 +425,7 @@ jobs:
       - name: build-all-docs-packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-docs --keep-going
+          command: nix -- build .#all-docs
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"               
 
