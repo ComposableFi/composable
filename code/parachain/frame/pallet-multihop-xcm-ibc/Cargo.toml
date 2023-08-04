@@ -24,7 +24,6 @@ bech32-no_std = { workspace = true, default-features = false, features = [
   "strict",
 ] }
 composable-traits = { path = "../composable-traits", default-features = false, features = ["centauri"]}
-xc-core = { path = "../../../xcvm/lib/core", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 composable-support = { default-features = false, path = "../composable-support" }
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
@@ -51,6 +50,8 @@ ibc-rs-scale = { workspace = true, default-features = false, features = [
   "serde",
 ] }
 
+serde = { workspace = true, default-features = false, features = ["alloc"] }
+
 [dev-dependencies]
 frame-benchmarking = { default-features = false, workspace = true }
 pallet-balances = { workspace = true }
@@ -67,6 +68,7 @@ std = [
   "hex/std",
   "ibc-primitives/std",
   "ibc-rs-scale/std",
+  "ibc-rs-scale/schema",
   "log/std",
   "orml-xtokens/std",
   "pallet-currency-factory/std",
@@ -77,7 +79,6 @@ std = [
   "sp-io/std",
   "sp-runtime/std",
   "sp-std/std",
-  "xc-core/std",
   "xcm/std",
 ]
 

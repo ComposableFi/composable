@@ -9465,11 +9465,11 @@ dependencies = [
  "parity-scale-codec",
  "primitives",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
- "xc-core",
  "xcm",
 ]
 
