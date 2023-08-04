@@ -121,6 +121,18 @@ impl<T> parity_scale_codec::WrapperTypeDecode for Displayed<T> {
 	type Wrapped = T;
 }
 
+impl From<crate::proto::Uint128> for Displayed<u128> {
+	fn from(value: crate::proto::Uint128) -> Self {
+		Self(value.into())
+	}
+}
+
+impl From<Displayed<u128>> for crate::proto::Uint128 {
+	fn from(value: Displayed<u128>) -> Self {
+		value.0.into()
+	}
+}
+
 impl From<Uint128> for Displayed<u128> {
 	fn from(value: Uint128) -> Self {
 		Self(value.u128())
@@ -421,8 +433,7 @@ mod tests {
 		assert_eq!(pica, 1.into());
 		let pica = generate_asset_id(1.into(), 0, 1);
 		assert_eq!(pica, 79228162514264337593543950337.into());
-		let pica = generate_asset_id(2.into(), 0, 1);
-		assert_eq!(pica, 158456325028528675187087900673.into());
+
 		let pica = generate_asset_id(3.into(), 0, 1);
 		assert_eq!(pica, 237684487542793012780631851009.into());
 

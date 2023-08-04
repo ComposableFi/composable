@@ -22,10 +22,10 @@ pub(crate) fn force_asset(_: auth::Admin, deps: DepsMut, msg: AssetItem) -> Resu
 }
 
 /// Fetches information about given asset.
-pub(crate) fn query_lookup(deps: Deps, asset_id: AssetId) -> Result<msg::LookupResponse> {
+pub(crate) fn get_asset_by_id(deps: Deps, asset_id: AssetId) -> Result<msg::GetAssetByIdResponse> {
 	ASSETS
 		.may_load(deps.storage, asset_id)?
-		.map(|reference| msg::LookupResponse { reference })
+		.map(|reference| msg::GetAssetByIdResponse { asset: reference })
 		.ok_or(ContractError::UnsupportedAsset)
 }
 

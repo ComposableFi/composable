@@ -78,26 +78,6 @@
         {
           "type": "object",
           "required": [
-            "a_d_r001"
-          ],
-          "properties": {
-            "a_d_r001": {
-              "type": "object",
-              "required": [
-                "sha256"
-              ],
-              "properties": {
-                "sha256": {
-                  "$ref": "#/definitions/HexBinary"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
             "cw20"
           ],
           "properties": {
@@ -149,10 +129,6 @@
           "additionalProperties": false
         }
       ]
-    },
-    "HexBinary": {
-      "description": "This is a wrapper around Vec<u8> to add hex de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is similar to `cosmwasm_std::Binary` but uses hex. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
-      "type": "string"
     },
     "NetworkId": {
       "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",

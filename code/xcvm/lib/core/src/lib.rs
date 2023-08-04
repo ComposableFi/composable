@@ -27,8 +27,9 @@ pub mod transport;
 pub use crate::{
 	asset::*, bridge::*, instruction::*, network::*, packet::*, program::*, protocol::*,
 };
-use alloc::{collections::VecDeque, vec::Vec};
+use alloc::collections::VecDeque;
 use core::marker::PhantomData;
+use prelude::*;
 
 /// Strongly typed network builder originating on `CurrentNetwork` network.
 #[derive(Clone)]

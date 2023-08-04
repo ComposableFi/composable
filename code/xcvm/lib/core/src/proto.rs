@@ -642,7 +642,7 @@ where
 {
 	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
 		Program {
-			tag: program.tag,
+			tag: program.tag.into(),
 			instructions: Some(Instructions {
 				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
 			}),

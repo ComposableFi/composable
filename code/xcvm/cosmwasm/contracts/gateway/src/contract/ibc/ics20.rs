@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
 	proto::decode_packet,
-	shared::{DefaultXCVMProgram, XcPacket},
+	shared::{XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
 	AssetId, CallOrigin,
 };
@@ -133,7 +133,7 @@ pub(crate) fn ics20_message_hook(
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
 }
 
-fn ensure_anonymous(program: &DefaultXCVMProgram) -> Result<()> {
+fn ensure_anonymous(program: &XcProgram) -> Result<()> {
 	for ix in &program.instructions {
 		match ix {
 			xc_core::Instruction::Transfer { .. } => {},

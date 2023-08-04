@@ -19,6 +19,7 @@ cw-utils = { workspace = true }
 cw2 = { workspace = true }
 cw20 = { workspace = true }
 num = { workspace = true }
+hex = { workspace = true, default-features = false, features = ["alloc"] }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde-json-wasm = { workspace = true }

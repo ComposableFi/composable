@@ -10,8 +10,8 @@ use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{
-	gateway::{AssetItem, ConfigSubMsg, HereItem},
-	shared::{DefaultXCVMProgram, Salt},
+	gateway::{AssetItem, ConfigSubMsg, HereItem, NetworkItem},
+	shared::{Salt, XcProgram},
 	AssetId, Funds, Network, NetworkId,
 };
 
@@ -292,7 +292,7 @@ impl<T> TestVM<XCVMState<T>> {
 		&mut self,
 		tx: BlockchainTransaction,
 		salt: impl Into<Salt>,
-		program: impl Into<DefaultXCVMProgram>,
+		program: impl Into<XcProgram>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 		allowance_expires: Option<Expiration>,
 	) -> Result<(Option<Binary>, Vec<Event>), TestError> {
@@ -326,7 +326,7 @@ impl<T> TestVM<XCVMState<T>> {
 		&mut self,
 		tx: BlockchainTransaction,
 		salt: impl Into<Salt>,
-		program: impl Into<DefaultXCVMProgram>,
+		program: impl Into<XcProgram>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 	) -> Result<(Option<Binary>, Vec<Event>), TestError> {
 		let execute_program = xc_core::gateway::ExecuteProgramMsg {

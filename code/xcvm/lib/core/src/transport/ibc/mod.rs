@@ -19,7 +19,7 @@ use self::ics20::{
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct XcMessageData {
 	pub from_network_id: NetworkId,
-	pub data: Binary,
+	pub data: Base64Binary,
 }
 
 /// Message type for `sudo` entry_point
@@ -45,8 +45,10 @@ pub struct IbcRoute {
 }
 
 pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdResult<CosmosMsg<T>> {
-	let memo =
-		XcMessageData { from_network_id: route.from_network, data: Binary::from(packet.encode()) };
+	let memo = XcMessageData {
+		from_network_id: route.from_network,
+		data: Base64Binary::from(packet.encode()),
+	};
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
@@ -105,7 +107,7 @@ pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdRes
 				memo,
 			}
 			.encode_to_vec();
-			let value = Binary::from(value);
+			let value = Base64Binary::from(value);
 			Ok(CosmosMsg::Stargate {
 				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
 				value,

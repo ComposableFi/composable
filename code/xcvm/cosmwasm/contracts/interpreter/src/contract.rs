@@ -21,7 +21,7 @@ use xc_core::{
 	gateway::{
 		AssetItem, AssetReference, BridgeForwardMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg,
 	},
-	shared::{encode_base64, DefaultXCVMProgram},
+	shared::{encode_base64, XcProgram},
 	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
 	Register,
 };
@@ -82,11 +82,11 @@ fn external_query_lookup_asset(
 	gateway_addr: Addr,
 	asset_id: AssetId,
 ) -> StdResult<AssetItem> {
-	let query = xc_core::gateway::QueryMsg::LookupAsset { asset_id };
+	let query = xc_core::gateway::QueryMsg::GetAssetById { asset_id };
 	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
 	querier
-		.query::<xc_core::gateway::LookupResponse>(&msg.into())
-		.map(|response| response.reference)
+		.query::<xc_core::gateway::GetAssetByIdResponse>(&msg.into())
+		.map(|response| response.asset)
 }
 
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
@@ -100,7 +100,7 @@ fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
 	tip: Addr,
-	program: DefaultXCVMProgram,
+	program: XcProgram,
 ) -> Result {
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
@@ -176,10 +176,9 @@ pub fn handle_execute_step(
 	} else {
 		// We subtract because of the extra loop to reach the empty instructions case.
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
-		// We save the relayer that executed the last program.
 		TIP_REGISTER.save(deps.storage, &tip)?;
-		let mut event =
-			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.success");
+		let mut event = Event::new("xc.interpreter.step.executed")
+			.add_attribute("tag", hex::encode(&program.tag));
 		if program.tag.len() >= 3 {
 			event = event.add_attribute(
 				"tag",
@@ -286,7 +285,7 @@ pub fn interpret_spawn(
 	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
-	program: DefaultXCVMProgram,
+	program: XcProgram,
 ) -> Result {
 	let Config { interpreter_origin, gateway_address, .. } = CONFIG.load(deps.storage)?;
 
