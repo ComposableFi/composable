@@ -20,6 +20,10 @@ pub enum Action {
 	/// A pending deposit has been acknowledgement by accounts contract or timed
 	/// out.
 	DepositDone,
+	/// New IBC channel has been opened.
+	IbcConnect,
+	/// An IBC channel has been closed.
+	IbcClose,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

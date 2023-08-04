@@ -97,7 +97,7 @@ pub(crate) fn handle_receive(
 ) -> Result {
 	let sender = deps.api.addr_validate(&sender)?;
 	let msg::ReceiveMsgBody { account } =
-		serde_json_wasm::from_slice(&msg).map_err(|_| ContractError::InvalidCw20Packet)?;
+		serde_json_wasm::from_slice(&msg).map_err(|_| ContractError::InvalidPacket)?;
 	let auth::policy::Cw20Contract { asset_id, address } = auth.into_inner();
 
 	let deposits = vec![(asset_id, address.into(), amount.into())];

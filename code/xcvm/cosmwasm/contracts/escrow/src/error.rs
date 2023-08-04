@@ -1,4 +1,4 @@
-use cosmwasm_std::{Response, StdError};
+use cosmwasm_std::{IbcOrder, Response, StdError};
 use thiserror::Error;
 
 pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
@@ -17,11 +17,12 @@ pub enum ContractError {
 	#[error("Unrecognised asset ‘{0}’.")]
 	UnknownAsset(String),
 
-	#[error("Invalid IBC packet.")]
-	InvalidIbcPacket,
-
-	#[error("Invalid CW20 message.")]
-	InvalidCw20Packet,
+	#[error("Invalid IBC channel version ‘{0}’.")]
+	InvalidIbcVersion(String),
+	#[error("Invalid IBC channel ordering ‘{0:?}’.")]
+	InvalidIbcOrdering(IbcOrder),
+	#[error("Invalid packet.")]
+	InvalidPacket,
 
 	#[error("Internal contract error.")]
 	InternalError,

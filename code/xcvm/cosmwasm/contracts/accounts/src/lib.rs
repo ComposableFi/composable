@@ -2,7 +2,7 @@ mod accounts;
 mod auth;
 pub mod contract;
 mod error;
-mod ibc;
+pub mod ibc;
 mod state;
 
 mod msg {
