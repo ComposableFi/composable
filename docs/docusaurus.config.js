@@ -66,6 +66,26 @@ const config = {
 				},
 				items: [
 					{
+						to: '/parachains/picasso-parachain-overview',
+						position: 'left',
+						label: 'Networks',
+					  },
+					{
+						to: '/products/centauri/Dotsama-ibc',
+						position: 'left',
+						label: 'Centauri',
+					  },
+					{
+						to: '/products/xcvm',
+						position: 'left',
+						label: 'Technology',
+					  },
+					{
+						to: '/nix/install',
+						position: 'left',
+						label: 'Develop',
+					  },				
+					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
 						position: 'right',
