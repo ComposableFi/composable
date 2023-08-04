@@ -6,7 +6,7 @@ name = "composable"
 version = { workspace = true }
 
 [workspace.package]
-version = "8.10035.2"
+version = "8.10035.4"
 
 [[bin]]
 name = "composable"
