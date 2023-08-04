@@ -21,7 +21,7 @@
         type = "picasso_kusama";
       };
 
-      ibc-composable-picasso-config = hyperspace-picasso-kusama-config-base // {
+      ibc-composable-to-picasso-2-1 = hyperspace-picasso-kusama-config-base // {
         parachain_rpc_url = "ws://${host}:9988";
         relay_chain_rpc_url = "ws://${host}:9944";
         client_id = "10-grandpa-2";
@@ -29,14 +29,14 @@
         private_key = "//Alice";
       };
 
-      ibc-relayer-config-centauri-to-picasso-kusama =
+      ibc-relayer-config-centauri-to-picasso-kusama-0-0 =
         hyperspace-picasso-kusama-config-base // {
           parachain_rpc_url = "ws://${host}:9988";
           relay_chain_rpc_url = "ws://${host}:9944";
           client_id = "10-grandpa-0";
         };
 
-      ibc-relayer-config-picasso-kusama-to-centauri = {
+      ibc-relayer-config-picasso-kusama-to-centauri-0-0 = {
         type = "cosmos";
         name = "centauri";
         rpc_url = "http://${host}:26657";
@@ -44,7 +44,7 @@
         websocket_url = "ws://${host}:26657/websocket";
         chain_id = "centauri-dev";
         client_id = "07-tendermint-0";
-        connection_id = "connection-1";
+        connection_id = "connection-0";
         account_prefix = "centauri";
         fee_denom = "ppica";
         fee_amount = "100000000";
@@ -61,7 +61,7 @@
 
       hyperspace-core-config = { prometheus_endpoint = "https://${host}"; };
 
-      ibc-composable-polkadot-config = {
+      ibc-picasso-to-composable-polkadot-0-0 = {
         type = "composable";
         channel_whitelist = [ ];
         client_id = "10-grandpa-0";
@@ -246,19 +246,24 @@
             dontStrip = true;
           };
 
-        ibc-composable-picasso-config-2 = pkgs.writeText "config-chain-a.toml"
-          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-picasso-config);
+        ibc-composable-to-picasso-config-2-1 =
+          pkgs.writeText "config-chain-a.toml"
+          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-to-picasso-2-1);
 
-        hyperspace-config-chain-b = pkgs.writeText "config-chain-b.toml"
-          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-polkadot-config);
-
-        hyperspace-config-chain-2 = pkgs.writeText "config-chain-2.toml"
+        ibc-picasso-to-composable-polkadot-config-0-0 =
+          pkgs.writeText "config-chain-b.toml"
           (self.inputs.nix-std.lib.serde.toTOML
-            ibc-relayer-config-picasso-kusama-to-centauri);
+            ibc-picasso-to-composable-polkadot-0-0);
 
-        hyperspace-config-chain-3 = pkgs.writeText "config-chain-3.toml"
+        ibc-relayer-config-picasso-kusama-to-centauri-0-0-config =
+          pkgs.writeText "config-chain-2.toml"
           (self.inputs.nix-std.lib.serde.toTOML
-            ibc-relayer-config-centauri-to-picasso-kusama);
+            ibc-relayer-config-picasso-kusama-to-centauri-0-0);
+
+        ibc-relayer-config-centauri-to-picasso-kusama-0-0-config =
+          pkgs.writeText "config-chain-3.toml"
+          (self.inputs.nix-std.lib.serde.toTOML
+            ibc-relayer-config-centauri-to-picasso-kusama-0-0);
 
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);
