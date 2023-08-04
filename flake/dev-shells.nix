@@ -36,6 +36,7 @@
           websocat
           yarn
           zombienet
+          self'.packages.bech32
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

@@ -49,8 +49,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    bech32 = {
-      url = "github:cmoog/bech32/master";
+    bech32 = {      
+      url = "github:input-output-hk/bech32/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     centauri-src = {

@@ -2,7 +2,9 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, devnetTools, cosmosTools, ... }:
     let
-      validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
+      devnet-root-directory = cosmosTools.devnet-root-directory;
+      validator-mnemonic = cosmosTools.validators.mnemonic;
+      validator = cosmosTools.validators.centauri;
       gov = {
         account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
         voting_period = "20s";
@@ -150,7 +152,7 @@
           echo "bleak slush nose opinion document sample embark couple cabbage soccer cage slow father witness canyon ring distance hub denial topic great beyond actress problem" | centaurid keys add bob --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "coffee hospital claim ability wrap load display submit lecture solid secret law base barrel miss tattoo desert want wall bar ketchup sauce real unknown" | centaurid keys add charlie --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "VALIDATOR:"
-          echo "${validator-mnemonic}" | centaurid keys add validator --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+          echo "${validator-mnemonic}" | centaurid keys add ${cosmosTools.validators.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
@@ -166,7 +168,7 @@
           add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
           add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d
           add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
-          centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx validator "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
+          centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CENTAURI_DATA" gentx ${cosmosTools.validators.moniker} "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CENTAURI_DATA"  --gentx-dir "$CENTAURI_DATA/config/gentx"
           centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CENTAURI_DATA" --db_dir "$CENTAURI_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CENTAURI_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CENTAURI_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
