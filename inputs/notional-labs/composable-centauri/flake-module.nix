@@ -1,11 +1,8 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, devnetTools, ... }:
+    , systemCommonRust, subnix, devnetTools, cosmosTools, ... }:
     let
-      devnet-root-directory = "/tmp/composable-devnet";
       validator = "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n";
-      validator-mnemonic =
-        "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
       gov = {
         account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
         voting_period = "20s";
