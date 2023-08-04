@@ -42,6 +42,7 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'parachains/picasso/asset-list'
                         'parachains/picasso/crowdloan',
                         'parachains/picasso/governance',
                         {
@@ -70,6 +71,7 @@ const sidebars = {
                     collapsible: true,
                     collapsed: true,
                     items: [
+                        'parachains/composable/composie-asset-list'
                         'parachains/composable/composable-crowdloan',
                         'parachains/composable/LAYR-tokenomics',
                         'parachains/composable/composable-council'
