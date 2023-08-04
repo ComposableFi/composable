@@ -3,7 +3,7 @@
   flake = {
     homeConfigurations = let user = "vscode";
     in (withSystem "x86_64-linux"
-      ({ config, self', inputs', pkgs, devnetTools, this, subnix, ... }: {
+      ({ config, self', inputs', pkgs, devnetTools, subnix, ... }: {
         default = "${user}";
         "${user}" = let codespace = with pkgs; [ cachix acl direnv ];
         in self.inputs.home-manager.lib.homeManagerConfiguration {
@@ -13,11 +13,21 @@
               username = user;
               sessionVariables = subnix.subattrs;
               homeDirectory = "/home/${user}";
-              stateVersion = "22.11";
+              stateVersion = "23.05";
               packages = with pkgs;
                 with self'.packages;
-                [ clang nodejs python3 yarn sad git git-lfs subwasm zombienet ]
-                ++ (with self'.packages; [ rust-nightly ]) ++ codespace;
+                [
+                  clang
+                  dasel
+                  git
+                  git-lfs
+                  nodejs
+                  python3
+                  sad
+                  subwasm
+                  yarn
+                  zombienet
+                ] ++ (with self'.packages; [ rust-nightly ]) ++ codespace;
             };
             programs = {
               home-manager.enable = true;

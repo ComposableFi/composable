@@ -29,7 +29,6 @@ cat > /etc/nix/nix.conf << EOF
     max-jobs = 1
     cores = 64
     auto-optimise-store = true
-    # max-substitution-jobs = 32
     allow-import-from-derivation = true
     gc-reserved-space = 18388608
     http-connections = 32

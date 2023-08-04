@@ -273,6 +273,10 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-ci-packages --keep-going
+      - name: build-home-configuration
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build --no-link ".#homeConfigurations.vscode.activationPackage"
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT" 
 

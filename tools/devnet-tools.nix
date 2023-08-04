@@ -39,10 +39,20 @@
           config = {
             Entrypoint =
               [ "${pkgs.lib.getBin devNet}/bin/${pkgs.lib.getName devNet}" ];
+            Env = [ "USER=actions-runner" ];
           };
 
           runAsRoot = ''
-            mkdir --parents /usr/bin /tmp/composable-devnet && chown 777 /tmp
+            #!${pkgs.runtimeShell}
+            ${pkgs.dockerTools.shadowSetup}
+            # so we add 2 potential runners, CI and Codespace just for convenience
+            mkdir --parents /usr/bin /home/actions-runner /tmp/composable-devnet /home/vscode
+            chown 777 /tmp 
+            chown 777 /tmp/composable-devnet
+            chown 777 /home/actions-runner
+            chown 777 /home/vscode
+            groupadd --system actions-runner
+            useradd --system --gid actions-runner --groups root actions-runner
           '';
         };
     };

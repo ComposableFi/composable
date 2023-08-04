@@ -1,10 +1,12 @@
 FROM mcr.microsoft.com/vscode/devcontainers/base:0.202.7-bullseye
+
+ARG NIX_VERSION=2.17.0
+ARG CHANNEL_URL=https://github.com/NixOS/nixpkgs/archive/1db42b7fe3878f3f5f7a4f2dc210772fd080e205.tar.gz
+
 ARG USER=vscode
 ARG UID=1000
 ARG GID=${UID}
-ARG NIX_VERSION=2.14.1
 ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-${NIX_VERSION}/install
-ARG CHANNEL_URL=https://github.com/NixOS/nixpkgs/archive/aaa1c973c8c189195e1b1a702d3b74dbcde91538.tar.gz
 ARG CACHIX_NAME=composable-community
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
@@ -24,9 +26,11 @@ RUN usermod --append --groups sudo ${USER} --shell /bin/bash && \
 
 RUN mkdir --parents /etc/nix/ && \
     echo "sandbox = relaxed" >> /etc/nix/nix.conf && \
-    echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf && \
+    echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf && \    
+    echo "cores = 32" >> /etc/nix/nix.conf && \
+    echo "allow-import-from-derivation = true" >> /etc/nix/nix.conf && \
     echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf  && \
-    echo "trusted-users = root vscode" >> /etc/nix/nix.conf  && \
+    echo "trusted-users = root vscode actiions-runner" >> /etc/nix/nix.conf  && \
     echo "substitute = true" >> /etc/nix/nix.conf  && \
     echo "substituters = https://cache.nixos.org/ https://composable-community.cachix.org/ https://devenv.cachix.org/ https://nix-community.cachix.org/" >> /etc/nix/nix.conf  && \
     echo "require-sigs = false" >> /etc/nix/nix.conf  && \
