@@ -2,7 +2,7 @@
   perSystem =
     { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, cosmosTools, ... }:
     let
-      devnet-root-directory = ${cosmosTools.validators.moniker};
+      devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
     in {
       packages = rec {
@@ -22,14 +22,14 @@
             HOME=${devnet-root-directory}
             export HOME
             CHAIN_DATA="$HOME/.osmosisd"
-            #if test "$1" == "clean" ; then
-             # pkill --exact osmosisd
+            if test "''${1-reuse}" == "fresh" ; then
+             echo "removing data dir"
              rm --force --recursive "$CHAIN_DATA" 
-            #fi           
+            fi
 
+            PORT=36657
             KEYRING_TEST=$CHAIN_DATA
             CHAIN_ID="osmosis-dev"
-
             VALIDATOR_MONIKER="${cosmosTools.validators.moniker}"
             VALIDATOR_MNEMONIC="${cosmosTools.validators.mnemonic}"
             FAUCET_MNEMONIC="increase bread alpha rigid glide amused approve oblige print asset idea enact lawn proof unfold jeans rabbit audit return chuckle valve rather cactus great"
@@ -107,12 +107,12 @@
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
             osmosisd collect-gentxs --home "$CHAIN_DATA"
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "" '.p2p.seeds'
-            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36657" '.rpc.laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$PORT" '.rpc.laddr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "0.0.0.0:16060" '.rpc.pprof_laddr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://127.0.0.1:36658" '.proxy_app'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value ":36660" '.instrumentation.prometheus_listen_addr'
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:36656" '.p2p.laddr'
-            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://localhost:36657" '.node'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://localhost:$PORT" '.node'
 
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19090" '.grpc.address'
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:19091" '.grpc-web.address'
@@ -128,13 +128,12 @@
             dasel put --type bool --file $CONFIG_FOLDER/app.toml --value "true" '.api.enabled-unsafe-cors'
             dasel put --type bool --file $CONFIG_FOLDER/app.toml --value "true" '.grpc-web.enable-unsafe-cors'
 
-            dasel put --type string --file $CONFIG_FOLDER/client.toml --value "tcp://localhost:36657" '.node'
+            dasel put --type string --file $CONFIG_FOLDER/client.toml --value "tcp://localhost:$PORT" '.node'
             dasel put --type string --file $CONFIG_FOLDER/client.toml --value "$CHAIN_ID" '.chain-id'
             dasel put --type string --file $CONFIG_FOLDER/client.toml --value "test" '.keyring-backend'
             dasel put --type string --file $CONFIG_FOLDER/client.toml --value "json" '.output'
 
-
-            osmosisd start --home "$CHAIN_DATA" --rpc.unsafe --rpc.laddr tcp://0.0.0.0:36657 --pruning=nothing --grpc.address localhost:19090   --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:36656" --p2p.pex false --p2p.upnp  false  --p2p.seed_mode true --log_level trace
+            osmosisd start --home "$CHAIN_DATA" --rpc.unsafe --rpc.laddr tcp://0.0.0.0:$PORT --pruning=nothing --grpc.address localhost:19090   --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:36656" --p2p.pex false --p2p.upnp  false  --p2p.seed_mode true --log_level trace
           '';
         };
 
@@ -144,15 +143,6 @@
           text = ''
             rm --force --recursive ${devnet-root-directory} 
             osmosisd-gen
-          '';
-        };
-
-        wasmd-init = pkgs.writeShellApplication {
-          name = "wasmd-init";
-          runtimeInputs = devnetTools.withBaseContainerTools
-            ++ [ pkgs.jq pkgs.dasel cosmosd ];
-          text = ''
-
           '';
         };
 
@@ -170,8 +160,13 @@
             PORT=36657
             BLOCK_SECONDS=5
             FEE=uosmo
-
+            NETWORK_ID=4
+            VALIDATOR_KEY=${validator-key}
+            
             function init_xcvm() {
+              local INSTANTIATE=$1
+              echo $VALIDATOR_KEY
+              echo $NETWORK_ID
               osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
@@ -183,11 +178,23 @@
               osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
-              osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID '{"admin" : "${validator-key}", "here_id" : 4}' "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --admin "${validator-key}"
+             
+              osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --admin "$VALIDATOR_KEY"
 
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$(osmosisd query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
             }
+
+            INSTANTIATE=$(cat << EOF
+                {
+                    "admin" : "$VALIDATOR_KEY", 
+                    "here_id" : $NETWORK_ID
+                }                                 
+            EOF
+            )
+
+             
+            init_xcvm "$INSTANTIATE"
 
             FORCE_NETWORK_OSMOSIS=$(cat << EOF
               {
@@ -222,7 +229,7 @@
               }                                   
             EOF
             )
-            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
 
             sleep $BLOCK_SECONDS
             FORCE_NETWORK_CENTAURI=$(cat << EOF
@@ -258,7 +265,7 @@
               }                                   
             EOF
             )
-            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
 
 
             sleep $BLOCK_SECONDS
@@ -283,7 +290,7 @@
               }                                 
             EOF
             )
-            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
             sleep $BLOCK_SECONDS
@@ -311,7 +318,7 @@
             }                               
             EOF
             )
-            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
             sleep $BLOCK_SECONDS
@@ -331,10 +338,10 @@
               }                                 
             EOF
             )
-            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            osmosisd tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166uosmo --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
             sleep $BLOCK_SECONDS
-            osmosisd query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:36657" --output json --home "$CHAIN_DATA"
+            osmosisd query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
           '';
         };
       };
