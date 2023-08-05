@@ -194,7 +194,6 @@
             )
 
             init_xcvm "$INSTANTIATE"
-             
 
             FORCE_NETWORK_OSMOSIS=$(cat << EOF
               {

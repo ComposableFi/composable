@@ -75,27 +75,28 @@
           BLOCK_SECONDS=5
           FEE=ppica 
           NETWORK_ID=3
+          BINARY=centaurid
 
           function init_xcvm() {
               local INSTANTIATE=$1
               echo $VALIDATOR_KEY
               echo $NETWORK_ID
-              osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
-              osmosisd tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
               INTERPRETER_CODE_ID=2
 
               sleep $BLOCK_SECONDS
-              osmosisd tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
              
-              osmosisd tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --admin "$VALIDATOR_KEY"
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --admin "$VALIDATOR_KEY"
 
               sleep $BLOCK_SECONDS
-              GATEWAY_CONTRACT_ADDRESS=$(osmosisd query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
+              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
           }
 
           INSTANTIATE=$(cat << EOF
@@ -107,7 +108,8 @@
           )
           
           init_xcvm "$INSTANTIATE"
-
+          echo "$GATEWAY_CONTRACT_ADDRESS"
+          echo "$INTERPRETER_CODE_ID"
 
           centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep $BLOCK_SECONDS
