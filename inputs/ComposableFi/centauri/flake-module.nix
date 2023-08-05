@@ -21,10 +21,10 @@
         type = "picasso_kusama";
       };
 
-      ibc-composable-to-picasso-2-1 = hyperspace-picasso-kusama-config-base // {
+      ibc-composable-to-picasso-1-1 = hyperspace-picasso-kusama-config-base // {
         parachain_rpc_url = "ws://${host}:9988";
         relay_chain_rpc_url = "ws://${host}:9944";
-        client_id = "10-grandpa-2";
+        client_id = "10-grandpa-1";
         connection_id = "connection-1";
         private_key = "//Alice";
       };
@@ -246,9 +246,9 @@
             dontStrip = true;
           };
 
-        ibc-composable-to-picasso-config-2-1 =
+        ibc-composable-to-picasso-config-1-1 =
           pkgs.writeText "config-chain-a.toml"
-          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-to-picasso-2-1);
+          (self.inputs.nix-std.lib.serde.toTOML ibc-composable-to-picasso-1-1);
 
         ibc-picasso-to-composable-polkadot-config-0-0 =
           pkgs.writeText "config-chain-b.toml"
