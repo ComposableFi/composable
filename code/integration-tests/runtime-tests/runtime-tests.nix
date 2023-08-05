@@ -17,7 +17,10 @@
           } 2>&1 & ) | tee devnet-xc.log &
 
           process-compose-stop() {
-            for i in $(process-compose process list); do process-compose process stop "$i"; done
+            for i in $(process-compose process list)
+            do
+              process-compose process stop "$i"
+            done
           }
 
           TRIES=0
