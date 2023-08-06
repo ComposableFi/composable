@@ -16,7 +16,7 @@
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
-      validator = cosmosTools.validators.centauri;
+      validator-key = cosmosTools.validators.centauri;
       gov = {
         account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
         voting_period = "20s";
@@ -70,11 +70,11 @@
           
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          VALIDATOR_KEY=${validator}
+          VALIDATOR_KEY=${validator-key}
           PORT=26657
           BLOCK_SECONDS=5
           FEE=ppica 
-          NETWORK_ID=3
+          NETWORK_ID=2
           BINARY=centaurid
 
           function init_xcvm() {
@@ -108,9 +108,183 @@
           )
           
           init_xcvm "$INSTANTIATE"
-          echo "$GATEWAY_CONTRACT_ADDRESS"
-          echo "$INTERPRETER_CODE_ID"
 
+          FORCE_NETWORK_OSMOSIS=$(cat << EOF
+            {
+              "config": {
+                  "force_network": {
+                    "network_id": 3,
+                    "accounts": {
+                        "bech": "osmo"
+                    },
+                    "gateway": {
+                        "cosm_wasm": {
+                          "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                          "interpreter_code_id": $INTERPRETER_CODE_ID,
+                          "admin": "${validator-key}"
+                        }
+                    },
+                    "ibc": {
+                        "channels": {
+                          "ics20": {
+                              "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                              "features": {
+                                "pfm": {},
+                                "wasm_hooks": {
+                                    "callback": true
+                                }
+                              }
+                          }
+                        }
+                    }
+                  }
+              }
+            }                                   
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+
+          sleep $BLOCK_SECONDS
+          FORCE_NETWORK_CENTAURI=$(cat << EOF
+            {
+              "config": {
+                  "force_network": {
+                    "network_id": 2,
+                    "accounts": {
+                        "bech": "centauri"
+                    },
+                    "gateway": {
+                        "cosm_wasm": {
+                          "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                          "interpreter_code_id": $INTERPRETER_CODE_ID,
+                          "admin": "${validator-key}"
+                        }
+                    },
+                    "ibc": {
+                        "channels": {
+                          "ics20": {
+                              "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                              "features": {
+                                "pfm": {},
+                                "wasm_hooks": {
+                                    "callback": true
+                                }
+                              }
+                          }
+                        }
+                    }
+                  }
+              }
+            }                                   
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
+
+
+          sleep $BLOCK_SECONDS
+          FORCE_CENTAURI_TO_OSMOSIS=$(cat << EOF
+            {
+              "config": {
+                  "force_network_to_network": {
+                    "from": 2,
+                    "to": 3,
+                    "other": {
+                        "counterparty_timeout": {
+                          "timestamp": "60"
+                        },
+                        "ics_20": {
+                          "source" : "channel-0", 
+                          "sink" : "channel-0" 
+                        }
+                                                
+                    }
+                  }
+              }
+            }                                 
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+          # 
+
+          sleep $BLOCK_SECONDS
+          FORCE_PICA=$(cat << EOF
+          {
+            "config": {
+              "force_asset": {
+                "asset_id": "158456325028528675187087900673",
+                "from_network_id": 2,
+                "local": {
+                  "native": {
+                    "denom": "ppica"
+                  }
+                },
+                "bridged": {
+                  "location_on_network": {
+                    "ibc_ics20": {
+                      "base_denom" : "ppica",
+                      "trace_path" : "transfer/channel-0"
+                    }
+                  }
+                }
+              }
+            }
+          }                               
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+          sleep $BLOCK_SECONDS
+          FORCE_PICA=$(cat << EOF
+          {
+            "config": {
+              "force_asset": {
+                "asset_id": "158456325028528675187087900674",
+                "from_network_id": 2,
+                "local": {
+                  "native": {
+                    "denom": "uatom"
+                  }
+                },
+                "bridged": {
+                  "location_on_network": {
+                    "ibc_ics20": {
+                      "base_denom" : "uatom",
+                      "trace_path" : "transfer/channel-0"
+                    }
+                  }
+                }
+              }
+            }
+          }                               
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+          sleep $BLOCK_SECONDS
+          FORCE_UATOM=$(cat << EOF
+            {
+              "config": {
+                  "force_asset": {
+                    "asset_id": "237684487542793012780631851010",
+                    "from_network_id": 2,
+                    "local": {
+                      "native": {
+                        "denom" : "uatom"
+                      }
+                    }
+                  }
+              }
+            }                                 
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+          sleep $BLOCK_SECONDS
+          "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+
+          # light client
           centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep $BLOCK_SECONDS
           centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
@@ -193,13 +367,16 @@
           add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf
           add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
           add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
-          add-genesis-account ${validator}
+          add-genesis-account ${validator-key}
           add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
           add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d
           add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CHAIN_DATA" gentx ${cosmosTools.validators.moniker} "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CHAIN_DATA"  --gentx-dir "$CHAIN_DATA/config/gentx"
           centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CHAIN_DATA" --db_dir "$CHAIN_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CHAIN_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CHAIN_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
+
+
+
         '';
       };
     in
