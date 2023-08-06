@@ -1729,20 +1729,17 @@ pub(crate) fn accumulate_reward<T: Config>(
 	// test with proptest/ kani. The nonzero checks can be left outside of said function.
 
 	// short-circuit if the reward rate amount is zero
-	let Some(reward_rate_amount) = NonZeroU128::new(reward.reward_rate.amount.into())
-		else {
-			return RewardAccumulationCalculationOutcome::Success
-		};
+	let Some(reward_rate_amount) = NonZeroU128::new(reward.reward_rate.amount.into()) else {
+		return RewardAccumulationCalculationOutcome::Success
+	};
 
 	// REVIEW(benluelo): Should this be a user-facing error? Or would defensively saturating at zero
 	// for elapsed_time be better? This should never be hit, and if it is then it's either a logic
 	// error or the chain state is wonky (in which case there are probably bigger issues than this
 	// hook!)
-	let Some(elapsed_time) = now_seconds
-		.checked_sub(reward.last_updated_timestamp)
-		else {
-			return RewardAccumulationCalculationOutcome::BackToTheFuture
-		};
+	let Some(elapsed_time) = now_seconds.checked_sub(reward.last_updated_timestamp) else {
+		return RewardAccumulationCalculationOutcome::BackToTheFuture
+	};
 
 	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
 
@@ -1751,10 +1748,10 @@ pub(crate) fn accumulate_reward<T: Config>(
 	//   reward_rate_period_seconds
 	let Some(periods_surpassed) =
 		NonZeroU64::new(<u64 as Div<NonZeroU64>>::div(elapsed_time, reward_rate_period_seconds))
-		else {
-			// if no periods have been surpassed, short-circuit
-			return RewardAccumulationCalculationOutcome::Success
-		};
+	else {
+		// if no periods have been surpassed, short-circuit
+		return RewardAccumulationCalculationOutcome::Success
+	};
 	let total_locked_rewards: u128 =
 		T::AssetsTransactor::balance_on_hold(asset_id, pool_account).into();
 	log::info!("total_locked_rewards = {total_locked_rewards}");
@@ -1767,11 +1764,11 @@ pub(crate) fn accumulate_reward<T: Config>(
 	//    reward_rate_amount
 	let Some(maximum_releasable_periods) =
 		NonZeroU128::new(<u128 as Div<NonZeroU128>>::div(total_locked_rewards, reward_rate_amount))
-		else {
-			// if the maximum releasable periods is zero, then that means the pot doesn't have
-			// enough in it to fund a single period.
-			return RewardAccumulationCalculationOutcome::RewardsPotEmpty;
-		};
+	else {
+		// if the maximum releasable periods is zero, then that means the pot doesn't have
+		// enough in it to fund a single period.
+		return RewardAccumulationCalculationOutcome::RewardsPotEmpty
+	};
 
 	//     ( total_locked_rewards          elapsed_time        )
 	// min ( -------------------- , -------------------------- )
@@ -1808,7 +1805,7 @@ pub(crate) fn accumulate_reward<T: Config>(
 			total_shares.into(),
 			Rounding::Down,
 		) else {
-			return RewardAccumulationCalculationOutcome::Overflow;
+			return RewardAccumulationCalculationOutcome::Overflow
 		};
 
 		value
@@ -1817,9 +1814,9 @@ pub(crate) fn accumulate_reward<T: Config>(
 	let Some(new_total_rewards) = newly_accumulated_rewards
 		.checked_add(unstaked_shares_adjustment)
 		.and_then(|x| x.checked_add(reward.total_rewards.into()))
-		else {
-			return RewardAccumulationCalculationOutcome::Overflow;
-		};
+	else {
+		return RewardAccumulationCalculationOutcome::Overflow
+	};
 
 	log::info!("asset_id: {asset_id:?}; new_total_rewards = {new_total_rewards}");
 

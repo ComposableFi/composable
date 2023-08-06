@@ -38,7 +38,7 @@ pub fn derive_intermediate_sender(
 	let sender_str = alloc::format!("{channel}/{original_sender}");
 	let sender_hash_32 = addess_hash(SENDER_PREFIX, sender_str.as_bytes());
 	let sender = sender_hash_32.to_base32();
-	bech32_no_std::encode(bech32_prefix, sender)
+	bech32_no_std::encode(bech32_prefix, sender, bech32_no_std::Variant::Bech32)
 }
 
 /// see https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-hooks
