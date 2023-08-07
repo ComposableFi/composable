@@ -51,6 +51,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure sccache env var
+        run: | 
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+	        echo “SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.2
+
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:

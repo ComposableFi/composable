@@ -1,8 +1,0 @@
-changelog:
-  exclude:
-    labels:
-      - misc
-  categories:
-    - title: General changes
-      labels:
-        - "*"
