@@ -8,8 +8,10 @@ assignees: ""
 
 # Description
 
+Supported are NixOs and Debian derived Linuxes on aarch64 and x86_64 architectures, uncluding running these in OCI containers. 
+
 In order to report issue during usage of command line tools and daemons,
-please attach output of next command as run from directory you run tool.
+please attach output of next commands as run from working directory you run command for:
 
 1. `uname -a`
 2. `nix version`
@@ -19,9 +21,10 @@ please attach output of next command as run from directory you run tool.
 6. `git log -1`
 7. `cat /proc/meminfo`
 8. `cat /proc/cpuinfo`
-9. `ps -A x u`
-10. Exact command used to run.
-11. Tool version.
+9. `df --human-readable /tmp/`
+10. `ps -A x u`
+11. Exact command used to run.
+12. Tool version.
 13. Full output of command of run.
 14. `Output files` of run.
 15. Human description of expected and observed behaviour
