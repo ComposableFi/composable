@@ -11,6 +11,7 @@
         subwasm
         zombienet
         subxt
+        bech32cli
       ]);
 
       all-testnet-deps = pkgs.linkFarmFromDrvs "all-testnet-deps"

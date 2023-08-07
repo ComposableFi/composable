@@ -24,8 +24,8 @@
         procps
       ];
       withDevNetContainerTools = with pkgs;
-        [ bottom gawk gnugrep less nettools nix ] ++ withBaseContainerTools
-        ++ withUserContainerTools;
+        [ bottom gawk gnugrep less nettools nix self'.packages.bech32cli ]
+        ++ withBaseContainerTools ++ withUserContainerTools;
 
       buildDevnetImage = { name, devNet, container-tools }:
         pkgs.dockerTools.buildImage {

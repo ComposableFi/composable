@@ -28,13 +28,15 @@
           python3
           rnix-lsp
           sad
-          self.inputs.cosmos.packages.${system}.gex
+          gex
+          bech32cli
           subwasm
           terraform
           terraform-ls
           websocat
           yarn
           zombienet
+          self'.packages.bech32cli
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

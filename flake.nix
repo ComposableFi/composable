@@ -48,9 +48,17 @@
         "github:dzmitry-lahoda-forks/cosmos.nix/00fccea13af8142c7abee42b6ff75d05338d29f7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    centauri-src.flake = false;
-    centauri-src.url =
-      "github:ComposableFi/centauri/fd0a4911d86a531513547bbcc1f98df0a276fa79";
+
+    bech32cli = {
+      url =
+        "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    centauri-src = {
+      flake = false;
+      url =
+        "github:ComposableFi/centauri/fd0a4911d86a531513547bbcc1f98df0a276fa79";
+    };
   };
 
   nixConfig = {
