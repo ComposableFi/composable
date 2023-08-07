@@ -272,16 +272,14 @@ impl<T> TestVM<XCVMState<T>> {
 			},
 			tx.info,
 			tx.gas,
-			xc_core::gateway::ExecuteMsg::Config(
-				ConfigSubMsg::ForceAsset(AssetItem {
-					asset_id,
-					from_network_id: todo!("restore"),
-					local: xc_core::gateway::AssetReference::Cw20 {
-						contract: asset_address.clone().into(),
-					},
-					bridged: None,
-				}),
-			),
+			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceAsset(AssetItem {
+				asset_id,
+				from_network_id: todo!("restore"),
+				local: xc_core::gateway::AssetReference::Cw20 {
+					contract: asset_address.clone().into(),
+				},
+				bridged: None,
+			})),
 		)?;
 		self.xcvm_state.insert_asset(asset_id, asset_address.clone());
 		Ok((
