@@ -782,8 +782,8 @@ impl<T: Config> Pallet<T> {
 	/// This function will update the state if the `code_id` is changing:
 	/// 1. Refcount of the new `code_id` is incremented.
 	/// 2. Refcount of the old `code_id` is decremented.
-	/// 3. Delete every entry related to old `code_id` if
-	///    the refcount is 0. And unreserve the bonded funds.
+	/// 3. Delete every entry related to old `code_id` if the refcount is 0. And unreserve the
+	///    bonded funds.
 	pub(crate) fn do_set_contract_meta(
 		contract: &AccountIdOf<T>,
 		code_id: CosmwasmCodeId,

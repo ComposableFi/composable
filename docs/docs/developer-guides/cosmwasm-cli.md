@@ -106,16 +106,6 @@ Fetch using the code ID:
 ccw substrate -n alice tx upload --cosmos-rpc https://juno-api.polkachu.com --code-id 1
 ```
 
-#### 3. Upload a contract from a server
-
-One common thing is to go to a contract's release page and download the contract
-binary from there. You don't have to do that with `ccw`.
-
-```sh
-# Fetch the official release of `cw20_base.wasm`
-ccw substrate -n alice tx upload --url https://github.com/CosmWasm/cw-plus/releases/download/v1.0.1/cw20_base.wasm
-```
-
 ## Interact with contracts
 
 For examples of interacting with the contract, go to the [walkthrough](./cosmwasm/walkthrough.md).
