@@ -11,8 +11,9 @@ please attach outputo of:
 6. `git log -1`
 7. `cat /proc/meminfo`
 8. `cat /proc/cpuinfo`
-9. Exact command used to run.
-10. Full output of command of run.
+9. `ps -A x u`
+10. Exact command used to run.
+11. Full output of command of run.
 12. `Output files` of run.
 13. Human description of expected and observed behaviour
 
