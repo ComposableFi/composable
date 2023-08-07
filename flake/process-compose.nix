@@ -17,6 +17,16 @@
           '';
         };
 
+        devnet-xc-dotsama-fresh-background = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          name = "devnet-xc-dotsama-fresh-background";
+          text = ''
+            rm --force --recursive /tmp/composable-devnet             
+            mkdir --parents /tmp/composable-devnet
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-dotsama-background}
+          '';
+        };
+
         devnet-xc-clean = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-clean";
@@ -48,6 +58,159 @@
       };
       process-compose = rec {
         devnet-xc-background = devnet-xc // { tui = false; };
+
+        devnet-xc-dotsama-background = devnet-xc-dotsama // { tui = false; };
+        devnet-xc-dotsama = {
+          debug = true;
+          settings = {
+            processes = {
+              centauri = {
+                command = self'.packages.centaurid-gen;
+                readiness_probe.http_get = {
+                  host = "127.0.0.1";
+                  port = 26657;
+                };
+                log_location = "/tmp/composable-devnet/centauri.log";
+                availability = { restart = "on_failure"; };
+              };
+              centauri-init = {
+                command = self'.packages.centaurid-init;
+                depends_on."centauri".condition = "process_healthy";
+                log_location = "/tmp/composable-devnet/centauri-init.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              picasso = {
+                command = self'.packages.zombienet-rococo-local-picasso-dev;
+                availability = { restart = "on_failure"; };
+                log_location = "/tmp/composable-devnet/picasso.log";
+                readiness_probe = {
+                  initial_delay_seconds = 32;
+                  period_seconds = 8;
+                  failure_threshold = 8;
+                  timeout_seconds = 2;
+                  exec.command = ''
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32200
+                  '';
+                };
+              };
+              composable = {
+                command = self'.packages.zombienet-composable-centauri-b;
+                availability = { restart = "on_failure"; };
+                log_location = "/tmp/composable-devnet/composable.log";
+                readiness_probe = {
+                  initial_delay_seconds = 32;
+                  period_seconds = 8;
+                  failure_threshold = 8;
+                  timeout_seconds = 2;
+                  exec.command = ''
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
+                  '';
+                };
+              };
+              picasso-centauri-ibc-init = {
+                command = self'.packages.picasso-centauri-ibc-init;
+                log_location =
+                  "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
+                depends_on = {
+                  "centauri-init".condition = "process_completed_successfully";
+                  "centauri".condition = "process_healthy";
+                  "picasso".condition = "process_healthy";
+                };
+                availability = { restart = "on_failure"; };
+              };
+              picasso-centauri-ibc-connection-init = {
+                command = self'.packages.picasso-centauri-ibc-connection-init;
+                log_location =
+                  "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
+                depends_on = {
+                  "picasso-centauri-ibc-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = "on_failure"; };
+              };
+
+              picasso-centauri-ibc-channels-init = {
+                command = self'.packages.picasso-centauri-ibc-channels-init;
+                log_location =
+                  "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
+                depends_on = {
+                  "picasso-centauri-ibc-connection-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = "on_failure"; };
+              };
+
+              picasso-centauri-ibc-relay = {
+                command = self'.packages.picasso-centauri-ibc-relay;
+                log_location =
+                  "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+                depends_on = {
+                  "picasso-centauri-ibc-channels-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = relay; };
+              };
+
+              composable-picasso-ibc-init = {
+                command = self'.packages.composable-picasso-ibc-init;
+                log_location =
+                  "/tmp/composable-devnet/composable-picasso-ibc-init.log";
+                depends_on = {
+                  "picasso-centauri-ibc-channels-init".condition =
+                    "process_completed_successfully";
+                  "composable".condition = "process_healthy";
+                  "picasso".condition = "process_healthy";
+                };
+                availability = { restart = "on_failure"; };
+              };
+              composable-picasso-ibc-connection-init = {
+                command = ''
+                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  export HOME                
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+                  export RUST_LOG      
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+                '';
+                log_location =
+                  "/tmp/composable-devnet/composable-picasso-ibc-connection-init.log";
+                depends_on = {
+                  "composable-picasso-ibc-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = "on_failure"; };
+              };
+
+              composable-picasso-ibc-channels-init = {
+                command = ''
+                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  export HOME       
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+                  export RUST_LOG
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+                '';
+                log_location =
+                  "/tmp/composable-devnet/composable-picasso-ibc-channels-init.log";
+                depends_on = {
+                  "composable-picasso-ibc-connection-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = "on_failure"; };
+              };
+              composable-picasso-ibc-relay = {
+                command = self'.packages.composable-picasso-ibc-relay;
+                log_location =
+                  "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
+                depends_on = {
+                  "composable-picasso-ibc-channels-init".condition =
+                    "process_completed_successfully";
+                };
+                availability = { restart = relay; };
+              };
+            };
+          };
+        };
+
         devnet-xc = {
           debug = true;
           settings = {
