@@ -22,9 +22,13 @@ please attach output of next command as run from directory you run tool.
 9. `ps -A x u`
 10. Exact command used to run.
 11. Tool version.
-12. Full output of command of run.
-13. `Output files` of run.
-14. Human description of expected and observed behaviour
+13. Full output of command of run.
+14. `Output files` of run.
+15. Human description of expected and observed behaviour
+
+## Logs
+
+Run tool with logs enabled, for example like it is documented for Nix.
 
 ##  Output files
 
