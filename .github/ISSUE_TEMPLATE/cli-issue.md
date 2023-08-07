@@ -1,7 +1,7 @@
 # Issue during usage command line tool and daemons
 
 In order to report issue during usage of command line tools and daemons,
-please attach outputo of:
+please attach output of:
 
 1. `uname -a`
 2. `nix version`
