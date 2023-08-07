@@ -32,6 +32,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
+#[cfg(test)]
+mod tests;
 mod prelude;
 
 #[frame_support::pallet]
@@ -361,7 +363,7 @@ pub mod pallet {
 						let name = String::from_utf8(name.into()).map_err(|_| {
 							DispatchError::Other("Failed to convert chain name from utf8")
 						})?;
-						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+						bech32_no_std::encode(&name, data.clone(), bech32_no_std::Variant::Bech32).map_err(|_| {
 							DispatchError::Other(
 								"Failed to convert chain name and address into bech32",
 							)
@@ -610,7 +612,7 @@ pub mod pallet {
 					return None;
 				};
 
-				let Ok(name) = bech32_no_std::encode(&name, data.clone()) else {
+				let Ok(name) = bech32_no_std::encode(&name, data, bech32_no_std::Variant::Bech32) else {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,

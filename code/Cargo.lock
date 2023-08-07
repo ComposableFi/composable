@@ -831,12 +831,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
 
 [[package]]
-name = "bech32-no_std"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4756f018d917ebf7d60361ce6b48e88a9f1904525429e501bc0841b9436d416e"
-
-[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2052,7 +2046,7 @@ dependencies = [
 name = "composable-traits"
 version = "1.0.0"
 dependencies = [
- "bech32-no_std",
+ "bech32",
  "bitflags 1.3.2",
  "composable-support",
  "cosmwasm-schema 1.2.5",
@@ -3292,7 +3286,7 @@ dependencies = [
 name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
- "bech32-no_std",
+ "bech32",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
@@ -9401,7 +9395,7 @@ dependencies = [
 name = "pallet-multihop-xcm-ibc"
 version = "1.0.0"
 dependencies = [
- "bech32-no_std",
+ "bech32",
  "composable-support",
  "composable-traits",
  "frame-benchmarking",
@@ -19135,7 +19129,7 @@ dependencies = [
 name = "xc-core"
 version = "0.1.0"
 dependencies = [
- "bech32-no_std",
+ "bech32",
  "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",
