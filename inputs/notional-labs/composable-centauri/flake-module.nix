@@ -280,7 +280,7 @@
           EOF
           )
           "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-
+          echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
           sleep $BLOCK_SECONDS
           "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
 
@@ -298,22 +298,57 @@
         '';
       };
 
-      centaurid-execute-program = pkgs.writeShellApplication {
+      xc-transfer-pica-from-centauri-to-osmosis = pkgs.writeShellApplication {
         name = "centaurid-execute-program";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
-
-        text = ''
-        {
-          "execute_program" : {
+        text = ''          
+          TRANSFER_PICA_TO_OSMOSIS=$(cat <<EOF
+          {
             "execute_program" : {
-              "assets" : [],
-              "instructions" : [
-                
-              ]
+              "tip": "${validator-key}",
+              "execute_program" : {
+                "assets" : [ ["158456325028528675187087900674","1000000000000"] ],
+                "program" : {
+                  "instructions" : [
+                    {
+                      "spawn" : {
+                        "assets" : [ ["158456325028528675187087900674","1000000000000"] ],
+                        "network": 3,
+                        "program" : {
+                          "instructions" : [
+                            {
+                              "transfer" : {
+                                "amount" : "1000000000000",
+                                "asset_id:": "79228162514264337593543950337",
+                                "to" : "${cosmosTools.validators.osmosis}",
+                              }
+                            }
+                          ]
+                        }
+                        "salt" : [1,2,3,4]
+                      }
+                    }
+                  ],                
+                  tag : [1,2,3,4],
+                },
+                "salt" : [1,2,3,4]
+              }
             }
           }
-        }
+          EOF
+          )
+
+          CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+          CHAIN_ID="centauri-dev"
+          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          PORT=26657
+          FEE=ppica
+          BLOCK_SECONDS=5
+          BINARY=centaurid
+          GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_wOSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          sleep $BLOCK_SECONDS
         '';
       };
 
@@ -337,7 +372,7 @@
           
           if test "''${1-reuse}" == "fresh" ; then
              echo "removing data dir"
-             rm --force --recursive "$CHAIN_DATA" 
+             rm --force --recursive "$CHAIN_DATA"
           fi
 
           mkdir --parents "$CHAIN_DATA"
@@ -398,7 +433,7 @@
     {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init
-          centaurid-gen-fresh ics10-grandpa-cw-proposal;
+          centaurid-gen-fresh ics10-grandpa-cw-proposal xc-transfer-pica-from-centauri-to-osmosis;
       };
     };
 }
