@@ -100,9 +100,7 @@ cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-rpc-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
 
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
-  "rococo-native",
-], workspace = true }
+polkadot-cli = { workspace = true }
 polkadot-parachain = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-service = { workspace = true }

@@ -20,7 +20,7 @@ sp-runtime = { default-features = false, workspace = true }
 
 sp-std = { default-features = false, workspace = true }
 
-schemars = { optional = true, workspace = true, default-features = false }
+schemars = { optional = true, workspace = true }
 
 codec = { version = "3.0.0", package = "parity-scale-codec", default-features = false, features = [
   "derive",

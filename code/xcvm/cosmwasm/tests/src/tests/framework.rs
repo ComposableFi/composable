@@ -10,7 +10,7 @@ use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{
-	gateway::{AssetItem, ConfigSubMsg, HereItem, NetworkItem},
+	gateway::{AssetItem, ConfigSubMsg, HereItem},
 	shared::{DefaultXCVMProgram, Salt},
 	AssetId, Funds, Network, NetworkId,
 };
@@ -273,14 +273,14 @@ impl<T> TestVM<XCVMState<T>> {
 			tx.info,
 			tx.gas,
 			xc_core::gateway::ExecuteMsg::Config(
-				(ConfigSubMsg::ForceAsset(AssetItem {
+				ConfigSubMsg::ForceAsset(AssetItem {
 					asset_id,
 					from_network_id: todo!("restore"),
 					local: xc_core::gateway::AssetReference::Cw20 {
 						contract: asset_address.clone().into(),
 					},
 					bridged: None,
-				})),
+				}),
 			),
 		)?;
 		self.xcvm_state.insert_asset(asset_id, asset_address.clone());

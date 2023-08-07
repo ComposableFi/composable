@@ -12071,7 +12071,6 @@ dependencies = [
  "cosmwasm-std",
  "frame-support",
  "ibc 0.43.1",
- "lazy_static",
  "parity-scale-codec",
  "scale-info",
  "serde",
