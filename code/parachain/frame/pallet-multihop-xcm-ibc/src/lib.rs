@@ -36,6 +36,9 @@ pub use pallet::*;
 mod centauri;
 mod prelude;
 
+#[cfg(test)]
+mod tests;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -240,10 +243,10 @@ pub mod pallet {
 		) -> Option<()> {
 			let signed_account_id = RawOrigin::Signed(from.clone());
 			let acc_bytes = T::AccountId::encode(&to);
-			let Ok(id) = acc_bytes.try_into() else{
-				//we need to emit event when error or succseed for front-end becase 
-				//this function is called from pallet-ibc 
-				//deliver extrinsic and only relayer will get the error. 
+			let Ok(id) = acc_bytes.try_into() else {
+				//we need to emit event when error or succseed for front-end becase
+				//this function is called from pallet-ibc
+				//deliver extrinsic and only relayer will get the error.
 				<Pallet<T>>::deposit_event(crate::Event::<T>::MultihopXcmMemo {
 					reason: MultihopEventReason::FailedToConvertAddressToBytes,
 					from,
@@ -252,7 +255,7 @@ pub mod pallet {
 					asset_id: currency,
 					is_error: true,
 				});
-				return None;
+				return None
 			};
 			//if para id is none then parent is 1 if para id is some then parent is 0
 			let parent = if para_id.is_some() { 0 } else { 1 };
@@ -360,7 +363,8 @@ pub mod pallet {
 						let name = String::from_utf8(name).map_err(|_| {
 							DispatchError::Other("Failed to convert chain name from utf8")
 						})?;
-						bech32_no_std::encode(&name, data.clone()).map_err(|_| {
+						bech32_no_std::encode(&name, data.clone(), bech32_no_std::Variant::Bech32)
+							.map_err(|_| {
 							DispatchError::Other(
 								"Failed to convert chain name and address into bech32",
 							)
@@ -552,13 +556,13 @@ pub mod pallet {
 			}
 
 			//route does not exist
-			let Ok(mut route) = RouteIdToRoutePath::<T>::try_get(route_id) else{
+			let Ok(mut route) = RouteIdToRoutePath::<T>::try_get(route_id) else {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
 					reason: MultihopEventReason::MultiHopRouteDoesNotExist,
 				});
-				return None;
+				return None
 			};
 
 			let route_len = route.len();
@@ -567,13 +571,13 @@ pub mod pallet {
 			let mut chain_info_iter = route.into_iter();
 
 			//route does not exist
-			let Some((next_chain_info, chain_name)) = chain_info_iter.next() else{
+			let Some((next_chain_info, chain_name)) = chain_info_iter.next() else {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
 					reason: MultihopEventReason::MultiHopRouteExistButNotConfigured,
 				});
-				return None;
+				return None
 			};
 
 			if addresses.len() != route_len {
@@ -591,13 +595,13 @@ pub mod pallet {
 				let result: core::result::Result<Vec<bech32_no_std::u5>, bech32_no_std::Error> =
 					raw_address_to.into_iter().map(bech32_no_std::u5::try_from_u8).collect();
 
-				let Ok(data) = result else{
+				let Ok(data) = result else {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
 						reason: MultihopEventReason::FailedToDeriveCosmosAddressFromBytes,
 					});
-					return None;
+					return None
 				};
 
 				let Ok(name) = String::from_utf8(chain_name.into()) else {
@@ -606,29 +610,30 @@ pub mod pallet {
 						route_id,
 						reason: MultihopEventReason::FailedToDeriveChainNameFromUtf8,
 					});
-					return None;
+					return None
 				};
 
-				let Ok(name) = bech32_no_std::encode(&name, data) else {
+				let Ok(name) = bech32_no_std::encode(&name, data, bech32_no_std::Variant::Bech32)
+				else {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
 						reason: MultihopEventReason::FailedToEncodeBech32Address,
 					});
-					return None;
+					return None
 				};
 
 				MultiAddress::<AccoindIdOf<T>>::Raw(name.into_bytes())
 			} else {
 				let account_from = sp_runtime::AccountId32::new(raw_address_to);
 				let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
-				let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else{
+				let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else {
 					<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 						origin_address: address_from,
 						route_id,
 						reason: MultihopEventReason::FailedToDecodeDestAccountId,
 					});
-					return None;
+					return None
 				};
 				MultiAddress::<AccoindIdOf<T>>::Id(account_id_from)
 			};
@@ -643,24 +648,24 @@ pub mod pallet {
 
 			let account_from = sp_runtime::AccountId32::new(address_from);
 			let mut account_from_32: &[u8] = sp_runtime::AccountId32::as_ref(&account_from);
-			let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else{
+			let Ok(account_id_from) = T::AccountId::decode(&mut account_from_32) else {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
 					reason: MultihopEventReason::FailedToDecodeSenderAccountId,
 				});
-				return None;
+				return None
 			};
 			let signed_account_id = RawOrigin::Signed(account_id_from.clone());
 
 			//do not support non fungible.
-			let Fungibility::Fungible(ref amount) = asset.fun else{
+			let Fungibility::Fungible(ref amount) = asset.fun else {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
 					reason: MultihopEventReason::DoesNotSupportNonFungible,
 				});
-				return None;
+				return None
 			};
 
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
@@ -674,13 +679,13 @@ pub mod pallet {
 				.collect();
 
 			let memo_data = Pallet::<T>::create_memo(vec);
-			let Ok(memo_data) = memo_data else{
+			let Ok(memo_data) = memo_data else {
 				<Pallet<T>>::deposit_event(crate::Event::<T>::FailedCallback {
 					origin_address: address_from,
 					route_id,
 					reason: MultihopEventReason::FailedCreateMemo,
 				});
-				return None;
+				return None
 			};
 			if let Some(memo_data) = memo_data {
 				let memo_result =
