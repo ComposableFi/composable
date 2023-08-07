@@ -9,8 +9,6 @@ mod opts;
 extern crate custom_derive;
 #[macro_use]
 extern crate enum_derive;
-#[macro_use]
-extern crate lazy_static;
 
 use crate::{
 	asset::Asset,
