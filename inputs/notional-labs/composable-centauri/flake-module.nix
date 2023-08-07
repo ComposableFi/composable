@@ -298,6 +298,24 @@
         '';
       };
 
+      centaurid-execute-program = pkgs.writeShellApplication {
+        name = "centaurid-execute-program";
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
+
+        text = ''
+        {
+          "execute_program" : {
+            "execute_program" : {
+              "assets" : [],
+              "instructions" : [
+                
+              ]
+            }
+          }
+        }
+        '';
+      };
 
       centaurid-gen-fresh = pkgs.writeShellApplication {
         name = "centaurid-gen-fresh";
@@ -374,9 +392,6 @@
           centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CHAIN_DATA" gentx ${cosmosTools.validators.moniker} "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
           centaurid collect-gentxs --home "$CHAIN_DATA"  --gentx-dir "$CHAIN_DATA/config/gentx"
           centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CHAIN_DATA" --db_dir "$CHAIN_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CHAIN_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CHAIN_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
-
-
-
         '';
       };
     in

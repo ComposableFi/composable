@@ -27,7 +27,7 @@ pub enum ExecuteMsg {
 	ExecuteProgram {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
-		tip: Addr,
+		tip: Option<Addr>,
 	},
 
 	/// Request to execute a program on behalf of given user.
@@ -39,7 +39,7 @@ pub enum ExecuteMsg {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
 
-		tip: Addr,
+		tip: Option<Addr>,
 	},
 
 	/// Message sent from interpreter trying to spawn program on another
