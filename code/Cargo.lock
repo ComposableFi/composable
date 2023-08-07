@@ -895,7 +895,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -918,7 +918,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more 0.99.17",
@@ -5076,7 +5076,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5098,7 +5098,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5536,7 +5536,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "derive_more 0.99.17",
  "flex-error",
@@ -5596,7 +5596,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5620,7 +5620,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "base58",
  "blake2",
@@ -5644,7 +5644,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5673,7 +5673,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -5700,7 +5700,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5712,7 +5712,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5734,7 +5734,7 @@ dependencies = [
 [[package]]
 name = "ics08-wasm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "hex",
  "ibc 0.15.0",
@@ -5746,7 +5746,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5772,7 +5772,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -7224,7 +7224,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9204,7 +9204,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -9257,7 +9257,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -15111,7 +15111,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/centauri?rev=fb6a23d16fe312f1cd2d38505389c049b446149a#fb6a23d16fe312f1cd2d38505389c049b446149a"
+source = "git+https://github.com/ComposableFi/centauri?rev=1687de03194ba073b14ea7344efe35f0a95017b8#1687de03194ba073b14ea7344efe35f0a95017b8"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.10.0",
