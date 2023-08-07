@@ -28,8 +28,8 @@
           python3
           rnix-lsp
           sad
-          self.inputs.cosmos.packages.${system}.gex
-          self.inputs.bech32.packages.${system}.bech32
+          gex
+          bech32cli
           subwasm
           terraform
           terraform-ls

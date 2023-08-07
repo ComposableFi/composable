@@ -49,8 +49,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    bech32 = {
-      url = "github:input-output-hk/bech32/master";
+    bech32cli = {
+      url =
+        "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     centauri-src = {
