@@ -162,7 +162,7 @@
             FEE=uosmo
             NETWORK_ID=4
             VALIDATOR_KEY=${validator-key}
-            BINARY=centaurid
+            BINARY=osmosisd
 
             function init_xcvm() {
               local INSTANTIATE=$1
