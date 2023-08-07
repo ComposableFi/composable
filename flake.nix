@@ -49,7 +49,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    bech32 = {      
+    bech32 = {
       url = "github:input-output-hk/bech32/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };

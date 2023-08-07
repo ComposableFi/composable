@@ -1,18 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config
-    , self'
-    , inputs'
-    , pkgs
-    , lib
-    , system
-    , crane
-    , systemCommonRust
-    , subnix
-    , devnetTools
-    , cosmosTools
-    , ...
-    }:
+  perSystem = { config, self', inputs', pkgs, lib, system, crane
+    , systemCommonRust, subnix, devnetTools, cosmosTools, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
@@ -43,23 +31,20 @@
         "summary" = "none";
       };
 
-      ics10-grandpa-cw-proposal =
-        let
-          code = builtins.readFile
-            "${self'.packages.ics10-grandpa-cw}/lib/ics10_grandpa_cw.wasm.gz.txt";
-          code-file = builtins.toFile "ics10_grandpa_cw.wasm.json"
-            (builtins.toJSON
-              (ibc-lightclients-wasm-v1-msg-push-new-wasm-code code));
-        in
-        pkgs.stdenv.mkDerivation {
-          name = "ics10-grandpa-cw-proposal";
-          dontUnpack = true;
-          #buildInputs = [ self'.packages.ics10-grandpa-cw ];
-          installPhase = ''
-            mkdir --parents $out
-            cp ${code-file} $out/ics10_grandpa_cw.wasm.json
-          '';
-        };
+      ics10-grandpa-cw-proposal = let
+        code = builtins.readFile
+          "${self'.packages.ics10-grandpa-cw}/lib/ics10_grandpa_cw.wasm.gz.txt";
+        code-file = builtins.toFile "ics10_grandpa_cw.wasm.json"
+          (builtins.toJSON
+            (ibc-lightclients-wasm-v1-msg-push-new-wasm-code code));
+      in pkgs.stdenv.mkDerivation {
+        name = "ics10-grandpa-cw-proposal";
+        dontUnpack = true;
+        installPhase = ''
+          mkdir --parents $out
+          cp ${code-file} $out/ics10_grandpa_cw.wasm.json
+        '';
+      };
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
         runtimeInputs = devnetTools.withBaseContainerTools
@@ -67,7 +52,7 @@
 
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
-          
+
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           VALIDATOR_KEY=${validator-key}
@@ -106,7 +91,7 @@
               }                                 
           EOF
           )
-          
+
           init_xcvm "$INSTANTIATE"
 
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
@@ -302,7 +287,7 @@
         name = "centaurid-execute-program";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
-        text = ''          
+        text = ''
           TRANSFER_PICA_TO_OSMOSIS=$(cat <<EOF
           {
             "execute_program" : {
@@ -369,7 +354,7 @@
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          
+
           if test "''${1-reuse}" == "fresh" ; then
              echo "removing data dir"
              rm --force --recursive "$CHAIN_DATA"
@@ -429,11 +414,10 @@
           centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CHAIN_DATA" --db_dir "$CHAIN_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CHAIN_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CHAIN_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
       };
-    in
-    {
+    in {
       packages = rec {
-        inherit centaurid centaurid-gen centaurid-init
-          centaurid-gen-fresh ics10-grandpa-cw-proposal xc-transfer-pica-from-centauri-to-osmosis;
+        inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
+          ics10-grandpa-cw-proposal xc-transfer-pica-from-centauri-to-osmosis;
       };
     };
 }
