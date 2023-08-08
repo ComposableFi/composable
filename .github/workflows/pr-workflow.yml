@@ -190,6 +190,8 @@ jobs:
       group: ${{ inputs.github_workflow }}-build-devnet-xc-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
+      - name: setup-magic-nix-cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2    
       - name: Set up Cachix
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309

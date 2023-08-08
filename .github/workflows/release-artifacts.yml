@@ -5,13 +5,6 @@ on:
       - 'release-v[0-9]+\.[0-9]+\.[0-9]+'
 
 env:
-  NIX_VERSION: nix-2.13.2
-  NIXPKGS_CHANNEL: nixos-22.11
-  CACHIX_COMPOSABLE: composable-community
-  CACHIX_COMPRESSION_LEVEL: 16
-  CACHIX_JOBS: 8
-  CACHIX_COMPRESSION_METHOD: zstd
-  CACHIX_NAME: composable-community
   DOCKER_REGISTRY_NAME: composablefi
   DOCKER_USER_OPTION: '$UID:$GID'
 
@@ -19,67 +12,40 @@ jobs:
   release-artifacts:
     name: "release-artifacts"
     runs-on:
-      - self-hosted
-      - x64-monster
+      - x86_64-linux-32C-128GB-2TB
     permissions: 
       pull-requests: write
       contents: write      
     concurrency:
       group: release-artifacts-${{ github.ref }}
       cancel-in-progress: true      
-    steps:
-      - name: Set up Nix
-        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
-        with:
-          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
-          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
-          extra_nix_config: |
-            sandbox = relaxed
-            narinfo-cache-negative-ttl = 0      
-            system-features = kvm          
-      - name: Set up Cachix
-        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+    steps: 
+      - uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: ${{ env.CACHIX_NAME }}
-      - name: Add tools needed for non-nix steps
-        run: |  
-          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
-          nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.git nixpkgs.git-lfs nixpkgs.docker nixpkgs.coreutils    
+          name: composable-community
+          installCommand: "true"
+          skipAddingSubstituter: true  
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
+      - uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build runtime
-        run: |
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-runtime
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-runtime
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#picasso-testfast-runtime
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-testfast-runtime
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#composable-node
-          cachix watch-exec --compression-level $CACHIX_COMPRESSION_LEVEL $CACHIX_COMPOSABLE nix -- build .#devnet-image
+      - run: |
           nix run .#generate-release-artifacts --print-build-logs
-          echo "COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)" >> $GITHUB_ENV
-
-      - name: Release Docker image
-        run: |
+          COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)"
           docker load --input release-artifacts/composable-image
-          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v$COMPOSABLE_VERSION"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v$COMPOSABLE_VERSION"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
 
           docker load --input release-artifacts/devnet-image
-          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v$COMPOSABLE_VERSION"
           docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v${{ env.COMPOSABLE_VERSION }}"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v$COMPOSABLE_VERSION"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"                    
 
       - name: Release artifacts
