@@ -35,7 +35,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
           nix run .#generate-release-artifacts --print-build-logs
-          COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)"
+          COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)
           docker load --input release-artifacts/composable-image
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v$COMPOSABLE_VERSION"
           docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
