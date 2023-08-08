@@ -11,7 +11,7 @@ use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId},
 	shared::{XcFunds, XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
-	AssetId, CallOrigin, Displayed,
+	AssetId, CallOrigin,
 };
 
 use crate::{
@@ -159,7 +159,7 @@ pub(crate) fn ics20_message_hook(
 				deps,
 				AssetReference::Native { denom: coin.denom },
 			)?;
-			Ok((asset.asset_id, Displayed::<u128>::from(coin.amount.u128())))
+			Ok((asset.asset_id, coin.amount.into()))
 		})
 		.collect();
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };

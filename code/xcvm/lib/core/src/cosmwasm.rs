@@ -66,7 +66,7 @@
 use super::{BindingValue, Bindings};
 use crate::{InterpreterOrigin, NetworkId, OrderedBindings, UserId, UserOrigin};
 use alloc::{fmt::Debug, string::String, vec, vec::Vec};
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg, StdResult};
+use cosmwasm_std::{BankMsg, Coin, CosmosMsg, StdResult, Uint64};
 use cw_storage_plus::{IntKey, Key, KeyDeserialize, Prefixer, PrimaryKey};
 use serde::{Deserialize, Serialize};
 
@@ -226,7 +226,7 @@ where
 	/// `sender` is automatically filled with the current contract's address.
 	Instantiate {
 		admin: Option<String>,
-		code_id: u64,
+		code_id: Uint64,
 		/// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
 		msg: T,
 		funds: Vec<Coin>,
@@ -243,7 +243,7 @@ where
 	Migrate {
 		contract_addr: String,
 		/// the code_id of the new logic to place in the given contract
-		new_code_id: u64,
+		new_code_id: Uint64,
 		/// msg is the json-encoded MigrateMsg struct that will be passed to the new code
 		msg: T,
 	},
@@ -369,7 +369,7 @@ impl LateCall {
 				Some(StaticBinding::None(data)) => Some(data.clone()),
 				_ => None,
 			},
-			code_id,
+			code_id: code_id.into(),
 			msg: match &msg {
 				IndexedBinding::Some((_, data)) => data.clone(),
 				IndexedBinding::None(data) => data.clone(),
@@ -408,7 +408,7 @@ impl LateCall {
 	) -> Result<Self, ()> {
 		let migrate_msg = FlatWasmMsg::<T>::Migrate {
 			contract_addr,
-			new_code_id,
+			new_code_id: new_code_id.into(),
 			msg: match &msg {
 				IndexedBinding::Some((_, data)) => data.clone(),
 				IndexedBinding::None(data) => data.clone(),
@@ -489,7 +489,7 @@ where
 			FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate { admin, code_id, msg, funds, label }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Instantiate {
 					admin,
-					code_id,
+					code_id: code_id.into(),
 					msg: cosmwasm_std::Binary(serde_json_wasm::to_vec(&msg)?),
 					funds,
 					label,
@@ -497,7 +497,7 @@ where
 			FlatCosmosMsg::Wasm(FlatWasmMsg::Migrate { contract_addr, new_code_id, msg }) =>
 				CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Migrate {
 					contract_addr,
-					new_code_id,
+					new_code_id: new_code_id.into(),
 					msg: cosmwasm_std::Binary(serde_json_wasm::to_vec(&msg)?),
 				}),
 			FlatCosmosMsg::Wasm(FlatWasmMsg::UpdateAdmin { contract_addr, admin }) =>
@@ -596,7 +596,7 @@ mod tests {
 			msg.encoded_call,
 			serde_json_wasm::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Instantiate {
 				admin: Some(Default::default()),
-				code_id: 1,
+				code_id: 1u64.into(),
 				msg: test_msg,
 				funds: Vec::new(),
 				label: "cool label".into()
@@ -622,7 +622,7 @@ mod tests {
 			msg.encoded_call,
 			serde_json_wasm::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::Migrate {
 				contract_addr: "migrate_addr".into(),
-				new_code_id: 2,
+				new_code_id: 2u64.into(),
 				msg: test_msg
 			}))
 			.unwrap()

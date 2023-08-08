@@ -83,9 +83,12 @@ pub(crate) fn handle_deposit_request(
 			deps.querier,
 			AssetReference::Cw20 { contract: cw20.addr() },
 		)?;
-		response =
-			response.add_message(cw20.make_take_msg(&env.contract, info.sender.clone(), amount)?);
-		deposits.push((asset.asset_id, cw20.into(), amount));
+		response = response.add_message(cw20.make_take_msg(
+			&env.contract,
+			info.sender.clone(),
+			*amount,
+		)?);
+		deposits.push((asset.asset_id, cw20.into(), *amount));
 	}
 
 	send_deposit(response, deps.storage, info.sender, account, deposits)
@@ -130,12 +133,19 @@ fn send_deposit(
 	let deposit = PendingDeposit { account, sender, deposits };
 	PENDING_DEPOSITS.save(storage, deposit_id, &deposit)?;
 
-	let deposits = deposit.deposits.into_iter().map(|(id, _, amount)| (id, amount)).collect();
-	let packet =
-		msg::accounts::DepositNotificationPacket { deposit_id, account: deposit.account, deposits };
+	let deposits = deposit
+		.deposits
+		.into_iter()
+		.map(|(id, _, amount)| (id, amount.into()))
+		.collect();
+	let packet = msg::accounts::DepositNotificationPacket {
+		deposit_id: deposit_id.into(),
+		account: deposit.account,
+		deposits,
+	};
 	let send_packet = ibc::make_message(&msg::accounts::Packet::from(packet));
 
-	let data = to_vec(&msg::DepositAssetsResponse { deposit_id })?;
+	let data = to_vec(&msg::DepositAssetsResponse { deposit_id: deposit_id.into() })?;
 	Ok(response.add_message(send_packet).set_data(data))
 }
 
@@ -158,7 +168,7 @@ pub(crate) fn handle_deposit_done(
 		None => (false, "TO"),
 	};
 
-	let key = PENDING_DEPOSITS.key(packet.deposit_id);
+	let key = PENDING_DEPOSITS.key(packet.deposit_id.into());
 
 	let mut response = IbcBasicResponse::default();
 	if !ok {

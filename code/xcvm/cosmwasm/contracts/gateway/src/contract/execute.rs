@@ -13,7 +13,7 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 
-use xc_core::{gateway::ConfigSubMsg, CallOrigin, Displayed, Funds, InterpreterOrigin};
+use xc_core::{gateway::ConfigSubMsg, CallOrigin, Funds, InterpreterOrigin};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
@@ -95,19 +95,19 @@ fn transfer_from_user(
 	self_address: Addr,
 	user: Addr,
 	host_funds: Vec<Coin>,
-	program_funds: &Funds<Displayed<u128>>,
+	program_funds: &Funds<xc_core::shared::Displayed<u128>>,
 ) -> Result<Vec<CosmosMsg>> {
 	deps.api
 		.debug(serde_json_wasm::to_string(&(&program_funds, &host_funds))?.as_str());
 	let mut transfers = Vec::with_capacity(program_funds.0.len());
-	for (asset_id, Displayed(program_amount)) in program_funds.0.iter() {
+	for (asset_id, program_amount) in program_funds.0.iter() {
 		match assets::get_asset_by_id(deps.as_ref(), *asset_id)?.local {
 			msg::AssetReference::Native { denom } => {
 				let Coin { amount: host_amount, .. } = host_funds
 					.iter()
 					.find(|c| c.denom == denom)
 					.ok_or(ContractError::ProgramFundsDenomMappingToHostNotFound)?;
-				if u128::from(*host_amount) != *program_amount {
+				if *program_amount != u128::from(*host_amount) {
 					return Err(ContractError::ProgramAmountNotEqualToHostAmount)?
 				}
 			},
@@ -211,19 +211,21 @@ pub(crate) fn handle_execute_program_privilleged(
 fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,
-	funds: Funds<Displayed<u128>>,
+	funds: Funds<xc_core::shared::Displayed<u128>>,
 ) -> Result {
 	let mut response = Response::new();
 	let interpreter_address = interpreter_address.into_string();
-	for (asset_id, Displayed(amount)) in
-		funds.0.into_iter().filter(|(_, Displayed(amount))| *amount > 0)
-	{
+	for (asset_id, amount) in funds.0 {
+		// Ignore zero amounts
+		if amount == 0 {
+			continue
+		}
 		deps.api.debug("xcvm::gateway:: sending funds");
 
 		let msg = match assets::get_asset_by_id(deps, asset_id)?.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),
-				amount: vec![Coin::new(amount, denom)],
+				amount: vec![Coin::new(amount.into(), denom)],
 			}
 			.into(),
 			msg::AssetReference::Cw20 { contract } => {

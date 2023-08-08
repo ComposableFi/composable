@@ -3,12 +3,13 @@ use crate::{prelude::*, NetworkId};
 #[cfg(feature = "cw-storage-plus")]
 use cw_storage_plus::{Key, Prefixer};
 
+use crate::shared::Displayed;
 use core::ops::Add;
 use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 /// Newtype for XCVM assets ID. Must be unique for each asset and must never change.
 /// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
@@ -83,114 +84,6 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 
 	fn from_slice(value: &[u8]) -> cosmwasm_std::StdResult<Self::Output> {
 		<u128 as cw_storage_plus::KeyDeserialize>::from_slice(value)
-	}
-}
-
-/// A wrapper around a type which is serde-serialised as a string.
-///
-/// For serde-serialisation to be implemented for the type `T` must implement
-/// `Display` and `FromStr` traits.
-///
-/// ```
-/// # use xc_core::Displayed;
-///
-/// #[derive(serde::Serialize, serde::Deserialize)]
-/// struct Foo {
-///     value: Displayed<u64>
-/// }
-///
-/// let encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap();
-/// assert_eq!(r#"{"value":"42"}"#, encoded);
-///
-/// let decoded = serde_json_wasm::from_str::<Foo>(r#"{"value":"42"}"#).unwrap();
-/// assert_eq!(Displayed(42), decoded.value);
-/// ```
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, TypeInfo)]
-#[repr(transparent)]
-pub struct Displayed<T>(pub T);
-
-impl<T: Default> Default for Displayed<T> {
-	fn default() -> Self {
-		Self(Default::default())
-	}
-}
-
-impl<T> parity_scale_codec::WrapperTypeEncode for Displayed<T> {}
-impl<T> parity_scale_codec::WrapperTypeDecode for Displayed<T> {
-	type Wrapped = T;
-}
-
-impl From<crate::proto::Uint128> for Displayed<u128> {
-	fn from(value: crate::proto::Uint128) -> Self {
-		Self(value.into())
-	}
-}
-
-impl From<Displayed<u128>> for crate::proto::Uint128 {
-	fn from(value: Displayed<u128>) -> Self {
-		value.0.into()
-	}
-}
-
-impl From<Uint128> for Displayed<u128> {
-	fn from(value: Uint128) -> Self {
-		Self(value.u128())
-	}
-}
-
-impl From<Displayed<u128>> for Uint128 {
-	fn from(value: Displayed<u128>) -> Self {
-		value.into()
-	}
-}
-
-impl<T> core::ops::Deref for Displayed<T> {
-	type Target = T;
-
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl<T: core::fmt::Display> core::fmt::Display for Displayed<T> {
-	fn fmt(&self, fmtr: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		self.0.fmt(fmtr)
-	}
-}
-
-impl<T: core::fmt::Display> Serialize for Displayed<T> {
-	fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-		ser.collect_str(&self.0)
-	}
-}
-
-impl<'de, T: core::str::FromStr> Deserialize<'de> for Displayed<T> {
-	fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-		de.deserialize_str(DisplayedVisitor::<T>(Default::default()))
-	}
-}
-
-/// Serde Visitor helper for deserialising [`Displayed`] type.
-struct DisplayedVisitor<V>(core::marker::PhantomData<V>);
-
-impl<'de, T: core::str::FromStr> serde::de::Visitor<'de> for DisplayedVisitor<T> {
-	type Value = Displayed<T>;
-
-	fn expecting(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
-		fmt.write_str("a string")
-	}
-
-	fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
-		T::from_str(s)
-			.map(Displayed)
-			.map_err(|_| serde::de::Error::custom("Parse from string failed"))
-	}
-}
-
-impl<T> From<T> for Displayed<T> {
-	fn from(x: T) -> Self {
-		Displayed(x)
 	}
 }
 

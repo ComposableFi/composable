@@ -19,7 +19,7 @@ pub use cosmwasm_schema::{cw_serde, QueryResponses};
 #[cfg(feature = "std")]
 pub use schemars::JsonSchema;
 
-use crate::{Amount, Destination, Displayed, Funds, NetworkId, MAX_PARTS};
+use crate::{shared::Displayed, Amount, Destination, Funds, NetworkId, MAX_PARTS};
 use alloc::format;
 use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
@@ -104,7 +104,7 @@ impl From<crate::UserOrigin> for UserOrigin {
 }
 
 impl From<(crate::AssetId, Displayed<u128>)> for PacketAsset {
-	fn from((asset, Displayed(amount)): (crate::AssetId, Displayed<u128>)) -> Self {
+	fn from((asset, amount): (crate::AssetId, Displayed<u128>)) -> Self {
 		PacketAsset { asset_id: Some(asset.into()), amount: Some(amount.into()) }
 	}
 }
@@ -164,7 +164,7 @@ impl TryFrom<PacketAsset> for (crate::AssetId, Displayed<u128>) {
 	fn try_from(value: PacketAsset) -> core::result::Result<Self, Self::Error> {
 		Ok((
 			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.id.ok_or(())?)),
-			Displayed(value.amount.ok_or(())?.into()),
+			value.amount.ok_or(())?.into(),
 		))
 	}
 }
@@ -438,7 +438,7 @@ impl TryFrom<AssetId> for crate::AssetId {
 	type Error = ();
 
 	fn try_from(asset_id: AssetId) -> core::result::Result<Self, Self::Error> {
-		Ok(crate::AssetId(Displayed(asset_id.id.ok_or(())?.into())))
+		Ok(crate::AssetId(asset_id.id.ok_or(())?.into()))
 	}
 }
 
@@ -664,7 +664,6 @@ fn calc_nom(nom: u128, denom: u128, max: u128) -> u128 {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{proto::Uint128 as ProtoUint128, Displayed};
 
 	#[test]
 	fn balance_to_amount_works() {
@@ -688,8 +687,8 @@ mod tests {
 		let real_value = 1231231231231231233123123123123123_u128;
 		let high_bits = u64::from_be_bytes(real_value.to_be_bytes()[0..8].try_into().unwrap());
 		let low_bits = u64::from_be_bytes(real_value.to_be_bytes()[8..].try_into().unwrap());
-		let uint128 = ProtoUint128 { high_bits, low_bits };
+		let uint128 = Uint128 { high_bits, low_bits };
 		assert_eq!(u128::from(uint128.clone()), real_value);
-		assert_eq!(ProtoUint128::from(real_value), uint128)
+		assert_eq!(Uint128::from(real_value), uint128)
 	}
 }

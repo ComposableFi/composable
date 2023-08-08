@@ -20,7 +20,7 @@ use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
 	shared::{encode_base64, XcProgram},
-	Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId, Register,
+	Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -268,7 +268,7 @@ pub fn interpret_spawn(
 ) -> Result {
 	let Config { interpreter_origin, gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 
-	let mut normalized_funds: Funds<Displayed<u128>> = Funds::default();
+	let mut normalized_funds = Funds::default();
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
