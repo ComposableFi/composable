@@ -17,13 +17,13 @@
             export HOME
             RUST_LOG="${RUST_LOG}"
             export RUST_LOG
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-2} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"  
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-3} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-picasso-kusama-to-centauri-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-centauri-to-picasso-kusama-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/picasso-centauri-ibc/config-core.toml"                
             CODE_ID=$(cat ${devnet-root-directory}/.centaurid/code_id)
             echo "$CODE_ID"
             sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"
-            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml" --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
+            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
           '';
         };
 
@@ -37,8 +37,8 @@
             export HOME
             RUST_LOG="${RUST_LOG},jsonrpsee_client_transport::ws=info,soketto=info,tracing::span=info,mio::poll=info,trie=info,jsonrpsee_core::client::async_client=info"
             export RUST_LOG
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-picasso-config-2} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-chain-b} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-composable-to-picasso-config-1-1} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"  
+            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-picasso-to-composable-polkadot-config-0-0} "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/composable-picasso-ibc/config-core.toml"                
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml" --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
           '';
