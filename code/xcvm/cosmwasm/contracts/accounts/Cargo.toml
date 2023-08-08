@@ -18,6 +18,7 @@ cosmwasm-std = { workspace = true, features = ["ibc3", "stargate"] }
 cw-storage-plus.workspace = true
 cw-utils = { workspace = true, features = ["std"] }
 cw2.workspace = true
+derive_more.workspace = true
 parity-scale-codec.workspace = true
 strum.workspace = true
 thiserror.workspace = true

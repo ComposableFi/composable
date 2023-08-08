@@ -3,7 +3,7 @@
 use crate::{
 	accounts,
 	error::{ContractError, Result},
-	state,
+	ibc, state,
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, DepsMut, Env, IbcEndpoint, MessageInfo, Response, StdResult, Storage};
@@ -43,6 +43,7 @@ const BREAK_GLASS: Item<BrokenGlassState> = Item::new(state::BREAK_GLASS_NS);
 ///
 /// For convenience, type aliases are provided for the different
 /// authorisation levels: [`Contract`], [`Interpreter`] and [`Admin`].
+#[derive(Clone, derive_more::Deref)]
 pub(crate) struct Auth<T>(T);
 
 /// Authorisation token for messages which come from a regular user.
@@ -88,22 +89,20 @@ impl Auth<policy::Account> {
 	/// Verifies that given remote address is a recovery address for the
 	/// account.
 	pub fn authorise_remote(
+		auth: &EscrowContract,
 		deps: &mut DepsMut,
 		env: &Env,
 		account: String,
-		network_id: NetworkId,
 		address: String,
 	) -> Result<Self> {
 		check_break_glass(deps.storage, env)?;
 		let account = deps.api.addr_validate(&account)?;
-		if let Some(account) = accounts::Account::load(deps.storage, account)? {
-			if account.has_recovery_address(deps.storage, network_id, address) {
-				Ok(Self(policy::Account(account)))
-			} else {
-				Err(ContractError::NotAuthorized)
-			}
+		let account =
+			accounts::Account::load(deps.storage, account)?.ok_or(ContractError::NotAuthorized)?;
+		if account.has_recovery_address(deps.storage, auth.network_id, address) {
+			Ok(Self(policy::Account(account)))
 		} else {
-			Err(ContractError::UnknownAccount)
+			Err(ContractError::NotAuthorized)
 		}
 	}
 
@@ -113,17 +112,17 @@ impl Auth<policy::Account> {
 	}
 }
 
-/// Mapping from escrow contract’s IBC endpoint to id of the network its on.
-///
-/// The key is a `(channel_id, port_id)` tuple.
-const IBC_ENDPOINTS: Map<(String, String), NetworkId> = Map::new(state::IBC_ENDPOINTS_NS);
-
 impl Auth<policy::EscrowContract> {
 	/// Verifies that sender of an IBC message is a remote escrow contract.
-	pub fn authorise(storage: &mut dyn Storage, env: &Env, endpoint: IbcEndpoint) -> Result<Self> {
+	pub fn authorise_ibc(
+		storage: &mut dyn Storage,
+		env: &Env,
+		endpoint: IbcEndpoint,
+	) -> Result<Self> {
 		check_break_glass(storage, env)?;
-		let network_id = IBC_ENDPOINTS.load(storage, (endpoint.channel_id, endpoint.port_id))?;
-		Ok(Self(policy::EscrowContract { network_id }))
+		ibc::get_network_id_for_channel(storage, endpoint.channel_id)
+			.and_then(|id| id.ok_or(ContractError::NotAuthorized))
+			.map(|network_id| Self(policy::EscrowContract { network_id }))
 	}
 
 	/// Verifies that message’s sender is local escrow contract.
@@ -139,11 +138,6 @@ impl Auth<policy::EscrowContract> {
 		} else {
 			Err(ContractError::NotAuthorized)
 		}
-	}
-
-	/// Returns identifier of the network given escrow contract runs at.
-	pub fn network_id(&self) -> NetworkId {
-		self.0.network_id
 	}
 }
 

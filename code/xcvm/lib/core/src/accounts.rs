@@ -8,6 +8,9 @@ use crate::{AssetId, NetworkId};
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.accounts";
 
+/// Version of IBC channels used by the accounts contract.
+pub const IBC_VERSION: &str = "xcvm-vw-v0";
+
 /// Kinds of events escrow contract can generate.
 #[derive(Clone, Copy, Debug, PartialEq, strum::AsRefStr)]
 #[strum(serialize_all = "lowercase")]
@@ -16,6 +19,10 @@ pub enum Action {
 	Instantiated,
 	/// Funds have been deposited to an account.
 	Deposit,
+	/// New IBC channel has been opened.
+	IbcConnect,
+	/// An IBC channel has been closed.
+	IbcClose,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -50,7 +57,7 @@ pub struct MigrateMsg {}
 pub enum ExecuteMsg {
 	CreateAccount(CreateAccountRequest),
 	DropAccount(DropAccountRequest),
-	SubmitProblem(SubmitProblemRequest),
+	ExecuteSolution(ExecuteSolutionRequest),
 	/// A normally cross-chain packet sent from a contract on local chain.
 	LocalPacket(Packet),
 	BreakGlass,
@@ -114,31 +121,22 @@ pub struct AssetBalance {
 	pub locked_amount: u128,
 }
 
-/// Sends a new problem for the system to solve.
+/// Sends a solution for the virtual wallet to execute.
 ///
-/// The problem is added to set of active problems so that solvers can start
-/// working on it and figure out the best solution.  Submitting of a problem
-/// may fail if user has insufficient funds.
+/// The solution involves swapping account balances and executing XCVM programs.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct SubmitProblemRequest {
-	/// The problem to solve; TODO: refer to problem specification
-	// TODO(mina86): Switch to Binary.  Currently issue is this conflicts with
-	// Encode and Decode derives.
-	pub problem: Vec<u8>,
+pub struct ExecuteSolutionRequest {
+	// TODO
 }
 
-/// Response to submisison of a new problem.
-///
-/// The problem is assigned a unique identifier which can be used to query
-/// state of the problem.
+/// Response to execution of a solution.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct SubmitProblemResponse {
-	/// Globally unique identifier of the problem.
-	pub problem_id: u128,
+pub struct ExecuteSolutionResponse {
+	// TODO
 }
 
 /// Message from escrow contract to wallet contact updating balances for
@@ -181,7 +179,7 @@ pub struct RelayedRequestPacket {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum RelayedRequest {
 	DropAccount(DropAccountRequest),
-	SubmitProblem(SubmitProblemRequest),
+	ExecuteSolution(ExecuteSolutionRequest),
 }
 
 /// A cross-chain packet that the contract accepts.

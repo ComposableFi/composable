@@ -10,7 +10,8 @@ pub(crate) const CONFIG_NS: &str = "config";
 pub(crate) const ACCOUNTS_NS: &str = "accounts";
 pub(crate) const RECOVERY_ADDRESSES_NS: &str = "recovery-addrs";
 pub(crate) const BREAK_GLASS_NS: &str = "break-glass";
-pub(crate) const IBC_ENDPOINTS_NS: &str = "ibc-endpoints";
+pub(crate) const IBC_CHANNEL_INFO_NS: &str = "channels";
+pub(crate) const IBC_NETWORK_CHANNEL_NS: &str = "networks";
 
 /// Configuration of the contract.
 #[cw_serde]

@@ -20,6 +20,7 @@ pub(crate) struct Account {
 }
 
 /// Data associated with a user account saved in the persistent storage.
+#[derive(Default)]
 #[cw_serde]
 pub(crate) struct AccountData {
 	/// Balance on the account.
@@ -129,13 +130,13 @@ pub(crate) fn handle_drop_account(
 	auth: auth::Account,
 	mut deps: DepsMut,
 	req: msg::DropAccountRequest,
-) -> Result<crate::contract::PacketResponse> {
+) -> Result<crate::ibc::PacketResponse> {
 	let account = auth.account();
 	if !account.balances.is_empty() {
 		transfer_balances(&mut deps, &account, req.beneficiary_account)?;
 	}
 	account.delete(deps.storage);
-	Ok(crate::contract::PacketResponse::new(b"\x01".to_vec()))
+	Ok(crate::ibc::PacketResponse::new(b"\x01".to_vec()))
 }
 
 /// Transfers all balance from given account to given beneficiary account.
@@ -167,18 +168,51 @@ fn transfer_balances(deps: &mut DepsMut, src_account: &Account, beneficiary: Str
 	beneficiary.save(deps.storage)
 }
 
+pub(crate) fn handle_deposit_notification(
+	_: auth::EscrowContract,
+	deps: DepsMut,
+	packet: msg::DepositNotificationPacket,
+) -> Result<crate::ibc::PacketResponse> {
+	use std::collections::hash_map::Entry;
+
+	let path = ACCOUNTS.key(deps.api.addr_validate(&packet.account)?);
+	let mut account = path.may_load(deps.storage)?.unwrap_or_default();
+
+	let mut idx_from_asset = account
+		.balances
+		.iter()
+		.enumerate()
+		.map(|(idx, balance)| (balance.asset_id, idx))
+		.collect::<std::collections::HashMap<xc_core::AssetId, usize>>();
+	for (asset_id, amount) in packet.deposits {
+		match idx_from_asset.entry(asset_id) {
+			Entry::Occupied(entry) => {
+				let entry = &mut account.balances[*entry.get()];
+				entry.unlocked_amount = entry
+					.unlocked_amount
+					.checked_add(amount)
+					.ok_or(ContractError::ArithmeticOverflow)?;
+			},
+			Entry::Vacant(entry) => {
+				entry.insert(account.balances.len());
+				account.balances.push(msg::AssetBalance {
+					asset_id,
+					unlocked_amount: amount,
+					locked_amount: 0,
+				});
+			},
+		}
+	}
+
+	path.save(deps.storage, &account)?;
+
+	Ok(crate::ibc::PacketResponse::new(vec![1]))
+}
+
 pub(crate) fn handle_submit_problem(
 	_auth: auth::Account,
 	_deps: DepsMut,
-	_req: msg::SubmitProblemRequest,
-) -> Result<crate::contract::PacketResponse> {
-	todo!()
-}
-
-pub(crate) fn handle_deposit_notification(
-	_auth: auth::EscrowContract,
-	_deps: DepsMut,
-	_packet: msg::DepositNotificationPacket,
-) -> Result<crate::contract::PacketResponse> {
+	_req: msg::ExecuteSolutionRequest,
+) -> Result<crate::ibc::PacketResponse> {
 	todo!()
 }

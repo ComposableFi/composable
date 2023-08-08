@@ -1,11 +1,15 @@
 extern crate alloc;
 
-use crate::{auth, deposits, error::Result, ibc, msg};
+use crate::{
+	auth, deposits,
+	error::{ContractError, Result},
+	ibc, msg,
+};
 
 use cosmwasm_std::{
-	Binary, Deps, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-	IbcChannelOpenMsg, IbcChannelOpenResponse, IbcPacketAckMsg, IbcPacketTimeoutMsg, MessageInfo,
-	Response,
+	Binary, Deps, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannel,
+	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
+	IbcPacketAckMsg, IbcPacketTimeoutMsg, MessageInfo, Response,
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
@@ -63,27 +67,53 @@ pub fn query(_deps: Deps, _env: Env, _msg: msg::QueryMsg) -> Result<Binary> {
 pub fn ibc_channel_open(
 	_deps: DepsMut,
 	_env: Env,
-	_msg: IbcChannelOpenMsg,
+	msg: IbcChannelOpenMsg,
 ) -> Result<IbcChannelOpenResponse> {
-	todo!()
+	fn check_version(version: String) -> Result<String> {
+		if version == xc_core::accounts::IBC_VERSION {
+			Ok(version)
+		} else {
+			Err(ContractError::InvalidIbcVersion(version))
+		}
+	}
+
+	let channel = match msg {
+		IbcChannelOpenMsg::OpenInit { channel } => channel,
+		IbcChannelOpenMsg::OpenTry { channel, counterparty_version } => {
+			check_version(counterparty_version)?;
+			channel
+		},
+	};
+	let version = check_version(channel.version)?;
+	if channel.order != IbcOrder::Unordered {
+		Err(ContractError::InvalidIbcOrdering(channel.order))
+	} else {
+		Ok(Some(Ibc3ChannelOpenResponse { version }))
+	}
 }
 
 #[cosmwasm_std::entry_point]
 pub fn ibc_channel_connect(
 	_deps: DepsMut,
 	_env: Env,
-	_msg: IbcChannelConnectMsg,
+	msg: IbcChannelConnectMsg,
 ) -> Result<IbcBasicResponse> {
-	todo!()
+	let IbcChannel { endpoint, .. } = msg.into();
+	Ok(IbcBasicResponse::new().add_event(
+		msg::make_event(msg::Action::IbcConnect).add_attribute("channel_id", endpoint.channel_id),
+	))
 }
 
 #[cosmwasm_std::entry_point]
 pub fn ibc_channel_close(
 	_deps: DepsMut,
 	_env: Env,
-	_msg: IbcChannelCloseMsg,
+	msg: IbcChannelCloseMsg,
 ) -> Result<IbcBasicResponse> {
-	todo!()
+	let IbcChannel { endpoint, .. } = msg.into();
+	Ok(IbcBasicResponse::new().add_event(
+		msg::make_event(msg::Action::IbcClose).add_attribute("channel_id", endpoint.channel_id),
+	))
 }
 
 /// Relays a message to the accounts contract.
