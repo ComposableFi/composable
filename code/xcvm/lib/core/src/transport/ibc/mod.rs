@@ -45,10 +45,8 @@ pub struct IbcRoute {
 }
 
 pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdResult<CosmosMsg<T>> {
-	let memo = XcMessageData {
-		from_network_id: route.from_network,
-		data: Binary::from(packet.encode()),
-	};
+	let memo =
+		XcMessageData { from_network_id: route.from_network, data: Binary::from(packet.encode()) };
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
