@@ -47,6 +47,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			}
 		},
 		msg::ExecuteMsg::MessageHook(msg) => {
+			deps.api.debug(&serde_json_wasm::to_string(&msg)?);
 			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
 			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
 		},
@@ -176,7 +177,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		let interpreter_code_id = match config.gateway.expect("expected setup") {
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
-
+		deps.api.debug("instantiating interpreter");
 		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
 			// router is the default admin of a contract
 			admin: Some(env.contract.address.clone().into_string()),

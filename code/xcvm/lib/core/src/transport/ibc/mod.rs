@@ -19,7 +19,7 @@ use self::ics20::{
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct XcMessageData {
 	pub from_network_id: NetworkId,
-	pub data: Binary,
+	pub packet: XcPacket,
 }
 
 /// Message type for `sudo` entry_point
@@ -31,7 +31,10 @@ pub enum SudoMsg {
 	IBCLifecycleComplete(IBCLifecycleComplete),
 }
 
+
+/// route is used to describe how to send a packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub struct IbcRoute {
 	pub from_network: NetworkId,
@@ -46,12 +49,11 @@ pub struct IbcRoute {
 
 pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdResult<CosmosMsg<T>> {
 	let memo =
-		XcMessageData { from_network_id: route.from_network, data: Binary::from(packet.encode()) };
+		XcMessageData { from_network_id: route.from_network, packet };
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
 				contract: route.gateway_to_send_to.clone(),
-
 				msg: serde_cw_value::to_value(memo).expect("can always serde"),
 			}),
 			forward: None,
