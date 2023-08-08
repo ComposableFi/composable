@@ -178,8 +178,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
 		deps.api.debug("instantiating interpreter");
-		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate {
-			// router is the default admin of a contract
+		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate2 {			
 			admin: Some(env.contract.address.clone().into_string()),
 			code_id: interpreter_code_id,
 			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
@@ -188,6 +187,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			})?,
 			funds: vec![],
 			label: format!("xcvm-interpreter-{interpreter_origin}"),
+			salt: interpreter_origin.to_string().bytes().into(),
 		}
 		.into();
 

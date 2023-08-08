@@ -1,6 +1,18 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, devnetTools, cosmosTools, ... }:
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , lib
+    , system
+    , crane
+    , systemCommonRust
+    , subnix
+    , devnetTools
+    , cosmosTools
+    , ...
+    }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
@@ -31,20 +43,22 @@
         "summary" = "none";
       };
 
-      ics10-grandpa-cw-proposal = let
-        code = builtins.readFile
-          "${self'.packages.ics10-grandpa-cw}/lib/ics10_grandpa_cw.wasm.gz.txt";
-        code-file = builtins.toFile "ics10_grandpa_cw.wasm.json"
-          (builtins.toJSON
-            (ibc-lightclients-wasm-v1-msg-push-new-wasm-code code));
-      in pkgs.stdenv.mkDerivation {
-        name = "ics10-grandpa-cw-proposal";
-        dontUnpack = true;
-        installPhase = ''
-          mkdir --parents $out
-          cp ${code-file} $out/ics10_grandpa_cw.wasm.json
-        '';
-      };
+      ics10-grandpa-cw-proposal =
+        let
+          code = builtins.readFile
+            "${self'.packages.ics10-grandpa-cw}/lib/ics10_grandpa_cw.wasm.gz.txt";
+          code-file = builtins.toFile "ics10_grandpa_cw.wasm.json"
+            (builtins.toJSON
+              (ibc-lightclients-wasm-v1-msg-push-new-wasm-code code));
+        in
+        pkgs.stdenv.mkDerivation {
+          name = "ics10-grandpa-cw-proposal";
+          dontUnpack = true;
+          installPhase = ''
+            mkdir --parents $out
+            cp ${code-file} $out/ics10_grandpa_cw.wasm.json
+          '';
+        };
       centaurid-init = pkgs.writeShellApplication {
         name = "centaurid-init";
         runtimeInputs = devnetTools.withBaseContainerTools
@@ -349,62 +363,64 @@
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
         text = ''
-                  TRANSFER_PICA_TO_OSMOSIS=$(cat <<EOF
-          				{
-          					"execute_program": {
-          					  "execute_program": {
-          						"salt": "737061776e5f776974685f6173736574",
-          						"program": {
-          						  "tag": "737061776e5f776974685f6173736574",
-          						  "instructions": [
-          							{
-          							  "spawn": {
-          								"network": 3,
-          								"salt": "737061776e5f776974685f6173736574",
-          								"assets": [
-          								  [
-          									"237684487542793012780631851009",
-          									{
-          									  "amount": {
-          										"intercept": "1000000000",
-          										"slope": "0"
-          									  },
-          									  "is_unit": false
-          									}
-          								  ]
-          								],
-          								"program": {
-          								  "tag": "737061776e5f776974685f6173736574",
-          								  "instructions": []
-          								}
-          							  }
-          							}
-          						  ]
-          						},
-          						"assets": [
-          						  [
-          							"158456325028528675187087900673",
-          							"1000000000"
-          						  ]
-          						]
-          					  },
-          					  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
-          					}
-          				  }
-                    EOF
-                    )
+                  CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+                  CHAIN_ID="centauri-dev"
+                  KEYRING_TEST="$CHAIN_DATA/keyring-test"
+                  PORT=26657
+                  FEE=ppica
+                  BLOCK_SECONDS=5
+                  BINARY=centaurid
+                  GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
-                    CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-                    CHAIN_ID="centauri-dev"
-                    KEYRING_TEST="$CHAIN_DATA/keyring-test"
-                    PORT=26657
-                    FEE=ppica
-                    BLOCK_SECONDS=5
-                    BINARY=centaurid
-                    GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
-                    "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-                    sleep $BLOCK_SECONDS
-        '';
+                  TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
+                  {
+                    "execute_program": {
+                      "execute_program": {
+                      "salt": "737061776e5f776974685f6173736574",
+                      "program": {
+                        "tag": "737061776e5f776974685f6173736574",
+                        "instructions": [
+                        {
+                          "spawn": {
+                          "network": 3,
+                          "salt": "737061776e5f776974685f6173736574",
+                          "assets": [
+                            [
+                            "237684487542793012780631851009",
+                            {
+                              "amount": {
+                              "intercept": "1000000000",
+                              "slope": "0"
+                              },
+                              "is_unit": false
+                            }
+                            ]
+                          ],
+                          "program": {
+                            "tag": "737061776e5f776974685f6173736574",
+                            "instructions": []
+                          }
+                          }
+                        }
+                        ]
+                      },
+                      "assets": [
+                        [
+                        "158456325028528675187087900673",
+                        "1000000000"
+                        ]
+                      ]
+                      },
+                      "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+                    }
+                    }                                 
+                  EOF
+                  )                  
+
+                  "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+                  sleep "$BLOCK_SECONDS"
+        ''
+        ;
       };
 
       centaurid-gen-fresh = pkgs.writeShellApplication {
@@ -488,7 +504,8 @@
           centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0ppica --log_level debug --home "$CHAIN_DATA" --db_dir "$CHAIN_DATA/data" --trace --with-tendermint true --transport socket --trace-store $CHAIN_DATA/kvstore.log --grpc.address localhost:9090 --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CHAIN_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
         '';
       };
-    in {
+    in
+    {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
           ics10-grandpa-cw-proposal xc-transfer-pica-from-centauri-to-osmosis centaurid-xcvm-init centaurid-xcvm-config;
