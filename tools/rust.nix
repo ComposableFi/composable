@@ -8,7 +8,7 @@
         crane.nightly.cargoBuild (systemCommonRust.common-attrs // {
           cargoArtifacts = self'.packages.common-deps-nightly;
           buildPhase = ''
-            cargo check --no-default-features --target wasm32-unknown-unknown --package ${pname} 
+            cargo check --no-default-features --quiet --target wasm32-unknown-unknown --package ${pname}
             cargo clippy --package ${pname} -- --deny warnings --allow deprecated
           '';
           installPhase = "mkdir --parents $out";
