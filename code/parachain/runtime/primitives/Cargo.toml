@@ -13,7 +13,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 ] }
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
-frame-support = { package = "frame-support", default-features = false, workspace = true }
+frame-support = { workspace = true, default-features = false }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 scale-info = { workspace = true, default-features = false, features = [
   "derive",

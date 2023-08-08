@@ -27,9 +27,9 @@ normal = [
 ]
 
 [dependencies]
-executive = { package = "frame-executive", default-features = false, workspace = true }
+executive = { workspace = true, default-features = false }
 frame-support = { default-features = false, workspace = true }
-frame-system = { package = "frame-system", default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
 sp-api = { default-features = false, workspace = true }
 sp-block-builder = { default-features = false, workspace = true }
 sp-consensus-aura = { default-features = false, workspace = true }

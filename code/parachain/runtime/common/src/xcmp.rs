@@ -14,10 +14,7 @@ use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
 use xcm::latest::{MultiAsset, MultiLocation};
 use xcm_builder::*;
-use xcm_executor::{
-	traits::{FilterAssetLocation, WeightTrader},
-	*,
-};
+use xcm_executor::{traits::WeightTrader, *};
 pub const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 
 match_types! {
@@ -259,8 +256,11 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 		}
 	}
 }
+
 pub struct RelayReserveFromParachain;
-impl FilterAssetLocation for RelayReserveFromParachain {
+
+#[allow(deprecated)]
+impl xcm_executor::traits::FilterAssetLocation for RelayReserveFromParachain {
 	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
