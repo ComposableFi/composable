@@ -6,10 +6,10 @@
       "description": "Returns [`AssetReference`] for an asset with given id.",
       "type": "object",
       "required": [
-        "lookup_asset"
+        "get_asset_by_id"
       ],
       "properties": {
-        "lookup_asset": {
+        "get_asset_by_id": {
           "type": "object",
           "required": [
             "asset_id"

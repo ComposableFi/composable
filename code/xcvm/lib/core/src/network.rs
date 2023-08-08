@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use core::fmt::Display;
 
 use crate::abstraction::IndexOf;
 use alloc::vec::Vec;

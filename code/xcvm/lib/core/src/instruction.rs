@@ -77,6 +77,9 @@ pub enum Instruction<Payload, Account, Assets> {
 	/// The salt is used to track the program when events are dispatched in the network.
 	Spawn {
 		network: crate::network::NetworkId,
+		/// If JSON, than hex encoded non prefixed lower case string.
+		#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
+		#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
 		salt: Vec<u8>,
 		assets: Assets,
 		program: Program<VecDeque<Self>>,

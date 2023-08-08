@@ -1,7 +1,7 @@
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
 use serde::{Deserialize, Serialize};
-use xc_core::{shared::DefaultXCVMProgram, InterpreterOrigin, Register};
+use xc_core::{shared::*, InterpreterOrigin, Register};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -15,7 +15,7 @@ pub struct Step {
 	/// instructions we already consumed.
 	pub instruction_pointer: u16,
 	/// The next instructions to execute (actual program).
-	pub program: DefaultXCVMProgram,
+	pub program: XcProgram,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -33,7 +33,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
 	/// Execute an XCVM program
-	Execute { tip: Addr, program: DefaultXCVMProgram },
+	Execute { tip: Addr, program: XcProgram },
 	/// This is only meant to be used by the interpreter itself, otherwise it will return an error
 	/// The existence of this message is to allow the execution of the `Call` instruction. Once we
 	/// hit a call, the program queue the call and queue itself after it to ensure that the side

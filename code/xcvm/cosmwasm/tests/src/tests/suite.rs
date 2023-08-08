@@ -14,7 +14,7 @@ use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{
 	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX,
-	shared::{DefaultXCVMProgram, Salt},
+	shared::{Salt, XcProgram},
 	AssetId, Balance, Centauri, Destination, Funds, Network, Picasso, ProgramBuilder,
 };
 
@@ -207,7 +207,7 @@ impl<T> CrossChainScenario<XCVMState<T>, Connected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 		sender: Account,
-		program: DefaultXCVMProgram,
+		program: XcProgram,
 		salt: impl Into<Salt>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 		allowance_expiration: Option<Expiration>,
@@ -236,7 +236,7 @@ impl<T> CrossChainScenario<XCVMState<T>, Connected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 		sender: Account,
-		program: DefaultXCVMProgram,
+		program: XcProgram,
 		salt: impl Into<Salt>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 		allowance_expiration: Option<Expiration>,

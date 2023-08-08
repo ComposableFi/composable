@@ -221,7 +221,7 @@
 
 
           sleep $BLOCK_SECONDS
-          FORCE_PICA=$(cat << EOF
+          FORCE_PICA_ON_CENTAURI=$(cat << EOF
           {
             "config": {
               "force_asset": {
@@ -245,7 +245,38 @@
           }                               
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+          sleep $BLOCK_SECONDS
+          FORCE_PICA_ON_OSMOSIS=$(cat << EOF
+          {
+            "config": {
+              "force_asset": {
+                "asset_id": "237684487542793012780631851009",
+                "from_network_id": 3,
+                "local": {
+                  "native": {
+                    "denom": "ppica"
+                  }
+                },
+                "bridged": {
+                  "location_on_network": {
+                    "ibc_ics20": {
+                      "base_denom" : "ppica",
+                      "trace_path" : "transfer/channel-0"
+                    }
+                  }
+                }
+              }
+            }
+          }                               
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+
 
           sleep $BLOCK_SECONDS
           FORCE_UATOM=$(cat << EOF
@@ -286,54 +317,63 @@
       xc-transfer-pica-from-centauri-to-osmosis = pkgs.writeShellApplication {
         name = "centaurid-execute-program";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
+          ++ [ centaurid pkgs.jq ];
         text = ''
-          TRANSFER_PICA_TO_OSMOSIS=$(cat <<EOF
-          {
-            "execute_program" : {
-              "tip": "${validator-key}",
-              "execute_program" : {
-                "assets" : [ ["158456325028528675187087900674","1000000000000"] ],
-                "program" : {
-                  "instructions" : [
-                    {
-                      "spawn" : {
-                        "assets" : [ ["158456325028528675187087900674","1000000000000"] ],
-                        "network": 3,
-                        "program" : {
-                          "instructions" : [
-                            {
-                              "transfer" : {
-                                "amount" : "1000000000000",
-                                "asset_id:": "79228162514264337593543950337",
-                                "to" : "${cosmosTools.validators.osmosis}",
-                              }
-                            }
-                          ]
-                        }
-                        "salt" : [1,2,3,4]
-                      }
-                    }
-                  ],                
-                  tag : [1,2,3,4],
-                },
-                "salt" : [1,2,3,4]
-              }
-            }
-          }
-          EOF
-          )
+                  TRANSFER_PICA_TO_OSMOSIS=$(cat <<EOF
+          				{
+          					"execute_program": {
+          					  "execute_program": {
+          						"salt": "737061776e5f776974685f6173736574",
+          						"program": {
+          						  "tag": "737061776e5f776974685f6173736574",
+          						  "instructions": [
+          							{
+          							  "spawn": {
+          								"network": 3,
+          								"salt": "737061776e5f776974685f6173736574",
+          								"assets": [
+          								  [
+          									"237684487542793012780631851009",
+          									{
+          									  "amount": {
+          										"intercept": "1000000000",
+          										"slope": "0"
+          									  },
+          									  "is_unit": false
+          									}
+          								  ]
+          								],
+          								"program": {
+          								  "tag": "737061776e5f776974685f6173736574",
+          								  "instructions": []
+          								}
+          							  }
+          							}
+          						  ]
+          						},
+          						"assets": [
+          						  [
+          							"158456325028528675187087900673",
+          							"1000000000"
+          						  ]
+          						]
+          					  },
+          					  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+          					}
+          				  }
+                    EOF
+                    )
 
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-          CHAIN_ID="centauri-dev"
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          PORT=26657
-          FEE=ppica
-          BLOCK_SECONDS=5
-          BINARY=centaurid
-          GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_wOSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-          sleep $BLOCK_SECONDS
+                    CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+                    CHAIN_ID="centauri-dev"
+                    KEYRING_TEST="$CHAIN_DATA/keyring-test"
+                    PORT=26657
+                    FEE=ppica
+                    BLOCK_SECONDS=5
+                    BINARY=centaurid
+                    GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+                    "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+                    sleep $BLOCK_SECONDS
         '';
       };
 
@@ -399,7 +439,7 @@
           echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
           function add-genesis-account () {
-            centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000ppica" --keyring-backend test --home "$CHAIN_DATA"          
+            centaurid --keyring-backend test add-genesis-account "$1" "10000000000000000000000ppica" --keyring-backend test --home "$CHAIN_DATA"          
           }
 
           add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf

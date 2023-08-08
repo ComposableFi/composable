@@ -77,31 +77,36 @@ fn handle_shortcut(
 	Err(ContractError::NotImplemented)
 }
 
+/// transfers assets from user
+/// if case of bask assets, transfers directly,
+/// in case of cw20 asset transfers using messages
 fn transfer_from_user(
 	deps: &DepsMut,
 	self_address: Addr,
 	user: Addr,
-	funds: Vec<Coin>,
-	assets: &Funds<Displayed<u128>>,
+	host_funds: Vec<Coin>,
+	program_funds: &Funds<Displayed<u128>>,
 ) -> Result<Vec<CosmosMsg>> {
-	let mut transfers = Vec::with_capacity(assets.0.len());
-	for (asset_id, Displayed(amount)) in assets.0.iter() {
-		let reference = assets::query_lookup(deps.as_ref(), *asset_id)?.reference;
+	deps.api
+		.debug(serde_json_wasm::to_string(&(&program_funds, &host_funds))?.as_str());
+	let mut transfers = Vec::with_capacity(program_funds.0.len());
+	for (asset_id, Displayed(program_amount)) in program_funds.0.iter() {
+		let reference = assets::get_asset_by_id(deps.as_ref(), *asset_id)?.asset;
 		match reference.local {
 			msg::AssetReference::Native { denom } => {
-				let Coin { amount: provided_amount, .. } = funds
+				let Coin { amount: host_amount, .. } = host_funds
 					.iter()
 					.find(|c| c.denom == denom)
-					.ok_or(ContractError::InsufficientFunds)?;
-				if u128::from(*provided_amount) != *amount {
-					return Err(ContractError::InsufficientFunds)?
+					.ok_or(ContractError::ProgramFundsDenomMappingToHostNotFound)?;
+				if u128::from(*host_amount) != *program_amount {
+					return Err(ContractError::ProgramAmountNotEqualToHostAmount)?
 				}
 			},
 			msg::AssetReference::Cw20 { contract } =>
 				transfers.push(Cw20Contract(contract).call(Cw20ExecuteMsg::TransferFrom {
 					owner: user.to_string(),
 					recipient: self_address.to_string(),
-					amount: (*amount).into(),
+					amount: (*program_amount).into(),
 				})?),
 		}
 	}
@@ -153,8 +158,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	let interpreter =
 		state::interpreter::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
 	if let Some(state::interpreter::Interpreter { address }) = interpreter {
-		// There is already an interpreter instance, so all we do is fund the interpreter, then
-		// add a callback to it
+		deps.api.debug("reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
@@ -225,7 +229,7 @@ fn send_funds_to_interpreter(
 			continue
 		}
 
-		let reference = assets::query_lookup(deps, asset_id)?.reference;
+		let reference = assets::get_asset_by_id(deps, asset_id)?.asset;
 		let msg: CosmosMsg = match reference.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),

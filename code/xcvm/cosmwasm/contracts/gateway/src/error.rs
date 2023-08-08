@@ -31,6 +31,10 @@ pub enum ContractError {
 	ArithmeticOverflow,
 	#[error("Not enough funds to cover the operation.")]
 	InsufficientFunds,
+	#[error("Program funds denom mapping to host not found")]
+	ProgramFundsDenomMappingToHostNotFound,
+	#[error("Program amount not equal to host amount")]
+	ProgramAmountNotEqualToHostAmount,
 	#[error("{0:?}")]
 	Protobuf(DecodingFailure),
 	#[error("An invalid ACK was provided, this MUST be impossible.")]

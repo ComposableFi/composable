@@ -650,9 +650,9 @@ where
 	}
 }
 
-// TODO(aeryz): This can be a helper function in SDK so that users won't
-// necessarily need to know how the ratio is handled in our SDK
-// Calculates `x` in the following equation: nom / denom = x / max
+/// This can be a helper function in SDK so that users won't
+/// necessarily need to know how the ratio is handled in our SDK
+/// Calculates `x` in the following equation: nom / denom = x / max
 fn calc_nom(nom: u128, denom: u128, max: u128) -> u128 {
 	let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
 	wrap(nom)

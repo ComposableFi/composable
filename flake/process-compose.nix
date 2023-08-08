@@ -6,6 +6,7 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       relay = "on_failure"; # `no` not to restart
     in {
+
       packages = rec {
         devnet-xc-fresh-background = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
@@ -24,6 +25,22 @@
             rm --force --recursive /tmp/composable-devnet             
             mkdir --parents /tmp/composable-devnet
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc-dotsama-background}
+          '';
+        };
+
+        prune-run-unsafe = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ pkgs.process-compose ];
+          name = "prune-run-unsafe";
+          text = ''
+            process-compose-stop() {
+              for i in $(process-compose process list)
+              do
+                process-compose process stop "$i"
+              done
+            }
+            process-compose-stop
+            pkill composable centaurid osmosisd hyperspace hermes
           '';
         };
 

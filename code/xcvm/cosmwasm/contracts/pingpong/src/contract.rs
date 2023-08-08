@@ -30,7 +30,7 @@ pub fn instantiate(deps: DepsMut, _env: Env, _info: MessageInfo, msg: Instantiat
 fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<u8>>>(
 	remote_address: UserId,
 	msg: ExecuteMsg,
-) -> Result<xc_core::shared::DefaultXCVMProgram, ContractError> {
+) -> Result<xc_core::shared::XcProgram, ContractError> {
 	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
 		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),

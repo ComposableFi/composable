@@ -5,8 +5,8 @@ pub use alloc::{
 	vec,
 	vec::Vec,
 };
-pub use core::str::FromStr;
-pub use cosmwasm_std::{Addr, Binary, Coin, Uint128};
+pub use core::{fmt::Display, str::FromStr};
+pub use cosmwasm_std::{Addr, Binary, Coin, HexBinary, Uint128};
 pub use serde::{Deserialize, Serialize};
 
 pub use parity_scale_codec::{Decode, Encode};
