@@ -91,8 +91,7 @@ fn transfer_from_user(
 		.debug(serde_json_wasm::to_string(&(&program_funds, &host_funds))?.as_str());
 	let mut transfers = Vec::with_capacity(program_funds.0.len());
 	for (asset_id, Displayed(program_amount)) in program_funds.0.iter() {
-		let reference = assets::get_asset_by_id(deps.as_ref(), *asset_id)?.asset;
-		match reference.local {
+		match assets::get_asset_by_id(deps.as_ref(), *asset_id)?.local {
 			msg::AssetReference::Native { denom } => {
 				let Coin { amount: host_amount, .. } = host_funds
 					.iter()
@@ -229,8 +228,7 @@ fn send_funds_to_interpreter(
 			continue
 		}
 
-		let reference = assets::get_asset_by_id(deps, asset_id)?.asset;
-		let msg: CosmosMsg = match reference.local {
+		let msg = match assets::get_asset_by_id(deps, asset_id)?.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
 				to_address: interpreter_address.clone(),
 				amount: vec![Coin::new(amount, denom)],

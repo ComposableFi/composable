@@ -144,7 +144,7 @@ pub struct OtherNetworkItem {
 /// and about assets and services on these chains
 /// (in future block hooks and some set of host extensions/precompiles would help to get some info
 /// automatically)
-/// `Force` message sets the data unconditionally.  
+/// `Force` message sets the data unconditionally.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -234,5 +234,23 @@ impl AssetReference {
 			AssetReference::Native { denom } => denom.clone(),
 			AssetReference::Cw20 { contract } => ["cw20:", contract.as_str()].concat(),
 		}
+	}
+}
+
+#[cfg(feature = "cosmwasm")]
+impl cw_storage_plus::PrimaryKey<'_> for AssetReference {
+	type Prefix = ();
+	type SubPrefix = ();
+	type Suffix = ();
+	type SuperSuffix = ();
+
+	#[inline]
+	fn key(&self) -> Vec<cw_storage_plus::Key<'_>> {
+		use cw_storage_plus::Key;
+		let (tag, value) = match self {
+			AssetReference::Native { denom } => (0, denom.as_bytes()),
+			AssetReference::Cw20 { contract } => (1, contract.as_bytes()),
+		};
+		vec![Key::Val8([tag]), Key::Ref(value)]
 	}
 }

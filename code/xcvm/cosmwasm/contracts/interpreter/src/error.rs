@@ -62,4 +62,7 @@ pub enum ContractError {
 
 	#[error("Not implemented")]
 	NotImplemented,
+
+	#[error("The asset is not yet supported.")]
+	UnsupportedAsset,
 }

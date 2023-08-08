@@ -101,14 +101,18 @@ pub struct BridgeForwardMsg {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema, QueryResponses))]
 pub enum QueryMsg {
 	/// Returns [`AssetReference`] for an asset with given id.
-	#[cfg_attr(feature = "std", returns(GetAssetByIdResponse))]
+	#[cfg_attr(feature = "std", returns(GetAssetResponse))]
 	GetAssetById { asset_id: AssetId },
+
+	/// Returns [`AssetItem`] for an asset with given local reference.
+	#[cfg_attr(feature = "std", returns(GetAssetResponse))]
+	GetLocalAssetByReference { reference: AssetReference },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct GetAssetByIdResponse {
+pub struct GetAssetResponse {
 	pub asset: AssetItem,
 }
 
@@ -148,7 +152,7 @@ mod tests {
 						},
 						"tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
 						}
-					}	
+					}
 				"#,
 			)
 			.unwrap(),
@@ -179,7 +183,7 @@ mod tests {
 							"salt": "6e6f6f705f776974685f6173736574",
 							"program": {
 								"tag": "6e6f6f705f776974685f6173736574",
-								"instructions": [								
+								"instructions": [
 								]
 							},
 							"assets": [
@@ -188,7 +192,7 @@ mod tests {
 						},
 						"tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
 						}
-					}	
+					}
 				"#,
 			)
 			.unwrap(),

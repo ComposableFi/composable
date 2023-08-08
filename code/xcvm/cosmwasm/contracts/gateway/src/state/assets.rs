@@ -1,4 +1,7 @@
-use xc_core::{gateway::AssetItem, AssetId, NetworkId};
+use xc_core::{
+	gateway::{config::AssetReference, AssetItem},
+	AssetId, NetworkId,
+};
 
 use crate::prelude::*;
 
@@ -6,3 +9,5 @@ use crate::prelude::*;
 pub(crate) const NETWORK_ASSET: Map<(AssetId, NetworkId), AssetId> = Map::new("network_asset");
 
 pub(crate) const ASSETS: Map<AssetId, AssetItem> = Map::new("assets");
+
+pub(crate) const LOCAL_ASSETS: Map<AssetReference, AssetItem> = Map::new("local_assets");
