@@ -12,6 +12,7 @@
           name = "picasso-centauri-ibc-init";
           runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
+            sleep 60
             mkdir --parents "/tmp/composable-devnet/picasso-centauri-ibc"
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME
@@ -78,6 +79,29 @@
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10            
           '';
         };
+        composable-picasso-ibc-connection-init  = pkgs.writeShellApplication  {
+          name = "composable-picasso-ibc-connection-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          text = ''
+            HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  export HOME                
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+                  export RUST_LOG      
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+          '';
+         };
+
+        composable-picasso-ibc-channels-init = pkgs.writeShellApplication  {
+          name = "composable-picasso-ibc-channels-init";
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          text = ''
+             HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  export HOME       
+                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+                  export RUST_LOG
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+          '';
+         };
 
         composable-picasso-ibc-relay = pkgs.writeShellApplication {
           name = "composable-picasso-ibc-relay";
