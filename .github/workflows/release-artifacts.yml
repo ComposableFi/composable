@@ -56,7 +56,7 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
           body_path: release-artifacts/release.txt
-          name: test-${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: |
