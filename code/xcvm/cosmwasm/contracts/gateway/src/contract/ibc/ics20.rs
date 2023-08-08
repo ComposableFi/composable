@@ -8,7 +8,6 @@ use cosmwasm_std::{
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
-	proto::decode_packet,
 	shared::{XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
 	AssetId, CallOrigin,

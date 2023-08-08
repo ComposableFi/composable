@@ -187,7 +187,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			})?,
 			funds: vec![],
 			label: format!("xcvm-interpreter-{interpreter_origin}"),
-			salt: interpreter_origin.to_string().bytes().into(),
+			salt: to_binary(&interpreter_origin.to_string().as_bytes())?,
 		}
 		.into();
 

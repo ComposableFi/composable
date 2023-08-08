@@ -1,7 +1,7 @@
 pub mod ics20;
 pub mod picasso;
 
-use crate::{prelude::*, proto::Encodable, shared::XcPacket, AssetId, NetworkId};
+use crate::{prelude::*, shared::XcPacket, AssetId, NetworkId};
 use cosmwasm_std::{to_binary, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg};
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};

@@ -274,4 +274,83 @@ mod tests {
 		.unwrap();
 		assert_eq!(program, expected)
 	}
+
+	#[test]
+	fn osmosis_spawn_with_asset() {
+		let osmo_on_osmosis = generate_asset_id(3.into(), 0, 1001);
+		let osmo_on_centauri = generate_asset_id(2.into(), 0, 1001);
+		let program: ExecuteMsg = ExecuteMsg::ExecuteProgram {
+			execute_program: ExecuteProgramMsg {
+				salt: b"spawn_with_asset".to_vec(),
+				program: XcProgram {
+					tag: b"spawn_with_asset".to_vec(),
+					instructions: [Instruction::Spawn {
+						network: 2.into(),
+						salt: b"spawn_with_asset".to_vec(),
+						assets: vec![(osmo_on_centauri, 1_000_000_000u128)].into(),
+						program: XcProgram {
+							tag: b"spawn_with_asset".to_vec(),
+							instructions: [].into(),
+						},
+					}]
+					.into(),
+				},
+				assets: vec![(osmo_on_osmosis, 1_000_000_000u128)].into(),
+			},
+			tip: Addr::unchecked("osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+		};
+
+		let program = serde_json_wasm::to_string(&program).expect("serde");
+		//assert_eq!(program, "123");
+		let expected = serde_json_wasm::to_string(
+			&serde_json_wasm::from_str::<ExecuteMsg>(
+				r#"
+				{
+					"execute_program": {
+						"execute_program": {
+							"salt": "737061776e5f776974685f6173736574",
+							"program": {
+								"tag": "737061776e5f776974685f6173736574",
+								"instructions": [
+									{
+										"spawn": {
+											"network": 2,
+											"salt": "737061776e5f776974685f6173736574",
+											"assets": [
+												[
+													"158456325028528675187087901673",
+													{
+														"amount": {
+															"intercept": "1000000000",
+															"slope": "0"
+														},
+														"is_unit": false
+													}
+												]
+											],
+											"program": {
+												"tag": "737061776e5f776974685f6173736574",
+												"instructions": []
+											}
+										}
+									}
+								]
+							},
+							"assets": [
+								[
+									"237684487542793012780631852009",
+									"1000000000"
+								]
+							]
+						},
+						"tip": "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+					}
+				}				
+				"#,
+			)
+			.unwrap(),
+		)
+		.unwrap();
+		assert_eq!(program, expected)
+	}
 }
