@@ -545,12 +545,7 @@
         },
         "salt": {
           "description": "The program salt.",
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          }
+          "type": "string"
         }
       }
     },
@@ -953,12 +948,7 @@
                   "$ref": "#/definitions/Program_for_Array_of_Instruction_for_Array_of_uint8_and_CanonicalAddr_and_Funds_for_Balance"
                 },
                 "salt": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
+                  "type": "string"
                 }
               }
             }
@@ -1163,12 +1153,7 @@
           }
         },
         "tag": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          }
+          "type": "string"
         }
       }
     },

@@ -75,7 +75,9 @@ pub enum ShortcutSubMsg {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct ExecuteProgramMsg {
 	/// The program salt.
+	/// If JSON, than hex encoded non prefixed lower case string.
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
+	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
 	pub salt: Vec<u8>,
 	/// The program.
 	pub program: crate::shared::XcProgram,
@@ -174,11 +176,11 @@ mod tests {
 					{
 					"execute_program": {
 						"execute_program": {
-							"salt": "6e6f6f70",
+							"salt": "6e6f6f705f776974685f6173736574",
 							"program": {
-							"tag": "6e6f6f70",
-							"instructions": [								
-							]
+								"tag": "6e6f6f705f776974685f6173736574",
+								"instructions": [								
+								]
 							},
 							"assets": [
 								[ "158456325028528675187087900673", "1000000000"]
