@@ -82,7 +82,9 @@
 
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
+              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"        
           }
+
 
           INSTANTIATE=$(cat << EOF
               {
@@ -93,6 +95,39 @@
           )
 
           init_xcvm "$INSTANTIATE"
+
+          # light client
+          centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
+          sleep $BLOCK_SECONDS
+          centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
+          PROPOSAL_ID=1          
+          centaurid tx gov vote $PROPOSAL_ID yes --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json          
+          sleep 20          
+          centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CHAIN_DATA" |
+          jq '.status'
+          sleep $BLOCK_SECONDS         
+          centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CHAIN_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CHAIN_DATA/code_id"
+        '';
+      };
+
+      centaurid-xcvm = pkgs.writeShellApplication {
+        name = "centaurid-init";
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
+
+        text = ''
+          CHAIN_DATA="${devnet-root-directory}/.centaurid"
+
+          CHAIN_ID="centauri-dev"
+          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          VALIDATOR_KEY=${validator-key}
+          PORT=26657
+          BLOCK_SECONDS=5
+          FEE=ppica 
+          NETWORK_ID=2
+          BINARY=centaurid
+
+          GATEWAY_CONTRACT_ADDRESS =$(cat $CHAIN_DATA/gateway_contract_address)"        
 
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
             {
@@ -296,21 +331,8 @@
           EOF
           )
           "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.validators.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-          echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
           sleep $BLOCK_SECONDS
           "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
-
-          # light client
-          centaurid tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
-          sleep $BLOCK_SECONDS
-          centaurid query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
-          PROPOSAL_ID=1          
-          centaurid tx gov vote $PROPOSAL_ID yes --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166ppica --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json          
-          sleep 20          
-          centaurid query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:26657 --home "$CHAIN_DATA" |
-          jq '.status'
-          sleep $BLOCK_SECONDS         
-          centaurid query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CHAIN_DATA" --output json --node tcp://localhost:26657 | jq '.code_ids[0]' --raw-output | tee "$CHAIN_DATA/code_id"
         '';
       };
 

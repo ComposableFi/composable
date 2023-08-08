@@ -30,7 +30,7 @@ RUN mkdir --parents /etc/nix/ && \
     echo "cores = 32" >> /etc/nix/nix.conf && \
     echo "allow-import-from-derivation = true" >> /etc/nix/nix.conf && \
     echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf  && \
-    echo "trusted-users = root vscode actiions-runner" >> /etc/nix/nix.conf  && \
+    echo "trusted-users = root vscode actions-runner" >> /etc/nix/nix.conf  && \
     echo "substitute = true" >> /etc/nix/nix.conf  && \
     echo "substituters = https://cache.nixos.org/ https://composable-community.cachix.org/ https://devenv.cachix.org/ https://nix-community.cachix.org/" >> /etc/nix/nix.conf  && \
     echo "require-sigs = false" >> /etc/nix/nix.conf  && \
