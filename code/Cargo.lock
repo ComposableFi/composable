@@ -639,7 +639,7 @@ checksum = "a564d521dd56509c4c47480d00b80ee55f7e385ae48db5744c67ad50c92d2ebf"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -745,7 +745,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -1632,7 +1632,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -1781,7 +1781,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "smallvec 1.11.0",
  "sp-consensus-aura",
  "sp-core",
@@ -2339,7 +2339,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "sha2 0.10.7",
  "thiserror-core",
  "uint",
@@ -3311,7 +3311,7 @@ dependencies = [
  "derive_more 1.0.0-beta.2",
  "parity-scale-codec",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "strum 0.25.0",
  "thiserror-core",
  "xc-core",
@@ -3331,7 +3331,7 @@ dependencies = [
  "ibc 0.43.1",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "thiserror-core",
  "xc-core",
 ]
@@ -3350,7 +3350,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-cw-value",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "thiserror-core",
  "xc-core",
 ]
@@ -3367,7 +3367,7 @@ dependencies = [
  "num",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "serde_json",
  "thiserror-core",
  "xc-core",
@@ -3439,7 +3439,7 @@ dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
  "scratch",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3456,7 +3456,7 @@ checksum = "cf01e8a540f5a4e0f284595834f81cf88572f244b768f051724537afa99a2545"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3504,7 +3504,7 @@ dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
  "strsim 0.10.0",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3526,7 +3526,7 @@ checksum = "836a9bbc7ad63342d6d6e7b815ccab164bc77a2d95d84bc3117a8c0d5c98e2d5"
 dependencies = [
  "darling_core 0.20.3",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3688,7 +3688,7 @@ dependencies = [
  "convert_case 0.6.0",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
  "unicode-xid 0.2.4",
 ]
 
@@ -3792,7 +3792,7 @@ checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -4018,7 +4018,7 @@ checksum = "5e9a1f9f7d83e59740248a6e14ecf93929ade55027844dfcea78beafccc15745"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -4029,7 +4029,7 @@ checksum = "c9838a970f5de399d3070ae1739e131986b2f5dcc223c7423ca0927e3a878522"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -4874,7 +4874,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -5583,7 +5583,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_derive",
  "sha2 0.10.7",
  "subtle-encoding",
@@ -5616,7 +5616,7 @@ dependencies = [
  "darling 0.20.3",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -8209,7 +8209,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -10490,7 +10490,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -10598,7 +10598,7 @@ dependencies = [
  "reward",
  "reward-rpc-runtime-api",
  "scale-info",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "smallvec 1.11.0",
  "sp-api",
  "sp-block-builder",
@@ -10640,7 +10640,7 @@ checksum = "ec2e072ecce94ec471b13398d5402c188e76ac03cf74dd1a975161b23a3f6d9c"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -12077,7 +12077,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -12721,7 +12721,7 @@ checksum = "68bf53dad9b6086826722cdc99140793afd9f62faa14a1ad07eb4f955e7a7216"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -14815,9 +14815,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.173"
+version = "1.0.181"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e91f70896d6720bc714a4a57d22fc91f1db634680e65c8efe13323f1fa38d53f"
+checksum = "6d3e73c93c3240c0bda063c239298e633114c69a888c3e37ca8bb33f343e9890"
 dependencies = [
  "serde_derive",
 ]
@@ -14828,6 +14828,14 @@ version = "0.7.0"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595#b91ac6d797fd24c00758ad3995a55dc820279595"
 dependencies = [
  "schemars",
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.5.1"
+source = "git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a#5629f4222b020e2597dc15ca29b120f82fccca3a"
+dependencies = [
  "serde",
 ]
 
@@ -14850,13 +14858,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.173"
+version = "1.0.181"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6250dde8342e0232232be9ca3db7aa40aceb5a3e5dd9bddbc00d99a007cde49"
+checksum = "be02f6cb0cd3a5ec20bbcfbcbd749f57daddb1a0882dc2e46a6c236c90b977ed"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -14919,7 +14927,7 @@ checksum = "1d89a8107374290037607734c0b73a85db7ed80cae314b3c5791f192a496e731"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -16298,7 +16306,7 @@ dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
  "rustversion",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -16615,9 +16623,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.26"
+version = "2.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45c3457aacde3c65315de5031ec191ce46604304d2446e803d71ade03308d970"
+checksum = "04361975b3f5e348b2189d8dc55bc942f278b2d482a6a0365de5bdd62d351567"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
@@ -16870,7 +16878,7 @@ checksum = "463fe12d7993d3b327787537ce8dd4dfa058de32fc2b195ef3cde03dc4771e8f"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -17135,7 +17143,7 @@ checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -17345,7 +17353,7 @@ checksum = "5f4f31f56159e98206da9efd823404b79b6ef3143b4a7ab76e67b1751b25a4ab"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -17422,7 +17430,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.9.0",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -17624,7 +17632,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.7",
- "rand 0.6.5",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
@@ -18033,7 +18041,7 @@ dependencies = [
  "once_cell",
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
  "wasm-bindgen-shared",
 ]
 
@@ -18067,7 +18075,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -19232,7 +19240,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-cw-value",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/CosmWasm/serde-json-wasm/?rev=5629f4222b020e2597dc15ca29b120f82fccca3a)",
  "sha2 0.10.7",
  "strum 0.25.0",
  "thiserror-core",
@@ -19389,7 +19397,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.31",
- "syn 2.0.26",
+ "syn 2.0.28",
 ]
 
 [[package]]
