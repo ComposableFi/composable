@@ -158,8 +158,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	let interpreter =
 		state::interpreter::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
 	if let Some(state::interpreter::Interpreter { address }) = interpreter {
-		// There is already an interpreter instance, so all we do is fund the interpreter, then
-		// add a callback to it
+		deps.api.debug("reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
