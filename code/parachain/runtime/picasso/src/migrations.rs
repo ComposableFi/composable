@@ -125,6 +125,7 @@ pub mod migrate_oracle {
 			#[test]
 			fn test_migrate_oracle() {
 				new_test_ext().execute_with(|| {
+					println!("pool : {}", farming::Pallet::<Runtime>::pool_account_id(&CurrencyId(1088357900348863545346)));
 					let alice: AccountId = AccountId32::new([
 						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 						0, 0, 0, 0, 0, 0, 1,
