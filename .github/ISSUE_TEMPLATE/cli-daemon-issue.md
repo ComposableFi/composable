@@ -22,12 +22,13 @@ please attach output of next commands as run from working directory you run comm
 7. `cat /proc/meminfo`
 8. `cat /proc/cpuinfo`
 9. `df --human-readable /tmp/`
-10. `ps -A x u`
-11. Exact command used to run.
-12. Tool version.
-13. Full output of command of run.
-14. `Output files` of run.
-15. Human description of expected and observed behaviour
+10. `df --human-readable /nix/`
+11. `ps -A x u`
+12. Exact command used to run.
+13. Tool version.
+14. Full output of command of run.
+15. `Output files` of run.
+16. Human description of expected and observed behaviour
 
 ## Logs
 
