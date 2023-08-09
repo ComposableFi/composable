@@ -6,17 +6,19 @@
 [Apollo](../products/apollo-overview.md) is an oracle for submitting prices on-chain. 
 We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. 
 By taking part in Apollo and becoming an oracle operator, 
-you will be securing the assets prices and help the network become more resilient. 
+you will be securing the price of assets on-chain and help the network become more resilient in a decentralized manner. 
 Participants receive tokens as rewards for their work, 
 but it is important to note that the on-chain algorithm also allows for slashing based on bad behavior, 
 which is defined as submitting prices out of a certain threshold range from a pivot price calculated on all submitted prices.
 
-Apollo consists of three key components. The On-chain pallet/worker that decides when a price is requested. 
-An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request. 
-Finally, a Price-Feed (we provide a reference implementation for this component) that fetches the prices from a CEX/DEX 
-and caches them, such that the Off-Chain worker is able to query those prices and stream them by submitting a transaction. 
-Below is a high level diagram that shows the interactions between the components.
+Apollo consists of three key components: 
 
+- The On-chain pallet/worker that decides when a price is requested. 
+- An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request. 
+- A Price-Feed (we provide a reference implementation for this component) that fetches the prices from a CEX/DEX 
+and caches them, such that the Off-Chain worker is able to query those prices and stream them by submitting a transaction. You are open to use a price-feed of your choice.
+
+The following diagram provides a high-level architecture of how these three components interact with each other.
 
 ## High level architecture
 
@@ -31,97 +33,18 @@ Below is a high level diagram that shows the interactions between the components
 
 ## Setting up a node
 
-[Setup a node by following the collator guide](https://docs.composable.finance/developer-guides#collator-set-up-guide)
-
-
-### Setting up a node in development mode
-
-For development mode, polkalaunch scripts should be used. 
-
-It sets up a local network with 4 collators with predefined keys and addresses.
-
-**Setup required prerequisites**
-
-A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linux Mint.
-
-1. Set up required packages 
-
-Run the following command:
-
-
-```bash
-sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
-```
-
-2. Setup Rust binary and Toolchain
-
-Run the following commands:
-
-
-```bash
-RUST_C="nightly-2021-11-07"
-curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-export PATH="$PATH:$HOME/.cargo/bin" && \
-rustup toolchain uninstall $(rustup toolchain list) && \
-rustup toolchain install $RUST_C && \
-rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
-rustup default $RUST_C && \
-rustup show
-```
-
-And wait for the installation process to finish.
-
-3. Setup Nodejs & Yarn 
-
-Run the following commands:
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-export NVM_DIR="$HOME/.nvm" && \
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-nvm install v16.15.0 && \
-nvm use v16.15.0 && \
-npm install --global yarn
-```
-
-**Run devnet**
-
-```bash
-nix run .#devnet-picasso
-```
-
-This means your node has started.
-
-Nodes are writing logs here: 
-
-```markdown
-ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ ls
-9988.log  9997.log   alice.log  charlie.log      composable_and_basilisk.json  ferdie.log      node_modules  rococo-local-raw.json  yarn.lock
-9996.log  README.md  bob.log    composable.json  dave.log  
-
-ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log 
-2022-05-23 10:23:24 [Parachain] PoV size { header: 0.1787109375kb, extrinsics: 2.4931640625kb, storage_proof: 5.80078125kb }
-2022-05-23 10:23:24 [Parachain] Compressed PoV size: 7.423828125kb
-2022-05-23 10:23:24 [Parachain] Produced proof-of-validity candidate. block_hash=0x67087d9d563ecbe2f13ab63d4280f003f80a4189be3f800c12adc82361463a2d
-2022-05-23 10:23:25 [Relaychain] 💤 Idle (7 peers), best: #113 (0xb71b…7e30), finalized #110 (0x0ffc…245c), ⬇ 5.7kiB/s ⬆ 6.0kiB/s    
-2022-05-23 10:23:25 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 0.1kiB/s ⬆ 1.4kiB/s    
-2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x496f…c871)    
-2022-05-23 10:23:30 [Relaychain] ♻️  Reorg on #114,0x496f…c871 to #114,0x9970…5f18, common ancestor #113,0xb71b…7e30    
-2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x9970…5f18)    
-2022-05-23 10:23:30 [Relaychain] 💤 Idle (7 peers), best: #114 (0x9970…5f18), finalized #110 (0x0ffc…245c), ⬇ 4.5kiB/s ⬆ 4.0kiB/s    
-2022-05-23 10:23:30 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 24 B/s ⬆ 24 B/s    
-2022-05-23 10:23:34 [Relaychain] 👴  Applying authority set change scheduled at block #111   
-```
+[Setup a node by following the collator guide](../developer-guides/collator-guide.md)
 
 ## Using PolkadotJS Web Interface
 
-To see the block explorer and run extrinsics the PolkadotJS web interface needs to be connected. 
+To see the block explorer of your collator and run extrinsics, the PolkadotJS web interface needs to be connected. 
 
 * Go to polkadot js →[https://polkadot.js.org/apps/#/explorer](https://polkadot.js.org/apps/#/explorer)
 * Add custom endpoint
 
-Connection should be established to port 9988. ws://127.0.0.1:9988 \
-Please note that port 9944 doesn't have pallet functionality; it is a relay node. 
+:::note
+Connection should be established to the port 9988 of the IP address that is running your collator, for connecting to node running locally: ws://127.0.0.1:9988.
+:::
 
 Make sure you have connected to the right port. 
 
@@ -152,7 +75,7 @@ In this step, we will set up a rust compiler, a toolchain and build a node.  \
 Run the following command:
 
 ```bash
-sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config
+sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config protobuf-compiler libprotobuf-dev
 ```
 
 **Get the project and build the price-feed**
@@ -160,8 +83,8 @@ sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-de
 Run the following commands:
 
 ```bash
-git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git composable-oracle && \
-cd composable-oracle && \
+git clone --depth 1 --branch release-v9.10035.5 https://github.com/ComposableFi/composable.git composable-oracle-10035 && \
+cd composable-oracle-10035/code && \
 cargo build --release --package price-feed
 ```
 
@@ -179,7 +102,7 @@ To make sure the price-feed is working correctly one should go to the browser.
 
 By default, price-feed runs on localhost, port 3001. 
 
-Currently only the price for KSM is supported, which can be accessed using the following link.
+Currently, the only assets supported for retrieving prices is KSM & DOT (corresponding to asset id's of 4 & 6 respectively), which can be accessed using the following link.
 
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
 
@@ -304,6 +227,89 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 
 ![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
+
+:::tip
+For a stable submission of 2 prices you need to stake at least 201k PICA, this can be added through a PolkadotJS extrinsic via oracle.addStake from your controller address. The distribution of rewards is based on the proportions of amount staked, so the more PICA you stake, the more rewards you receive.
+:::
+
+### Setting up DevNet Oracle
+
+For development mode, polkalaunch scripts should be used. 
+
+It sets up a local network with 4 collators with predefined keys and addresses.
+
+**Setup required prerequisites**
+
+A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linux Mint.
+
+1. Set up required packages 
+
+Run the following command:
+
+
+```bash
+sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
+```
+
+2. Setup Rust binary and Toolchain
+
+Run the following commands:
+
+
+```bash
+RUST_C="nightly-2021-11-07"
+curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+export PATH="$PATH:$HOME/.cargo/bin" && \
+rustup toolchain uninstall $(rustup toolchain list) && \
+rustup toolchain install $RUST_C && \
+rustup target add wasm32-unknown-unknown --toolchain $RUST_C && \
+rustup default $RUST_C && \
+rustup show
+```
+
+And wait for the installation process to finish.
+
+3. Setup Nodejs & Yarn 
+
+Run the following commands:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+export NVM_DIR="$HOME/.nvm" && \
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+nvm install v16.15.0 && \
+nvm use v16.15.0 && \
+npm install --global yarn
+```
+
+**Run devnet**
+
+```bash
+nix run .#devnet-picasso
+```
+
+This means your node has started.
+
+Nodes are writing logs here: 
+
+```markdown
+ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ ls
+9988.log  9997.log   alice.log  charlie.log      composable_and_basilisk.json  ferdie.log      node_modules  rococo-local-raw.json  yarn.lock
+9996.log  README.md  bob.log    composable.json  dave.log  
+
+ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log 
+2022-05-23 10:23:24 [Parachain] PoV size { header: 0.1787109375kb, extrinsics: 2.4931640625kb, storage_proof: 5.80078125kb }
+2022-05-23 10:23:24 [Parachain] Compressed PoV size: 7.423828125kb
+2022-05-23 10:23:24 [Parachain] Produced proof-of-validity candidate. block_hash=0x67087d9d563ecbe2f13ab63d4280f003f80a4189be3f800c12adc82361463a2d
+2022-05-23 10:23:25 [Relaychain] 💤 Idle (7 peers), best: #113 (0xb71b…7e30), finalized #110 (0x0ffc…245c), ⬇ 5.7kiB/s ⬆ 6.0kiB/s    
+2022-05-23 10:23:25 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 0.1kiB/s ⬆ 1.4kiB/s    
+2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x496f…c871)    
+2022-05-23 10:23:30 [Relaychain] ♻️  Reorg on #114,0x496f…c871 to #114,0x9970…5f18, common ancestor #113,0xb71b…7e30    
+2022-05-23 10:23:30 [Relaychain] ✨ Imported #114 (0x9970…5f18)    
+2022-05-23 10:23:30 [Relaychain] 💤 Idle (7 peers), best: #114 (0x9970…5f18), finalized #110 (0x0ffc…245c), ⬇ 4.5kiB/s ⬆ 4.0kiB/s    
+2022-05-23 10:23:30 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 24 B/s ⬆ 24 B/s    
+2022-05-23 10:23:34 [Relaychain] 👴  Applying authority set change scheduled at block #111   
+```
 
 **Setting signer (for local testing)**
 
