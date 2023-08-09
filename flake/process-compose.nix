@@ -278,8 +278,6 @@
                 command = self'.packages.osmosis-centauri-hermes-init;
                 depends_on = {
                   "centauri-init".condition = "process_completed_successfully";
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
                   "osmosis".condition = "process_healthy";
                 };
                 log_location =
@@ -306,6 +304,8 @@
                   "centauri-init".condition = "process_completed_successfully";
                   "centauri".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
+                  "composable-picasso-ibc-channels-init".condition =
+                    "process_completed_successfully";
                 };
                 availability = { restart = "on_failure"; };
               };
@@ -348,8 +348,6 @@
                 log_location =
                   "/tmp/composable-devnet/composable-picasso-ibc-init.log";
                 depends_on = {
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
                   "composable".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
                 };
