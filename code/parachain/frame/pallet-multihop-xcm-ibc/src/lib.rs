@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use xcm::latest::prelude::*;
 
-	use composable_traits::{prelude::ToString, xcm::memo::ChainInfo};
+	use composable_traits::xcm::memo::ChainInfo;
 	use sp_std::boxed::Box;
 
 	use frame_support::BoundedVec;
@@ -376,7 +376,7 @@ pub mod pallet {
 						memo_receiver,
 						PortId::transfer(),
 						ChannelId::new(i.channel_id),
-						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?.to_string(),
+						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?,
 						i.retries.ok_or(DispatchError::Other("Retries is none"))?,
 					)
 				};
