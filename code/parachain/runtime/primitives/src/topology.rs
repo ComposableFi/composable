@@ -111,7 +111,7 @@ impl Picasso {
 			InnerPrefixedDenom::from_str(CurrencyId::COMPOSABLE_DOT.to_string().as_str())
 				.expect("genesis");
 		dot_from_composable
-			.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(1)));
+			.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(0)));
 
 		let dot = (
 			CurrencyId::DOT.0 as u64,
