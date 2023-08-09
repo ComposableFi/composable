@@ -21,8 +21,8 @@ please attach output of next commands as run from working directory you run comm
 6. `git log -1`
 7. `cat /proc/meminfo`
 8. `cat /proc/cpuinfo`
-9. `stat  /tmp || df --human-readable /tmp/`
-10. `stat  /nix || df --human-readable /nix/`
+9. `stat  /tmp && df --human-readable /tmp/`
+10. `stat  /nix && df --human-readable /nix/`
 11. `ps -A x u`
 12. `stat -a /tmp`
 13. Exact command used to run.
