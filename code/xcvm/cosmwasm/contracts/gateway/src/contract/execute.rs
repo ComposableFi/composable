@@ -5,7 +5,7 @@ use crate::{
 	events::make_event,
 	msg,
 	network::{self, load_this},
-	state,
+	state, user,
 };
 
 use cosmwasm_std::{
@@ -52,23 +52,6 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
 		},
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
-		msg::ExecuteMsg::Test(msg) => handle_test(deps, env, info, msg),
-	}
-}
-
-fn handle_test(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::TestSubMsg) -> Result {
-	let mut response = Response::new();
-	match msg {
-		msg::TestSubMsg::InstantiateContract { code_id, msg } => {
-			let msg = WasmMsg::Instantiate {
-				admin: None,
-				code_id,
-				msg: to_binary(&msg)?,
-				funds: vec![],
-				label: "test".into(),
-			};
-			return Ok(response.add_message(msg).add_event(make_event("test.instantiated")))
-		},
 	}
 }
 
@@ -81,6 +64,8 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg) -> Res
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
+		ConfigSubMsg::ForceInstantiate { network_id, user_origin, salt } =>
+			user::force_instantiate(auth, deps, network_id, user_origin, salt),
 	}
 }
 

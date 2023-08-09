@@ -51,9 +51,6 @@ pub enum ExecuteMsg {
 
 	/// executed by host as part of memo handling
 	MessageHook(XcMessageData),
-
-	/// Allow to test if CW host supports some features 
-	Test(TestSubMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

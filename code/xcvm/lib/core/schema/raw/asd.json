@@ -1,0 +1,17 @@
+{
+    "test": {
+        "instantiate_contract": {
+            "code_id": 2,
+            "msg": {
+                "gateway_address": "centauri1e0nh3davd6d3yh73sldwndww7zchetwsae8m9rz9x6hlg7w4ysrqhmaqju",
+                "interpreter_origin": {
+                    "salt": "737061776e5f776974685f6173736574",
+                    "user_origin": {
+                        "network_id": 2,
+                        "user_id": "test"
+                    }
+                }
+            }
+        }
+    }
+}
