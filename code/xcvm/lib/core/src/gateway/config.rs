@@ -161,9 +161,9 @@ pub enum ConfigSubMsg {
 
 	/// Message sent by an admin to remove an asset from registry.
 	ForceRemoveAsset { asset_id: AssetId },
-	
-	/// instantiates default interpreter on behalf of user 
-	ForceInstantiate { user_origin: Addr,  }
+
+	/// instantiates default interpreter on behalf of user
+	ForceInstantiate { user_origin: Addr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

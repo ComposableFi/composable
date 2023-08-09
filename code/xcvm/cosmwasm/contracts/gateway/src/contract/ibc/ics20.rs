@@ -34,7 +34,6 @@ pub(crate) fn handle_bridge_forward(
 	// 1. recurse on program until can with memo
 	// 2. as soon as see no Spawn/Transfer, stop memo and do Wasm call with remaining Packet
 
-
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,

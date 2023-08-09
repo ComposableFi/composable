@@ -16,7 +16,7 @@ use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
 use xc_core::XCVMAck;
 
-use self::{ibc::make_ibc_failure_event};
+use self::ibc::make_ibc_failure_event;
 
 const CONTRACT_NAME: &str = "composable:xcvm-gateway";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -57,7 +57,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response> {
 	match msg.id {
 		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
 		INSTANTIATE_INTERPRETER_REPLY_ID =>
-		  crate::interpreter::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
+			crate::interpreter::handle_instantiate_reply(deps, msg).map_err(ContractError::from),
 		_ => Err(ContractError::UnknownReply),
 	}
 }

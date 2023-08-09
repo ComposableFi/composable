@@ -61,7 +61,7 @@ pub enum TestSubMsg {
 	InstantiateContract {
 		/// code of contract to instantiate
 		code_id: u64,
-		/// body of instantiate message 
+		/// body of instantiate message
 		msg: serde_cw_value::Value,
 	},
 }

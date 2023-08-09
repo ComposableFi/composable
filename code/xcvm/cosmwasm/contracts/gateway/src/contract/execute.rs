@@ -3,9 +3,9 @@ use crate::{
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
-	msg,
+	interpreter, msg,
 	network::{self, load_this},
-	state, interpreter,
+	state,
 };
 
 use cosmwasm_std::{
@@ -64,8 +64,8 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: E
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
-		ConfigSubMsg::ForceInstantiate {  user_origin,  } =>
-			interpreter::force_instantiate(auth, env.contract.address, deps,  user_origin),
+		ConfigSubMsg::ForceInstantiate { user_origin } =>
+			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin),
 	}
 }
 
@@ -158,7 +158,8 @@ pub(crate) fn handle_execute_program_privilleged(
 	let config = load_this(deps.storage)?;
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
-	let interpreter = state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin).ok();
+	let interpreter =
+		state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin.clone()).ok();
 	if let Some(state::interpreter::Interpreter { address, .. }) = interpreter {
 		deps.api.debug("reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
@@ -179,9 +180,14 @@ pub(crate) fn handle_execute_program_privilleged(
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
 		deps.api.debug("instantiating interpreter");
-		let admin = env.contract.address;
-		
-		let interpreter_instantiate_submessage = crate::interpreter::instantiate(deps.as_ref(), admin, interpreter_code_id, &interpreter_origin)?;
+		let admin = env.contract.address.clone();
+
+		let interpreter_instantiate_submessage = crate::interpreter::instantiate(
+			deps.as_ref(),
+			admin,
+			interpreter_code_id,
+			&interpreter_origin,
+		)?;
 
 		// Secondly, call itself again with the same parameters, so that this functions goes
 		// into `Ok` state and properly executes the interpreter
@@ -205,7 +211,6 @@ pub(crate) fn handle_execute_program_privilleged(
 			.add_message(self_call_message))
 	}
 }
-
 
 /// Transfer funds attached to a [`XCVMProgram`] before dispatching the program to the interpreter.
 fn send_funds_to_interpreter(
@@ -240,4 +245,3 @@ fn send_funds_to_interpreter(
 	}
 	Ok(response)
 }
-
