@@ -508,7 +508,7 @@
             FEE=ppica 
             BINARY=centaurid
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
-            MSG='{ "config": { "force_instantiate" : {  "user_origin" : "centauri1e0nh3davd6d3yh73sldwndww7zchetwsae8m9rz9x6hlg7w4ysrqhmaqju" } }}'
+            MSG=$1
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };

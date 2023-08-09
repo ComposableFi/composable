@@ -481,16 +481,16 @@
                 availability = { restart = "on_failure"; };
               };
 
-              # osmosis-centauri-hermes-relay = {
-              #   command = self'.packages.osmosis-centauri-hermes-relay;
-              #   depends_on = {
-              #     "osmosis-centauri-hermes-init".condition =
-              #       "process_completed_successfully";
-              #   };
-              #   log_location =
-              #     "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
-              #   availability = { restart = relay; };
-              # };
+              osmosis-centauri-hermes-relay = {
+                command = self'.packages.osmosis-centauri-hermes-relay;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+                availability = { restart = relay; };
+              };
             };
           };
         };

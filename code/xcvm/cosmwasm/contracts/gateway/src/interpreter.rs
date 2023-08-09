@@ -3,20 +3,20 @@ use crate::{
 	error::{ContractError, Result},
 	events::make_event,
 	network::load_this,
-	state::{self, interpreter},
+	state,
 };
 use cosmwasm_std::{
-	to_binary, Deps, DepsMut, Reply, Response, StdError, StdResult, Storage, SubMsg, WasmMsg,
+	to_binary, Deps, DepsMut, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw_xc_interpreter::contract::{
 	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
 };
-use xc_core::{CallOrigin, InterpreterOrigin, NetworkId};
+use xc_core::{CallOrigin, InterpreterOrigin};
 
 use crate::{auth, prelude::*};
 
 pub(crate) fn force_instantiate(
-	auth: auth::Admin,
+	_: auth::Admin,
 	gateway: Addr,
 	deps: DepsMut,
 	user_origin: Addr,
@@ -41,7 +41,12 @@ pub fn instantiate(
 	interpreter_code_id: u64,
 	interpreter_origin: &InterpreterOrigin,
 ) -> Result<SubMsg, ContractError> {
-	let next_interpreter_id: u128 = state::interpreter::INTERPRETERS_COUNT.load(deps.storage)? + 1;
+	let next_interpreter_id: u128 =
+		state::interpreter::INTERPRETERS_COUNT.load(deps.storage).unwrap_or_default() + 1;
+
+	// salt limit is 64 characters
+	// and label has some unknown limits too (including usage of special characters)
+	let label = ["xcvm_interpreter", &next_interpreter_id.to_string()].join("_");
 	let instantiate_msg = WasmMsg::Instantiate2 {
 		admin: Some(admin.clone().into_string()),
 		code_id: interpreter_code_id,
@@ -50,8 +55,8 @@ pub fn instantiate(
 			interpreter_origin: interpreter_origin.clone(),
 		})?,
 		funds: vec![],
-		label: ["xcvm_interpreter", &next_interpreter_id.to_string()].join("_"),
-		salt: to_binary(&interpreter_origin.to_string().as_bytes())?,
+		label,
+		salt: to_binary("default")?,
 	};
 	let interpreter_instantiate_submessage =
 		SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);
@@ -59,7 +64,10 @@ pub fn instantiate(
 }
 
 pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	deps.api.debug(&serde_json_wasm::to_string(&msg)?);
+	deps.api.debug(&format!(
+		"xcvm:: {}",
+		serde_json_wasm::to_string(&msg).map_err(|e| StdError::generic_err(e.to_string()))?
+	));
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	// Catch the default `instantiate` event which contains `_contract_address` attribute that
 	// has the instantiated contract's address
@@ -91,7 +99,8 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 	let interpreter_origin =
 		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
 
-	let interpreter_id = state::interpreter::INTERPRETERS_COUNT.load(deps.storage)? + 1;
+	let interpreter_id: u128 =
+		state::interpreter::INTERPRETERS_COUNT.load(deps.storage).unwrap_or_default() + 1;
 	let interpreter = state::interpreter::Interpreter {
 		address: interpreter_address,
 		interpreter_id: interpreter_id.into(),
@@ -105,7 +114,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		&interpreter_id,
 	)?;
 
-	deps.api.debug("saved interpreter");
+	deps.api.debug("xcvm:: saved interpreter");
 
 	Ok(Response::new().add_event(
 		make_event("xcvm.interpreter.instantiated")

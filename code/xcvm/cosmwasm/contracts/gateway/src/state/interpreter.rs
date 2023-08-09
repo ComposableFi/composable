@@ -1,4 +1,4 @@
-use cosmwasm_std::{Deps, StdError, StdResult, Storage};
+use cosmwasm_std::{Deps, StdResult};
 use cw_storage_plus::Item;
 use xc_core::{Displayed, InterpreterOrigin};
 

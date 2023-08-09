@@ -1,6 +1,5 @@
 use crate::{
 	assets, auth,
-	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
 	interpreter, msg,
@@ -9,13 +8,10 @@ use crate::{
 };
 
 use cosmwasm_std::{
-	entry_point, to_binary, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env,
-	MessageInfo, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
+	entry_point, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
+	Response,
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
-use cw_xc_interpreter::contract::{
-	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
-};
 
 use xc_core::{gateway::ConfigSubMsg, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
