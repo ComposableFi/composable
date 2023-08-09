@@ -11,10 +11,11 @@ Participants receive tokens as rewards for their work,
 but it is important to note that the on-chain algorithm also allows for slashing based on bad behavior, 
 which is defined as submitting prices out of a certain threshold range from a pivot price calculated on all submitted prices.
 
-Apollo consists of three key components: 
+Apollo consists of four key components: 
 
-- The On-chain pallet/worker that decides when a price is requested. 
-- An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request. 
+- The On-chain pallet that decides when a price is requested. 
+- An Off-Chain worker that monitors when a price has been requested and if so, submits a price for the request.
+- An oracle node where the offchain worker is running.
 - A Price-Feed (we provide a reference implementation for this component) that fetches the prices from a CEX/DEX 
 and caches them, such that the Off-Chain worker is able to query those prices and stream them by submitting a transaction. You are open to use a price-feed of your choice.
 
@@ -104,7 +105,9 @@ By default, price-feed runs on localhost, port 3001.
 
 Currently, the only assets supported for retrieving prices is KSM & DOT (corresponding to asset id's of 4 & 6 respectively), which can be accessed using the following link.
 
-[http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
+KSM: [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
+
+DOT: [http://127.0.0.1:3001/price/6](http://127.0.0.1:3001/price/6)
 
 
 ![price_feed_output](./oracle-set-up-guide/price-feed-output.png)
