@@ -50,5 +50,6 @@ pub(crate) fn force_remove_asset(
 	if asset.from_network_id == config.here_id {
 		LOCAL_ASSETS.remove(deps.storage, asset.local);
 	}
-	Ok(Response::new().add_event(make_event("assets.removed").add_attribute("asset_id", asset_id.to_string())))
+	Ok(Response::new()
+		.add_event(make_event("assets.removed").add_attribute("asset_id", asset_id.to_string())))
 }
