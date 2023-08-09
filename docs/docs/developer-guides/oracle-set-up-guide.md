@@ -228,8 +228,14 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 ![register_offchain_worker](./oracle-set-up-guide/register-offchain-worker.png)
 
+
+## Further Steps
+
+Once these steps are complete, send us your collator node's public key, controller key, and signer key. You must have at least 200k PICA on your controller address and then we can onboard you as a oracle which results in 200k PICA staked. **To add more stake, add more PICA to your controller addrress and call oracle.addStake extrinsic on PolkadotJS.**
+
+
 :::tip
-For a stable submission of 2 prices you need to stake at least 201k PICA, this can be added through a PolkadotJS extrinsic via oracle.addStake from your controller address. The distribution of rewards is based on the proportions of amount staked, so the more PICA you stake, the more rewards you receive.
+The distribution of rewards is based on the proportions of amount staked, therefore, the more PICA you stake, the more rewards you earn.
 :::
 
 ### Setting up DevNet Oracle
