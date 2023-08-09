@@ -51,6 +51,22 @@ pub enum ExecuteMsg {
 
 	/// executed by host as part of memo handling
 	MessageHook(XcMessageData),
+
+	/// Allow to test if CW host supports some features 
+	Test(TestSubMsg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub enum TestSubMsg {
+	/// instantiates contract
+	InstantiateContract {
+		/// code of contract to instantiate
+		code_id: u64,
+		/// body of instantiate message 
+		msg: serde_cw_value::Value,
+	},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

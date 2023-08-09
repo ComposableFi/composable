@@ -52,6 +52,23 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
 		},
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
+		msg::ExecuteMsg::Test(msg) => handle_test(deps, env, info, msg),
+	}
+}
+
+fn handle_test(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::TestSubMsg) -> Result {
+	let mut response = Response::new();
+	match msg {
+		msg::TestSubMsg::InstantiateContract { code_id, msg } => {
+			let msg = WasmMsg::Instantiate {
+				admin: None,
+				code_id,
+				msg: to_binary(&msg)?,
+				funds: vec![],
+				label: "test".into(),
+			};
+			return Ok(response.add_message(msg).add_event(make_event("test.instantiated")))
+		},
 	}
 }
 
@@ -178,7 +195,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
 		deps.api.debug("instantiating interpreter");
-		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate2 {			
+		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate2 {
 			admin: Some(env.contract.address.clone().into_string()),
 			code_id: interpreter_code_id,
 			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
