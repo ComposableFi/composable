@@ -21,22 +21,22 @@ set -o errexit
 adduser actions-runner --disabled-password && passwd --delete actions-runner
 sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 cat > /etc/nix/nix.conf << EOF
-    experimental-features = nix-command flakes
-    sandbox = relaxed
-    narinfo-cache-negative-ttl = 0      
-    system-features = kvm     
-    trusted-users = root actions-runner
-    max-jobs = 1
-    cores = 64
-    auto-optimise-store = true
+    # keep-derivations = true
+    # keep-outputs = true
     allow-import-from-derivation = true
+    auto-optimise-store = true
+    cores = 64
+    experimental-features = nix-command flakes
     gc-reserved-space = 18388608
     http-connections = 32
     http2 = true
-    min-free = 100000000000
     max-free = 1000000000000
-    # keep-outputs = true
-    # keep-derivations = true
+    max-jobs = 1
+    min-free = 100000000000
+    narinfo-cache-negative-ttl = 0
+    sandbox = relaxed
+    system-features = kvm     
+    trusted-users = root actions-runner
 EOF
 service nix-daemon restart
 apt-get update && apt-get install apt-transport-https qemu-system-x86 ca-certificates curl gnupg software-properties-common --yes
@@ -54,7 +54,7 @@ su actions-runner
 ## User
 
 ```bash
-nix profile install "nixpkgs#git" "nixpkgs#git-lfs" "nixpkgs#cachix" "nixpkgs#process-compose" "nixpkgs#dasel"
+nix profile install "nixpkgs#git" "nixpkgs#git-lfs" "nixpkgs#cachix" "nixpkgs#process-compose" "nixpkgs#dasel" "nixpkgs#nix-tree"
 ```
 
 ### x84_64

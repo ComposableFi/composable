@@ -513,14 +513,14 @@ jobs:
 
   push-docker-images:
     name: push-docker-images
-    if: ${{ inputs.github_event_name == 'push' }}   
+    if: ${{ inputs.flow == 'push' }}   
     needs: 
       - draft-release-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-push-docker-images-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
+      group: ${{inputs.flow}}-${{ inputs.github_workflow }}-push-docker-images-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: false
     steps:          
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
