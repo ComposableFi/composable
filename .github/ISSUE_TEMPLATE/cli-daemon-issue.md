@@ -24,12 +24,12 @@ please attach output of next commands as run from working directory you run comm
 9. `stat  /tmp && df --human-readable /tmp/`
 10. `stat  /nix && df --human-readable /nix/`
 11. `ps -A x u`
-12. `stat -a /tmp`
-13. Exact command used to run.
-14. Tool version.
-15. Full output of command of run.
-16. `Output files` of run.
-17. Human description of expected and observed behaviour
+13. `netstat --tcp --udp --listening --numeric --programs  | grep LISTEN`
+14. Exact command used to run.
+15. Tool version.
+16. Full output of command of run.
+17. `Output files` of run.
+18. Human description of expected and observed behaviour
 
 ## Logs
 
