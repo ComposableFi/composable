@@ -5,7 +5,7 @@ use crate::{
 	events::make_event,
 	msg,
 	network::{self, load_this},
-	state, user,
+	state, interpreter,
 };
 
 use cosmwasm_std::{
@@ -25,7 +25,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	match msg {
 		ExecuteMsg::Config(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_config_msg(auth, deps, msg)
+			handle_config_msg(auth, deps, msg, env)
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
@@ -55,7 +55,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	}
 }
 
-fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg) -> Result {
+fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: Env) -> Result {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
@@ -64,8 +64,8 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg) -> Res
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
-		ConfigSubMsg::ForceInstantiate { network_id, user_origin, salt } =>
-			user::force_instantiate(auth, deps, network_id, user_origin, salt),
+		ConfigSubMsg::ForceInstantiate {  user_origin,  } =>
+			interpreter::force_instantiate(auth, env.contract.address, deps,  user_origin),
 	}
 }
 
@@ -158,9 +158,8 @@ pub(crate) fn handle_execute_program_privilleged(
 	let config = load_this(deps.storage)?;
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
-	let interpreter =
-		state::interpreter::INTERPRETERS.may_load(deps.storage, interpreter_origin.clone())?;
-	if let Some(state::interpreter::Interpreter { address }) = interpreter {
+	let interpreter = state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin).ok();
+	if let Some(state::interpreter::Interpreter { address, .. }) = interpreter {
 		deps.api.debug("reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
@@ -180,21 +179,10 @@ pub(crate) fn handle_execute_program_privilleged(
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
 		deps.api.debug("instantiating interpreter");
-		let instantiate_msg: CosmosMsg = WasmMsg::Instantiate2 {
-			admin: Some(env.contract.address.clone().into_string()),
-			code_id: interpreter_code_id,
-			msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
-				gateway_address: env.contract.address.clone().into_string(),
-				interpreter_origin: interpreter_origin.clone(),
-			})?,
-			funds: vec![],
-			label: interpreter_origin.to_string(),
-			salt: to_binary(&interpreter_origin.to_string().as_bytes())?,
-		}
-		.into();
+		let admin = env.contract.address;
+		
+		let interpreter_instantiate_submessage = crate::interpreter::instantiate(deps.as_ref(), admin, interpreter_code_id, &interpreter_origin)?;
 
-		let interpreter_instantiate_submessage =
-			SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);
 		// Secondly, call itself again with the same parameters, so that this functions goes
 		// into `Ok` state and properly executes the interpreter
 		let self_call_message: CosmosMsg = wasm_execute(
@@ -217,6 +205,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			.add_message(self_call_message))
 	}
 }
+
 
 /// Transfer funds attached to a [`XCVMProgram`] before dispatching the program to the interpreter.
 fn send_funds_to_interpreter(
@@ -252,41 +241,3 @@ fn send_funds_to_interpreter(
 	Ok(response)
 }
 
-pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-
-	// Catch the default `instantiate` event which contains `_contract_address` attribute that
-	// has the instantiated contract's address
-	let address = &response
-		.events
-		.iter()
-		.find(|event| event.ty == "instantiate")
-		.ok_or_else(|| StdError::not_found("instantiate event not found"))?
-		.attributes
-		.iter()
-		.find(|attr| &attr.key == "_contract_address")
-		.ok_or_else(|| StdError::not_found("_contract_address attribute not found"))?
-		.value;
-	let interpreter_address = deps.api.addr_validate(address)?;
-
-	// Interpreter provides `network_id, user_id` pair as an event for the router to know which
-	// pair is instantiated
-	let event_name = format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX);
-	let interpreter_origin = &response
-		.events
-		.iter()
-		.find(|event| event.ty.starts_with(&event_name))
-		.ok_or_else(|| StdError::not_found("interpreter event not found"))?
-		.attributes
-		.iter()
-		.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
-		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
-		.value;
-	let interpreter_origin =
-		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
-
-	let interpreter = state::interpreter::Interpreter { address: interpreter_address };
-	state::interpreter::INTERPRETERS.save(deps.storage, interpreter_origin, &interpreter)?;
-
-	Ok(Response::new())
-}
