@@ -234,7 +234,7 @@ And enter the details above, as seen in the screenshot and press: “Submit RPC 
 
 ## Further Steps
 
-Once these steps are complete, send us your collator node's public key, controller key, and signer key. You must have at least 200k PICA on your controller address and then we can onboard you as a oracle which results in 200k PICA staked. **To add more stake, add more PICA to your controller addrress and call oracle.addStake extrinsic on PolkadotJS.**
+Once these steps are complete, send us your collator node's public key, controller key, and signer key. You must have at least 200k PICA on your controller address and then we can onboard you as a oracle which results in 200k PICA staked. To submit prices for 2 or more assets, you will need to stake an additional 1k PICA for each asset you provide an oracle for on your controller address. **To increase your stake, add more PICA to your controller addrress and call `oracle.addStake` extrinsic on PolkadotJS.**
 
 
 :::tip
