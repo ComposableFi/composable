@@ -1,7 +1,6 @@
 //! Module with authorisation checks.
 
 use crate::{
-	assets,
 	error::{ContractError, Result},
 	state,
 };
@@ -113,8 +112,17 @@ impl Admin {
 
 impl Auth<policy::Cw20Contract> {
 	/// Verifies that given address is address of a known CW20 contract.
-	pub(crate) fn authorise(storage: &dyn Storage, address: Addr) -> Result<Self> {
-		policy::Cw20Contract::new(storage, address).map(Self)
+	pub(crate) fn authorise(
+		gateway: &xc_core::gateway::Gateway,
+		querier: cosmwasm_std::QuerierWrapper,
+		address: Addr,
+	) -> Result<Self> {
+		use xc_core::gateway::config::AssetReference;
+		let reference = AssetReference::Cw20 { contract: address.clone() };
+		let asset = gateway.get_local_asset_by_reference(querier, reference)?;
+		let asset_id = asset.asset_id;
+		let address = cw20::Cw20Contract(address);
+		Ok(Self(policy::Cw20Contract { asset_id, address }))
 	}
 }
 
@@ -149,8 +157,6 @@ pub(crate) fn handle_break_glass(_: Admin, deps: DepsMut, env: Env, _info: Messa
 }
 
 pub(crate) mod policy {
-	use super::*;
-
 	#[derive(Clone, Default)]
 	pub(crate) struct User;
 
@@ -161,16 +167,5 @@ pub(crate) mod policy {
 	pub(crate) struct Cw20Contract {
 		pub asset_id: xc_core::AssetId,
 		pub address: cw20::Cw20Contract,
-	}
-
-	impl Cw20Contract {
-		/// Creates a new `Cw20Contract` if the address corresponds to a known
-		/// asset.
-		///
-		/// If it doesn’t, returns [`ContractError::UnknownAsset`] error.
-		pub fn new(storage: &dyn Storage, address: Addr) -> Result<Self> {
-			let (asset_id, address) = assets::resolve_cw20(storage, address)?;
-			Ok(Self { asset_id, address })
-		}
 	}
 }

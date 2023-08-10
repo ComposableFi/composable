@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Item, Map};
 
-use xc_core::AssetId;
+use xc_core::{gateway::config::AssetReference, AssetId};
 
 use crate::{
 	assets,
@@ -57,12 +57,18 @@ pub(crate) fn handle_deposit_request(
 	info: MessageInfo,
 	msg::DepositAssetsRequest { account, tokens }: msg::DepositAssetsRequest,
 ) -> Result {
+	let gateway = state::Config::load(deps.storage)?.gateway;
+
 	let mut deposits = Vec::with_capacity(info.funds.len() + tokens.len());
 
 	// Look through native funds attached to the message.
 	for coin in info.funds {
-		let (asset_id, denom) = assets::resolve_denom(deps.storage, coin.denom)?;
-		deposits.push((asset_id, denom.into(), coin.amount.into()));
+		let asset = gateway.get_local_asset_by_reference(
+			deps.querier,
+			AssetReference::Native { denom: coin.denom.clone() },
+		)?;
+		let denom = assets::Native(coin.denom);
+		deposits.push((asset.asset_id, denom.into(), coin.amount.into()));
 	}
 
 	// Look through CW20 tokens.  Those are tokens that user gave us allowance
@@ -72,14 +78,14 @@ pub(crate) fn handle_deposit_request(
 	let mut response = Response::default();
 	response.messages.reserve(tokens.len());
 	for (cw20_addr, amount) in tokens {
-		let cw20_addr = deps.api.addr_validate(&cw20_addr)?;
-		let (asset_id, cw20_addr) = assets::resolve_cw20(deps.storage, cw20_addr)?;
-		response = response.add_message(cw20_addr.make_take_msg(
-			&env.contract,
-			info.sender.clone(),
-			amount,
-		)?);
-		deposits.push((asset_id, cw20_addr.into(), amount));
+		let cw20 = cw20::Cw20Contract(deps.api.addr_validate(&cw20_addr)?);
+		let asset = gateway.get_local_asset_by_reference(
+			deps.querier,
+			AssetReference::Cw20 { contract: cw20.addr() },
+		)?;
+		response =
+			response.add_message(cw20.make_take_msg(&env.contract, info.sender.clone(), amount)?);
+		deposits.push((asset.asset_id, cw20.into(), amount));
 	}
 
 	send_deposit(response, deps.storage, info.sender, account, deposits)

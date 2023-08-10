@@ -3,7 +3,7 @@ extern crate alloc;
 use crate::{
 	auth, deposits,
 	error::{ContractError, Result},
-	ibc, msg,
+	ibc, msg, state,
 };
 
 use cosmwasm_std::{
@@ -25,10 +25,17 @@ pub fn instantiate(
 	msg: msg::InstantiateMsg,
 ) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+	let network_id = msg.network_id;
+	let gateway = xc_core::gateway::Gateway::addr_validate(deps.api, &msg.gateway_address)?;
+	state::Config { network_id, gateway }.save(deps.storage)?;
+
 	for admin in msg.admins {
 		auth::Admin::add(deps.storage, deps.api.addr_validate(&admin)?)?;
 	}
+
 	deposits::init_state(deps.storage)?;
+
 	Ok(Response::default().add_event(msg::make_event(msg::Action::Instantiated)))
 }
 
@@ -38,7 +45,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 		msg::ExecuteMsg::DepositAssets(msg) =>
 			deposits::handle_deposit_request(deps, env, info, msg),
 		msg::ExecuteMsg::Receive(msg) => {
-			let auth = auth::Cw20Contract::authorise(deps.storage, info.sender)?;
+			let gateway = state::Config::load(deps.storage)?.gateway;
+			let auth = auth::Cw20Contract::authorise(&gateway, deps.querier, info.sender)?;
 			deposits::handle_receive(auth, deps, env, msg)
 		},
 		msg::ExecuteMsg::Relay(req) => {

@@ -32,6 +32,8 @@ pub enum Action {
 pub struct InstantiateMsg {
 	/// Network ID of this network
 	pub network_id: NetworkId,
+	/// Address of a local XCVM gateway contract.
+	pub gateway_address: String,
 	/// Admins which are allowed to use the break glass feature.
 	pub admins: Vec<String>,
 }
