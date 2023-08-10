@@ -23,8 +23,8 @@ pub enum ContractError {
 	ICS20NotFound,
 	#[error("Could not serialize to JSON")]
 	FailedToSerialize,
-	#[error("The asset is not yet supported.")]
-	UnsupportedAsset,
+	#[error("Asset not been found in the registry.")]
+	AssetNotFound,
 	#[error("The contract must be initialized first.")]
 	NotInitialized,
 	#[error("An overflow occurred.")]

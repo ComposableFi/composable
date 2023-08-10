@@ -85,7 +85,7 @@ fn external_query_lookup_asset(
 	let query = xc_core::gateway::QueryMsg::GetAssetById { asset_id };
 	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
 	querier
-		.query::<xc_core::gateway::GetAssetByIdResponse>(&msg.into())
+		.query::<xc_core::gateway::GetAssetResponse>(&msg.into())
 		.map(|response| response.asset)
 }
 
