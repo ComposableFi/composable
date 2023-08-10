@@ -121,20 +121,17 @@ pub(crate) fn handle_execute_program(
 	execute_program: msg::ExecuteProgramMsg,
 	tip: Addr,
 ) -> Result {
-	let self_address = env.contract.address;
+	let this = msg::Gateway::new(env.contract.address);
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
 	let transfers = transfer_from_user(
 		&deps,
-		self_address.clone(),
+		this.address(),
 		info.sender,
 		info.funds,
 		&execute_program.assets,
 	)?;
-	let msg = wasm_execute(
-		self_address,
-		&msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip },
-		Default::default(),
-	)?;
+	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
+	let msg = this.execute(msg)?;
 	Ok(Response::default().add_messages(transfers).add_message(msg))
 }
 
@@ -175,11 +172,11 @@ pub(crate) fn handle_execute_program_privilleged(
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 		};
 		deps.api.debug("instantiating interpreter");
-		let admin = env.contract.address.clone();
+		let this = msg::Gateway::new(env.contract.address);
 
 		let interpreter_instantiate_submessage = crate::interpreter::instantiate(
 			deps.as_ref(),
-			admin,
+			this.address(),
 			interpreter_code_id,
 			&interpreter_origin,
 			salt,
@@ -187,20 +184,11 @@ pub(crate) fn handle_execute_program_privilleged(
 
 		// Secondly, call itself again with the same parameters, so that this functions goes
 		// into `Ok` state and properly executes the interpreter
-		let self_call_message: CosmosMsg = wasm_execute(
-			env.contract.address,
-			&xc_core::gateway::ExecuteMsg::ExecuteProgramPrivileged {
-				call_origin,
-				execute_program: xc_core::gateway::ExecuteProgramMsg {
-					salt: interpreter_origin.salt,
-					program,
-					assets,
-				},
-				tip,
-			},
-			vec![],
-		)?
-		.into();
+		let execute_program =
+			xc_core::gateway::ExecuteProgramMsg { salt: interpreter_origin.salt, program, assets };
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
+		let self_call_message = this.execute(msg)?;
+
 		Ok(Response::new()
 			.add_event(make_event("route.create"))
 			.add_submessage(interpreter_instantiate_submessage)
