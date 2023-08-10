@@ -15,7 +15,7 @@ pub struct ForwardingMemo {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub channel: Option<ChannelId>,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub timeout: Option<u64>,
+	pub timeout: Option<String>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub retries: Option<u8>,
 
@@ -60,7 +60,7 @@ impl ForwardingMemo {
 		receiver: String,
 		port: PortId,
 		channel: ChannelId,
-		timeout: u64,
+		timeout: String,
 		retries: u8,
 	) -> Self {
 		Self {

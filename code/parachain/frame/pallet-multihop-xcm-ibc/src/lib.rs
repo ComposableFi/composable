@@ -376,7 +376,7 @@ pub mod pallet {
 						memo_receiver,
 						PortId::transfer(),
 						ChannelId::new(i.channel_id),
-						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?,
+						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?.to_string(),
 						i.retries.ok_or(DispatchError::Other("Retries is none"))?,
 					)
 				};
