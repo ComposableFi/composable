@@ -9,8 +9,8 @@ use alloc::borrow::Cow;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps,
-	DepsMut, Env, Event, MessageInfo, QuerierWrapper, QueryRequest, Reply, Response, StdError,
-	StdResult, SubMsg, WasmQuery,
+	DepsMut, Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
+	WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -18,12 +18,9 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{
-		AssetItem, AssetReference, BridgeForwardMsg, ExecuteMsg as GWExecuteMsg, ExecuteProgramMsg,
-	},
+	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
 	shared::{encode_base64, XcProgram},
-	AssetId, Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId,
-	Register,
+	Balance, BindingValue, Destination, Displayed, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -37,7 +34,7 @@ pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-	let gateway_address = deps.api.addr_validate(&msg.gateway_address)?;
+	let gateway_address = xc_core::gateway::Gateway::addr_validate(deps.api, &msg.gateway_address)?;
 	let config = Config { gateway_address, interpreter_origin: msg.interpreter_origin };
 	CONFIG.save(deps.storage, &config)?;
 	// Save the caller as owner, in most cases, it is the `XCVM router`
@@ -75,18 +72,6 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result {
 	let token = ensure_owner(deps.as_ref(), &env.contract.address, env.contract.address.clone())?;
 	let _ = add_owners(token, deps, msg.owners)?;
 	Ok(Response::default())
-}
-
-fn external_query_lookup_asset(
-	querier: QuerierWrapper,
-	gateway_addr: Addr,
-	asset_id: AssetId,
-) -> StdResult<AssetItem> {
-	let query = xc_core::gateway::QueryMsg::GetAssetById { asset_id };
-	let msg = WasmQuery::Smart { contract_addr: gateway_addr.into(), msg: to_binary(&query)? };
-	querier
-		.query::<xc_core::gateway::GetAssetResponse>(&msg.into())
-		.map(|response| response.asset)
 }
 
 /// Initiate an execution by adding a `ExecuteStep` callback. This is used to be able to prepare an
@@ -206,7 +191,8 @@ pub fn interpret_call(
 	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_cw_value::Value> = if !bindings
 		.is_empty()
 	{
-		let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
+		let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
+
 		// Len here is the maximum possible length
 		let mut formatted_call =
 			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
@@ -223,11 +209,7 @@ pub fn interpret_call(
 						.map_err(|_| ContractError::DataSerializationError)?,
 				),
 				BindingValue::Asset(asset_id) => {
-					let reference = external_query_lookup_asset(
-						deps.querier,
-						gateway_address.clone(),
-						asset_id,
-					)?;
+					let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 					match reference.local {
 						AssetReference::Cw20 { contract } =>
 							Cow::Owned(contract.into_string().into()),
@@ -235,11 +217,7 @@ pub fn interpret_call(
 					}
 				},
 				BindingValue::AssetAmount(asset_id, balance) => {
-					let reference = external_query_lookup_asset(
-						deps.querier,
-						gateway_address.clone(),
-						asset_id,
-					)?;
+					let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 					let amount = match reference.local {
 						AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
 							deps,
@@ -287,14 +265,13 @@ pub fn interpret_spawn(
 	assets: Funds<Balance>,
 	program: XcProgram,
 ) -> Result {
-	let Config { interpreter_origin, gateway_address, .. } = CONFIG.load(deps.storage)?;
+	let Config { interpreter_origin, gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 
 	let mut normalized_funds: Funds<Displayed<u128>> = Funds::default();
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
-		let reference =
-			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
+		let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 		let transfer_amount = match &reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
@@ -320,12 +297,12 @@ pub fn interpret_spawn(
 			normalized_funds.0.push((asset_id.into(), transfer_amount.into()));
 			response = match reference.local {
 				AssetReference::Native { denom } => response.add_message(BankMsg::Send {
-					to_address: gateway_address.clone().into(),
+					to_address: gateway.address().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
 				AssetReference::Cw20 { contract } =>
 					response.add_message(Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
-						recipient: gateway_address.clone().into(),
+						recipient: gateway.address().into(),
 						amount: transfer_amount.into(),
 					})?),
 			};
@@ -334,15 +311,11 @@ pub fn interpret_spawn(
 
 	let execute_program = ExecuteProgramMsg { salt, program, assets: normalized_funds };
 	Ok(response
-		.add_message(wasm_execute(
-			gateway_address,
-			&GWExecuteMsg::BridgeForward(BridgeForwardMsg {
-				interpreter_origin: interpreter_origin.clone(),
-				msg: execute_program,
-				to: network,
-			}),
-			Default::default(),
-		)?)
+		.add_message(gateway.execute(BridgeForwardMsg {
+			interpreter_origin: interpreter_origin.clone(),
+			msg: execute_program,
+			to: network,
+		})?)
 		.add_event(
 			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
 				.add_attribute("instruction", "spawn")
@@ -367,7 +340,7 @@ pub fn interpret_transfer(
 	to: Destination<CanonicalAddr>,
 	assets: Funds<Balance>,
 ) -> Result {
-	let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
+	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
@@ -380,8 +353,7 @@ pub fn interpret_transfer(
 			continue
 		}
 
-		let reference =
-			external_query_lookup_asset(deps.querier, gateway_address.clone(), asset_id)?;
+		let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 		response = match reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {

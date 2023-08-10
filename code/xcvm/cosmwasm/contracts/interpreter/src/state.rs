@@ -6,7 +6,7 @@ use xc_core::InterpreterOrigin;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct Config {
-	pub gateway_address: Addr,
+	pub gateway_address: xc_core::gateway::Gateway,
 	pub interpreter_origin: InterpreterOrigin,
 }
 
