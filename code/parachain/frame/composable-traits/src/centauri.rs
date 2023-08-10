@@ -13,7 +13,7 @@ impl Map {
 				receiver: value.receiver,
 				port: value.port.map(|x| x.to_string()),
 				channel: value.channel.map(|x| x.to_string()),
-				timeout: value.timeout,
+				timeout: value.timeout.and_then(|x| x.parse().ok()),
 				retries: value.retries.map(Into::into),
 				para_id: value.substrate.and_then(|x| x.para_id),
 				substrate: Some(value.substrate.is_some()),
