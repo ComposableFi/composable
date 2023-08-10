@@ -59,6 +59,8 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: E
 		ConfigSubMsg::ForceAsset(msg) => assets::force_asset(auth, deps, msg),
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
+		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>
+			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
 		ConfigSubMsg::ForceInstantiate { user_origin, salt } =>
 			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin, salt),

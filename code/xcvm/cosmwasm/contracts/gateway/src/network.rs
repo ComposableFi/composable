@@ -4,12 +4,12 @@ use xc_core::{gateway::NetworkItem, NetworkId};
 
 use crate::state::{self, NETWORK, NETWORK_TO_NETWORK};
 
-use crate::error::Result;
+use crate::error::{ContractError, Result};
 
 pub fn load_this(storage: &dyn Storage) -> Result<NetworkItem> {
-	let this = state::load(storage)?;
-	let this = NETWORK.load(storage, this.here_id)?;
-	Ok(this)
+	state::load(storage)
+		.and_then(|this| NETWORK.load(storage, this.here_id))
+		.map_err(|_| ContractError::NetworkConfig)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

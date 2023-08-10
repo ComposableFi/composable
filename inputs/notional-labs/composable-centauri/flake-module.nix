@@ -322,6 +322,21 @@
 
 
           sleep $BLOCK_SECONDS
+          FORCE_PICA_FROM_CENTAURI_TO_OSMOSIS=$(cat << EOF
+          {
+            "config": {
+              "force_asset_to_network_map": {
+                "this_asset": "158456325028528675187087900673",
+                "other_network": 3,
+                "other_asset": "237684487542793012780631851009"          
+              }
+            }
+          }                               
+          EOF
+          )
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_FROM_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+          sleep $BLOCK_SECONDS
           FORCE_UATOM=$(cat << EOF
             {
               "config": {
@@ -372,7 +387,7 @@
                   "salt": "737061776e5f776974685f6173736574",
                   "assets": [
                     [
-                    "237684487542793012780631851009",
+                    "158456325028528675187087900673",
                     {
                       "amount": {
                       "intercept": "1000000000",
@@ -402,6 +417,9 @@
             }                                 
           EOF
           )                  
+
+          # check route
+          "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
 
           "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           sleep "$BLOCK_SECONDS"
@@ -507,7 +525,7 @@
             PORT=26657
             FEE=ppica 
             BINARY=centaurid
-            GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
+            GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)
             MSG=$1
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';

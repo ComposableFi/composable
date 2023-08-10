@@ -1,7 +1,7 @@
 use cosmwasm_std::{IbcOrder, Response, StdError};
 use ibc_rs_scale::core::ics24_host::identifier::IdentifierError;
 use thiserror::Error;
-use xc_core::proto::DecodingFailure;
+use xc_core::{proto::DecodingFailure, AssetId, NetworkId};
 
 pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
 
@@ -61,6 +61,17 @@ pub enum ContractError {
 	NotImplemented,
 	#[error("{0}")]
 	IbcIdentifier(IdentifierError),
+	#[error("Network config")]
+	NetworkConfig,
+	#[error("Unknown target network")]
+	UnknownTargetNetwork,
+	#[error("No connection information from this to other network")]
+	NoConnectionInformationFromThisToOtherNetwork,
+
+	#[error("Asset {0} not found by id")]
+	AssetNotFoundById(AssetId),
+	#[error("Asset {0} cannot be transferred to network {1}")]
+	AssetCannotBeTransferredToNetwork(AssetId, NetworkId),
 }
 
 impl From<bech32_no_std::Error> for ContractError {
