@@ -26,19 +26,12 @@ pub(crate) fn force_instantiate(
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
 		GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 	};
+	let salt = salt.map_or(<_>::default(), |x| x.into_bytes());
 
 	let call_origin = CallOrigin::Local { user: user_origin };
-	let interpreter_origin = InterpreterOrigin {
-		user_origin: call_origin.user(config.network_id),
-		salt: salt.clone().map(|x| x.into_bytes()).unwrap_or_default(),
-	};
-	let msg = instantiate(
-		deps.as_ref(),
-		gateway,
-		interpreter_code_id,
-		&interpreter_origin,
-		salt.map(|x| x.into_bytes()).unwrap_or_default(),
-	)?;
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt: salt.clone() };
+	let msg = instantiate(deps.as_ref(), gateway, interpreter_code_id, &interpreter_origin, salt)?;
 	Ok(Response::new().add_submessage(msg).add_event(make_event("interpreter.forced")))
 }
 

@@ -85,37 +85,29 @@
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           KEY=${cosmosTools.xcvm.centauri}
           PORT=26657
-          NODE="tcp://localhost:$PORT"
+          BLOCK_SECONDS=5
           FEE=ppica 
           NETWORK_ID=2
           BINARY=centaurid
-          BLOCK_TIME=5
 
           function init_xcvm() {
-              SEQUENCE=$("$BINARY" query account $KEY --chain-id "$CHAIN_ID" --node "$NODE" --home "$CHAIN_DATA" | jq '.sequence' --raw-output)
               local INSTANTIATE=$1
-              SEQUENCE=$((SEQUENCE+1))
-              echo $SEQUENCE
-              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --sequence $SEQUENCE  
+              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
-              SEQUENCE=$((SEQUENCE+1))
-              echo $SEQUENCE
-              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --sequence $SEQUENCE
+              sleep $BLOCK_SECONDS
+              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
-              SEQUENCE=$((SEQUENCE+1))
-              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --sequence $SEQUENCE
+              sleep $BLOCK_SECONDS
+              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
-              SEQUENCE=$((SEQUENCE+1))
-              echo $SEQUENCE
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --sequence $SEQUENCE
+              sleep $BLOCK_SECONDS
+             
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY"
 
-              sleep $BLOCK_TIME
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
-              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"      
-              echo "==================================================================="  
-              echo "$GATEWAY_CONTRACT_ADDRESS"  
-              echo "==================================================================="  
+              sleep $BLOCK_SECONDS
+              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
+              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"        
               echo "2" > "$CHAIN_DATA/interpreter_code_id"  
           }
 
@@ -138,19 +130,17 @@
 
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
-          BLOCK_TIME=5
+
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           KEY=${cosmosTools.xcvm.centauri}
           PORT=26657
-          FEE=ppica
-          NODE="tcp://localhost:$PORT"
+          BLOCK_SECONDS=5
+          FEE=ppica 
           BINARY=centaurid
           GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
           INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
 
-          SEQUENCE=$("$BINARY" query account  $KEY --chain-id "$CHAIN_ID" --node "$NODE" --home "$CHAIN_DATA" | jq '.sequence' --raw-output)
-              
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
             {
               "config": {
@@ -184,10 +174,9 @@
             }                                   
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE            
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
 
-          SEQUENCE=$((SEQUENCE+1))
+          sleep $BLOCK_SECONDS
           FORCE_NETWORK_CENTAURI=$(cat << EOF
             {
               "config": {
@@ -221,10 +210,10 @@
             }                                   
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE   
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
 
 
+          sleep $BLOCK_SECONDS
           FORCE_CENTAURI_TO_OSMOSIS=$(cat << EOF
             {
               "config": {
@@ -246,9 +235,9 @@
             }                                 
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
+          sleep $BLOCK_SECONDS
           FORCE_PICA=$(cat << EOF
           {
             "config": {
@@ -273,10 +262,10 @@
           }                               
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
+          sleep $BLOCK_SECONDS
           FORCE_PICA_ON_CENTAURI=$(cat << EOF
           {
             "config": {
@@ -301,10 +290,10 @@
           }                               
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
+          sleep $BLOCK_SECONDS
           FORCE_PICA_ON_OSMOSIS=$(cat << EOF
           {
             "config": {
@@ -327,12 +316,12 @@
               }
             }
           }                               
-          SEQUENCE=$((SEQUENCE+1))
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
+          sleep $BLOCK_SECONDS
           FORCE_UATOM=$(cat << EOF
             {
               "config": {
@@ -349,9 +338,8 @@
             }                                 
           EOF
           )
-          SEQUENCE=$((SEQUENCE+1))
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace --sequence $SEQUENCE
-          sleep $BLOCK_TIME
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          sleep $BLOCK_SECONDS
           "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
         '';
       };
@@ -366,6 +354,7 @@
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           FEE=ppica
+          BLOCK_SECONDS=5
           BINARY=centaurid
           GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
@@ -415,6 +404,7 @@
           )                  
 
           "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          sleep "$BLOCK_SECONDS"
         '';
       };
 
@@ -519,7 +509,6 @@
             BINARY=centaurid
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
             MSG=$1
-
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };

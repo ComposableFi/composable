@@ -156,7 +156,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	let interpreter =
 		state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin.clone()).ok();
 	if let Some(state::interpreter::Interpreter { address, .. }) = interpreter {
-		deps.api.debug("reusing existing interpreter and adding funds");
+		deps.api.debug("xcvm:: reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
@@ -216,11 +216,8 @@ fn send_funds_to_interpreter(
 ) -> Result {
 	let mut response = Response::new();
 	let interpreter_address = interpreter_address.into_string();
-	for (asset_id, Displayed(amount)) in funds.0 {
-		// We ignore zero amounts
-		if amount == 0 {
-			continue
-		}
+	for (asset_id, Displayed(amount)) in funds.0.into_iter().filter(|(_, Displayed(amount))| *amount > 0) {
+		deps.api.debug("xcvm::gateway:: sending funds");
 
 		let msg = match assets::get_asset_by_id(deps, asset_id)?.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {
