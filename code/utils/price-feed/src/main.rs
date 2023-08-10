@@ -17,7 +17,7 @@ use crate::{
 	backend::{Backend, FeedNotificationAction},
 	cache::ThreadSafePriceCache,
 	feed::{
-		binance::BinanceFeed, composable::ComposableFeed, Exponent, FeedIdentifier,
+		binance::BinanceFeed, Exponent, FeedIdentifier,
 		FeedNotification, TimeStampedPrice,
 	},
 	frontend::Frontend,
@@ -32,7 +32,6 @@ use futures::{
 };
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::{Signals, SignalsInfo};
-use tokio::sync::watch;
 
 use std::{
 	collections::HashMap,
@@ -53,7 +52,6 @@ async fn main() {
 
 	// watch instead of oneshot to allow for multiple feeds to listen at once, instead of creating
 	// multiple channels
-	let (feed_shutdown_sender, feed_shutdown_receiver) = watch::channel(false);
 
 	// used for binance feed
 	// TODO(benluelo): Use the AtomicBool internally in the binance feed but use the watch channel
@@ -72,18 +70,6 @@ async fn main() {
 	})
 	.unwrap();
 
-	let composable = ComposableFeed::start(
-		feed_shutdown_receiver,
-		opts.composable_node,
-		&[(Asset::PICA, Asset::USDC)].into_iter().collect(),
-	)
-	.await
-	.map_err(|e| {
-		log::error!("{:?}", e);
-		std::process::exit(1);
-	})
-	.unwrap();
-
 	/* NOTE(hussein-aitlahcen):
 		 Introducing a new feed is a matter of merge it with the existing ones.
 		 A feed is a tuple of both a stream of notification along with joinable handle.
@@ -93,7 +79,7 @@ async fn main() {
 		 ... merge(vec![..., new_feed])
 	*/
 	let (feeds_handle, feeds_source) = {
-		let (handles, sources) = [binance, composable].into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
+		let (handles, sources) = [binance].into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
 		(join_all(handles), futures::stream::select_all(sources))
 	};
 
@@ -127,8 +113,6 @@ async fn main() {
 
 	log::info!("backend terminated, notifying feeds of termination");
 	keep_running.store(false, Ordering::SeqCst);
-
-	feed_shutdown_sender.send(true).unwrap();
 
 	log::info!("waiting for feeds to terminate");
 	let _ = feeds_handle.await;
