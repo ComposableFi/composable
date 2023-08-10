@@ -163,7 +163,8 @@ pub enum ConfigSubMsg {
 	ForceRemoveAsset { asset_id: AssetId },
 
 	/// instantiates default interpreter on behalf of user
-	ForceInstantiate { user_origin: Addr },
+	/// `salt` - human string, converted to hex or base64 depending on implementation
+	ForceInstantiate { user_origin: Addr, salt: Option<String> },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

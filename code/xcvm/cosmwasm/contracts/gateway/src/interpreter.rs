@@ -20,6 +20,7 @@ pub(crate) fn force_instantiate(
 	gateway: Addr,
 	deps: DepsMut,
 	user_origin: Addr,
+	salt: Option<String>,
 ) -> Result {
 	let config = load_this(deps.storage)?;
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
@@ -29,9 +30,15 @@ pub(crate) fn force_instantiate(
 	let call_origin = CallOrigin::Local { user: user_origin };
 	let interpreter_origin = InterpreterOrigin {
 		user_origin: call_origin.user(config.network_id),
-		salt: b"default".to_vec(),
+		salt: salt.clone().map(|x| x.into_bytes()).unwrap_or_default(),
 	};
-	let msg = instantiate(deps.as_ref(), gateway, interpreter_code_id, &interpreter_origin)?;
+	let msg = instantiate(
+		deps.as_ref(),
+		gateway,
+		interpreter_code_id,
+		&interpreter_origin,
+		salt.map(|x| x.into_bytes()).unwrap_or_default(),
+	)?;
 	Ok(Response::new().add_submessage(msg).add_event(make_event("interpreter.forced")))
 }
 
@@ -40,13 +47,11 @@ pub fn instantiate(
 	admin: Addr,
 	interpreter_code_id: u64,
 	interpreter_origin: &InterpreterOrigin,
+	salt: Vec<u8>,
 ) -> Result<SubMsg, ContractError> {
 	let next_interpreter_id: u128 =
 		state::interpreter::INTERPRETERS_COUNT.load(deps.storage).unwrap_or_default() + 1;
 
-	// salt limit is 64 characters
-	// and label has some unknown limits too (including usage of special characters)
-	let label = ["xcvm_interpreter", &next_interpreter_id.to_string()].join("_");
 	let instantiate_msg = WasmMsg::Instantiate2 {
 		admin: Some(admin.clone().into_string()),
 		code_id: interpreter_code_id,
@@ -55,8 +60,10 @@ pub fn instantiate(
 			interpreter_origin: interpreter_origin.clone(),
 		})?,
 		funds: vec![],
-		label,
-		salt: to_binary("default")?,
+		// and label has some unknown limits  (including usage of special characters)
+		label: format!("xcvm_interpreter_{}", &next_interpreter_id),
+		// salt limit is 64 characters
+		salt: to_binary(&salt)?,
 	};
 	let interpreter_instantiate_submessage =
 		SubMsg::reply_on_success(instantiate_msg, INSTANTIATE_INTERPRETER_REPLY_ID);

@@ -60,8 +60,8 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: E
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
-		ConfigSubMsg::ForceInstantiate { user_origin } =>
-			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin),
+		ConfigSubMsg::ForceInstantiate { user_origin, salt } =>
+			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin, salt),
 	}
 }
 
@@ -153,7 +153,7 @@ pub(crate) fn handle_execute_program_privilleged(
 ) -> Result {
 	let config = load_this(deps.storage)?;
 	let interpreter_origin =
-		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt };
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt: salt.clone() };
 	let interpreter =
 		state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin.clone()).ok();
 	if let Some(state::interpreter::Interpreter { address, .. }) = interpreter {
@@ -183,6 +183,7 @@ pub(crate) fn handle_execute_program_privilleged(
 			admin,
 			interpreter_code_id,
 			&interpreter_origin,
+			salt,
 		)?;
 
 		// Secondly, call itself again with the same parameters, so that this functions goes
