@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use xcm::latest::prelude::*;
 
-	use composable_traits::xcm::memo::ChainInfo;
+	use composable_traits::{prelude::ToString, xcm::memo::ChainInfo};
 	use sp_std::boxed::Box;
 
 	use frame_support::BoundedVec;
