@@ -26,19 +26,12 @@ pub(crate) fn force_instantiate(
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
 		GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 	};
+	let salt = salt.map_or(<_>::default(), |x| x.into_bytes());
 
 	let call_origin = CallOrigin::Local { user: user_origin };
-	let interpreter_origin = InterpreterOrigin {
-		user_origin: call_origin.user(config.network_id),
-		salt: salt.clone().map(|x| x.into_bytes()).unwrap_or_default(),
-	};
-	let msg = instantiate(
-		deps.as_ref(),
-		gateway,
-		interpreter_code_id,
-		&interpreter_origin,
-		salt.map(|x| x.into_bytes()).unwrap_or_default(),
-	)?;
+	let interpreter_origin =
+		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt: salt.clone() };
+	let msg = instantiate(deps.as_ref(), gateway, interpreter_code_id, &interpreter_origin, salt)?;
 	Ok(Response::new().add_submessage(msg).add_event(make_event("interpreter.forced")))
 }
 
@@ -56,7 +49,7 @@ pub fn instantiate(
 		admin: Some(admin.clone().into_string()),
 		code_id: interpreter_code_id,
 		msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
-			gateway_address: admin.clone().into_string(),
+			gateway_address: admin.into_string(),
 			interpreter_origin: interpreter_origin.clone(),
 		})?,
 		funds: vec![],
@@ -100,7 +93,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.ok_or_else(|| StdError::not_found("interpreter event not found"))?
 		.attributes
 		.iter()
-		.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
+		.find(|attr| attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
 		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 		.value;
 	let interpreter_origin =

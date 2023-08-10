@@ -35,7 +35,7 @@ pub enum SudoMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
-pub struct IbcRoute {
+pub struct IbcIcs20Route {
 	pub from_network: NetworkId,
 	pub local_native_denom: String,
 	pub channel_to_send_over: ChannelId,
@@ -46,7 +46,11 @@ pub struct IbcRoute {
 	pub on_remote_asset: AssetId,
 }
 
-pub fn to_cw_message<T>(coin: Coin, route: IbcRoute, packet: XcPacket) -> StdResult<CosmosMsg<T>> {
+pub fn to_cw_message<T>(
+	coin: Coin,
+	route: IbcIcs20Route,
+	packet: XcPacket,
+) -> StdResult<CosmosMsg<T>> {
 	let memo = XcMessageData { from_network_id: route.from_network, packet };
 	let memo = SendMemo {
 		inner: Memo {

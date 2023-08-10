@@ -139,6 +139,7 @@ pub fn handle_execute_step(
 	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
+		deps.api.debug(&format!("xcvm::interpreter:: executing {:?}", &instruction));
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, &tip, to, assets),

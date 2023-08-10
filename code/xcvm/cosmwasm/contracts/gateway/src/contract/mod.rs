@@ -1,17 +1,15 @@
 pub mod execute;
 pub mod ibc;
+pub mod query;
 pub mod sudo;
 
 use crate::{
-	assets,
 	error::{ContractError, Result},
 	events::make_event,
 	msg, state,
 };
 
-use cosmwasm_std::{
-	to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsgResult,
-};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Reply, Response, SubMsgResult};
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
 use xc_core::XCVMAck;
@@ -45,16 +43,6 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> Result {
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> Result<Binary> {
-	match msg {
-		msg::QueryMsg::GetAssetById { asset_id } => assets::get_asset_by_id(deps, asset_id),
-		msg::QueryMsg::GetLocalAssetByReference { reference } =>
-			assets::get_local_asset_by_reference(deps, reference),
-	}
-	.and_then(|asset| Ok(to_binary(&msg::GetAssetResponse { asset })?))
-}
-
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response> {
 	match msg.id {
 		EXEC_PROGRAM_REPLY_ID => handle_exec_reply(msg),
@@ -68,7 +56,7 @@ fn handle_exec_reply(msg: Reply) -> Result {
 	let (data, event) = match msg.result {
 		SubMsgResult::Ok(_) =>
 			(XCVMAck::Ok, make_event("receive").add_attribute("result", "success")),
-		SubMsgResult::Err(err) => (XCVMAck::Fail, make_ibc_failure_event(err.to_string())),
+		SubMsgResult::Err(err) => (XCVMAck::Fail, make_ibc_failure_event(err)),
 	};
 	Ok(Response::default().add_event(event).set_data(data))
 }

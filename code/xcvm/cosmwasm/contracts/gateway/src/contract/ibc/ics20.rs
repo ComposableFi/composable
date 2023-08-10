@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
 	shared::{XcPacket, XcProgram},
-	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
+	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
 	AssetId, CallOrigin,
 };
 
@@ -28,7 +28,10 @@ pub(crate) fn handle_bridge_forward(
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
 ) -> Result {
-	deps.api.debug(&serde_json_wasm::to_string(&msg)?);
+	deps.api.debug(&format!(
+		"xcvm::gateway:: forwarding over IBC ICS20 MEMO {}",
+		&serde_json_wasm::to_string(&msg)?
+	));
 	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
 	// algorithm to handle for multihop
 	// 1. recurse on program until can with memo
@@ -45,7 +48,10 @@ pub(crate) fn handle_bridge_forward(
 	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
 
 	let route = get_route(deps.storage, msg.to, *local_asset)?;
-	deps.api.debug(&serde_json_wasm::to_string(&route)?);
+	deps.api.debug(&format!(
+		"xcvm::gateway::ibc::ics20 route {}",
+		&serde_json_wasm::to_string(&route)?
+	));
 	let mut event = make_event("bridge")
 		.add_attribute("to_network_id", msg.to.to_string())
 		.add_attribute(
@@ -65,8 +71,11 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	deps.api.debug(&route.channel_to_send_over.to_string());
 	let msg = to_cw_message(coin, route, packet)?;
+	deps.api.debug(&format!(
+		"xcvm::gateway::ibc::ics20:: payload {}",
+		&serde_json_wasm::to_string(&msg)?
+	));
 
 	Ok(Response::default().add_event(event).add_message(msg))
 }
@@ -75,10 +84,10 @@ pub(crate) fn handle_bridge_forward(
 /// find channels, target denomination and gateway on other network
 /// so can form and sent ICS20 PFM Wasm terminated packet
 pub fn get_route(
-	storage: &mut dyn Storage,
+	storage: &dyn Storage,
 	to: xc_core::NetworkId,
 	asset_id: AssetId,
-) -> Result<IbcRoute, ContractError> {
+) -> Result<IbcIcs20Route, ContractError> {
 	let this = load_this(storage)?;
 	let other: NetworkItem = state::NETWORK.load(storage, to)?;
 	let this_to_other: OtherNetworkItem =
@@ -96,7 +105,7 @@ pub fn get_route(
 
 	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
-	Ok(IbcRoute {
+	Ok(IbcIcs20Route {
 		from_network: this.network_id,
 		local_native_denom: asset.local.denom(),
 		channel_to_send_over: channel,
@@ -122,7 +131,6 @@ pub(crate) fn ics20_message_hook(
 	info: MessageInfo,
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = msg.packet;
-
 	ensure_anonymous(&packet.program)?;
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 	let execute_program =
