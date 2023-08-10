@@ -15,6 +15,14 @@
           osmosis = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
         };
 
+        xcvm = {
+          mnemonic =
+            "apart ahead month tennis merge canvas possible cannon lady reward traffic city hamster monitor lesson nasty midnight sniff enough spatial rare multiply keep task";
+          centauri = "centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd";
+          key = "A03mRJjzKKa8+4INiSDSdIzaMuA1nhbNs/B0fOVLlYNI";
+          moniker = "xcvm";
+          osmosis = "osmo1qq0k7d56juu7h49arelzgw09jccdk8su7jx0qv";
+        };
       };
     };
 }

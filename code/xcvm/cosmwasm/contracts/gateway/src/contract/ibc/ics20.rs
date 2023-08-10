@@ -8,7 +8,6 @@ use cosmwasm_std::{
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
-	proto::decode_packet,
 	shared::{XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
 	AssetId, CallOrigin,
@@ -29,6 +28,7 @@ pub(crate) fn handle_bridge_forward(
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
 ) -> Result {
+	deps.api.debug(&serde_json_wasm::to_string(&msg)?);
 	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
 	// algorithm to handle for multihop
 	// 1. recurse on program until can with memo
@@ -45,7 +45,7 @@ pub(crate) fn handle_bridge_forward(
 	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
 
 	let route = get_route(deps.storage, msg.to, *local_asset)?;
-
+	deps.api.debug(&serde_json_wasm::to_string(&route)?);
 	let mut event = make_event("bridge")
 		.add_attribute("to_network_id", msg.to.to_string())
 		.add_attribute(
@@ -121,7 +121,7 @@ pub(crate) fn ics20_message_hook(
 	env: Env,
 	info: MessageInfo,
 ) -> Result<Response, ContractError> {
-	let packet: XcPacket = decode_packet(&msg.data).map_err(ContractError::Protobuf)?;
+	let packet: XcPacket = msg.packet;
 
 	ensure_anonymous(&packet.program)?;
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };

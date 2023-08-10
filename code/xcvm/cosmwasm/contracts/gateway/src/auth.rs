@@ -70,9 +70,9 @@ impl Auth<policy::Interpreter> {
 		info: &MessageInfo,
 		interpreter_origin: xc_core::InterpreterOrigin,
 	) -> Result<Self> {
-		let interpreter_address = state::interpreter::INTERPRETERS
-			.may_load(deps.storage, interpreter_origin)?
-			.map(|int| int.address);
+		let interpreter_address = state::interpreter::get_by_origin(deps, interpreter_origin)
+			.map(|int| int.address)
+			.ok();
 		Self::new(Some(&info.sender) == interpreter_address.as_ref())
 	}
 }

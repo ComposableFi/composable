@@ -8,6 +8,7 @@ pub mod auth;
 pub mod contract;
 pub mod error;
 mod events;
+pub mod interpreter;
 mod network;
 mod prelude;
 pub mod state;
