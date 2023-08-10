@@ -1,15 +1,8 @@
 use crate::prelude::*;
 
-use crate::{
-	assets,
-	error::{ContractError, Result},
-	events::make_event,
-	msg, state,
-};
+use crate::{assets, error::Result, msg};
 
-use cosmwasm_std::{
-	Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, SubMsgResult,
-};
+use cosmwasm_std::{Binary, Deps, Env};
 
 use super::ibc::ics20::get_route;
 
@@ -22,7 +15,7 @@ pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> Result<Binary> {
 			assets::get_local_asset_by_reference(deps, reference)
 				.and_then(|asset| Ok(to_binary(&msg::GetAssetResponse { asset })?)),
 		msg::QueryMsg::GetIbcIcs20Route { to_network, for_asset } =>
-			get_route(deps.api, deps.storage, to_network, for_asset)
+			get_route(deps.storage, to_network, for_asset)
 				.and_then(|route| Ok(to_binary(&msg::GetIbcIcs20RouteResponse { route })?)),
 	}
 }

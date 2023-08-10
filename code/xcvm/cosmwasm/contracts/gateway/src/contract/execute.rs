@@ -216,7 +216,9 @@ fn send_funds_to_interpreter(
 ) -> Result {
 	let mut response = Response::new();
 	let interpreter_address = interpreter_address.into_string();
-	for (asset_id, Displayed(amount)) in funds.0.into_iter().filter(|(_, Displayed(amount))| *amount > 0) {
+	for (asset_id, Displayed(amount)) in
+		funds.0.into_iter().filter(|(_, Displayed(amount))| *amount > 0)
+	{
 		deps.api.debug("xcvm::gateway:: sending funds");
 
 		let msg = match assets::get_asset_by_id(deps, asset_id)?.local {

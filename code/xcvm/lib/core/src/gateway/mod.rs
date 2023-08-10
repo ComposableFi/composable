@@ -116,9 +116,8 @@ pub enum QueryMsg {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct GetIbcIcs20RouteResponse {
-	pub route: crate::transport::ibc::IbcIcs20Route,	
+	pub route: crate::transport::ibc::IbcIcs20Route,
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]

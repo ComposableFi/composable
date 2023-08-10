@@ -49,7 +49,7 @@ pub fn instantiate(
 		admin: Some(admin.clone().into_string()),
 		code_id: interpreter_code_id,
 		msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
-			gateway_address: admin.clone().into_string(),
+			gateway_address: admin.into_string(),
 			interpreter_origin: interpreter_origin.clone(),
 		})?,
 		funds: vec![],
@@ -93,7 +93,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.ok_or_else(|| StdError::not_found("interpreter event not found"))?
 		.attributes
 		.iter()
-		.find(|attr| &attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
+		.find(|attr| attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
 		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 		.value;
 	let interpreter_origin =

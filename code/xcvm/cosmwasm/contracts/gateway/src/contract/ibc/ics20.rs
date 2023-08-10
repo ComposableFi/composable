@@ -4,7 +4,7 @@
 //! handles PFM and IBC wasm hooks
 use crate::prelude::*;
 use cosmwasm_std::{
-	ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage, SubMsg, Api,
+	ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage, SubMsg,
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
@@ -47,7 +47,7 @@ pub(crate) fn handle_bridge_forward(
 
 	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
 
-	let route = get_route(deps.api, deps.storage, msg.to, *local_asset)?;
+	let route = get_route(deps.storage, msg.to, *local_asset)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20 route {}",
 		&serde_json_wasm::to_string(&route)?
@@ -84,7 +84,6 @@ pub(crate) fn handle_bridge_forward(
 /// find channels, target denomination and gateway on other network
 /// so can form and sent ICS20 PFM Wasm terminated packet
 pub fn get_route(
-	api : &dyn Api,
 	storage: &dyn Storage,
 	to: xc_core::NetworkId,
 	asset_id: AssetId,
