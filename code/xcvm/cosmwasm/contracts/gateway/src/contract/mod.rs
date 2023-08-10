@@ -1,6 +1,7 @@
 pub mod execute;
 pub mod ibc;
 pub mod sudo;
+pub mod query;
 
 use crate::{
 	assets,
@@ -42,16 +43,6 @@ pub fn instantiate(
 pub fn migrate(deps: DepsMut, _env: Env, _msg: msg::MigrateMsg) -> Result {
 	let _ = ensure_from_older_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 	Ok(Response::default())
-}
-
-#[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> Result<Binary> {
-	match msg {
-		msg::QueryMsg::GetAssetById { asset_id } => assets::get_asset_by_id(deps, asset_id),
-		msg::QueryMsg::GetLocalAssetByReference { reference } =>
-			assets::get_local_asset_by_reference(deps, reference),
-	}
-	.and_then(|asset| Ok(to_binary(&msg::GetAssetResponse { asset })?))
 }
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]

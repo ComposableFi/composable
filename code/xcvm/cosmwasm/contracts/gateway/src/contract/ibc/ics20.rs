@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
 	shared::{XcPacket, XcProgram},
-	transport::ibc::{to_cw_message, IbcRoute, XcMessageData},
+	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
 	AssetId, CallOrigin,
 };
 
@@ -88,7 +88,7 @@ pub fn get_route(
 	storage: &dyn Storage,
 	to: xc_core::NetworkId,
 	asset_id: AssetId,
-) -> Result<IbcRoute, ContractError> {
+) -> Result<IbcIcs20Route, ContractError> {
 	let this = load_this(storage)?;
 	let other: NetworkItem = state::NETWORK.load(storage, to)?;
 	let this_to_other: OtherNetworkItem =
@@ -106,7 +106,7 @@ pub fn get_route(
 
 	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
-	Ok(IbcRoute {
+	Ok(IbcIcs20Route {
 		from_network: this.network_id,
 		local_native_denom: asset.local.denom(),
 		channel_to_send_over: channel,
