@@ -129,17 +129,22 @@
           ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
 
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
+          HOME=${devnet-root-directory}
+          export HOME
+          KEY=${cosmosTools.xcvm.centauri}
+          
+          CHAIN_DATA="$HOME/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          KEY=${cosmosTools.xcvm.centauri}
           PORT=26657
           BLOCK_SECONDS=5
           FEE=ppica 
           BINARY=centaurid
+
           GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
           INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
+          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")  
 
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
             {
@@ -151,7 +156,7 @@
                     },
                     "gateway": {
                         "cosm_wasm": {
-                          "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                          "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
                           "interpreter_code_id": $INTERPRETER_CODE_ID,
                           "admin": "$KEY"
                         }
@@ -222,7 +227,7 @@
                     "to": 3,
                     "other": {
                         "counterparty_timeout": {
-                          "timestamp": "60"
+                          "timestamp": 60000000000
                         },
                         "ics_20": {
                           "source" : "channel-0", 
@@ -462,10 +467,14 @@
             jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
             jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
 
-            jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
-            jq-genesis '.app_state.transmiddleware.token_infos[0].channel_id |= "channel-0"'  
-            jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
-            jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
+           function pica() {
+              jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
+              jq-genesis '.app_state.transmiddleware.token_infos[0].channel_id |= "channel-0"'  
+              jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
+              jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
+           }
+           # disabled until https://github.com/notional-labs/composable-centauri/issues/219
+           # pica
 
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"            

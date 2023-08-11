@@ -217,6 +217,7 @@
             BINARY=osmosisd
 
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
             INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
 
             FORCE_NETWORK_OSMOSIS=$(cat << EOF
@@ -265,7 +266,7 @@
                       },
                       "gateway": {
                           "cosm_wasm": {
-                            "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                            "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
                             "interpreter_code_id": $INTERPRETER_CODE_ID,
                             "admin": "$KEY"
                           }
@@ -300,7 +301,7 @@
                       "to": 3,
                       "other": {
                           "counterparty_timeout": {
-                            "timestamp": "60"
+                            "timestamp": 60000000000
                           },
                           "ics_20": {
                             "source" : "channel-0", 
