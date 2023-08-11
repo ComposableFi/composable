@@ -4,6 +4,7 @@ pub use alloc::{
 	string::{String, ToString},
 	vec,
 	vec::Vec,
+	format,
 };
 pub use core::{fmt::Display, str::FromStr};
 pub use cosmwasm_std::{Addr, Binary, Coin, HexBinary, Uint128};

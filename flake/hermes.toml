@@ -35,7 +35,7 @@ rpc_timeout = '20s'
 account_prefix = 'centauri'
 key_name = 'centauri-dev'
 store_prefix = 'ibc'
-default_gas = 1000000
+default_gas = 10000000
 max_gas = 400000000
 gas_price = { price = 0.001, denom = 'ppica' }
 gas_multiplier = 1.1
@@ -59,8 +59,8 @@ account_prefix = 'osmo'
 key_name = 'osmosis-dev'
 store_prefix = 'ibc'
 key_store_type = 'Test'
-default_gas = 100000
-max_gas = 400000
+default_gas = 10000000
+max_gas = 400000000
 gas_price = { price = 0.01, denom = 'uosmo' }
 gas_multiplier = 1.1
 max_msg_num = 30

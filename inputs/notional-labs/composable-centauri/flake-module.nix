@@ -227,7 +227,10 @@
                     "to": 3,
                     "other": {
                         "counterparty_timeout": {
-                          "timestamp": "30000000000"
+                          "block" : {
+                            "height": 100,
+                            "revision": 0
+                          }
                         },
                         "ics_20": {
                           "source" : "channel-0", 

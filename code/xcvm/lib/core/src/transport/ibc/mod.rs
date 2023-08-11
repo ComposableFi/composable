@@ -1,8 +1,8 @@
 pub mod ics20;
 pub mod picasso;
 
-use crate::{prelude::*, shared::XcPacket, AssetId, NetworkId};
-use cosmwasm_std::{to_binary, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg};
+use crate::{prelude::*, shared::XcPacket, AssetId, NetworkId, gateway};
+use cosmwasm_std::{to_binary, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg, Api};
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
@@ -47,23 +47,24 @@ pub struct IbcIcs20Route {
 }
 
 pub fn to_cw_message<T>(
+	api: &dyn Api,
 	coin: Coin,
 	route: IbcIcs20Route,
 	packet: XcPacket,
 ) -> StdResult<CosmosMsg<T>> {
-	let memo = XcMessageData { from_network_id: route.from_network, packet };
+	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData { from_network_id: route.from_network, packet });
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
 				contract: route.gateway_to_send_to.clone(),
-				msg: serde_cw_value::to_value(memo).expect("can always serde"),
+				msg: serde_cw_value::to_value(msg).expect("can always serde"),
 			}),
 			forward: None,
 		},
 		ibc_callback: None,
 	};
 	let memo = serde_json_wasm::to_string(&memo).expect("any memo can be to string");
-
+	api.debug(&format!("xcvm::ibc::ics20 callback {}", &memo));
 	match route.ibc_ics_20_sender {
 		IbcIcs20Sender::SubstratePrecompile(addr) => {
 			let transfer = picasso::IbcMsg::Transfer {
@@ -106,7 +107,7 @@ pub fn to_cw_message<T>(
 					.timestamp()
 					.map(|x| x.seconds())
 					.unwrap_or_default(),
-				memo,
+				memo : "".into(),
 			}
 			.encode_to_vec();
 			let value = Binary::from(value);

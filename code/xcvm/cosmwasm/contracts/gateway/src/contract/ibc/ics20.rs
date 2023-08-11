@@ -71,7 +71,7 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let msg = to_cw_message(coin, route, packet)?;
+	let msg = to_cw_message(deps.api, coin, route, packet)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20:: payload {}",
 		&serde_json_wasm::to_string(&msg)?

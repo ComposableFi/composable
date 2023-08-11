@@ -50,6 +50,6 @@ pub struct Callback {
 	// really Addr, but it does not have scale, I guess we need to impl `type XcAddr = SS58 |
 	// Bech32` with signer inside for serde
 	pub contract: Addr,
-	/// really serde_cw_value::Value, but it has not scale
+	/// Is a valid JSON object. The contract will be called with this as the message.
 	pub msg: serde_cw_value::Value,
 }

@@ -1,10 +1,20 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , cosmosTools, ... }:
+  perSystem =
+    { self'
+    , pkgs
+    , systemCommonRust
+    , subnix
+    , lib
+    , system
+    , devnetTools
+    , cosmosTools
+    , ...
+    }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
-    in {
+    in
+    {
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
           name = "osmosisd";
@@ -301,7 +311,10 @@
                       "to": 3,
                       "other": {
                           "counterparty_timeout": {
-                            "timestamp": "30000000000"
+                            "block" : {
+                              "height": 100,
+                              "revision": 0
+                            }
                           },
                           "ics_20": {
                             "source" : "channel-0", 
@@ -423,7 +436,7 @@
                                                   "158456325028528675187087901673",
                                                   {
                                                       "amount": {
-                                                          "intercept": "1000000000",
+                                                          "intercept": "123456789",
                                                           "slope": "0"
                                                       },
                                                       "is_unit": false
@@ -441,7 +454,7 @@
                           "assets": [
                               [
                                   "237684487542793012780631852009",
-                                  "1000000000"
+                                  "123456789"
                               ]
                           ]
                       },
