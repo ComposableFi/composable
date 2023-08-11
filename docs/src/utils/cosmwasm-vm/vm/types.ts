@@ -1,4 +1,4 @@
-import { Addr, CodeId, ContractMeta, Env, MessageInfo } from 'cw_vm_ts_sdk_001';
+import { Addr, CodeId, ContractMeta, Env, MessageInfo } from '@composable-finance/cosmwasm-vm';
 
 export type UUID = string;
 export interface VMHostShared {

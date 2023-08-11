@@ -1,5 +1,5 @@
 import { StorageId, useVmStore, vmStore } from '../../../utils/cosmwasm-vm/store/state';
-import { Result, VMStep } from 'cw_vm_ts_sdk_001';
+import { Result, VMStep } from '@composable-finance/cosmwasm-vm';
 import { getInitVmHostShared, VMHostShared } from '../../../utils/cosmwasm-vm/vm/types';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { loadRemoteContract } from '../../../utils/cosmwasm-vm/code/utils';

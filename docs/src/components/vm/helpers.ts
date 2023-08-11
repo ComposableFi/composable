@@ -1,5 +1,5 @@
 //	TODO : update to make other values editable
-import { Env } from 'cw_vm_ts_sdk_001';
+import { Env } from '@composable-finance/cosmwasm-vm';
 import { VMHostShared } from '../../utils/cosmwasm-vm/vm/types';
 
 export const getVmEnv = (accountId: string): Env => {
