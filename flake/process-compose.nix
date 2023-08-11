@@ -256,10 +256,10 @@
                 };
                 log_location = "/tmp/composable-devnet/osmosis.log";
               };
-              osmosis-init = {
+              osmosisd-xcvm-init = {
                 command = self'.packages.osmosisd-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/osmosis-init.log";
+                log_location = "/tmp/composable-devnet/osmosisd-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -463,10 +463,10 @@
                 };
                 log_location = "/tmp/composable-devnet/osmosis.log";
               };
-              osmosis-init = {
+              osmosisd-xcvm-init = {
                 command = self'.packages.osmosisd-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/osmosis-init.log";
+                log_location = "/tmp/composable-devnet/osmosisd-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
 
