@@ -159,12 +159,23 @@ pub enum ConfigSubMsg {
 	/// Permissioned message (gov or admin) to force set asset information.
 	ForceAsset(AssetItem),
 
+	ForceAssetToNetworkMap {
+		this_asset: AssetId,
+		other_network: NetworkId,
+		other_asset: AssetId,
+	},
+
 	/// Message sent by an admin to remove an asset from registry.
-	ForceRemoveAsset { asset_id: AssetId },
+	ForceRemoveAsset {
+		asset_id: AssetId,
+	},
 
 	/// instantiates default interpreter on behalf of user
 	/// `salt` - human string, converted to hex or base64 depending on implementation
-	ForceInstantiate { user_origin: Addr, salt: Option<String> },
+	ForceInstantiate {
+		user_origin: Addr,
+		salt: Option<String>,
+	},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

@@ -86,14 +86,21 @@ pub(crate) fn handle_bridge_forward(
 pub fn get_route(
 	storage: &dyn Storage,
 	to: xc_core::NetworkId,
-	asset_id: AssetId,
+	this_asset_id: AssetId,
 ) -> Result<IbcIcs20Route, ContractError> {
 	let this = load_this(storage)?;
-	let other: NetworkItem = state::NETWORK.load(storage, to)?;
-	let this_to_other: OtherNetworkItem =
-		state::NETWORK_TO_NETWORK.load(storage, (this.network_id, to))?;
-	let asset: AssetItem = state::assets::ASSETS.load(storage, asset_id)?;
-	let to_asset: AssetId = state::assets::NETWORK_ASSET.load(storage, (asset_id, to))?;
+	let other: NetworkItem = state::NETWORK
+		.load(storage, to)
+		.map_err(|_| ContractError::UnknownTargetNetwork)?;
+	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK
+		.load(storage, (this.network_id, to))
+		.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork)?;
+	let asset: AssetItem = state::assets::ASSETS
+		.load(storage, this_asset_id)
+		.map_err(|_| ContractError::AssetNotFoundById(this_asset_id))?;
+	let to_asset: AssetId = state::assets::NETWORK_ASSET
+		.load(storage, (this_asset_id, to))
+		.map_err(|_| ContractError::AssetCannotBeTransferredToNetwork(this_asset_id, to))?;
 	let gateway_to_send_to = other.gateway.ok_or(ContractError::UnsupportedNetwork)?;
 	let gateway_to_send_to = match gateway_to_send_to {
 		GatewayId::CosmWasm { contract, .. } => contract,
