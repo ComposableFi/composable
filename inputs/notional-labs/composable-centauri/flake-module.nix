@@ -133,7 +133,7 @@
           HOME=${devnet-root-directory}
           export HOME
           KEY=${cosmosTools.xcvm.centauri}
-          
+
           CHAIN_DATA="$HOME/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
@@ -227,7 +227,7 @@
                     "to": 3,
                     "other": {
                         "counterparty_timeout": {
-                          "timestamp": 60000000000
+                          "timestamp": "30000000000"
                         },
                         "ics_20": {
                           "source" : "channel-0", 
@@ -537,6 +537,21 @@
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)
             MSG=$1
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+          '';
+        };
+        centauri-tx = pkgs.writeShellApplication {
+          name = "centaurid-xcvm-config";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
+
+          text = ''
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"
+            CHAIN_ID="centauri-dev"
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"
+            PORT=26657
+            FEE=ppica 
+            BINARY=centaurid
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n 10000000000ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
       };

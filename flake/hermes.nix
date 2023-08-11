@@ -4,6 +4,7 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
+      log = "debug";
     in {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes;
@@ -11,6 +12,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-init";
           text = ''
+            RUST_LOG=${log}
             mkdir --parents "${devnet-root-directory}"            
             HOME=${devnet-root-directory}
             export HOME
@@ -24,7 +26,6 @@
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" > "$MNEMONIC_FILE"
             hermes keys add --chain centauri-dev --mnemonic-file "$MNEMONIC_FILE" --key-name centauri-dev --overwrite
             hermes keys add --chain osmosis-dev --mnemonic-file "$MNEMONIC_FILE" --key-name osmosis-dev --overwrite
-            RUST_LOG=info
             export RUST_LOG
             hermes create channel --a-chain centauri-dev --b-chain osmosis-dev --a-port transfer --b-port transfer --new-client-connection --yes
           '';
@@ -33,10 +34,10 @@
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
           text = ''
+            RUST_LOG=${log}
             mkdir --parents "${devnet-root-directory}"            
             HOME=${devnet-root-directory}
             export HOME
-            RUST_LOG=info
             export RUST_LOG
             hermes start
           '';

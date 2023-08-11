@@ -445,7 +445,6 @@
                 log_location = "/tmp/composable-devnet/centauri-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
-              
 
               centauri-xcvm-config = {
                 command = self'.packages.centaurid-xcvm-config;
