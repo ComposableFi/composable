@@ -450,10 +450,23 @@
                 command = self'.packages.centaurid-xcvm-config;
                 depends_on."centauri-xcvm-init".condition =
                   "process_completed_successfully";
+                depends_on."osmosis-xcvm-init".condition =
+                  "process_completed_successfully";                  
                 log_location =
                   "/tmp/composable-devnet/centauri-xcvm-config.log";
                 availability = { restart = "on_failure"; };
               };
+
+              osmosis-xcvm-config = {
+                command = self'.packages.centaurid-xcvm-config;
+                depends_on."centauri-xcvm-init".condition =
+                  "process_completed_successfully";
+                depends_on."osmosis-xcvm-init".condition =
+                  "process_completed_successfully";                  
+                log_location =
+                  "/tmp/composable-devnet/osmosis-xcvm-config.log";
+                availability = { restart = "on_failure"; };
+              };              
 
               osmosis = {
                 command = self'.packages.osmosisd-gen;
