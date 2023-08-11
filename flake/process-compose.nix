@@ -257,7 +257,7 @@
                 log_location = "/tmp/composable-devnet/osmosis.log";
               };
               osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-init;
+                command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
                 log_location = "/tmp/composable-devnet/osmosisd-xcvm-init.log";
                 availability = { restart = "on_failure"; };
@@ -451,22 +451,21 @@
                 depends_on."centauri-xcvm-init".condition =
                   "process_completed_successfully";
                 depends_on."osmosis-xcvm-init".condition =
-                  "process_completed_successfully";                  
+                  "process_completed_successfully";
                 log_location =
                   "/tmp/composable-devnet/centauri-xcvm-config.log";
                 availability = { restart = "on_failure"; };
               };
 
               osmosis-xcvm-config = {
-                command = self'.packages.centaurid-xcvm-config;
+                command = self'.packages.osmosis-xcvm-config;
                 depends_on."centauri-xcvm-init".condition =
                   "process_completed_successfully";
                 depends_on."osmosis-xcvm-init".condition =
-                  "process_completed_successfully";                  
-                log_location =
-                  "/tmp/composable-devnet/osmosis-xcvm-config.log";
+                  "process_completed_successfully";
+                log_location = "/tmp/composable-devnet/osmosis-xcvm-config.log";
                 availability = { restart = "on_failure"; };
-              };              
+              };
 
               osmosis = {
                 command = self'.packages.osmosisd-gen;
@@ -477,7 +476,7 @@
                 log_location = "/tmp/composable-devnet/osmosis.log";
               };
               osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-init;
+                command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
                 log_location = "/tmp/composable-devnet/osmosisd-xcvm-init.log";
                 availability = { restart = "on_failure"; };
