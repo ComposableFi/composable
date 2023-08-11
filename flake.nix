@@ -57,7 +57,7 @@
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/centauri/1687de03194ba073b14ea7344efe35f0a95017b8";
+        "github:ComposableFi/centauri/664429d7b929266549067a14a21cd74c27e3848b";
     };
   };
 

@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use xcm::latest::prelude::*;
 
-	use composable_traits::{prelude::ToString, xcm::memo::ChainInfo};
+	use composable_traits::xcm::memo::ChainInfo;
 	use sp_std::boxed::Box;
 
 	use frame_support::BoundedVec;
@@ -303,7 +303,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Pallet<T> {
+	impl<T> Pallet<T> {
 		/// Create memo from the route configuration using chain info, name and address
 		///
 		/// This function is called from deposit_asset XCM callback function in
@@ -356,16 +356,31 @@ pub mod pallet {
 							.into_iter()
 							.map(|byte| {
 								u5::try_from_u8(byte).map_err(|_| {
+									//write to log
+									frame_support::log::error!(
+										"Failed to convert u8 into u5: {:?}",
+										byte
+									);
 									DispatchError::Other("Failed to convert u8 into u5")
 								})
 							})
 							.collect::<Result<_, _>>()?;
 
-						let name = String::from_utf8(name).map_err(|_| {
+						let name = String::from_utf8(name.clone()).map_err(|_| {
+							//write to log
+							frame_support::log::error!(
+								"Failed to convert chain name from utf8: {:?}",
+								name
+							);
 							DispatchError::Other("Failed to convert chain name from utf8")
 						})?;
 						bech32_no_std::encode(&name, data.clone(), bech32_no_std::Variant::Bech32)
 							.map_err(|_| {
+							//write to log
+							frame_support::log::error!(
+								"Failed to convert chain name and address into bech32: {:?}",
+								data
+							);
 							DispatchError::Other(
 								"Failed to convert chain name and address into bech32",
 							)
@@ -376,7 +391,7 @@ pub mod pallet {
 						memo_receiver,
 						PortId::transfer(),
 						ChannelId::new(i.channel_id),
-						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?.to_string(),
+						i.timeout.ok_or(DispatchError::Other("Timeout is none"))?,
 						i.retries.ok_or(DispatchError::Other("Retries is none"))?,
 					)
 				};
