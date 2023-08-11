@@ -1,4 +1,4 @@
-import { Option } from 'cw_vm_ts_sdk_001';
+import { Option } from '@composable-finance/cosmwasm-vm';
 
 export interface SetupState {
 	loaded: boolean;
