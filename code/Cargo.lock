@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "composable"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "color-eyre",
  "composable-node",
@@ -1820,7 +1820,7 @@ dependencies = [
 
 [[package]]
 name = "composable-node"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
@@ -1913,7 +1913,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -1999,7 +1999,7 @@ dependencies = [
 
 [[package]]
 name = "composable-runtime-wasm"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "composable-runtime",
 ]
@@ -10516,7 +10516,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "assets-runtime-api",
  "common",
@@ -10618,7 +10618,7 @@ dependencies = [
 
 [[package]]
 name = "picasso-runtime-wasm"
-version = "8.10035.2"
+version = "9.10036.1"
 dependencies = [
  "picasso-runtime",
 ]
