@@ -8,6 +8,7 @@ assignees: ""
 
 In order to report CI issue:
 
+0. https://www.githubstatus.com/ is all green
 1. [] Rebase PR on latest `main` branch
 2. [] PR description formed according [pull request template]( ../pull_request_template.md)
 3. [] Retry to run failing jobs
