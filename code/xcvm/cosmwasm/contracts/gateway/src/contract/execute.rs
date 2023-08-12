@@ -37,14 +37,17 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
 
 			if !msg.msg.assets.0.is_empty() {
-				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg)
+				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg, env.block)
 			} else {
-				super::ibc::xcvm::handle_bridge_forward_no_assets(auth, deps, info, msg)
+				super::ibc::xcvm::handle_bridge_forward_no_assets(auth, deps, info, msg, env.block)
 			}
 		},
 		msg::ExecuteMsg::MessageHook(msg) => {
-			deps.api.debug(format!("xcvm::gateway::execute::message_hook {:?}", msg).as_str());
+			deps.api
+				.debug(format!("xcvm::gateway::execute::message_hook {:?}", msg).as_str());
 			let auth = auth::WasmHook::authorise(deps.storage, &env, &info, msg.from_network_id)?;
+			//
+			//
 			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
 		},
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),

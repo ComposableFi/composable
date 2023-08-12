@@ -103,7 +103,7 @@
 
               sleep $BLOCK_SECONDS
              
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY"
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
@@ -227,10 +227,7 @@
                     "to": 3,
                     "other": {
                         "counterparty_timeout": {
-                          "block" : {
-                            "height": 100,
-                            "revision": 0
-                          }
+                          "seconds" : 120
                         },
                         "ics_20": {
                           "source" : "channel-0", 
@@ -398,7 +395,7 @@
                     "158456325028528675187087900673",
                     {
                       "amount": {
-                      "intercept": "1000000000",
+                      "intercept": "1234567890",
                       "slope": "0"
                       },
                       "is_unit": false
@@ -416,7 +413,7 @@
               "assets": [
                 [
                 "158456325028528675187087900673",
-                "1000000000"
+                "1234567890"
                 ]
               ]
               },
@@ -429,7 +426,7 @@
           # check route
           "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
 
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           sleep "$BLOCK_SECONDS"
         '';
       };
@@ -554,7 +551,7 @@
             PORT=26657
             FEE=ppica 
             BINARY=centaurid
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n 10000000000ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --memo '{ "wasm" : { "contract" : "osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8" } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
       };

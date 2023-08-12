@@ -1,4 +1,4 @@
-use cosmwasm_std::IbcTimeout;
+use cosmwasm_std::{BlockInfo, IbcTimeout, Timestamp};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{
@@ -127,13 +127,30 @@ pub struct IcsPair {
 	pub sink: ChannelId,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub enum RelativeTimeout {
+	/// Timeout is relative to the current block timestamp of counter party
+	Seconds(u16),
+}
+
+impl RelativeTimeout {
+	pub fn absolute(&self, block: BlockInfo) -> IbcTimeout {
+		match self {
+			RelativeTimeout::Seconds(seconds) =>
+				IbcTimeout::with_timestamp(block.time.plus_seconds(*seconds as u64)),
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct OtherNetworkItem {
 	pub ics_20: Option<IcsPair>,
 	/// default timeout to use for direct send
-	pub counterparty_timeout: IbcTimeout,
+	pub counterparty_timeout: RelativeTimeout,
 	/// if there is custom IBC channel opened
 	pub xcvm_channel: Option<ChannelInfo>,
 }

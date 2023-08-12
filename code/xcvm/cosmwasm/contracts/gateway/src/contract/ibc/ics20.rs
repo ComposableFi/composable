@@ -4,7 +4,8 @@
 //! handles PFM and IBC wasm hooks
 use crate::prelude::*;
 use cosmwasm_std::{
-	ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage, SubMsg,
+	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, DepsMut, Env, MessageInfo, Response, Storage,
+	SubMsg,
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
@@ -27,6 +28,7 @@ pub(crate) fn handle_bridge_forward(
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
+	block: BlockInfo,
 ) -> Result {
 	deps.api.debug(&format!(
 		"xcvm::gateway:: forwarding over IBC ICS20 MEMO {}",
@@ -71,7 +73,7 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let msg = to_cw_message(deps.api, coin, route, packet)?;
+	let msg = to_cw_message(deps.api, coin, route, packet, block)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20:: payload {}",
 		&serde_json_wasm::to_string(&msg)?

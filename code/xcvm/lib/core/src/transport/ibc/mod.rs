@@ -1,8 +1,15 @@
 pub mod ics20;
 pub mod picasso;
 
-use crate::{prelude::*, shared::XcPacket, AssetId, NetworkId, gateway};
-use cosmwasm_std::{to_binary, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg, Api};
+use crate::{
+	gateway::{self, RelativeTimeout},
+	prelude::*,
+	shared::XcPacket,
+	AssetId, NetworkId,
+};
+use cosmwasm_std::{
+	to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg,
+};
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
@@ -41,7 +48,7 @@ pub struct IbcIcs20Route {
 	pub channel_to_send_over: ChannelId,
 	pub sender_gateway: Addr,
 	pub gateway_to_send_to: Addr,
-	pub counterparty_timeout: IbcTimeout,
+	pub counterparty_timeout: RelativeTimeout,
 	pub ibc_ics_20_sender: IbcIcs20Sender,
 	pub on_remote_asset: AssetId,
 }
@@ -51,8 +58,12 @@ pub fn to_cw_message<T>(
 	coin: Coin,
 	route: IbcIcs20Route,
 	packet: XcPacket,
+	block: BlockInfo,
 ) -> StdResult<CosmosMsg<T>> {
-	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData { from_network_id: route.from_network, packet });
+	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData {
+		from_network_id: route.from_network,
+		packet,
+	});
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
@@ -71,7 +82,7 @@ pub fn to_cw_message<T>(
 				channel_id: route.channel_to_send_over.clone(),
 				to_address: route.gateway_to_send_to,
 				amount: coin,
-				timeout: route.counterparty_timeout,
+				timeout: route.counterparty_timeout.absolute(block),
 				memo: Some(memo),
 			};
 			Ok(WasmMsg::Execute {
@@ -96,18 +107,19 @@ pub fn to_cw_message<T>(
 				token: Some(Coin { denom: coin.denom, amount: coin.amount.to_string() }),
 				sender: route.sender_gateway.to_string(),
 				receiver: route.gateway_to_send_to.to_string(),
-				timeout_height: route.counterparty_timeout.block().map(|x| {
-					ibc_proto::ibc::core::client::v1::Height {
+				timeout_height: route.counterparty_timeout.absolute(block.clone()).block().map(
+					|x| ibc_proto::ibc::core::client::v1::Height {
 						revision_height: x.height,
 						revision_number: x.revision,
-					}
-				}),
+					},
+				),
 				timeout_timestamp: route
 					.counterparty_timeout
+					.absolute(block)
 					.timestamp()
 					.map(|x| x.seconds())
 					.unwrap_or_default(),
-				memo : "".into(),
+				memo,
 			}
 			.encode_to_vec();
 			let value = Binary::from(value);

@@ -1,20 +1,10 @@
 { self, ... }: {
-  perSystem =
-    { self'
-    , pkgs
-    , systemCommonRust
-    , subnix
-    , lib
-    , system
-    , devnetTools
-    , cosmosTools
-    , ...
-    }:
+  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
+    , cosmosTools, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
-    in
-    {
+    in {
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
           name = "osmosisd";
@@ -312,7 +302,7 @@
                       "other": {
                           "counterparty_timeout": {
                             "block" : {
-                              "height": 100,
+                              "height": 100000,
                               "revision": 0
                             }
                           },
@@ -436,7 +426,7 @@
                                                   "158456325028528675187087901673",
                                                   {
                                                       "amount": {
-                                                          "intercept": "123456789",
+                                                          "intercept": "1234567890",
                                                           "slope": "0"
                                                       },
                                                       "is_unit": false
@@ -454,7 +444,7 @@
                           "assets": [
                               [
                                   "237684487542793012780631852009",
-                                  "123456789"
+                                  "1234567890"
                               ]
                           ]
                       },
@@ -464,7 +454,7 @@
               EOF
               )                  
 
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
               sleep "$BLOCK_SECONDS"
             '';
           };
