@@ -1,4 +1,4 @@
-use cosmwasm_std::{BlockInfo, IbcTimeout, Timestamp};
+use cosmwasm_std::{BlockInfo, IbcTimeout,};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{
@@ -127,6 +127,8 @@ pub struct IcsPair {
 	pub sink: ChannelId,
 }
 
+/// relative timeout to CW/IBC-rs time.
+/// very small, assumed messages are arriving fast enough, like less than hours
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -191,7 +193,8 @@ pub enum ConfigSubMsg {
 	/// `salt` - human string, converted to hex or base64 depending on implementation
 	ForceInstantiate {
 		user_origin: Addr,
-		salt: Option<String>,
+		#[serde(skip_serializing_if = "String::is_empty", default)]
+		salt: String,
 	},
 }
 
@@ -230,8 +233,10 @@ pub enum GatewayId {
 
 pub struct AssetItem {
 	pub asset_id: AssetId,
-	pub from_network_id: NetworkId,
+	/// network id on which this asset id can be used locally
+	pub network_id: NetworkId,
 	pub local: AssetReference,
+	/// if asset was bridged, it would have way to identify bridge/source/channel
 	pub bridged: Option<BridgeAsset>,
 }
 

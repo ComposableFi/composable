@@ -45,12 +45,17 @@ impl Auth<policy::WasmHook> {
 		network_id: NetworkId,
 	) -> Result<Self> {
 		let this = state::load(storage)?;
-		let this_to_other: OtherNetworkItem =
-			state::NETWORK_TO_NETWORK.load(storage, (this.here_id, network_id))?;
+		let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK
+			.load(storage, (this.here_id, network_id))
+			.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork(
+				this.here_id,
+				network_id,
+			))?;
 		let sender = state::NETWORK
 			.load(storage, network_id)?
 			.gateway
-			.ok_or(ContractError::NotAuthorized)?;
+			.ok_or(ContractError::GatewayForNetworkNotFound(network_id))?;
+
 		let sender = match sender {
 			msg::GatewayId::CosmWasm { contract, .. } => contract.to_string(),
 		};

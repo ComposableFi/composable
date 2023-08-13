@@ -20,13 +20,13 @@ pub(crate) fn force_instantiate(
 	gateway: Addr,
 	deps: DepsMut,
 	user_origin: Addr,
-	salt: Option<String>,
+	salt: String,
 ) -> Result {
 	let config = load_this(deps.storage)?;
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
 		GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
 	};
-	let salt = salt.map_or(<_>::default(), |x| x.into_bytes());
+	let salt = salt.into_bytes();
 
 	let call_origin = CallOrigin::Local { user: user_origin };
 	let interpreter_origin =

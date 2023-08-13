@@ -8,7 +8,7 @@ use crate::{
 	AssetId, NetworkId,
 };
 use cosmwasm_std::{
-	to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg,
+	to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, StdResult, WasmMsg,
 };
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};

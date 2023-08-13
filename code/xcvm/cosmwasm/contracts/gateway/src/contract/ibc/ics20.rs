@@ -39,17 +39,23 @@ pub(crate) fn handle_bridge_forward(
 	// 1. recurse on program until can with memo
 	// 2. as soon as see no Spawn/Transfer, stop memo and do Wasm call with remaining Packet
 
+
+	let (local_asset, amount) = msg.msg.assets.0.get(0).expect("proved above");
+
+	let route: IbcIcs20Route = get_route(deps.storage, msg.to, *local_asset)?;
+	
+	let asset =  msg.msg.assets.0.get(0).map(|(_, amount)| {
+		(route.on_remote_asset, *amount)
+	}).expect("not empty");
+
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
 		salt: msg.msg.salt,
 		program: msg.msg.program,
-		assets: msg.msg.assets,
+		assets: vec![asset].into(),
 	};
 
-	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
-
-	let route = get_route(deps.storage, msg.to, *local_asset)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20 route {}",
 		&serde_json_wasm::to_string(&route)?
@@ -96,7 +102,7 @@ pub fn get_route(
 		.map_err(|_| ContractError::UnknownTargetNetwork)?;
 	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK
 		.load(storage, (this.network_id, to))
-		.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork)?;
+		.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork(this.network_id, to))?;
 	let asset: AssetItem = state::assets::ASSETS
 		.load(storage, this_asset_id)
 		.map_err(|_| ContractError::AssetNotFoundById(this_asset_id))?;
