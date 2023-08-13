@@ -190,7 +190,7 @@
             INSTANTIATE=$(cat << EOF
                 {
                     "admin" : "$KEY", 
-                    "here_id" : $NETWORK_ID
+                    "network_id" : $NETWORK_ID
                 }                                 
             EOF
             )
@@ -326,7 +326,7 @@
               "config": {
                 "force_asset": {
                   "asset_id": "79228162514264337593543950337",
-                  "from_network_id": 2,
+                  "network_id": 2,
                   "local": {
                     "native": {
                       "denom": "ppica"
@@ -354,7 +354,7 @@
                 "config": {
                     "force_asset": {
                       "asset_id": "158456325028528675187087901673",
-                      "from_network_id": 3,
+                      "network_id": 3,
                       "local": {
                         "native": {
                           "denom" : "uosmo"
@@ -373,7 +373,7 @@
                 "config": {
                     "force_asset": {
                       "asset_id": "237684487542793012780631852009",
-                      "from_network_id": 3,
+                      "network_id": 3,
                       "local": {
                         "native": {
                           "denom" : "uosmo"
