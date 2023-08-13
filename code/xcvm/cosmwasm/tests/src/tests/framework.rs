@@ -223,7 +223,7 @@ impl TestVM<()> {
 				tx.info.clone(),
 				tx.gas,
 				xc_core::gateway::InstantiateMsg(HereItem {
-					here_id: self.network_id,
+					network_id: self.network_id,
 					admin: todo!(),
 				}),
 			)?;

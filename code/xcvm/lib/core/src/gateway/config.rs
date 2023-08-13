@@ -207,8 +207,8 @@ pub struct InstantiateMsg(pub HereItem);
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct HereItem {
-	/// Network ID of this network
-	pub here_id: NetworkId,
+	/// Network ID of this network where contract is deployed
+	pub network_id: NetworkId,
 	/// The admin which is allowed to update the bridge list.
 	pub admin: Addr,
 }
