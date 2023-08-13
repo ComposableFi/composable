@@ -4,14 +4,14 @@
 //! handles PFM and IBC wasm hooks
 use crate::prelude::*;
 use cosmwasm_std::{
-	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, DepsMut, Env, MessageInfo, Response, Storage,
-	SubMsg,
+	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, Deps, DepsMut, Env, MessageInfo, Response,
+	Storage, SubMsg,
 };
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
-	shared::{XcPacket, XcProgram},
+	shared::{XcFunds, XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
-	AssetId, CallOrigin,
+	AssetId, CallOrigin, Displayed,
 };
 
 use crate::{
@@ -145,15 +145,34 @@ pub fn get_route(
 
 pub(crate) fn ics20_message_hook(
 	_: auth::WasmHook,
+	deps: Deps,
 	msg: XcMessageData,
 	env: Env,
 	info: MessageInfo,
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = msg.packet;
 	ensure_anonymous(&packet.program)?;
+
+	let assets: Result<XcFunds, _> = info
+		.funds
+		.into_iter()
+		.map(|coin| {
+			match crate::assets::get_local_asset_by_reference(
+				deps,
+				AssetReference::Native { denom: coin.denom },
+			) {
+				Ok(asset) => Ok((asset.asset_id, Displayed::<u128>::from(coin.amount.u128()))),
+				Err(err) => Err(err),
+			}
+		})
+		.collect();
+	deps.api.debug(&format!(
+		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
+		&assets, &packet.assets
+	));
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 	let execute_program =
-		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: packet.assets };
+		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: assets?.into() };
 	let msg =
 		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;

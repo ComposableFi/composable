@@ -48,7 +48,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 
 			let auth = auth::WasmHook::authorise(deps.as_ref(), &env, &info, msg.from_network_id)?;
 
-			super::ibc::ics20::ics20_message_hook(auth, msg, env, info)
+			super::ibc::ics20::ics20_message_hook(auth,deps.as_ref(), msg, env, info)
 		},
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
 	}

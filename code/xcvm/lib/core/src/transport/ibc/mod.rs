@@ -45,6 +45,7 @@ pub struct IbcIcs20Route {
 	pub local_native_denom: String,
 	pub channel_to_send_over: ChannelId,
 	pub sender_gateway: Addr,
+	/// the contract address of the gateway to send to assets
 	pub gateway_to_send_to: Addr,
 	pub counterparty_timeout: RelativeTimeout,
 	pub ibc_ics_20_sender: IbcIcs20Sender,
@@ -115,7 +116,7 @@ pub fn to_cw_message<T>(
 					.counterparty_timeout
 					.absolute(block)
 					.timestamp()
-					.map(|x| x.seconds())
+					.map(|x| x.nanos())
 					.unwrap_or_default(),
 				memo,
 			}

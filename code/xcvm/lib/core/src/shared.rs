@@ -1,11 +1,12 @@
-use crate::prelude::*;
+use crate::{prelude::*, AssetId, Displayed};
 use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 
-pub type XcInstruction = crate::Instruction<Vec<u8>, CanonicalAddr, crate::Funds>;
-pub type XcProgram = crate::Program<VecDeque<XcInstruction>>;
 pub type XcPacket = crate::Packet<XcProgram>;
+pub type XcProgram = crate::Program<VecDeque<XcInstruction>>;
 pub type Salt = Vec<u8>;
+pub type XcInstruction = crate::Instruction<Vec<u8>, CanonicalAddr, crate::Funds>;
+pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
 
 pub fn encode_base64<T: Serialize>(x: &T) -> StdResult<String> {
 	Ok(to_binary(x)?.to_base64())
