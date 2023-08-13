@@ -1,4 +1,4 @@
-use cosmwasm_std::{BlockInfo, IbcTimeout,};
+use cosmwasm_std::{BlockInfo, IbcTimeout};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{

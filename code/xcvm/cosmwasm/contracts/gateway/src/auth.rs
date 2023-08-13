@@ -1,9 +1,9 @@
 //! Module with authorisation checks.
 use crate::{
 	error::{ContractError, Result},
-	msg, state, network,
+	msg, network, state,
 };
-use cosmwasm_std::{Deps, Env, MessageInfo, Storage};
+use cosmwasm_std::{Deps, Env, MessageInfo};
 use xc_core::{gateway::OtherNetworkItem, NetworkId};
 
 /// Authorisation token indicating call is authorised according to policy
@@ -39,24 +39,29 @@ impl Auth<policy::Contract> {
 
 impl Auth<policy::WasmHook> {
 	pub(crate) fn authorise(
-		storage: &dyn Storage,
+		deps: Deps,
 		env: &Env,
 		info: &MessageInfo,
 		network_id: NetworkId,
 	) -> Result<Self> {
-		let this = network::load_this(storage)?;
+		let this = network::load_this(deps.storage)?;
 		let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK
-			.load(storage, (this.network_id, network_id))
-			.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork(
-				this.network_id,
-				network_id,
-			))?;
-		let prefix = this.accounts.map(|x| match  x {
-			msg::Prefix::SS58(prefix) => prefix.to_string(),
-			msg::Prefix::Bech(prefix) => prefix,
-		}).unwrap_or_default();
+			.load(deps.storage, (this.network_id, network_id))
+			.map_err(|_| {
+				ContractError::NoConnectionInformationFromThisToOtherNetwork(
+					this.network_id,
+					network_id,
+				)
+			})?;
+		let prefix = this
+			.accounts
+			.map(|x| match x {
+				msg::Prefix::SS58(prefix) => prefix.to_string(),
+				msg::Prefix::Bech(prefix) => prefix,
+			})
+			.unwrap_or_default();
 		let sender = state::NETWORK
-			.load(storage, network_id)?
+			.load(deps.storage, network_id)?
 			.gateway
 			.ok_or(ContractError::GatewayForNetworkNotFound(network_id))?;
 
@@ -69,8 +74,11 @@ impl Auth<policy::WasmHook> {
 			xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(
 				&channel, &sender, &prefix,
 			)?;
-
-		Self::new(hash_of_channel_and_sender == info.sender && info.sender == env.contract.address)
+		deps.api.debug(&format!(
+			"xcvm::gateway:auth:: {0} {1}",
+			&hash_of_channel_and_sender, &info.sender
+		));
+		Self::new(hash_of_channel_and_sender == info.sender || info.sender == env.contract.address)
 	}
 }
 

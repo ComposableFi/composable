@@ -74,6 +74,8 @@ pub enum ContractError {
 	AssetCannotBeTransferredToNetwork(AssetId, NetworkId),
 	#[error("Gateway for network {0} not found")]
 	GatewayForNetworkNotFound(NetworkId),
+	#[error("Anonymous calls can do only limitet set of actions")]
+	AnonymousCallsCanDoOnlyLimitedSetOfActions,
 }
 
 impl From<bech32_no_std::Error> for ContractError {
