@@ -42,7 +42,7 @@ Joon is a seasoned Frontend software engineer with a background primarily focuse
 
 After graduating from UC Berkeley, Kostya worked on analyzing financial data and supporting storage infrastructure for various IT companies. In 2020, he joined a blockchain startup, where he developed both the front-end and back-end of a Web 3 application. Later on, Kostya shifted his focus to Substrate and Rust. Currently, Kostya is responsible for overseeing the technical aspects and delivery of innovative solutions on Composable's parachains, Picasso and Composable.
 
-## Vladislav Marshukin | Bridging Lead
+## Vladislav Marshukin | Super Bridging Lead
 
 Vlad is a skilled software engineer with experience in blockchain technology and programming languages like Rust, Java, C++, and Android development. He currently works as the Bridging Lead, focusing on developing several Centauri connections. In the past, he has delivered successful projects at companies like Soramitsu, Bitfury, and Paymon Inc. Vlad has a particular interest in functional programming, formal verification, and embedded systems, which he applies to internal projects and helps the team succeed.
 
