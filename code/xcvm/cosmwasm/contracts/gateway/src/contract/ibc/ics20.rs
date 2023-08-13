@@ -152,6 +152,10 @@ pub(crate) fn ics20_message_hook(
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = msg.packet;
 	ensure_anonymous(&packet.program)?;
+	deps.api.debug(&format!(
+		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
+		&info.funds, &packet.assets
+	));
 
 	let assets: Result<XcFunds, _> = info
 		.funds
@@ -166,10 +170,6 @@ pub(crate) fn ics20_message_hook(
 			}
 		})
 		.collect();
-	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
-		&assets, &packet.assets
-	));
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 	let execute_program =
 		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: assets?.into() };

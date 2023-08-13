@@ -380,46 +380,67 @@
 
           TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
           {
-            "execute_program": {
               "execute_program": {
-              "salt": "737061776e5f776974685f6173736574",
-              "program": {
-                "tag": "737061776e5f776974685f6173736574",
-                "instructions": [
-                {
-                  "spawn": {
-                  "network": 3,
-                  "salt": "737061776e5f776974685f6173736574",
-                  "assets": [
-                    [
-                    "158456325028528675187087900673",
-                    {
-                      "amount": {
-                      "intercept": "1234567890",
-                      "slope": "0"
+                  "execute_program": {
+                      "salt": "737061776e5f776974685f6173736574",
+                      "program": {
+                          "tag": "737061776e5f776974685f6173736574",
+                          "instructions": [
+                              {
+                                  "spawn": {
+                                      "network": 3,
+                                      "salt": "737061776e5f776974685f6173736574",
+                                      "assets": [
+                                          [
+                                              "158456325028528675187087900673",
+                                              {
+                                                  "amount": {
+                                                      "intercept": "1234567890",
+                                                      "slope": "0"
+                                                  },
+                                                  "is_unit": false
+                                              }
+                                          ]
+                                      ],
+                                      "program": {
+                                          "tag": "737061776e5f776974685f6173736574",
+                                          "instructions": [
+                                              {
+                                                  "transfer": {
+                                                      "to": {
+                                                          "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+                                                      },
+                                                      "assets": [
+                                                          [
+                                                              "237684487542793012780631851009",
+                                                              {
+                                                                  "amount": {
+
+                                                                      "intercept": "123456789",
+                                                                      "slope": "0"
+                                                                  },
+                                                                  "is_unit": false
+                                                              }
+                                                          ]
+                                                      ]
+                                                  }
+                                              }
+                                          ]
+                                      }
+                                  }
+                              }
+                          ]
                       },
-                      "is_unit": false
-                    }
-                    ]
-                  ],
-                  "program": {
-                    "tag": "737061776e5f776974685f6173736574",
-                    "instructions": []
-                  }
-                  }
-                }
-                ]
-              },
-              "assets": [
-                [
-                "158456325028528675187087900673",
-                "1234567890"
-                ]
-              ]
-              },
-              "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
-            }
-            }                                 
+                      "assets": [
+                          [
+                              "158456325028528675187087900673",
+                              "1234567890"
+                          ]
+                      ]
+                  },
+                  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+              }
+          }                             
           EOF
           )                  
 
@@ -542,7 +563,7 @@
         centauri-tx = pkgs.writeShellApplication {
           name = "centaurid-xcvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
-            ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
+            ++ [ centaurid pkgs.jq ];
 
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"

@@ -45,7 +45,7 @@
             }             
 
             dasel-genesis '.app_state.staking.params.bond_denom' 'uosmo'
-            dasel-genesis '.app_state.staking.params.unbonding_time' '120s'
+            dasel-genesis '.app_state.staking.params.unbonding_time' '960s'
             dasel  put --type json --file "$GENESIS" --value "[{},{}]" 'app_state.bank.denom_metadata'
             dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
@@ -301,10 +301,7 @@
                       "to": 3,
                       "other": {
                           "counterparty_timeout": {
-                            "block" : {
-                              "height": 100000,
-                              "revision": 0
-                            }
+                            "seconds" : 120
                           },
                           "ics_20": {
                             "source" : "channel-0", 
@@ -321,15 +318,40 @@
 
 
             sleep $BLOCK_SECONDS
+            FORCE_OSMOSIS_TO_CENTAURI=$(cat << EOF
+              {
+                "config": {
+                    "force_network_to_network": {
+                      "from": 3,
+                      "to": 2,
+                      "other": {
+                          "counterparty_timeout": {
+                            "seconds" : 120
+                          },
+                          "ics_20": {
+                            "source" : "channel-0", 
+                            "sink" : "channel-0" 
+                          }
+                                                  
+                      }
+                    }
+                }
+              }                                 
+            EOF
+            )
+            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_OSMOSIS_TO_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+            sleep $BLOCK_SECONDS
             FORCE_PICA=$(cat << EOF
             {
               "config": {
                 "force_asset": {
-                  "asset_id": "79228162514264337593543950337",
-                  "network_id": 2,
+                  "asset_id": "237684487542793012780631851009",
+                  "network_id": 3,
                   "local": {
                     "native": {
-                      "denom": "ppica"
+                      "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
                     }
                   },
                   "bridged": {
@@ -354,10 +376,10 @@
                 "config": {
                     "force_asset": {
                       "asset_id": "158456325028528675187087901673",
-                      "network_id": 3,
+                      "network_id": 2,
                       "local": {
                         "native": {
-                          "denom" : "uosmo"
+                          "denom" : "transfer/channel-0/uosmo"
                         }
                       }
                     }

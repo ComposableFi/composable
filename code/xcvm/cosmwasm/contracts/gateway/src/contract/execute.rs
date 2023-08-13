@@ -18,6 +18,13 @@ use xc_core::{gateway::ConfigSubMsg, CallOrigin, Displayed, Funds, InterpreterOr
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
 	use msg::ExecuteMsg;
+	let sender = &info.sender;
+	let canonical_sender = deps.api.addr_canonicalize(sender.as_str())?;
+	deps.api.debug(&format!(
+		"xcvm::gateway::execute sender on chain {}, sender cross chain {}",
+		sender,
+		&serde_json_wasm::to_string(&canonical_sender)?
+	));
 	match msg {
 		ExecuteMsg::Config(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
@@ -48,7 +55,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 
 			let auth = auth::WasmHook::authorise(deps.as_ref(), &env, &info, msg.from_network_id)?;
 
-			super::ibc::ics20::ics20_message_hook(auth,deps.as_ref(), msg, env, info)
+			super::ibc::ics20::ics20_message_hook(auth, deps.as_ref(), msg, env, info)
 		},
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
 	}

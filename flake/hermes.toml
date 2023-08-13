@@ -43,7 +43,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '30s'
-trusting_period = '60s'
+trusting_period = '480s'
 trust_threshold = { numerator = '1', denominator = '3' }
 type = 'CosmosSdk'
 address_type = { derivation = 'cosmos' }
@@ -67,7 +67,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '30s'
-trusting_period = '60s'
+trusting_period = '480s'
 trust_threshold = { numerator = '1', denominator = '3' }
 type = 'CosmosSdk'
 address_type = { derivation = 'cosmos' }

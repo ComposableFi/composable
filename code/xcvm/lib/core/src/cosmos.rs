@@ -19,8 +19,9 @@ pub fn addess_hash(typ: &str, key: &[u8]) -> [u8; 32] {
 // takes a transfer message and returns ibc/<hash of denom>
 // https://ibc.cosmos.network/main/architecture/adr-001-coin-source-tracing.html
 // so can infer for some chain denom on hops
-pub fn hash_denom_trace(unwrapped: &str) -> String {
-	let digest = Sha256::digest(unwrapped.as_bytes());
+pub fn hash_denom_trace(denom: &PrefixedDenom) -> String {
+	let denom = denom.to_string();
+	let digest = Sha256::digest(denom.as_bytes());
 	["ibc/", &hex::encode_upper(digest)].concat()
 }
 
@@ -31,21 +32,21 @@ mod tests {
 	// various devnet channels hashes
 	#[test]
 	fn devnet() {
-		let pica = hash_denom_trace("/transfer/channel-1/1");
-		assert_eq!(pica, "ibc/B62D63F2BD5A7B70AB15F84BCB70EAC88222D3A8E8E0B22793EE788068EA22BA");
-		let pica = hash_denom_trace("/transfer/channel-0/1");
-		assert_eq!(pica, "ibc/F2B6EF5B6F86990A3863B78687ADE3D95E412657AAEB7CF2B3B8131B8055C1F1");
+		let pica = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-1/1").expect("const"));
+		assert_eq!(pica, "ibc/71B5DB2263A5A5B160BBA26A307BF5441BDB330534C19A9F551F63D9CC0C3026");
+		let pica = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-0/1").expect("const"));
+		assert_eq!(pica, "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4");
 
-		let pica: String = hash_denom_trace("/transfer/channel-1/ppica");
-		assert_eq!(pica, "ibc/661BD30059657725608DF36907F06B70C1FA7A1772FF92AEE1844A3E35A80D63");
+		let pica: String = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-1/ppica").expect("const"));
+		assert_eq!(pica, "ibc/6188228DA6C48BB205E30BD8850E2E5ADBD75010B9BF542F7E77A87D9D7DCCB7");
 
-		let pica: String = hash_denom_trace("/transfer/channel-0/ppica");
-		assert_eq!(pica, "ibc/F0E228914E0E69E7B5E9231282FE6B7595CF90CB76E7193C6AFDCACDF5E83821");
+		let pica: String = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-0/ppica").expect("const"));
+		assert_eq!(pica, "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B");
 
-		let osmo: String = hash_denom_trace("/transfer/channel-1/uosmo");
-		assert_eq!(osmo, "ibc/BCACECE44E39A9009D793D68CC5DF76B402607B1C574379DCB4F3A5D24BC1936");
+		let osmo: String = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-1/uosmo").expect("const"));
+		assert_eq!(osmo, "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B");
 
-		let osmo: String = hash_denom_trace("/transfer/channel-0/uosmo");
-		assert_eq!(osmo, "ibc/B4511F40A2844906F5940444691EE3AE877E8E0DD8354C8C4D36670A46C5680D");
+		let osmo: String = hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-0/uosmo").expect("const"));
+		assert_eq!(osmo, "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518");
 	}
 }
