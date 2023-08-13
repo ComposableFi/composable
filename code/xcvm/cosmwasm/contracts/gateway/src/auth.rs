@@ -65,6 +65,7 @@ impl Auth<policy::WasmHook> {
 			xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(
 				&channel, &sender, "",
 			)?;
+				
 		Self::new(hash_of_channel_and_sender == info.sender && info.sender == env.contract.address)
 	}
 }
