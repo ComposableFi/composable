@@ -342,7 +342,7 @@ pub fn interpret_transfer(
 	assets: Funds<Balance>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-
+	deps.api.debug(&format!("xcvm::interpreter:: transfer to {:?}", &to));
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
 		Destination::Tip => tip.into(),

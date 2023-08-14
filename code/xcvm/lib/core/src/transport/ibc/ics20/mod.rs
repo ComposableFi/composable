@@ -12,6 +12,7 @@ use self::{hook::Callback, pfm::ForwardingMemo};
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 // Encode, Decode, scale_info::TypeInfo, to be manually implemented for subset of know messages
 pub struct Memo {
+	/// memo has at least one key, with value "wasm", than wasm hooks will try to execute it
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub wasm: Option<Callback>,
 	#[serde(skip_serializing_if = "Option::is_none")]

@@ -65,13 +65,17 @@ pub enum ContractError {
 	NetworkConfig,
 	#[error("Unknown target network")]
 	UnknownTargetNetwork,
-	#[error("No connection information from this to other network")]
-	NoConnectionInformationFromThisToOtherNetwork,
+	#[error("No connection information from this {0} to other network {1}")]
+	NoConnectionInformationFromThisToOtherNetwork(NetworkId, NetworkId),
 
 	#[error("Asset {0} not found by id")]
 	AssetNotFoundById(AssetId),
 	#[error("Asset {0} cannot be transferred to network {1}")]
 	AssetCannotBeTransferredToNetwork(AssetId, NetworkId),
+	#[error("Gateway for network {0} not found")]
+	GatewayForNetworkNotFound(NetworkId),
+	#[error("Anonymous calls can do only limitet set of actions")]
+	AnonymousCallsCanDoOnlyLimitedSetOfActions,
 }
 
 impl From<bech32_no_std::Error> for ContractError {

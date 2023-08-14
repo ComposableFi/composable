@@ -15,7 +15,7 @@ use xc_core::{AssetId, NetworkId};
 pub(crate) fn force_asset(_: auth::Admin, deps: DepsMut, msg: AssetItem) -> Result {
 	let config = crate::state::load(deps.storage)?;
 	ASSETS.save(deps.storage, msg.asset_id, &msg)?;
-	if msg.from_network_id == config.here_id {
+	if msg.network_id == config.network_id {
 		LOCAL_ASSETS.save(deps.storage, msg.local.clone(), &msg)?;
 	}
 	Ok(Response::new().add_event(
@@ -50,7 +50,7 @@ pub(crate) fn force_remove_asset(
 	let config = crate::state::load(deps.storage)?;
 	let asset = ASSETS.load(deps.storage, asset_id)?;
 	ASSETS.remove(deps.storage, asset_id);
-	if asset.from_network_id == config.here_id {
+	if asset.network_id == config.network_id {
 		LOCAL_ASSETS.remove(deps.storage, asset.local);
 	}
 	Ok(Response::new()

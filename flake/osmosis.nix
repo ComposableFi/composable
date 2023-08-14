@@ -45,7 +45,7 @@
             }             
 
             dasel-genesis '.app_state.staking.params.bond_denom' 'uosmo'
-            dasel-genesis '.app_state.staking.params.unbonding_time' '120s'
+            dasel-genesis '.app_state.staking.params.unbonding_time' '960s'
             dasel  put --type json --file "$GENESIS" --value "[{},{}]" 'app_state.bank.denom_metadata'
             dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
@@ -147,8 +147,8 @@
           '';
         };
 
-        osmosisd-init = pkgs.writeShellApplication {
-          name = "osmosisd-init";
+        osmosisd-xcvm-init = pkgs.writeShellApplication {
+          name = "osmosisd-xcvm-init";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
@@ -184,23 +184,47 @@
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
               echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+              echo "$INTERPRETER_CODE_ID" > "$CHAIN_DATA/interpreter_code_id"
             }
 
             INSTANTIATE=$(cat << EOF
                 {
                     "admin" : "$KEY", 
-                    "here_id" : $NETWORK_ID
+                    "network_id" : $NETWORK_ID
                 }                                 
             EOF
             )
 
-            init_xcvm "$INSTANTIATE"
+            init_xcvm "$INSTANTIATE"           
+          '';
+        };
+
+        osmosisd-xcvm-config = pkgs.writeShellApplication {
+          name = "osmosisd-xcvm-config";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ osmosisd pkgs.jq pkgs.dasel ];
+          text = ''
+            HOME=/tmp/composable-devnet
+            export HOME
+            CHAIN_DATA="$HOME/.osmosisd"             
+            KEYRING_TEST=$CHAIN_DATA
+            CHAIN_ID="osmosis-dev"            
+            PORT=36657
+            BLOCK_SECONDS=5
+            FEE=uosmo
+            NETWORK_ID=3
+            KEY=${cosmosTools.xcvm.osmosis}
+            BINARY=osmosisd
+
+            GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
+            INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
 
             FORCE_NETWORK_OSMOSIS=$(cat << EOF
               {
                 "config": {
                     "force_network": {
-                      "network_id": 3,
+                      "network_id": $NETWORK_ID,
                       "accounts": {
                           "bech": "osmo"
                       },
@@ -242,7 +266,7 @@
                       },
                       "gateway": {
                           "cosm_wasm": {
-                            "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                            "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
                             "interpreter_code_id": $INTERPRETER_CODE_ID,
                             "admin": "$KEY"
                           }
@@ -277,7 +301,7 @@
                       "to": 3,
                       "other": {
                           "counterparty_timeout": {
-                            "timestamp": "60"
+                            "seconds" : 120
                           },
                           "ics_20": {
                             "source" : "channel-0", 
@@ -294,15 +318,40 @@
 
 
             sleep $BLOCK_SECONDS
+            FORCE_OSMOSIS_TO_CENTAURI=$(cat << EOF
+              {
+                "config": {
+                    "force_network_to_network": {
+                      "from": 3,
+                      "to": 2,
+                      "other": {
+                          "counterparty_timeout": {
+                            "seconds" : 120
+                          },
+                          "ics_20": {
+                            "source" : "channel-0", 
+                            "sink" : "channel-0" 
+                          }
+                                                  
+                      }
+                    }
+                }
+              }                                 
+            EOF
+            )
+            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_OSMOSIS_TO_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+
+
+            sleep $BLOCK_SECONDS
             FORCE_PICA=$(cat << EOF
             {
               "config": {
                 "force_asset": {
-                  "asset_id": "79228162514264337593543950337",
-                  "from_network_id": 2,
+                  "asset_id": "237684487542793012780631851009",
+                  "network_id": 3,
                   "local": {
                     "native": {
-                      "denom": "ppica"
+                      "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
                     }
                   },
                   "bridged": {
@@ -327,10 +376,10 @@
                 "config": {
                     "force_asset": {
                       "asset_id": "158456325028528675187087901673",
-                      "from_network_id": 3,
+                      "network_id": 2,
                       "local": {
                         "native": {
-                          "denom" : "uosmo"
+                          "denom" : "transfer/channel-0/uosmo"
                         }
                       }
                     }
@@ -346,7 +395,7 @@
                 "config": {
                     "force_asset": {
                       "asset_id": "237684487542793012780631852009",
-                      "from_network_id": 3,
+                      "network_id": 3,
                       "local": {
                         "native": {
                           "denom" : "uosmo"
@@ -399,7 +448,7 @@
                                                   "158456325028528675187087901673",
                                                   {
                                                       "amount": {
-                                                          "intercept": "1000000000",
+                                                          "intercept": "1234567890",
                                                           "slope": "0"
                                                       },
                                                       "is_unit": false
@@ -417,7 +466,7 @@
                           "assets": [
                               [
                                   "237684487542793012780631852009",
-                                  "1000000000"
+                                  "1234567890"
                               ]
                           ]
                       },
@@ -427,7 +476,7 @@
               EOF
               )                  
 
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
               sleep "$BLOCK_SECONDS"
             '';
           };

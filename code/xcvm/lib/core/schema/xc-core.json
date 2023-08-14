@@ -515,6 +515,34 @@
             "additionalProperties": false
           },
           {
+            "type": "object",
+            "required": [
+              "force_asset_to_network_map"
+            ],
+            "properties": {
+              "force_asset_to_network_map": {
+                "type": "object",
+                "required": [
+                  "other_asset",
+                  "other_network",
+                  "this_asset"
+                ],
+                "properties": {
+                  "other_asset": {
+                    "$ref": "#/definitions/AssetId"
+                  },
+                  "other_network": {
+                    "$ref": "#/definitions/NetworkId"
+                  },
+                  "this_asset": {
+                    "$ref": "#/definitions/AssetId"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Message sent by an admin to remove an asset from registry.",
             "type": "object",
             "required": [
@@ -529,6 +557,33 @@
                 "properties": {
                   "asset_id": {
                     "$ref": "#/definitions/AssetId"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "instantiates default interpreter on behalf of user `salt` - human string, converted to hex or base64 depending on implementation",
+            "type": "object",
+            "required": [
+              "force_instantiate"
+            ],
+            "properties": {
+              "force_instantiate": {
+                "type": "object",
+                "required": [
+                  "user_origin"
+                ],
+                "properties": {
+                  "salt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "user_origin": {
+                    "$ref": "#/definitions/Addr"
                   }
                 }
               }
@@ -594,7 +649,7 @@
             ]
           },
           "salt": {
-            "description": "The program salt.",
+            "description": "The program salt. If JSON, than hex encoded non prefixed lower case string.",
             "type": "string"
           }
         }
@@ -782,54 +837,6 @@
           }
         ]
       },
-      "IbcTimeout": {
-        "description": "In IBC each package must set at least one type of timeout: the timestamp or the block height. Using this rather complex enum instead of two timeout fields we ensure that at least one timeout is set.",
-        "type": "object",
-        "properties": {
-          "block": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/IbcTimeoutBlock"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "timestamp": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Timestamp"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      },
-      "IbcTimeoutBlock": {
-        "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
-        "type": "object",
-        "required": [
-          "height",
-          "revision"
-        ],
-        "properties": {
-          "height": {
-            "description": "block height after which the packet times out. the height within the given revision",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "revision": {
-            "description": "the version that the client is currently on (eg. after reseting the chain this could increment 1 as height drops to 0)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        }
-      },
       "Ics20Channel": {
         "type": "object",
         "required": [
@@ -998,6 +1005,7 @@
                     "$ref": "#/definitions/Program_for_Array_of_Instruction_for_Array_of_uint8_and_CanonicalAddr_and_Funds_for_Balance"
                   },
                   "salt": {
+                    "description": "If JSON, than hex encoded non prefixed lower case string.",
                     "type": "string"
                   }
                 }
@@ -1110,7 +1118,7 @@
             "description": "default timeout to use for direct send",
             "allOf": [
               {
-                "$ref": "#/definitions/IbcTimeout"
+                "$ref": "#/definitions/RelativeTimeout"
               }
             ]
           },
@@ -1139,6 +1147,50 @@
       },
       "PFM": {
         "type": "object"
+      },
+      "Packet_for_Program_for_Array_of_Instruction_for_Array_of_uint8_and_CanonicalAddr_and_Funds_for_Balance": {
+        "type": "object",
+        "required": [
+          "assets",
+          "interpreter",
+          "program",
+          "salt",
+          "user_origin"
+        ],
+        "properties": {
+          "assets": {
+            "description": "The assets that were attached to the program.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Funds_for_Displayed_for_uint128"
+              }
+            ]
+          },
+          "interpreter": {
+            "description": "The interpreter that was the origin of this packet.",
+            "type": "string"
+          },
+          "program": {
+            "description": "The protobuf encoded program.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Program_for_Array_of_Instruction_for_Array_of_uint8_and_CanonicalAddr_and_Funds_for_Balance"
+              }
+            ]
+          },
+          "salt": {
+            "description": "The salt associated with the program.",
+            "type": "string"
+          },
+          "user_origin": {
+            "description": "The user that originated the first XCVM call.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/UserOrigin"
+              }
+            ]
+          }
+        }
       },
       "Prefix": {
         "description": "given prefix you may form accounts from 32 bit addresses or partially identify chains",
@@ -1203,6 +1255,7 @@
             }
           },
           "tag": {
+            "description": "If JSON, than hex encoded non prefixed lower case string.",
             "type": "string"
           }
         }
@@ -1236,6 +1289,25 @@
             "enum": [
               "result"
             ]
+          }
+        ]
+      },
+      "RelativeTimeout": {
+        "oneOf": [
+          {
+            "description": "Timeout is relative to the current block timestamp of counter party",
+            "type": "object",
+            "required": [
+              "seconds"
+            ],
+            "properties": {
+              "seconds": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -1288,20 +1360,8 @@
           }
         ]
       },
-      "Timestamp": {
-        "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
-        "allOf": [
-          {
-            "$ref": "#/definitions/Uint64"
-          }
-        ]
-      },
       "Uint128": {
         "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
-        "type": "string"
-      },
-      "Uint64": {
-        "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
         "type": "string"
       },
       "UserId": {
@@ -1339,15 +1399,15 @@
         "description": "This message should be send as part of wasm termination memo. So that can match it to sender hash and know what channel and origin was used to send message. All information here is not secured until compared with existing secured data.",
         "type": "object",
         "required": [
-          "data",
-          "from_network_id"
+          "from_network_id",
+          "packet"
         ],
         "properties": {
-          "data": {
-            "$ref": "#/definitions/Binary"
-          },
           "from_network_id": {
             "$ref": "#/definitions/NetworkId"
+          },
+          "packet": {
+            "$ref": "#/definitions/Packet_for_Program_for_Array_of_Instruction_for_Array_of_uint8_and_CanonicalAddr_and_Funds_for_Balance"
           }
         }
       }
@@ -1377,9 +1437,58 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Returns [`AssetItem`] for an asset with given local reference.",
+        "type": "object",
+        "required": [
+          "get_local_asset_by_reference"
+        ],
+        "properties": {
+          "get_local_asset_by_reference": {
+            "type": "object",
+            "required": [
+              "reference"
+            ],
+            "properties": {
+              "reference": {
+                "$ref": "#/definitions/AssetReference"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_ibc_ics20_route"
+        ],
+        "properties": {
+          "get_ibc_ics20_route": {
+            "type": "object",
+            "required": [
+              "for_asset",
+              "to_network"
+            ],
+            "properties": {
+              "for_asset": {
+                "$ref": "#/definitions/AssetId"
+              },
+              "to_network": {
+                "$ref": "#/definitions/NetworkId"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
       "AssetId": {
         "description": "Newtype for XCVM assets ID. Must be unique for each asset and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
         "allOf": [
@@ -1388,10 +1497,61 @@
           }
         ]
       },
+      "AssetReference": {
+        "description": "Definition of an asset on this local chain to operate with",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "native"
+            ],
+            "properties": {
+              "native": {
+                "type": "object",
+                "required": [
+                  "denom"
+                ],
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "cw20"
+            ],
+            "properties": {
+              "cw20": {
+                "type": "object",
+                "required": [
+                  "contract"
+                ],
+                "properties": {
+                  "contract": {
+                    "$ref": "#/definitions/Addr"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
       "Displayed_for_uint128": {
         "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
         "type": "integer",
         "format": "uint128",
+        "minimum": 0.0
+      },
+      "NetworkId": {
+        "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+        "type": "integer",
+        "format": "uint32",
         "minimum": 0.0
       }
     }
@@ -1401,7 +1561,289 @@
   "responses": {
     "get_asset_by_id": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GetAssetByIdResponse",
+      "title": "GetAssetResponse",
+      "type": "object",
+      "required": [
+        "asset"
+      ],
+      "properties": {
+        "asset": {
+          "$ref": "#/definitions/AssetItem"
+        }
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AssetId": {
+          "description": "Newtype for XCVM assets ID. Must be unique for each asset and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Displayed_for_uint128"
+            }
+          ]
+        },
+        "AssetItem": {
+          "type": "object",
+          "required": [
+            "asset_id",
+            "from_network_id",
+            "local"
+          ],
+          "properties": {
+            "asset_id": {
+              "$ref": "#/definitions/AssetId"
+            },
+            "bridged": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/BridgeAsset"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "from_network_id": {
+              "$ref": "#/definitions/NetworkId"
+            },
+            "local": {
+              "$ref": "#/definitions/AssetReference"
+            }
+          }
+        },
+        "AssetReference": {
+          "description": "Definition of an asset on this local chain to operate with",
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "native"
+              ],
+              "properties": {
+                "native": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "cw20"
+              ],
+              "properties": {
+                "cw20": {
+                  "type": "object",
+                  "required": [
+                    "contract"
+                  ],
+                  "properties": {
+                    "contract": {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "BridgeAsset": {
+          "type": "object",
+          "required": [
+            "location_on_network"
+          ],
+          "properties": {
+            "location_on_network": {
+              "$ref": "#/definitions/ForeignAssetId"
+            }
+          }
+        },
+        "Displayed_for_uint128": {
+          "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ForeignAssetId": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "ibc_ics20"
+              ],
+              "properties": {
+                "ibc_ics20": {
+                  "$ref": "#/definitions/PrefixedDenom"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "NetworkId": {
+          "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "PrefixedDenom": {
+          "description": "A type that contains the base denomination for ICS20 and the source tracing information path.",
+          "type": "object",
+          "required": [
+            "base_denom",
+            "trace_path"
+          ],
+          "properties": {
+            "base_denom": {
+              "description": "Base denomination of the relayed fungible token.",
+              "type": "string"
+            },
+            "trace_path": {
+              "description": "A series of `{port-id}/{channel-id}`s for tracing the source of the token.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "get_ibc_ics20_route": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GetIbcIcs20RouteResponse",
+      "type": "object",
+      "required": [
+        "route"
+      ],
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/IbcIcs20Route"
+        }
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AssetId": {
+          "description": "Newtype for XCVM assets ID. Must be unique for each asset and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Displayed_for_uint128"
+            }
+          ]
+        },
+        "ChannelId": {
+          "type": "string"
+        },
+        "Displayed_for_uint128": {
+          "description": "A wrapper around a type which is serde-serialised as a string.\n\nFor serde-serialisation to be implemented for the type `T` must implement `Display` and `FromStr` traits.\n\n``` # use xc_core::Displayed;\n\n#[derive(serde::Serialize, serde::Deserialize)] struct Foo { value: Displayed<u64> }\n\nlet encoded = serde_json_wasm::to_string(&Foo { value: Displayed(42) }).unwrap(); assert_eq!(r#\"{\"value\":\"42\"}\"#, encoded);\n\nlet decoded = serde_json_wasm::from_str::<Foo>(r#\"{\"value\":\"42\"}\"#).unwrap(); assert_eq!(Displayed(42), decoded.value); ```",
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "IbcIcs20Route": {
+          "description": "route is used to describe how to send a packet to another network",
+          "type": "object",
+          "required": [
+            "channel_to_send_over",
+            "counterparty_timeout",
+            "from_network",
+            "gateway_to_send_to",
+            "ibc_ics_20_sender",
+            "local_native_denom",
+            "on_remote_asset",
+            "sender_gateway"
+          ],
+          "properties": {
+            "channel_to_send_over": {
+              "$ref": "#/definitions/ChannelId"
+            },
+            "counterparty_timeout": {
+              "$ref": "#/definitions/RelativeTimeout"
+            },
+            "from_network": {
+              "$ref": "#/definitions/NetworkId"
+            },
+            "gateway_to_send_to": {
+              "$ref": "#/definitions/Addr"
+            },
+            "ibc_ics_20_sender": {
+              "$ref": "#/definitions/IbcIcs20Sender"
+            },
+            "local_native_denom": {
+              "type": "string"
+            },
+            "on_remote_asset": {
+              "$ref": "#/definitions/AssetId"
+            },
+            "sender_gateway": {
+              "$ref": "#/definitions/Addr"
+            }
+          }
+        },
+        "IbcIcs20Sender": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                "CosmWasmStd1_3"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "SubstratePrecompile"
+              ],
+              "properties": {
+                "SubstratePrecompile": {
+                  "$ref": "#/definitions/Addr"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "NetworkId": {
+          "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "RelativeTimeout": {
+          "oneOf": [
+            {
+              "description": "Timeout is relative to the current block timestamp of counter party",
+              "type": "object",
+              "required": [
+                "seconds"
+              ],
+              "properties": {
+                "seconds": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      }
+    },
+    "get_local_asset_by_reference": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GetAssetResponse",
       "type": "object",
       "required": [
         "asset"

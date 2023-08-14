@@ -103,7 +103,7 @@
 
               sleep $BLOCK_SECONDS
              
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY"
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
@@ -114,7 +114,7 @@
           INSTANTIATE=$(cat << EOF
               {
                   "admin" : "$KEY", 
-                  "here_id" : $NETWORK_ID
+                  "network_id" : $NETWORK_ID
               }                                 
           EOF
           )
@@ -129,17 +129,22 @@
           ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
 
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
+          HOME=${devnet-root-directory}
+          export HOME
+          KEY=${cosmosTools.xcvm.centauri}
+
+          CHAIN_DATA="$HOME/.centaurid"
           CHAIN_ID="centauri-dev"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          KEY=${cosmosTools.xcvm.centauri}
           PORT=26657
           BLOCK_SECONDS=5
           FEE=ppica 
           BINARY=centaurid
+
           GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
           INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
+          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")  
 
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
             {
@@ -151,7 +156,7 @@
                     },
                     "gateway": {
                         "cosm_wasm": {
-                          "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                          "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
                           "interpreter_code_id": $INTERPRETER_CODE_ID,
                           "admin": "$KEY"
                         }
@@ -222,7 +227,7 @@
                     "to": 3,
                     "other": {
                         "counterparty_timeout": {
-                          "timestamp": "60"
+                          "seconds" : 120
                         },
                         "ics_20": {
                           "source" : "channel-0", 
@@ -243,7 +248,7 @@
             "config": {
               "force_asset": {
                 "asset_id": "158456325028528675187087900673",
-                "from_network_id": 2,
+                "network_id": 2,
                 "local": {
                   "native": {
                     "denom": "ppica"
@@ -271,7 +276,7 @@
             "config": {
               "force_asset": {
                 "asset_id": "158456325028528675187087900674",
-                "from_network_id": 2,
+                "network_id": 2,
                 "local": {
                   "native": {
                     "denom": "uatom"
@@ -299,7 +304,7 @@
             "config": {
               "force_asset": {
                 "asset_id": "237684487542793012780631851009",
-                "from_network_id": 3,
+                "network_id": 3,
                 "local": {
                   "native": {
                     "denom": "ppica"
@@ -342,7 +347,7 @@
               "config": {
                   "force_asset": {
                     "asset_id": "237684487542793012780631851010",
-                    "from_network_id": 2,
+                    "network_id": 2,
                     "local": {
                       "native": {
                         "denom" : "uatom"
@@ -375,53 +380,74 @@
 
           TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
           {
-            "execute_program": {
               "execute_program": {
-              "salt": "737061776e5f776974685f6173736574",
-              "program": {
-                "tag": "737061776e5f776974685f6173736574",
-                "instructions": [
-                {
-                  "spawn": {
-                  "network": 3,
-                  "salt": "737061776e5f776974685f6173736574",
-                  "assets": [
-                    [
-                    "158456325028528675187087900673",
-                    {
-                      "amount": {
-                      "intercept": "1000000000",
-                      "slope": "0"
+                  "execute_program": {
+                      "salt": "737061776e5f776974685f6173736574",
+                      "program": {
+                          "tag": "737061776e5f776974685f6173736574",
+                          "instructions": [
+                              {
+                                  "spawn": {
+                                      "network": 3,
+                                      "salt": "737061776e5f776974685f6173736574",
+                                      "assets": [
+                                          [
+                                              "158456325028528675187087900673",
+                                              {
+                                                  "amount": {
+                                                      "intercept": "1234567890",
+                                                      "slope": "0"
+                                                  },
+                                                  "is_unit": false
+                                              }
+                                          ]
+                                      ],
+                                      "program": {
+                                          "tag": "737061776e5f776974685f6173736574",
+                                          "instructions": [
+                                              {
+                                                  "transfer": {
+                                                      "to": {
+                                                          "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+                                                      },
+                                                      "assets": [
+                                                          [
+                                                              "237684487542793012780631851009",
+                                                              {
+                                                                  "amount": {
+
+                                                                      "intercept": "123456789",
+                                                                      "slope": "0"
+                                                                  },
+                                                                  "is_unit": false
+                                                              }
+                                                          ]
+                                                      ]
+                                                  }
+                                              }
+                                          ]
+                                      }
+                                  }
+                              }
+                          ]
                       },
-                      "is_unit": false
-                    }
-                    ]
-                  ],
-                  "program": {
-                    "tag": "737061776e5f776974685f6173736574",
-                    "instructions": []
-                  }
-                  }
-                }
-                ]
-              },
-              "assets": [
-                [
-                "158456325028528675187087900673",
-                "1000000000"
-                ]
-              ]
-              },
-              "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
-            }
-            }                                 
+                      "assets": [
+                          [
+                              "158456325028528675187087900673",
+                              "1234567890"
+                          ]
+                      ]
+                  },
+                  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+              }
+          }                             
           EOF
           )                  
 
           # check route
           "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
 
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1000000000"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           sleep "$BLOCK_SECONDS"
         '';
       };
@@ -447,6 +473,8 @@
              echo "removing data dir"
              rm --force --recursive "$CHAIN_DATA"
           fi
+          PICA_CHANNEL_ID=''${2-1}
+
           if [[ ! -d "$CHAIN_DATA" ]]; then            
             mkdir --parents "$CHAIN_DATA"
             mkdir --parents "$CHAIN_DATA/config/gentx"
@@ -462,10 +490,13 @@
             jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
             jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
 
-            jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
-            jq-genesis '.app_state.transmiddleware.token_infos[0].channel_id |= "channel-0"'  
-            jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
-            jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
+           function pica_setup() {
+              jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
+              jq-genesis ".app_state.transmiddleware.token_infos[0].channel_id |= \"channel-$PICA_CHANNEL_ID\""  
+              jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
+              jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
+           }
+           pica_setup
 
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"            
@@ -528,6 +559,21 @@
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)
             MSG=$1
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+          '';
+        };
+        centauri-tx = pkgs.writeShellApplication {
+          name = "centaurid-xcvm-config";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ centaurid pkgs.jq ];
+
+          text = ''
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"
+            CHAIN_ID="centauri-dev"
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"
+            PORT=26657
+            FEE=ppica 
+            BINARY=centaurid
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --memo '{ "wasm" : { "contract" : "osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8" } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
       };

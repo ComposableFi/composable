@@ -2,15 +2,16 @@
 //! Allows to map asset identifiers, contracts, networks, channels, denominations from, to and on
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
-use crate::prelude::*;
+use crate::{network, prelude::*};
 use cosmwasm_std::{
-	ensure_eq, wasm_execute, Binary, Coin, DepsMut, Env, MessageInfo, Response, Storage, SubMsg,
+	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, Deps, DepsMut, Env, MessageInfo, Response,
+	Storage, SubMsg,
 };
 use xc_core::{
-	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
-	shared::{XcPacket, XcProgram},
+	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId},
+	shared::{XcFunds, XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
-	AssetId, CallOrigin,
+	AssetId, CallOrigin, Displayed,
 };
 
 use crate::{
@@ -27,6 +28,7 @@ pub(crate) fn handle_bridge_forward(
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
+	block: BlockInfo,
 ) -> Result {
 	deps.api.debug(&format!(
 		"xcvm::gateway:: forwarding over IBC ICS20 MEMO {}",
@@ -37,17 +39,26 @@ pub(crate) fn handle_bridge_forward(
 	// 1. recurse on program until can with memo
 	// 2. as soon as see no Spawn/Transfer, stop memo and do Wasm call with remaining Packet
 
+	let (local_asset, amount) = msg.msg.assets.0.get(0).expect("proved above");
+
+	let route: IbcIcs20Route = get_route(deps.storage, msg.to, *local_asset)?;
+
+	let asset = msg
+		.msg
+		.assets
+		.0
+		.get(0)
+		.map(|(_, amount)| (route.on_remote_asset, *amount))
+		.expect("not empty");
+
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
 		user_origin: msg.interpreter_origin.user_origin,
 		salt: msg.msg.salt,
 		program: msg.msg.program,
-		assets: msg.msg.assets,
+		assets: vec![asset].into(),
 	};
 
-	let (local_asset, amount) = packet.assets.0.get(0).expect("proved above");
-
-	let route = get_route(deps.storage, msg.to, *local_asset)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20 route {}",
 		&serde_json_wasm::to_string(&route)?
@@ -71,7 +82,7 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let msg = to_cw_message(coin, route, packet)?;
+	let msg = to_cw_message(deps.api, coin, route, packet, block)?;
 	deps.api.debug(&format!(
 		"xcvm::gateway::ibc::ics20:: payload {}",
 		&serde_json_wasm::to_string(&msg)?
@@ -89,19 +100,14 @@ pub fn get_route(
 	this_asset_id: AssetId,
 ) -> Result<IbcIcs20Route, ContractError> {
 	let this = load_this(storage)?;
-	let other: NetworkItem = state::NETWORK
-		.load(storage, to)
-		.map_err(|_| ContractError::UnknownTargetNetwork)?;
-	let this_to_other: OtherNetworkItem = state::NETWORK_TO_NETWORK
-		.load(storage, (this.network_id, to))
-		.map_err(|_| ContractError::NoConnectionInformationFromThisToOtherNetwork)?;
+	let other = network::load_other(storage, to)?;
 	let asset: AssetItem = state::assets::ASSETS
 		.load(storage, this_asset_id)
 		.map_err(|_| ContractError::AssetNotFoundById(this_asset_id))?;
 	let to_asset: AssetId = state::assets::NETWORK_ASSET
 		.load(storage, (this_asset_id, to))
 		.map_err(|_| ContractError::AssetCannotBeTransferredToNetwork(this_asset_id, to))?;
-	let gateway_to_send_to = other.gateway.ok_or(ContractError::UnsupportedNetwork)?;
+	let gateway_to_send_to = other.network.gateway.ok_or(ContractError::UnsupportedNetwork)?;
 	let gateway_to_send_to = match gateway_to_send_to {
 		GatewayId::CosmWasm { contract, .. } => contract,
 	};
@@ -110,7 +116,7 @@ pub fn get_route(
 		GatewayId::CosmWasm { contract, .. } => contract,
 	};
 
-	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
+	let channel = other.connection.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
 	Ok(IbcIcs20Route {
 		from_network: this.network_id,
@@ -118,7 +124,7 @@ pub fn get_route(
 		channel_to_send_over: channel,
 		gateway_to_send_to,
 		sender_gateway,
-		counterparty_timeout: this_to_other.counterparty_timeout,
+		counterparty_timeout: other.connection.counterparty_timeout,
 		ibc_ics_20_sender: this
 			.ibc
 			.ok_or(ContractError::ICS20NotFound)?
@@ -133,15 +139,32 @@ pub fn get_route(
 
 pub(crate) fn ics20_message_hook(
 	_: auth::WasmHook,
+	deps: Deps,
 	msg: XcMessageData,
 	env: Env,
 	info: MessageInfo,
 ) -> Result<Response, ContractError> {
 	let packet: XcPacket = msg.packet;
 	ensure_anonymous(&packet.program)?;
+	deps.api.debug(&format!(
+		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
+		&info.funds, &packet.assets
+	));
+
+	let assets: Result<XcFunds, ContractError> = info
+		.funds
+		.into_iter()
+		.map(|coin| {
+			let asset = crate::assets::get_local_asset_by_reference(
+				deps,
+				AssetReference::Native { denom: coin.denom },
+			)?;
+			Ok((asset.asset_id, Displayed::<u128>::from(coin.amount.u128())))
+		})
+		.collect();
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 	let execute_program =
-		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: packet.assets };
+		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: assets?.into() };
 	let msg =
 		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
@@ -153,7 +176,7 @@ fn ensure_anonymous(program: &XcProgram) -> Result<()> {
 		match ix {
 			xc_core::Instruction::Transfer { .. } => {},
 			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(program)?,
-			_ => Err(ContractError::NotAuthorized)?,
+			_ => Err(ContractError::AnonymousCallsCanDoOnlyLimitedSetOfActions)?,
 		}
 	}
 	Ok(())

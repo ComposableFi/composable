@@ -1,8 +1,13 @@
 pub mod ics20;
 pub mod picasso;
 
-use crate::{prelude::*, shared::XcPacket, AssetId, NetworkId};
-use cosmwasm_std::{to_binary, CosmosMsg, IbcEndpoint, IbcTimeout, StdResult, WasmMsg};
+use crate::{
+	gateway::{self, RelativeTimeout},
+	prelude::*,
+	shared::XcPacket,
+	AssetId, NetworkId,
+};
+use cosmwasm_std::{to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, StdResult, WasmMsg};
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
@@ -40,37 +45,43 @@ pub struct IbcIcs20Route {
 	pub local_native_denom: String,
 	pub channel_to_send_over: ChannelId,
 	pub sender_gateway: Addr,
+	/// the contract address of the gateway to send to assets
 	pub gateway_to_send_to: Addr,
-	pub counterparty_timeout: IbcTimeout,
+	pub counterparty_timeout: RelativeTimeout,
 	pub ibc_ics_20_sender: IbcIcs20Sender,
 	pub on_remote_asset: AssetId,
 }
 
 pub fn to_cw_message<T>(
+	api: &dyn Api,
 	coin: Coin,
 	route: IbcIcs20Route,
 	packet: XcPacket,
+	block: BlockInfo,
 ) -> StdResult<CosmosMsg<T>> {
-	let memo = XcMessageData { from_network_id: route.from_network, packet };
+	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData {
+		from_network_id: route.from_network,
+		packet,
+	});
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
 				contract: route.gateway_to_send_to.clone(),
-				msg: serde_cw_value::to_value(memo).expect("can always serde"),
+				msg: serde_cw_value::to_value(msg).expect("can always serde"),
 			}),
 			forward: None,
 		},
 		ibc_callback: None,
 	};
 	let memo = serde_json_wasm::to_string(&memo).expect("any memo can be to string");
-
+	api.debug(&format!("xcvm::ibc::ics20 callback {}", &memo));
 	match route.ibc_ics_20_sender {
 		IbcIcs20Sender::SubstratePrecompile(addr) => {
 			let transfer = picasso::IbcMsg::Transfer {
 				channel_id: route.channel_to_send_over.clone(),
 				to_address: route.gateway_to_send_to,
 				amount: coin,
-				timeout: route.counterparty_timeout,
+				timeout: route.counterparty_timeout.absolute(block),
 				memo: Some(memo),
 			};
 			Ok(WasmMsg::Execute {
@@ -95,16 +106,17 @@ pub fn to_cw_message<T>(
 				token: Some(Coin { denom: coin.denom, amount: coin.amount.to_string() }),
 				sender: route.sender_gateway.to_string(),
 				receiver: route.gateway_to_send_to.to_string(),
-				timeout_height: route.counterparty_timeout.block().map(|x| {
-					ibc_proto::ibc::core::client::v1::Height {
+				timeout_height: route.counterparty_timeout.absolute(block.clone()).block().map(
+					|x| ibc_proto::ibc::core::client::v1::Height {
 						revision_height: x.height,
 						revision_number: x.revision,
-					}
-				}),
+					},
+				),
 				timeout_timestamp: route
 					.counterparty_timeout
+					.absolute(block)
 					.timestamp()
-					.map(|x| x.seconds())
+					.map(|x| x.nanos())
 					.unwrap_or_default(),
 				memo,
 			}

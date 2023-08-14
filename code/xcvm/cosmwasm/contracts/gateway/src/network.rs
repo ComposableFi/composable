@@ -8,7 +8,7 @@ use crate::error::{ContractError, Result};
 
 pub fn load_this(storage: &dyn Storage) -> Result<NetworkItem> {
 	state::load(storage)
-		.and_then(|this| NETWORK.load(storage, this.here_id))
+		.and_then(|this| NETWORK.load(storage, this.network_id))
 		.map_err(|_| ContractError::NetworkConfig)
 }
 
@@ -19,10 +19,10 @@ pub struct OtherNetwork {
 	pub connection: OtherNetworkItem,
 }
 
-pub fn load_other(storage: &dyn Storage, _other: NetworkId) -> Result<OtherNetwork> {
+pub fn load_other(storage: &dyn Storage, other: NetworkId) -> Result<OtherNetwork> {
 	let this = state::load(storage)?;
-	let other = NETWORK.load(storage, this.here_id)?;
-	let connection = NETWORK_TO_NETWORK.load(storage, (this.here_id, other.network_id))?;
+	let other = NETWORK.load(storage, other)?;
+	let connection = NETWORK_TO_NETWORK.load(storage, (this.network_id, other.network_id))?;
 	Ok(OtherNetwork { network: other, connection })
 }
 

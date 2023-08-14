@@ -13,10 +13,10 @@ use crate::{
 };
 
 use cosmwasm_std::{
-	ensure_eq, wasm_execute, Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
-	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
-	IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-	MessageInfo, Response, SubMsg,
+	ensure_eq, wasm_execute, Binary, BlockInfo, DepsMut, Env, Ibc3ChannelOpenResponse,
+	IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+	IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+	IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Response, SubMsg,
 };
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId};
 use xc_core::{
@@ -143,6 +143,7 @@ pub(crate) fn handle_bridge_forward_no_assets(
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: msg::BridgeForwardMsg,
+	block: BlockInfo,
 ) -> Result<Response> {
 	ensure_eq!(msg.msg.assets.0.len(), 0, ContractError::CannotTransferAssets);
 	let other = load_other(deps.storage, msg.to)?;
@@ -178,6 +179,6 @@ pub(crate) fn handle_bridge_forward_no_assets(
 		channel_id: channel_id.to_string(),
 		data: Binary::from(packet.encode()),
 		// TODO: should be a parameter or configuration
-		timeout: other.connection.counterparty_timeout,
+		timeout: other.connection.counterparty_timeout.absolute(block),
 	}))
 }

@@ -28,7 +28,14 @@ pub enum IBCLifecycleComplete {
 	},
 }
 
-/// from Go code to make compliant wasm hook
+/// derives the sender address to be used when calling wasm hooks
+/// https://github.com/osmosis-labs/osmosis/blob/master/x/ibc-hooks/keeper/keeper.go#L170
+/// ```rust
+/// let channel = ibc_rs_scale::core::ics24_host::identifier::ChannelId::new(0);
+/// let original_sender =   "juno12smx2wdlyttvyzvzg54y2vnqwq2qjatezqwqxu";
+/// let hashed_sender = xc_core::transport::ibc::ics20::hook::derive_intermediate_sender(&channel, original_sender, "osmo").expect("new address");
+/// assert_eq!(hashed_sender, "osmo1nt0pudh879m6enw4j6z4mvyu3vmwawjv5gr7xw6lvhdsdpn3m0qs74xdjl");
+/// ```
 pub fn derive_intermediate_sender(
 	channel: &ChannelId,
 	original_sender: &str,
@@ -50,6 +57,6 @@ pub struct Callback {
 	// really Addr, but it does not have scale, I guess we need to impl `type XcAddr = SS58 |
 	// Bech32` with signer inside for serde
 	pub contract: Addr,
-	/// really serde_cw_value::Value, but it has not scale
+	/// Is a valid JSON object. The contract will be called with this as the message.
 	pub msg: serde_cw_value::Value,
 }

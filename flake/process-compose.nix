@@ -12,8 +12,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh-background";
           text = ''
-            rm --force --recursive /tmp/composable-devnet             
-            mkdir --parents /tmp/composable-devnet
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc-background}
           '';
         };
@@ -22,8 +22,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-dotsama-fresh-background";
           text = ''
-            rm --force --recursive /tmp/composable-devnet             
-            mkdir --parents /tmp/composable-devnet
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc-dotsama-background}
           '';
         };
@@ -48,8 +48,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-clean";
           text = ''
-            rm --force --recursive /tmp/composable-devnet             
-            mkdir --parents /tmp/composable-devnet            
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}            
           '';
         };
 
@@ -57,8 +57,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-cosmos-fresh";
           text = ''
-            rm --force --recursive /tmp/composable-devnet             
-            mkdir --parents /tmp/composable-devnet
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos}
           '';
         };
@@ -67,8 +67,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
           text = ''
-            rm --force --recursive /tmp/composable-devnet             
-            mkdir --parents /tmp/composable-devnet
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc}
           '';
         };
@@ -82,25 +82,31 @@
           settings = {
             processes = {
               centauri = {
-                command = self'.packages.centaurid-gen;
+                command = pkgs.writeShellApplication {
+                  runtimeInputs = devnetTools.withBaseContainerTools;
+                  name = "centauri";
+                  text = ''
+                    ${pkgs.lib.meta.getExe self'.packages.centaurid-gen} reuse 0
+                  '';
+                };
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
                   port = 26657;
                 };
-                log_location = "/tmp/composable-devnet/centauri.log";
+                log_location = "${devnet-root-directory}/centauri.log";
                 availability = { restart = "on_failure"; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/centauri-init.log";
+                log_location = "${devnet-root-directory}/centauri-init.log";
                 availability = { restart = "on_failure"; };
               };
 
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
                 availability = { restart = "on_failure"; };
-                log_location = "/tmp/composable-devnet/picasso.log";
+                log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
@@ -114,7 +120,7 @@
               composable = {
                 command = self'.packages.zombienet-composable-centauri-b;
                 availability = { restart = "on_failure"; };
-                log_location = "/tmp/composable-devnet/composable.log";
+                log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
@@ -128,7 +134,7 @@
               picasso-centauri-ibc-init = {
                 command = self'.packages.picasso-centauri-ibc-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-init.log";
                 depends_on = {
                   "centauri-init".condition = "process_completed_successfully";
                   "centauri".condition = "process_healthy";
@@ -139,7 +145,7 @@
               picasso-centauri-ibc-connection-init = {
                 command = self'.packages.picasso-centauri-ibc-connection-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-connection-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-init".condition =
                     "process_completed_successfully";
@@ -150,7 +156,7 @@
               picasso-centauri-ibc-channels-init = {
                 command = self'.packages.picasso-centauri-ibc-channels-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-channels-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-connection-init".condition =
                     "process_completed_successfully";
@@ -161,7 +167,7 @@
               picasso-centauri-ibc-relay = {
                 command = self'.packages.picasso-centauri-ibc-relay;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-relay.log";
                 depends_on = {
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -172,7 +178,7 @@
               composable-picasso-ibc-init = {
                 command = self'.packages.composable-picasso-ibc-init;
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -183,14 +189,14 @@
               };
               composable-picasso-ibc-connection-init = {
                 command = ''
-                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  HOME="${devnet-root-directory}/composable-picasso-ibc"
                   export HOME                
                   RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
                   export RUST_LOG      
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10
                 '';
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-connection-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-connection-init.log";
                 depends_on = {
                   "composable-picasso-ibc-init".condition =
                     "process_completed_successfully";
@@ -200,14 +206,14 @@
 
               composable-picasso-ibc-channels-init = {
                 command = ''
-                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  HOME="${devnet-root-directory}/composable-picasso-ibc"
                   export HOME       
                   RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
                   export RUST_LOG
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
                 '';
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-channels-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-channels-init.log";
                 depends_on = {
                   "composable-picasso-ibc-connection-init".condition =
                     "process_completed_successfully";
@@ -217,7 +223,7 @@
               composable-picasso-ibc-relay = {
                 command = self'.packages.composable-picasso-ibc-relay;
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-relay.log";
                 depends_on = {
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -233,18 +239,24 @@
           settings = {
             processes = {
               centauri = {
-                command = self'.packages.centaurid-gen;
+                command = pkgs.writeShellApplication {
+                  runtimeInputs = devnetTools.withBaseContainerTools;
+                  name = "centauri";
+                  text = ''
+                    ${pkgs.lib.meta.getExe self'.packages.centaurid-gen} reuse 0
+                  '';
+                };
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
                   port = 26657;
                 };
-                log_location = "/tmp/composable-devnet/centauri.log";
+                log_location = "${devnet-root-directory}/centauri.log";
                 availability = { restart = "on_failure"; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/centauri-init.log";
+                log_location = "${devnet-root-directory}/centauri-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -254,19 +266,20 @@
                   host = "127.0.0.1";
                   port = 36657;
                 };
-                log_location = "/tmp/composable-devnet/osmosis.log";
+                log_location = "${devnet-root-directory}/osmosis.log";
               };
-              osmosis-init = {
-                command = self'.packages.osmosisd-init;
+              osmosisd-xcvm-init = {
+                command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/osmosis-init.log";
+                log_location =
+                  "${devnet-root-directory}/osmosisd-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
 
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
                 availability = { restart = "on_failure"; };
-                log_location = "/tmp/composable-devnet/picasso.log";
+                log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
@@ -280,7 +293,7 @@
               composable = {
                 command = self'.packages.zombienet-composable-centauri-b;
                 availability = { restart = "on_failure"; };
-                log_location = "/tmp/composable-devnet/composable.log";
+                log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
@@ -300,7 +313,7 @@
                   "osmosis".condition = "process_healthy";
                 };
                 log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+                  "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -311,14 +324,14 @@
                     "process_completed_successfully";
                 };
                 log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+                  "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-init = {
                 command = self'.packages.picasso-centauri-ibc-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-init.log";
                 depends_on = {
                   "centauri-init".condition = "process_completed_successfully";
                   "centauri".condition = "process_healthy";
@@ -330,7 +343,7 @@
               picasso-centauri-ibc-connection-init = {
                 command = self'.packages.picasso-centauri-ibc-connection-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-connection-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-connection-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-init".condition =
                     "process_completed_successfully";
@@ -341,7 +354,7 @@
               picasso-centauri-ibc-channels-init = {
                 command = self'.packages.picasso-centauri-ibc-channels-init;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-channels-init.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-channels-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-connection-init".condition =
                     "process_completed_successfully";
@@ -352,7 +365,7 @@
               picasso-centauri-ibc-relay = {
                 command = self'.packages.picasso-centauri-ibc-relay;
                 log_location =
-                  "/tmp/composable-devnet/picasso-centauri-ibc-relay.log";
+                  "${devnet-root-directory}/picasso-centauri-ibc-relay.log";
                 depends_on = {
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -363,7 +376,7 @@
               composable-picasso-ibc-init = {
                 command = self'.packages.composable-picasso-ibc-init;
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-init.log";
                 depends_on = {
                   "picasso-centauri-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -374,14 +387,14 @@
               };
               composable-picasso-ibc-connection-init = {
                 command = ''
-                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  HOME="${devnet-root-directory}/composable-picasso-ibc"
                   export HOME                
                   RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
                   export RUST_LOG      
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10
                 '';
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-connection-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-connection-init.log";
                 depends_on = {
                   "composable-picasso-ibc-init".condition =
                     "process_completed_successfully";
@@ -391,14 +404,14 @@
 
               composable-picasso-ibc-channels-init = {
                 command = ''
-                  HOME="/tmp/composable-devnet/composable-picasso-ibc"
+                  HOME="${devnet-root-directory}/composable-picasso-ibc"
                   export HOME       
                   RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
                   export RUST_LOG
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
                 '';
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-channels-init.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-channels-init.log";
                 depends_on = {
                   "composable-picasso-ibc-connection-init".condition =
                     "process_completed_successfully";
@@ -408,7 +421,7 @@
               composable-picasso-ibc-relay = {
                 command = self'.packages.composable-picasso-ibc-relay;
                 log_location =
-                  "/tmp/composable-devnet/composable-picasso-ibc-relay.log";
+                  "${devnet-root-directory}/composable-picasso-ibc-relay.log";
                 depends_on = {
                   "composable-picasso-ibc-channels-init".condition =
                     "process_completed_successfully";
@@ -429,20 +442,21 @@
                   host = "127.0.0.1";
                   port = 26657;
                 };
-                log_location = "/tmp/composable-devnet/centauri.log";
+                log_location = "${devnet-root-directory}/centauri.log";
                 availability = { restart = "on_failure"; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/centauri-init.log";
+                log_location = "${devnet-root-directory}/centauri-init.log";
                 availability = { restart = "on_failure"; };
               };
 
               centauri-xcvm-init = {
                 command = self'.packages.centaurid-xcvm-init;
                 depends_on."centauri".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/centauri-xcvm-init.log";
+                log_location =
+                  "${devnet-root-directory}/centauri-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -450,8 +464,21 @@
                 command = self'.packages.centaurid-xcvm-config;
                 depends_on."centauri-xcvm-init".condition =
                   "process_completed_successfully";
+                depends_on."osmosis-xcvm-init".condition =
+                  "process_completed_successfully";
                 log_location =
-                  "/tmp/composable-devnet/centauri-xcvm-config.log";
+                  "${devnet-root-directory}/centauri-xcvm-config.log";
+                availability = { restart = "on_failure"; };
+              };
+
+              osmosis-xcvm-config = {
+                command = self'.packages.osmosisd-xcvm-config;
+                depends_on."centauri-xcvm-init".condition =
+                  "process_completed_successfully";
+                depends_on."osmosis-xcvm-init".condition =
+                  "process_completed_successfully";
+                log_location =
+                  "${devnet-root-directory}/osmosis-xcvm-config.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -461,12 +488,12 @@
                   host = "127.0.0.1";
                   port = 36657;
                 };
-                log_location = "/tmp/composable-devnet/osmosis.log";
+                log_location = "${devnet-root-directory}/osmosis.log";
               };
-              osmosis-init = {
-                command = self'.packages.osmosisd-init;
+              osmosis-xcvm-init = {
+                command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "/tmp/composable-devnet/osmosis-init.log";
+                log_location = "${devnet-root-directory}/osmosis-xcvm-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -477,7 +504,7 @@
                   "osmosis".condition = "process_healthy";
                 };
                 log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-init.log";
+                  "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
                 availability = { restart = "on_failure"; };
               };
 
@@ -488,7 +515,7 @@
                     "process_completed_successfully";
                 };
                 log_location =
-                  "/tmp/composable-devnet/osmosis-centauri-hermes-relay.log";
+                  "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
               };
             };

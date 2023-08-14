@@ -1,4 +1,4 @@
-use cosmwasm_std::IbcTimeout;
+use cosmwasm_std::{BlockInfo, IbcTimeout};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{
@@ -127,13 +127,32 @@ pub struct IcsPair {
 	pub sink: ChannelId,
 }
 
+/// relative timeout to CW/IBC-rs time.
+/// very small, assumed messages are arriving fast enough, like less than hours
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub enum RelativeTimeout {
+	/// Timeout is relative to the current block timestamp of counter party
+	Seconds(u16),
+}
+
+impl RelativeTimeout {
+	pub fn absolute(&self, block: BlockInfo) -> IbcTimeout {
+		match self {
+			RelativeTimeout::Seconds(seconds) =>
+				IbcTimeout::with_timestamp(block.time.plus_seconds(*seconds as u64)),
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct OtherNetworkItem {
 	pub ics_20: Option<IcsPair>,
 	/// default timeout to use for direct send
-	pub counterparty_timeout: IbcTimeout,
+	pub counterparty_timeout: RelativeTimeout,
 	/// if there is custom IBC channel opened
 	pub xcvm_channel: Option<ChannelInfo>,
 }
@@ -174,7 +193,8 @@ pub enum ConfigSubMsg {
 	/// `salt` - human string, converted to hex or base64 depending on implementation
 	ForceInstantiate {
 		user_origin: Addr,
-		salt: Option<String>,
+		#[serde(skip_serializing_if = "String::is_empty", default)]
+		salt: String,
 	},
 }
 
@@ -187,8 +207,8 @@ pub struct InstantiateMsg(pub HereItem);
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct HereItem {
-	/// Network ID of this network
-	pub here_id: NetworkId,
+	/// Network ID of this network where contract is deployed
+	pub network_id: NetworkId,
 	/// The admin which is allowed to update the bridge list.
 	pub admin: Addr,
 }
@@ -213,8 +233,10 @@ pub enum GatewayId {
 
 pub struct AssetItem {
 	pub asset_id: AssetId,
-	pub from_network_id: NetworkId,
+	/// network id on which this asset id can be used locally
+	pub network_id: NetworkId,
 	pub local: AssetReference,
+	/// if asset was bridged, it would have way to identify bridge/source/channel
 	pub bridged: Option<BridgeAsset>,
 }
 

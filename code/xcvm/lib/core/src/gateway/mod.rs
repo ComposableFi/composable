@@ -226,6 +226,8 @@ impl Gateway {
 
 #[cfg(test)]
 mod tests {
+	use cosmwasm_std::CanonicalAddr;
+
 	use crate::{
 		gateway::{ExecuteMsg, ExecuteProgramMsg},
 		generate_asset_id,
@@ -379,6 +381,116 @@ mod tests {
 					  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
 					}
 				  }
+				"#,
+			)
+			.unwrap(),
+		)
+		.unwrap();
+		assert_eq!(program, expected)
+	}
+
+	#[test]
+	fn spawn_with_asset_and_transfer() {
+		let pica_on_centauri = generate_asset_id(2.into(), 0, 1);
+		let pica_on_osmosis = generate_asset_id(3.into(), 0, 1);
+
+		let program = ExecuteMsg::ExecuteProgram {
+			execute_program: ExecuteProgramMsg {
+				salt: b"spawn_with_asset".to_vec(),
+				program: XcProgram {
+					tag: b"spawn_with_asset".to_vec(),
+					instructions: [Instruction::Spawn {
+						network: 3.into(),
+						salt: b"spawn_with_asset".to_vec(),
+						assets: vec![(pica_on_osmosis, 1_000_000_000u128)].into(),
+						program: XcProgram {
+							tag: b"spawn_with_asset".to_vec(),
+							instructions: [XcInstruction::Transfer {
+								to: crate::Destination::Account(CanonicalAddr(
+									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=").unwrap(),
+								)),
+								assets: crate::Funds(vec![(
+									pica_on_osmosis,
+									1_000_000_000u128.into(),
+								)]),
+							}]
+							.into(),
+						},
+					}]
+					.into(),
+				},
+				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+			},
+			tip: Addr::unchecked("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+		};
+
+		//pica_on_osmosis
+
+		let program = serde_json_wasm::to_string(&program).expect("serde");
+		let expected = serde_json_wasm::to_string(
+			&serde_json_wasm::from_str::<ExecuteMsg>(
+				r#"
+				{
+					"execute_program": {
+						"execute_program": {
+							"salt": "737061776e5f776974685f6173736574",
+							"program": {
+								"tag": "737061776e5f776974685f6173736574",
+								"instructions": [
+									{
+										"spawn": {
+											"network": 3,
+											"salt": "737061776e5f776974685f6173736574",
+											"assets": [
+												[
+													"237684487542793012780631851009",
+													{
+														"amount": {
+															"intercept": "1000000000",
+															"slope": "0"
+														},
+														"is_unit": false
+													}
+												]
+											],
+											"program": {
+												"tag": "737061776e5f776974685f6173736574",
+												"instructions": [
+													{
+														"transfer": {
+															"to": {
+																"account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+															},
+															"assets": [
+																[
+																	"237684487542793012780631851009",
+																	{
+																		"amount": {
+																			"intercept": "1000000000",
+																			"slope": "0"
+																		},
+																		"is_unit": false
+																	}
+																]
+															]
+														}
+													}
+												]
+											}
+										}
+									}
+								]
+							},
+							"assets": [
+								[
+									"158456325028528675187087900673",
+									"1000000000"
+								]
+							]
+						},
+						"tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+					}
+				}
 				"#,
 			)
 			.unwrap(),
