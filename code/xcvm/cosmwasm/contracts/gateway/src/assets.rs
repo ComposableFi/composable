@@ -12,7 +12,7 @@ use cosmwasm_std::{Deps, DepsMut, Response};
 use xc_core::{AssetId, NetworkId};
 
 /// Adds a new asset to the registry; errors out if asset already exists.
-pub(crate) fn force_asset(_: auth::Admin, deps: DepsMut, msg: AssetItem) -> Result {
+pub(crate) fn force_asset(_: auth::Admin, deps: &mut DepsMut, msg: AssetItem) -> Result {
 	let config = crate::state::load(deps.storage)?;
 	ASSETS.save(deps.storage, msg.asset_id, &msg)?;
 	if msg.network_id == config.network_id {
@@ -44,7 +44,7 @@ pub(crate) fn get_local_asset_by_reference(
 /// exist.
 pub(crate) fn force_remove_asset(
 	_: auth::Auth<auth::policy::Admin>,
-	deps: DepsMut<'_>,
+	deps: &mut DepsMut<'_>,
 	asset_id: AssetId,
 ) -> std::result::Result<Response, ContractError> {
 	let config = crate::state::load(deps.storage)?;
@@ -59,7 +59,7 @@ pub(crate) fn force_remove_asset(
 
 pub(crate) fn force_asset_to_network_map(
 	_: auth::Admin,
-	deps: DepsMut,
+	deps: &mut DepsMut,
 	this_asset: AssetId,
 	other_network: NetworkId,
 	other_asset: AssetId,

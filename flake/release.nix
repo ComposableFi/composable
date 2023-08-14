@@ -97,6 +97,11 @@
               subwasm-version packages.composable-testfast-runtime
             }.wasm
 
+
+            # XCVM
+            cp ${packages.cw-xc-gateway}/lib/cw_xc_gateway.wasm release-artifacts/to-upload/cw_xc_gateway.wasm
+            cp ${packages.cw-xc-interpreter}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_interpreter.wasm
+
             echo "Generate node packages"
             cp ${
               make-bundle "toRPM" packages.composable-node
@@ -130,6 +135,7 @@
             cp ${
               make-bundle "toDEB" packages.ccw
             }/*.deb release-artifacts/to-upload/ccw_${packages.ccw.version}-1_amd64.deb
+
 
             # Checksum everything
             cd release-artifacts/to-upload

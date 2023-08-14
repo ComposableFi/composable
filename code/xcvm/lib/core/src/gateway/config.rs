@@ -189,6 +189,10 @@ pub enum ConfigSubMsg {
 		asset_id: AssetId,
 	},
 
+	// https://github.com/CosmWasm/cosmwasm/discussions/1814
+	/// short cut to rollout config faster
+	Force(Vec<ConfigSubMsg>),
+
 	/// instantiates default interpreter on behalf of user
 	/// `salt` - human string, converted to hex or base64 depending on implementation
 	ForceInstantiate {

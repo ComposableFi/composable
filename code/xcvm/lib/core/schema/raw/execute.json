@@ -156,14 +156,15 @@
       "type": "object",
       "required": [
         "asset_id",
-        "from_network_id",
-        "local"
+        "local",
+        "network_id"
       ],
       "properties": {
         "asset_id": {
           "$ref": "#/definitions/AssetId"
         },
         "bridged": {
+          "description": "if asset was bridged, it would have way to identify bridge/source/channel",
           "anyOf": [
             {
               "$ref": "#/definitions/BridgeAsset"
@@ -173,11 +174,16 @@
             }
           ]
         },
-        "from_network_id": {
-          "$ref": "#/definitions/NetworkId"
-        },
         "local": {
           "$ref": "#/definitions/AssetReference"
+        },
+        "network_id": {
+          "description": "network id on which this asset id can be used locally",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NetworkId"
+            }
+          ]
         }
       }
     },
@@ -514,6 +520,22 @@
           "additionalProperties": false
         },
         {
+          "description": "short cut to rollout config faster",
+          "type": "object",
+          "required": [
+            "force"
+          ],
+          "properties": {
+            "force": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ConfigSubMsg"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
           "description": "instantiates default interpreter on behalf of user `salt` - human string, converted to hex or base64 depending on implementation",
           "type": "object",
           "required": [
@@ -527,10 +549,7 @@
               ],
               "properties": {
                 "salt": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "user_origin": {
                   "$ref": "#/definitions/Addr"
@@ -1243,6 +1262,7 @@
       ]
     },
     "RelativeTimeout": {
+      "description": "relative timeout to CW/IBC-rs time. very small, assumed messages are arriving fast enough, like less than hours",
       "oneOf": [
         {
           "description": "Timeout is relative to the current block timestamp of counter party",

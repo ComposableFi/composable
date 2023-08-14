@@ -16,7 +16,7 @@ use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use xc_core::{gateway::ConfigSubMsg, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
+pub fn execute(mut deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
 	use msg::ExecuteMsg;
 	let sender = &info.sender;
 	let canonical_sender = deps.api.addr_canonicalize(sender.as_str())?;
@@ -28,7 +28,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	match msg {
 		ExecuteMsg::Config(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_config_msg(auth, deps, msg, env)
+			handle_config_msg(auth, &mut deps, msg, &env)
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
@@ -60,7 +60,12 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	}
 }
 
-fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: Env) -> Result {
+fn handle_config_msg(
+	auth: auth::Admin,
+	deps: &mut DepsMut,
+	msg: ConfigSubMsg,
+	env: &Env,
+) -> Result {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
@@ -71,8 +76,21 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: E
 		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>
 			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
-		ConfigSubMsg::ForceInstantiate { user_origin, salt } =>
-			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin, salt),
+		ConfigSubMsg::ForceInstantiate { user_origin, salt } => interpreter::force_instantiate(
+			auth,
+			env.contract.address.clone(),
+			deps,
+			user_origin,
+			salt,
+		),
+		ConfigSubMsg::Force(msgs) => {
+			let mut aggregated = Response::new();
+			for msg in msgs {
+				let response = handle_config_msg(auth, deps, msg, env)?;
+				aggregated = aggregated.add_submessages(response.messages);
+			}
+			Ok(aggregated)
+		},
 	}
 }
 

@@ -19,7 +19,7 @@
         "type": "object",
         "required": [
           "admin",
-          "here_id"
+          "network_id"
         ],
         "properties": {
           "admin": {
@@ -30,8 +30,8 @@
               }
             ]
           },
-          "here_id": {
-            "description": "Network ID of this network",
+          "network_id": {
+            "description": "Network ID of this network where contract is deployed",
             "allOf": [
               {
                 "$ref": "#/definitions/NetworkId"
@@ -206,14 +206,15 @@
         "type": "object",
         "required": [
           "asset_id",
-          "from_network_id",
-          "local"
+          "local",
+          "network_id"
         ],
         "properties": {
           "asset_id": {
             "$ref": "#/definitions/AssetId"
           },
           "bridged": {
+            "description": "if asset was bridged, it would have way to identify bridge/source/channel",
             "anyOf": [
               {
                 "$ref": "#/definitions/BridgeAsset"
@@ -223,11 +224,16 @@
               }
             ]
           },
-          "from_network_id": {
-            "$ref": "#/definitions/NetworkId"
-          },
           "local": {
             "$ref": "#/definitions/AssetReference"
+          },
+          "network_id": {
+            "description": "network id on which this asset id can be used locally",
+            "allOf": [
+              {
+                "$ref": "#/definitions/NetworkId"
+              }
+            ]
           }
         }
       },
@@ -564,6 +570,22 @@
             "additionalProperties": false
           },
           {
+            "description": "short cut to rollout config faster",
+            "type": "object",
+            "required": [
+              "force"
+            ],
+            "properties": {
+              "force": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/ConfigSubMsg"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "instantiates default interpreter on behalf of user `salt` - human string, converted to hex or base64 depending on implementation",
             "type": "object",
             "required": [
@@ -577,10 +599,7 @@
                 ],
                 "properties": {
                   "salt": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
+                    "type": "string"
                   },
                   "user_origin": {
                     "$ref": "#/definitions/Addr"
@@ -1293,6 +1312,7 @@
         ]
       },
       "RelativeTimeout": {
+        "description": "relative timeout to CW/IBC-rs time. very small, assumed messages are arriving fast enough, like less than hours",
         "oneOf": [
           {
             "description": "Timeout is relative to the current block timestamp of counter party",
@@ -1588,14 +1608,15 @@
           "type": "object",
           "required": [
             "asset_id",
-            "from_network_id",
-            "local"
+            "local",
+            "network_id"
           ],
           "properties": {
             "asset_id": {
               "$ref": "#/definitions/AssetId"
             },
             "bridged": {
+              "description": "if asset was bridged, it would have way to identify bridge/source/channel",
               "anyOf": [
                 {
                   "$ref": "#/definitions/BridgeAsset"
@@ -1605,11 +1626,16 @@
                 }
               ]
             },
-            "from_network_id": {
-              "$ref": "#/definitions/NetworkId"
-            },
             "local": {
               "$ref": "#/definitions/AssetReference"
+            },
+            "network_id": {
+              "description": "network id on which this asset id can be used locally",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/NetworkId"
+                }
+              ]
             }
           }
         },
@@ -1775,7 +1801,12 @@
               "$ref": "#/definitions/NetworkId"
             },
             "gateway_to_send_to": {
-              "$ref": "#/definitions/Addr"
+              "description": "the contract address of the gateway to send to assets",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                }
+              ]
             },
             "ibc_ics_20_sender": {
               "$ref": "#/definitions/IbcIcs20Sender"
@@ -1821,6 +1852,7 @@
           "minimum": 0.0
         },
         "RelativeTimeout": {
+          "description": "relative timeout to CW/IBC-rs time. very small, assumed messages are arriving fast enough, like less than hours",
           "oneOf": [
             {
               "description": "Timeout is relative to the current block timestamp of counter party",
@@ -1870,14 +1902,15 @@
           "type": "object",
           "required": [
             "asset_id",
-            "from_network_id",
-            "local"
+            "local",
+            "network_id"
           ],
           "properties": {
             "asset_id": {
               "$ref": "#/definitions/AssetId"
             },
             "bridged": {
+              "description": "if asset was bridged, it would have way to identify bridge/source/channel",
               "anyOf": [
                 {
                   "$ref": "#/definitions/BridgeAsset"
@@ -1887,11 +1920,16 @@
                 }
               ]
             },
-            "from_network_id": {
-              "$ref": "#/definitions/NetworkId"
-            },
             "local": {
               "$ref": "#/definitions/AssetReference"
+            },
+            "network_id": {
+              "description": "network id on which this asset id can be used locally",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/NetworkId"
+                }
+              ]
             }
           }
         },
