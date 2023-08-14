@@ -56,7 +56,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-serde = { workspace = true,  default-features = false }
+serde = { workspace = true, default-features = false }
 serde-json-wasm = { workspace = true, default-features = false }
 
 derive_more = "0.99.17"

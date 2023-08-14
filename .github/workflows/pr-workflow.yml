@@ -128,7 +128,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true
       - uses: actions/checkout@v3
@@ -160,7 +160,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true
       - uses: actions/checkout@v3
@@ -195,7 +195,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true
       - uses: actions/checkout@v3
@@ -228,7 +228,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -261,7 +261,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -298,7 +298,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -333,7 +333,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -368,7 +368,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -411,7 +411,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
       - name: Add tools needed for non-nix steps
         run: |  
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
@@ -482,7 +482,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true             
       - uses: actions/checkout@v3
@@ -526,7 +526,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
           installCommand: "true"
           skipAddingSubstituter: true          
       - uses: actions/checkout@v3
@@ -592,7 +592,7 @@ jobs:
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
+          name: composable
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         with:
