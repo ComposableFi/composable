@@ -2,13 +2,13 @@
 //! Allows to map asset identifiers, contracts, networks, channels, denominations from, to and on
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
-use crate::prelude::*;
+use crate::{network, prelude::*};
 use cosmwasm_std::{
 	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, Deps, DepsMut, Env, MessageInfo, Response,
 	Storage, SubMsg,
 };
 use xc_core::{
-	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId, OtherNetworkItem},
+	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId},
 	shared::{XcFunds, XcPacket, XcProgram},
 	transport::ibc::{to_cw_message, IbcIcs20Route, XcMessageData},
 	AssetId, CallOrigin, Displayed,
@@ -100,20 +100,14 @@ pub fn get_route(
 	this_asset_id: AssetId,
 ) -> Result<IbcIcs20Route, ContractError> {
 	let this = load_this(storage)?;
-	let other: NetworkItem = state::NETWORK
-		.load(storage, to)
-		.map_err(|_| ContractError::UnknownTargetNetwork)?;
-	let this_to_other: OtherNetworkItem =
-		state::NETWORK_TO_NETWORK.load(storage, (this.network_id, to)).map_err(|_| {
-			ContractError::NoConnectionInformationFromThisToOtherNetwork(this.network_id, to)
-		})?;
+	let other = network::load_other(storage, to)?;
 	let asset: AssetItem = state::assets::ASSETS
 		.load(storage, this_asset_id)
 		.map_err(|_| ContractError::AssetNotFoundById(this_asset_id))?;
 	let to_asset: AssetId = state::assets::NETWORK_ASSET
 		.load(storage, (this_asset_id, to))
 		.map_err(|_| ContractError::AssetCannotBeTransferredToNetwork(this_asset_id, to))?;
-	let gateway_to_send_to = other.gateway.ok_or(ContractError::UnsupportedNetwork)?;
+	let gateway_to_send_to = other.network.gateway.ok_or(ContractError::UnsupportedNetwork)?;
 	let gateway_to_send_to = match gateway_to_send_to {
 		GatewayId::CosmWasm { contract, .. } => contract,
 	};
@@ -122,7 +116,7 @@ pub fn get_route(
 		GatewayId::CosmWasm { contract, .. } => contract,
 	};
 
-	let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
+	let channel = other.connection.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
 	Ok(IbcIcs20Route {
 		from_network: this.network_id,
@@ -130,7 +124,7 @@ pub fn get_route(
 		channel_to_send_over: channel,
 		gateway_to_send_to,
 		sender_gateway,
-		counterparty_timeout: this_to_other.counterparty_timeout,
+		counterparty_timeout: other.connection.counterparty_timeout,
 		ibc_ics_20_sender: this
 			.ibc
 			.ok_or(ContractError::ICS20NotFound)?
@@ -157,17 +151,15 @@ pub(crate) fn ics20_message_hook(
 		&info.funds, &packet.assets
 	));
 
-	let assets: Result<XcFunds, _> = info
+	let assets: Result<XcFunds, ContractError> = info
 		.funds
 		.into_iter()
 		.map(|coin| {
-			match crate::assets::get_local_asset_by_reference(
+			let asset = crate::assets::get_local_asset_by_reference(
 				deps,
 				AssetReference::Native { denom: coin.denom },
-			) {
-				Ok(asset) => Ok((asset.asset_id, Displayed::<u128>::from(coin.amount.u128()))),
-				Err(err) => Err(err),
-			}
+			)?;
+			Ok((asset.asset_id, Displayed::<u128>::from(coin.amount.u128())))
 		})
 		.collect();
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };

@@ -50,8 +50,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			}
 		},
 		msg::ExecuteMsg::MessageHook(msg) => {
-			deps.api
-				.debug(&format!("xcvm::gateway::execute::message_hook {:?}", msg));
+			deps.api.debug(&format!("xcvm::gateway::execute::message_hook {:?}", msg));
 
 			let auth = auth::WasmHook::authorise(deps.as_ref(), &env, &info, msg.from_network_id)?;
 
