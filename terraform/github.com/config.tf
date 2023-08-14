@@ -8,6 +8,11 @@ variable "RELEASE_GITHUB_TOKEN" {
   sensitive = true
 }
 
+variable "CI_COSMOS_MNEMONIC" {
+  type      = string
+  sensitive = true
+}
+
 
 data "github_repository" "self" {
   full_name = "ComposibleFi/composable"
@@ -42,4 +47,10 @@ resource "github_actions_secret" "RELEASE_GITHUB_TOKEN" {
   repository       = "composable"
   secret_name      = "RELEASE_GITHUB_TOKEN"
   plaintext_value  = var.RELEASE_GITHUB_TOKEN
+}
+
+resource "github_actions_secret" "CI_COSMOS_MNEMONIC" {
+  repository       = "composable"
+  secret_name      = "CI_COSMOS_MNEMONIC"  
+  plaintext_value  = var.CI_COSMOS_MNEMONIC
 }
