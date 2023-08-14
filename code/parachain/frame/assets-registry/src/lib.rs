@@ -565,16 +565,11 @@ pub mod pallet {
 		type AssetId = T::LocalAssetId;
 
 		fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId {
-			let bytes = T::NetworkId::get()
-				.to_be_bytes()
-				.into_iter()
-				.chain(protocol_id)
-				.chain(nonce.to_be_bytes())
-				.collect::<Vec<u8>>()
-				.try_into()
-				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
-
-			Self::AssetId::from(u128::from_be_bytes(bytes))
+			let protocol_id = u32::from_be_bytes(protocol_id);
+			let network_id: u32 = T::NetworkId::get();
+			let high = (u64::from(protocol_id) << 32) | u64::from(protocol_id);
+			let asset_id = (u128::from(high) << 64) | u128::from(nonce);
+			Self::AssetId::from(asset_id)
 		}
 	}
 }
