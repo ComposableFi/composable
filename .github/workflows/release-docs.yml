@@ -18,7 +18,7 @@ env:
   CACHIX_JOBS: 8
   CACHIX_COMPRESSION_METHOD: zstd
 
-  CACHIX_NAME: composable-community
+  CACHIX_NAME: composable
 
   DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action

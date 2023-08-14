@@ -11,7 +11,7 @@ on:
 
 env:
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
-  CACHIX_COMPOSABLE: composable-community
+  CACHIX_COMPOSABLE: composable
 
 jobs:
   update-benchmarks-weights:

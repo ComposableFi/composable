@@ -54,3 +54,9 @@ resource "github_actions_secret" "CI_COSMOS_MNEMONIC" {
   secret_name      = "CI_COSMOS_MNEMONIC"  
   plaintext_value  = var.CI_COSMOS_MNEMONIC
 }
+
+resource "github_actions_secret" "CACHIX_AUTH_TOKEN" {
+  repository       = "composable"
+  secret_name      = "CACHIX_AUTH_TOKEN"
+  plaintext_value  = var.CACHIX_AUTH_TOKEN
+}
