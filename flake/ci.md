@@ -28,7 +28,7 @@ cat > /etc/nix/nix.conf << EOF
     connect-timeout = 30
     cores = 64
     download-attempts = 5
-    experimental-features = nix-command flakes
+    experimental-features = nix-command flakes cgroups
     gc-reserved-space = 100000000000
     http-connections = 32
     http2 = true
@@ -60,9 +60,9 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 apt update && apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin cron --yes
 usermod --append --groups docker actions-runner && service docker restart
 usermod --append --groups kvm actions-runner && chmod 666 /dev/kvm
-service nix-daemon restart && service docker restart
 echo "0 5 * * 1 nix-store --gc && nix-store --optimise" > /var/spool/cron/crontabs/actions-runner
 systemctl enable cron
+service nix-daemon restart && service docker restart && service cron restart
 mkdir --parents /home/actions-runner/ 
 cd /home/actions-runner/
 su actions-runner
