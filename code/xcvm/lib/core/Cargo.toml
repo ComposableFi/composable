@@ -29,9 +29,6 @@ ibc-proto = { workspace = true, default-features = false, features = ["serde", "
 serde-cw-value = { workspace = true, default-features = false}
 xcm = { workspace = true, default-features = false, optional = true}
 
-[dev-dependencies]
-cosmwasm-orchestrate = { workspace = true }
-
 [build-dependencies]
 prost-build = { workspace = true }
 

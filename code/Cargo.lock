@@ -19216,7 +19216,6 @@ name = "xc-core"
 version = "0.1.0"
 dependencies = [
  "bech32",
- "cosmwasm-orchestrate",
  "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",

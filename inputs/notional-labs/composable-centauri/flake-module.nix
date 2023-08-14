@@ -473,6 +473,8 @@
              echo "removing data dir"
              rm --force --recursive "$CHAIN_DATA"
           fi
+          PICA_CHANNEL_ID=''${2-1}
+
           if [[ ! -d "$CHAIN_DATA" ]]; then            
             mkdir --parents "$CHAIN_DATA"
             mkdir --parents "$CHAIN_DATA/config/gentx"
@@ -488,14 +490,13 @@
             jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
             jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
 
-           function pica() {
+           function pica_setup() {
               jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
-              jq-genesis '.app_state.transmiddleware.token_infos[0].channel_id |= "channel-0"'  
+              jq-genesis ".app_state.transmiddleware.token_infos[0].channel_id |= \"channel-$PICA_CHANNEL_ID\""  
               jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
               jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
            }
-           # disabled until https://github.com/notional-labs/composable-centauri/issues/219
-           # pica
+           pica_setup
 
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"            

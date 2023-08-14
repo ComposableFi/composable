@@ -226,8 +226,7 @@ impl Gateway {
 
 #[cfg(test)]
 mod tests {
-	use bech32_no_std::FromBase32;
-	use cosmwasm_std::{to_binary, CanonicalAddr};
+	use cosmwasm_std::CanonicalAddr;
 
 	use crate::{
 		gateway::{ExecuteMsg, ExecuteProgramMsg},
@@ -390,18 +389,11 @@ mod tests {
 		assert_eq!(program, expected)
 	}
 
-	pub struct OsmosisAddressHandler;
-
-	impl cosmwasm_orchestrate::vm::CosmosAddressHandler for OsmosisAddressHandler {
-		const PREFIX: &'static str = "osmo";
-	}
-	
-
 	#[test]
 	fn spawn_with_asset_and_transfer() {
 		let pica_on_centauri = generate_asset_id(2.into(), 0, 1);
 		let pica_on_osmosis = generate_asset_id(3.into(), 0, 1);
-		
+
 		let program = ExecuteMsg::ExecuteProgram {
 			execute_program: ExecuteProgramMsg {
 				salt: b"spawn_with_asset".to_vec(),
@@ -415,7 +407,7 @@ mod tests {
 							tag: b"spawn_with_asset".to_vec(),
 							instructions: [XcInstruction::Transfer {
 								to: crate::Destination::Account(CanonicalAddr(
-									to_binary(&addr).unwrap()
+									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=").unwrap(),
 								)),
 								assets: crate::Funds(vec![(
 									pica_on_osmosis,
@@ -467,7 +459,7 @@ mod tests {
 													{
 														"transfer": {
 															"to": {
-																"account": "Im9zbW8xeDk5cGt6OG1rN21zbXB0ZWdnODg3d3k0NnZydXNsN2trMHN1ZHZhZjJ1aDJrOHF6N3NwcyI="
+																"account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
 															},
 															"assets": [
 																[
