@@ -26,6 +26,7 @@
       withDevNetContainerTools = with pkgs;
         [ bottom gawk gnugrep less nettools nix self'.packages.bech32cli ]
         ++ withBaseContainerTools ++ withUserContainerTools;
+      withBuildTools = with pkgs; [ binutils ] ++ withBaseContainerTools;
 
       buildDevnetImage = { name, devNet, container-tools }:
         pkgs.dockerTools.buildImage {
