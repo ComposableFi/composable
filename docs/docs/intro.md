@@ -1,16 +1,103 @@
 ---
+title: Welcome to the Future of France
+hide_table_of_contents: true
 slug: /
 ---
 
+<div class="container">
+  <div class="row">
+    <div class="col col--4">
+      <a href="/parachains/picasso-parachain-overview">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Networks"/>
+          </div>
+          <div class="card__body">
+            <h3>Networks</h3>
+            Explore the Composable networks on Kusama, Polkadot and Cosmos.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/products/centauri/Dotsama-ibc">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Centauri" />
+          </div>
+          <div class="card__body">
+            <h3>Centauri</h3>
+              Composable's IBC-based transfer protocol.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/products/xcvm">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Composable VM" />
+          </div>
+          <div class="card__body">
+            <h3>Composable VM</h3>
+              Cross-ecosystem communication enabled through cross-chain smart contracts.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/nix/install">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Develop" />
+          </div>
+          <div class="card__body">
+            <h3>Develop</h3>
+              Develop with the Picasso testnet, instructions to setup an oracle, collator and validator.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/ecosystem/build-on-composable-ecosystem-development">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>Ecosystem</h3>
+             Learn about Pablo, the Composable ecosystem, Team and Press Kit. 
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/accounts-wallets">
+        <div class="card">
+          <div class="card__image">
+            <img src="" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>User Guides</h3>
+              Navigate Composable products and infrastructure via User Guides.
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 
-# Introduction
+
+
 
 *Composable Finance: Composing DeFi for mass adoption*
-
 
 ![composable_finance](./composable-face-banner.png)
 *any money, any chain, anywhere*
 
+:::note
+The documentation for Composable is presently undergoing development, consequently resulting in an usual display.
+:::
 ## The Vision
 
 In an ideal cross-chain world, developers and users interact unhindered across ecosystems and protocols, regardless of 

@@ -1,4 +1,8 @@
-# XCVM
+# Composable Virtual Machine (CVM)
+
+:::note
+The existing documentation pertaining to the Composable Virtual Machine (VM), previously known as the XCVM is outdated and under imminent revision.
+:::
 
 The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts.
 

@@ -1,5 +1,9 @@
 # How it works
 
+:::note
+The existing documentation pertaining to the Composable Virtual Machine (VM) is outdated and is under imminent revision.
+:::
+
 *For more details, head to the XCVM technical specification on
 [GitHub](https://github.com/ComposableFi/composable/blob/main/code/xcvm/SPEC.md).*
 
