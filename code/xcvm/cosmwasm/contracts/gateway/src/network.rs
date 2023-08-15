@@ -1,5 +1,5 @@
 use crate::{events::make_event, prelude::*, state::xcvm::IBC_CHANNEL_NETWORK};
-use cosmwasm_std::{Response, Storage};
+use cosmwasm_std::{DepsMut, Response, Storage};
 use xc_core::{gateway::NetworkItem, NetworkId};
 
 use crate::state::{self, NETWORK, NETWORK_TO_NETWORK};
@@ -28,7 +28,7 @@ pub fn load_other(storage: &dyn Storage, other: NetworkId) -> Result<OtherNetwor
 
 pub(crate) fn force_network_to_network(
 	_: crate::auth::Auth<crate::auth::policy::Admin>,
-	deps: &mut cosmwasm_std::DepsMut,
+	deps: DepsMut,
 	msg: xc_core::gateway::ForceNetworkToNetworkMsg,
 ) -> std::result::Result<cosmwasm_std::Response, crate::error::ContractError> {
 	NETWORK_TO_NETWORK.save(deps.storage, (msg.from, msg.to), &msg.other)?;
@@ -42,7 +42,7 @@ pub(crate) fn force_network_to_network(
 
 pub(crate) fn force_network(
 	_auth: crate::auth::Auth<crate::auth::policy::Admin>,
-	deps: &mut cosmwasm_std::DepsMut,
+	deps: DepsMut,
 	msg: NetworkItem,
 ) -> std::result::Result<cosmwasm_std::Response, crate::error::ContractError> {
 	NETWORK.save(deps.storage, msg.network_id, &msg)?;

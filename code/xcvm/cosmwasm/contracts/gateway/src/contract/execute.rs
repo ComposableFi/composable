@@ -8,15 +8,15 @@ use crate::{
 };
 
 use cosmwasm_std::{
-	entry_point, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
-	Response,
+	ensure, entry_point, wasm_execute, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env,
+	MessageInfo, Response,
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 
 use xc_core::{gateway::ConfigSubMsg, CallOrigin, Displayed, Funds, InterpreterOrigin};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(mut deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
 	use msg::ExecuteMsg;
 	let sender = &info.sender;
 	let canonical_sender = deps.api.addr_canonicalize(sender.as_str())?;
@@ -28,7 +28,7 @@ pub fn execute(mut deps: DepsMut, env: Env, info: MessageInfo, msg: msg::Execute
 	match msg {
 		ExecuteMsg::Config(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_config_msg(auth, &mut deps, msg, &env)
+			handle_config_msg(auth, deps, msg, &env)
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
@@ -60,12 +60,7 @@ pub fn execute(mut deps: DepsMut, env: Env, info: MessageInfo, msg: msg::Execute
 	}
 }
 
-fn handle_config_msg(
-	auth: auth::Admin,
-	deps: &mut DepsMut,
-	msg: ConfigSubMsg,
-	env: &Env,
-) -> Result {
+fn handle_config_msg(auth: auth::Admin, mut deps: DepsMut, msg: ConfigSubMsg, env: &Env) -> Result {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
@@ -86,8 +81,13 @@ fn handle_config_msg(
 		ConfigSubMsg::Force(msgs) => {
 			let mut aggregated = Response::new();
 			for msg in msgs {
-				let response = handle_config_msg(auth, deps, msg, env)?;
-				aggregated = aggregated.add_submessages(response.messages);
+				let response = handle_config_msg(auth, deps.branch(), msg, env)?;
+				ensure!(
+					response.attributes.is_empty() && response.data.is_none(),
+					ContractError::BatchedCallsCannotReturnData
+				);
+				aggregated =
+					aggregated.add_submessages(response.messages).add_events(response.events);
 			}
 			Ok(aggregated)
 		},

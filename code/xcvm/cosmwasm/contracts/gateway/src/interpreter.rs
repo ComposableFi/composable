@@ -18,7 +18,7 @@ use crate::{auth, prelude::*};
 pub(crate) fn force_instantiate(
 	_: auth::Admin,
 	gateway: Addr,
-	deps: &mut DepsMut,
+	deps: DepsMut,
 	user_origin: Addr,
 	salt: String,
 ) -> Result {
