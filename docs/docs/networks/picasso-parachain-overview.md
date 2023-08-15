@@ -14,16 +14,12 @@ and its proprietary technology stack.
 Picasso houses a suite of modular and interoperable Substrate pallets:
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
-- [xPICA] - fNFTs: tradable and yield-bearing representation of a user's staked $PICA
 - [Centauri] - trustless bridging between major DeFi ecosystems
 - [Apollo] - Picasso’s native oracle pallet
-- [Cubic] - Picasso’s native vault pallet
 
 [Pablo]: ../products/pablo-overview.md
-[xPICA]: ../products/xpica-fnft-overview.md
 [Centauri]: ../products/centauri-overview.md
 [Apollo]: ../products/apollo-overview.md
-[Cubic]: ../products/cubic-overview.md
 
 ## How is Picasso enabling interoperable DeFi
 
@@ -99,11 +95,10 @@ aims to become an ecosystem flush with liquidity from multiple different blockch
 Developers interested in Picasso’s interoperability framework will find the core pallets and SDKs beneficial 
 as they stimulate the development process for building on Picasso. 
 Picasso’s modular base-level infrastructure allows developers to easily integrate, stack, 
-or leverage core pallets such as the Oracle [(Apollo)], Vaults [(Cubic)], 
+or leverage core pallets such as the Oracle [(Apollo)], 
 DEX [(Pablo)] and Trustless Bridging [(Centauri)] pallets. 
 These pallets and their functionalities are the foundation for Picasso that will lead us to enable interoperable DeFi.
 
 [(Apollo)]: ../products/apollo-overview.md
-[(Cubic)]: ../products/cubic-overview.md
 [(Pablo)]: ../products/pablo-overview.md
 [(Centauri)]: ../products/centauri-overview.md
