@@ -152,7 +152,7 @@
        label: "XCVM",
        link: {
          type: "doc",
-         id: "products/XCVM",
+         id: "products/xcvm",
        },
        collapsible: false,
        collapsed: false,
