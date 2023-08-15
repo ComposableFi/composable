@@ -1,4 +1,4 @@
-use crate::{Displayed, Funds, UserOrigin};
+use crate::{Funds, UserOrigin};
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Binary;
 use parity_scale_codec::{Decode, Encode};
@@ -75,5 +75,5 @@ pub struct Packet<Program> {
 	/// The protobuf encoded program.
 	pub program: Program,
 	/// The assets that were attached to the program.
-	pub assets: Funds<Displayed<u128>>,
+	pub assets: Funds<crate::shared::Displayed<u128>>,
 }

@@ -1,6 +1,6 @@
-use crate::{prelude::*, Displayed, NetworkId};
+use crate::{prelude::*, NetworkId};
 
-pub type ExchangeId = Displayed<u128>;
+pub type ExchangeId = crate::shared::Displayed<u128>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]

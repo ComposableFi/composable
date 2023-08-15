@@ -5,8 +5,7 @@ pub use config::*;
 use crate::prelude::*;
 
 use crate::{
-	transport::ibc::XcMessageData, AssetId, CallOrigin, Displayed, Funds, InterpreterOrigin,
-	NetworkId,
+	transport::ibc::XcMessageData, AssetId, CallOrigin, Funds, InterpreterOrigin, NetworkId,
 };
 
 /// Prefix used for all events attached to gateway responses.
@@ -83,7 +82,7 @@ pub struct ExecuteProgramMsg {
 	pub program: crate::shared::XcProgram,
 	/// Assets to fund the XCVM interpreter instance
 	/// The interpreter is funded prior to execution
-	pub assets: Funds<Displayed<u128>>,
+	pub assets: Funds<crate::shared::Displayed<u128>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

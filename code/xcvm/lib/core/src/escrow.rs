@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::NetworkId;
 
+type Uint128 = crate::shared::Displayed<u128>;
+
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.escrow";
 
@@ -101,7 +103,7 @@ pub struct DepositAssetsRequest {
 	/// for given amount of the token.  The contract will attempt to transfer
 	/// the funds to its account to get the funds.
 	#[cfg(feature = "cw20")]
-	pub tokens: Vec<(String, u128)>,
+	pub tokens: Vec<(String, Uint128)>,
 }
 
 /// Response to asset deposit request.
@@ -110,7 +112,7 @@ pub struct DepositAssetsRequest {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DepositAssetsResponse {
 	/// Identifier of the deposit unique on given chain.
-	pub deposit_id: u128,
+	pub deposit_id: Uint128,
 }
 
 /// Relies a problem to the accounts contract on the Centauri chain.

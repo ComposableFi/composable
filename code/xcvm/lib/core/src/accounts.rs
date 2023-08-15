@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{AssetId, NetworkId};
 
+type Uint128 = crate::shared::Displayed<u128>;
+
 /// Prefix used for all events attached to gateway responses.
 pub const EVENT_PREFIX: &str = "xcvm.accounts";
 
@@ -114,11 +116,11 @@ pub struct AssetBalance {
 	pub asset_id: AssetId,
 	/// Available unlocked balance.  This is the amount user can access at
 	/// the moment.
-	pub unlocked_amount: u128,
+	pub unlocked_amount: Uint128,
 	/// Available locked balance.  This is the amount that is being used
 	/// in processing of a problem and cannot be used until execution of
 	/// the problem terminates.
-	pub locked_amount: u128,
+	pub locked_amount: Uint128,
 }
 
 /// Sends a solution for the virtual wallet to execute.
@@ -151,11 +153,11 @@ pub struct ExecuteSolutionResponse {
 pub struct DepositNotificationPacket {
 	/// Identifier of the deposist assigned by the escrow contract.  It’s
 	/// not globally unique and is used to confirm or deecline a deposit.
-	pub deposit_id: u128,
+	pub deposit_id: Uint128,
 	/// The account whose balances are affected.
 	pub account: String,
 	/// List of credits to balances.
-	pub deposits: Vec<(AssetId, u128)>,
+	pub deposits: Vec<(AssetId, Uint128)>,
 }
 
 /// Message from escrow contract to accounts contract relaying user request.

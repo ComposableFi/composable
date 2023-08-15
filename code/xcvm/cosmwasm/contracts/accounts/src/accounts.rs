@@ -149,20 +149,20 @@ fn transfer_balances(deps: &mut DepsMut, src_account: &Account, beneficiary: Str
 	let mut balances = beneficiary
 		.balances
 		.iter()
-		.map(|balance| (balance.asset_id, (balance.unlocked_amount, balance.locked_amount)))
+		.map(|balance| (balance.asset_id, (*balance.unlocked_amount, *balance.locked_amount)))
 		.collect::<std::collections::HashMap<_, _>>();
 	for asset in src_account.balances.iter() {
 		if asset.locked_amount != 0 {
 			return Err(ContractError::HasLockedBalance(asset.asset_id))
 		}
-		balances.entry(asset.asset_id).or_default().0 += asset.unlocked_amount;
+		balances.entry(asset.asset_id).or_default().0 += *asset.unlocked_amount;
 	}
 	beneficiary.balances.clear();
 	beneficiary.balances.extend(balances.into_iter().map(
 		|(asset_id, (unlocked_amount, locked_amount))| msg::AssetBalance {
 			asset_id,
-			unlocked_amount,
-			locked_amount,
+			unlocked_amount: unlocked_amount.into(),
+			locked_amount: locked_amount.into(),
 		},
 	));
 	beneficiary.save(deps.storage)
@@ -190,15 +190,16 @@ pub(crate) fn handle_deposit_notification(
 				let entry = &mut account.balances[*entry.get()];
 				entry.unlocked_amount = entry
 					.unlocked_amount
-					.checked_add(amount)
-					.ok_or(ContractError::ArithmeticOverflow)?;
+					.checked_add(*amount)
+					.ok_or(ContractError::ArithmeticOverflow)?
+					.into();
 			},
 			Entry::Vacant(entry) => {
 				entry.insert(account.balances.len());
 				account.balances.push(msg::AssetBalance {
 					asset_id,
 					unlocked_amount: amount,
-					locked_amount: 0,
+					locked_amount: Default::default(),
 				});
 			},
 		}
