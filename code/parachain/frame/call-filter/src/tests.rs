@@ -1,11 +1,11 @@
 #![cfg(test)]
 
 use super::*;
+use frame_support::{assert_noop, assert_ok};
 use mock::{RuntimeEvent, *};
 use sp_runtime::traits::BadOrigin;
-use support::{assert_noop, assert_ok};
 
-const BALANCE_TRANSFER: &<Runtime as system::Config>::RuntimeCall =
+const BALANCE_TRANSFER: &<Runtime as frame_system::Config>::RuntimeCall =
 	&mock::RuntimeCall::Balances(pallet_balances::Call::transfer { dest: ALICE, value: 10 });
 #[test]
 fn pause_transaction_work() {

@@ -16,8 +16,8 @@ sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
-support = { package = "frame-support", default-features = false, workspace = true }
-system = { package = "frame-system", default-features = false, workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
 
 [dev-dependencies]
 pallet-balances = { workspace = true }
@@ -29,13 +29,12 @@ sp-io = { workspace = true }
 default = ["std"]
 std = [
   "codec/std",
+  "frame-support/std",
+  "frame-system/std",
   "scale-info/std",
   "serde",
   "sp-core/std",
   "sp-io/std",
   "sp-runtime/std",
   "sp-std/std",
-  "support/std",
-  "support/std",
-  "system/std",
 ]

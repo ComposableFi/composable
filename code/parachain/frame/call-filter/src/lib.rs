@@ -15,21 +15,21 @@
 
 mod prelude;
 mod types;
-pub use pallet::*;
-use support::{
+use frame_support::{
 	dispatch::{CallMetadata, GetCallMetadata},
 	pallet_prelude::*,
 	traits::{Contains, PalletInfoAccess},
 	transactional,
 };
-use system::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+pub use pallet::*;
 pub use types::*;
 use weights::WeightInfo;
 mod mock;
 mod tests;
 mod weights;
 
-#[support::pallet]
+#[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use prelude::*;
@@ -37,9 +37,9 @@ pub mod pallet {
 	type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
 
 	#[pallet::config]
-	pub trait Config: system::Config {
+	pub trait Config: frame_system::Config {
 		/// Overarching event type
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Origin which can disable extrinsic for being executed.
 		/// Consider be same or more allowed than EnableOrigin.
@@ -176,7 +176,7 @@ pub mod pallet {
 
 	impl<T: Config> Contains<T::RuntimeCall> for Pallet<T>
 	where
-		<T as system::Config>::RuntimeCall: GetCallMetadata,
+		<T as frame_system::Config>::RuntimeCall: GetCallMetadata,
 	{
 		fn contains(call: &T::RuntimeCall) -> bool {
 			let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
