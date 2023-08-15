@@ -1,4 +1,5 @@
 use crate::{
+	batch::BatchResponse,
 	contract::INSTANTIATE_INTERPRETER_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
@@ -21,7 +22,7 @@ pub(crate) fn force_instantiate(
 	deps: DepsMut,
 	user_origin: Addr,
 	salt: String,
-) -> Result {
+) -> Result<BatchResponse> {
 	let config = load_this(deps.storage)?;
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
 		GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
@@ -32,7 +33,10 @@ pub(crate) fn force_instantiate(
 	let interpreter_origin =
 		InterpreterOrigin { user_origin: call_origin.user(config.network_id), salt: salt.clone() };
 	let msg = instantiate(deps.as_ref(), gateway, interpreter_code_id, &interpreter_origin, salt)?;
-	Ok(Response::new().add_submessage(msg).add_event(make_event("interpreter.forced")))
+	Ok(BatchResponse::new().add_submessage(msg).add_event(
+		make_event("interpreter.forced")
+			.add_attribute("interpreter_origin", interpreter_origin.to_string()),
+	))
 }
 
 pub fn instantiate(

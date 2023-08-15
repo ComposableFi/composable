@@ -1,5 +1,7 @@
-use crate::{events::make_event, prelude::*, state::xcvm::IBC_CHANNEL_NETWORK};
-use cosmwasm_std::{DepsMut, Response, Storage};
+use crate::{
+	batch::BatchResponse, events::make_event, prelude::*, state::xcvm::IBC_CHANNEL_NETWORK,
+};
+use cosmwasm_std::{DepsMut, Storage};
 use xc_core::{gateway::NetworkItem, NetworkId};
 
 use crate::state::{self, NETWORK, NETWORK_TO_NETWORK};
@@ -30,23 +32,26 @@ pub(crate) fn force_network_to_network(
 	_: crate::auth::Auth<crate::auth::policy::Admin>,
 	deps: DepsMut,
 	msg: xc_core::gateway::ForceNetworkToNetworkMsg,
-) -> std::result::Result<cosmwasm_std::Response, crate::error::ContractError> {
+) -> std::result::Result<BatchResponse, crate::error::ContractError> {
 	NETWORK_TO_NETWORK.save(deps.storage, (msg.from, msg.to), &msg.other)?;
 	if let Some(ibc) = msg.other.xcvm_channel {
 		IBC_CHANNEL_NETWORK.save(deps.storage, ibc.id.to_string(), &msg.to)?;
 	}
-	Ok(Response::new()
-		.add_event(make_event("network_to_network.forced").add_attribute("to", msg.to.to_string()))
-		.add_attribute("from", msg.from.to_string()))
+	Ok(BatchResponse::new().add_event(
+		make_event("network_to_network.forced")
+			.add_attribute("to", msg.to.to_string())
+			.add_attribute("from", msg.from.to_string())
+			.add_attribute("ics_20", msg.other.ics_20.is_some().to_string()),
+	))
 }
 
 pub(crate) fn force_network(
 	_auth: crate::auth::Auth<crate::auth::policy::Admin>,
 	deps: DepsMut,
 	msg: NetworkItem,
-) -> std::result::Result<cosmwasm_std::Response, crate::error::ContractError> {
+) -> crate::error::Result<BatchResponse> {
 	NETWORK.save(deps.storage, msg.network_id, &msg)?;
-	Ok(Response::new().add_event(
+	Ok(BatchResponse::new().add_event(
 		make_event("network.forced").add_attribute("network_id", msg.network_id.to_string()),
 	))
 }
