@@ -76,6 +76,9 @@ pub enum ContractError {
 	GatewayForNetworkNotFound(NetworkId),
 	#[error("Anonymous calls can do only limitet set of actions")]
 	AnonymousCallsCanDoOnlyLimitedSetOfActions,
+	/// use events attributes to return data
+	#[error("Batched calls cannot return data")]
+	BatchedCallsCannotReturnData,
 }
 
 impl From<bech32_no_std::Error> for ContractError {

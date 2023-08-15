@@ -56,7 +56,12 @@
           "$ref": "#/definitions/NetworkId"
         },
         "gateway_to_send_to": {
-          "$ref": "#/definitions/Addr"
+          "description": "the contract address of the gateway to send to assets",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            }
+          ]
         },
         "ibc_ics_20_sender": {
           "$ref": "#/definitions/IbcIcs20Sender"
@@ -102,6 +107,7 @@
       "minimum": 0.0
     },
     "RelativeTimeout": {
+      "description": "relative timeout to CW/IBC-rs time. very small, assumed messages are arriving fast enough, like less than hours",
       "oneOf": [
         {
           "description": "Timeout is relative to the current block timestamp of counter party",

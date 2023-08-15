@@ -1,5 +1,6 @@
 use crate::{
 	assets, auth,
+	batch::BatchResponse,
 	error::{ContractError, Result},
 	events::make_event,
 	interpreter, msg,
@@ -28,7 +29,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	match msg {
 		ExecuteMsg::Config(msg) => {
 			let auth = auth::Admin::authorise(deps.as_ref(), &info)?;
-			handle_config_msg(auth, deps, msg, env)
+			handle_config_msg(auth, deps, msg, &env).map(Into::into)
 		},
 
 		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
@@ -60,7 +61,12 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	}
 }
 
-fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: Env) -> Result {
+fn handle_config_msg(
+	auth: auth::Admin,
+	mut deps: DepsMut,
+	msg: ConfigSubMsg,
+	env: &Env,
+) -> Result<BatchResponse> {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
@@ -71,8 +77,21 @@ fn handle_config_msg(auth: auth::Admin, deps: DepsMut, msg: ConfigSubMsg, env: E
 		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>
 			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
-		ConfigSubMsg::ForceInstantiate { user_origin, salt } =>
-			interpreter::force_instantiate(auth, env.contract.address, deps, user_origin, salt),
+		ConfigSubMsg::ForceInstantiate { user_origin, salt } => interpreter::force_instantiate(
+			auth,
+			env.contract.address.clone(),
+			deps,
+			user_origin,
+			salt,
+		),
+		ConfigSubMsg::Force(msgs) => {
+			let mut aggregated = BatchResponse::new();
+			for msg in msgs {
+				let response = handle_config_msg(auth, deps.branch(), msg, env)?;
+				aggregated.merge(response);
+			}
+			Ok(aggregated)
+		},
 	}
 }
 

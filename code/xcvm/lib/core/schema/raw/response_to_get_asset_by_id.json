@@ -27,14 +27,15 @@
       "type": "object",
       "required": [
         "asset_id",
-        "from_network_id",
-        "local"
+        "local",
+        "network_id"
       ],
       "properties": {
         "asset_id": {
           "$ref": "#/definitions/AssetId"
         },
         "bridged": {
+          "description": "if asset was bridged, it would have way to identify bridge/source/channel",
           "anyOf": [
             {
               "$ref": "#/definitions/BridgeAsset"
@@ -44,11 +45,16 @@
             }
           ]
         },
-        "from_network_id": {
-          "$ref": "#/definitions/NetworkId"
-        },
         "local": {
           "$ref": "#/definitions/AssetReference"
+        },
+        "network_id": {
+          "description": "network id on which this asset id can be used locally",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NetworkId"
+            }
+          ]
         }
       }
     },

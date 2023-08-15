@@ -17,6 +17,7 @@ use xc_core::{gateway::OtherNetworkItem, NetworkId};
 ///
 /// For convenience, type aliases are provided for the different
 /// authorisation levels: [`Contract`], [`Interpreter`] and [`Admin`].
+#[derive(Clone, Copy)]
 pub(crate) struct Auth<T>(core::marker::PhantomData<T>);
 
 /// Authorisation token for messages which can only be sent from the
@@ -113,8 +114,10 @@ impl<T> Auth<T> {
 }
 
 pub(crate) mod policy {
+	#[derive(Clone, Copy)]
 	pub(crate) enum Contract {}
 	pub(crate) enum Interpreter {}
+	#[derive(Clone, Copy)]
 	pub(crate) enum Admin {}
 	pub(crate) enum WasmHook {}
 }

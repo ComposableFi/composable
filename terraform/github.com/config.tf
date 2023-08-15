@@ -13,6 +13,10 @@ variable "CI_COSMOS_MNEMONIC" {
   sensitive = true
 }
 
+variable "CACHIX_AUTH_TOKEN" {
+  type      = string
+  sensitive = true
+}
 
 data "github_repository" "self" {
   full_name = "ComposibleFi/composable"
