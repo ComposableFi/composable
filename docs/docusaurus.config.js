@@ -71,7 +71,7 @@ const config = {
 						label: 'Networks',
 					  },
 					{
-						to: '/products/centauri/Dotsama-ibc',
+						to: '/products/centauri-overview',
 						position: 'left',
 						label: 'Centauri',
 					  },

@@ -138,6 +138,7 @@
    ],
  
    centauri: [
+     "products/centauri-overview",
      "products/centauri/Dotsama-ibc",
      "products/centauri/near-ibc-bridge",
      "products/centauri/hyperspace-relayer",
@@ -172,73 +173,73 @@
      },
    ],
    develop: [
-     {
-       type: "category",
-       label: "Nix",
-       link: {
-         type: "doc",
-         id: "nix",
-       },
-       collapsible: true,
-       collapsed: true,
-       items: [
-         "nix/install",
-         "nix/run-packages",
-         "nix/development-environments",
-         "nix/running-checks",
-         "nix/reading-logs",
-         "nix/defining-your-own-packages",
-         "nix/editing-docs",
-         "nix/troubleshooting",
-       ],
-     },
-     {
-       type: "doc",
-       id: "codespaces",
-     },
-     {
-       type: "category",
-       label: "Cosmwasm Orchestrate",
-       link: {
-         type: "doc",
-         id: "developer-guides/cosmwasm-orchestrate",
-       },
-       collapsible: true,
-       collapsed: true,
-       items: [
-         {
-           type: "category",
-           label: "Concepts",
-           link: {
-             type: "doc",
-             id: "developer-guides/cosmwasm/cw-orchestrate/concepts/concepts",
-           },
-           collapsible: true,
-           collapsed: true,
-           items: [
-             "developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch",
-             "developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers",
-             "developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler",
-           ],
-         },
-         "developer-guides/cosmwasm/cw-orchestrate/tutorial-dex",
-       ],
-     },
-     {
-       type: "category",
-       label: "Cosmwasm CLI",
-       link: {
-         type: "doc",
-         id: "developer-guides/cosmwasm-cli",
-       },
-       collapsible: true,
-       collapsed: true,
-       items: ["developer-guides/cosmwasm/walkthrough"],
-     },
-     "developer-guides/oracle-set-up-guide",
-     "developer-guides/collator-guide",
-     "developer-guides/local-picasso-guide",
-   ],
+    {
+      type: "category",
+      label: "Nix",
+      link: {
+        type: "doc",
+        id: "nix"
+      },
+      collapsible: true,
+      collapsed: true,
+      items: [
+        "nix/install",
+        "nix/run-packages",
+        "nix/development-environments",
+        "nix/running-checks",
+        "nix/reading-logs",
+        "nix/defining-your-own-packages",
+        "nix/editing-docs",
+        "nix/troubleshooting",
+      ],
+    },
+    {
+      type: "doc",
+      id: "codespaces",
+    },
+    {
+      type: "category",
+      label: "Cosmwasm Orchestrate",
+      link: {
+        type: "doc",
+        id: "developer-guides/cosmwasm-orchestrate",
+      },
+      collapsible: true,
+      collapsed: true,
+      items: [
+        {
+          type: "category",
+          label: "Concepts",
+          link: {
+            type: "doc",
+            id: "developer-guides/cosmwasm/cw-orchestrate/concepts/concepts",
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            "developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch",
+            "developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers",
+            "developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler",
+          ],
+        },
+        "developer-guides/cosmwasm/cw-orchestrate/tutorial-dex",
+      ],
+    },
+    {
+      type: "category",
+      label: "Cosmwasm CLI",
+      link: {
+        type: "doc",
+        id: "developer-guides/cosmwasm-cli",
+      },
+      collapsible: true,
+      collapsed: true,
+      items: ["developer-guides/cosmwasm/walkthrough"],
+    },
+    "developer-guides/oracle-set-up-guide",
+    "developer-guides/collator-guide",
+    "developer-guides/local-picasso-guide",
+  ],
    ecosystem: [
      {
        type: "category",
