@@ -151,12 +151,10 @@ frame-benchmarking-cli = { git = "https://github.com/ComposableFi/substrate", re
 frame-election-provider-support = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-executive = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-support = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
-support = { package = "frame-support", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-support-procedural = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-support-procedural-tools = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-support-procedural-tools-derive = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
-system = { package = "frame-system", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }

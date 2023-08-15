@@ -17822,7 +17822,6 @@ version = "0.1.0"
 dependencies = [
  "composable-runtime",
  "derive_more 0.99.17",
- "frame-system",
  "pallet-transaction-payment 4.0.0-dev",
  "picasso-runtime",
  "sp-core",
