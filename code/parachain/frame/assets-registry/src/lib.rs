@@ -564,10 +564,19 @@ pub mod pallet {
 	impl<T: Config> GenerateAssetId for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
+		/// Generates asset id from this network id and given protocol id and
+		/// nonce.
+		///
+		/// To guarantee the asset ids are unique, the `(protocol_id, nonce)`
+		/// pair must be unique within a single.  Since network id is part of
+		/// the asset id, each network is free to use its `(protocol_id, nonce)`
+		/// namespace without risk of colliding with other networks..
 		fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId {
+			// asset_id = <32-bit network id> <32-bit protocol id> <64-bit nonce>
+			//          = <64-bit high qword> <64-bit nonce>
 			let protocol_id = u32::from_be_bytes(protocol_id);
 			let network_id: u32 = T::NetworkId::get();
-			let high = (u64::from(protocol_id) << 32) | u64::from(protocol_id);
+			let high = (u64::from(network_id) << 32) | u64::from(protocol_id);
 			let asset_id = (u128::from(high) << 64) | u128::from(nonce);
 			Self::AssetId::from(asset_id)
 		}
