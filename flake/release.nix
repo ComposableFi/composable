@@ -199,7 +199,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
           name = "release-xcvm-centauri";
-          text = ''            
+          text = ''
             FEE=ppica
             NETWORK_ID=2
             CHAIN_ID=banksy-testnet-3
@@ -228,13 +228,13 @@
             GATEWAY_HASH=$(sha256sum < "$GATEWAY" | head -c 64 | tr "[:lower:]" "[:upper:]")
 
             INTERPRETER_HASH=$(sha256sum < "$INTERPRETER" | head -c 64 | tr "[:lower:]" "[:upper:]")
-            
+
             sleep $BLOCK_TIME
             echo "$GATEWAY_HASH"
             GATEWAY_CODE_ID=$("$BINARY" query wasm list-code --home .secret/$DIR --output json --node "$NODE" | jq -r ".code_infos[] | select(.data_hash == \"$GATEWAY_HASH\" and .creator == \"$ADDRESS\" ) | .code_id " | tail --lines 1)
             echo "$GATEWAY_CODE_ID" > .secret/$DIR/GATEWAY_CODE_ID
-            
-            
+
+
             INTERPRETER_TX=$("$BINARY" tx wasm store "$INTERPRETER" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync)
             echo "$INTERPRETER_TX"
 
@@ -258,8 +258,227 @@
             echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
           '';
         };
-      };      
+
+        release-xcvm-config = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
+          name = "release-xcvm-centauri";
+          text = ''
+            FEE=ppica
+            CHAIN_ID=banksy-testnet-3
+            DIR=.centaurid
+            BINARY=centaurid
+            NODE=https://rpc-t.composable.nodestake.top:443
+                      
+            if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
+              CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
+            fi            
+            CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"            
+            BLOCK_TIME=6
+            GATEWAY_CONTRACT_ADDRESS=$(cat .secret/$DIR/GATEWAY_CONTRACT_ADDRESS)
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat .secret/.osmosisd/GATEWAY_CONTRACT_ADDRESS)
+            INTERPRETER_CODE_ID=$(cat .secret/$DIR/INTERPRETER_CODE_ID)
+            OSMOSIS_INTERPRETER_CODE_ID=$(cat .secret/.osmosisd/INTERPRETER_CODE_ID)
+            ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
+            OSMOSIS_ADDRESS=$(osmosisd keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/.osmosisd --output json | jq -r '.address')
+
+            FORCE=$(cat << EOF
+            {
+              "config": {
+                "force": [
+                  {
+                    "force_network": {
+                      "network_id": 2,
+                      "accounts": {
+                          "bech": "centauri"
+                      },
+                      "gateway": {
+                          "cosm_wasm": {
+                            "contract": "$GATEWAY_CONTRACT_ADDRESS",
+                            "interpreter_code_id": $INTERPRETER_CODE_ID,
+                            "admin": "$ADDRESS"
+                          }
+                      },
+                      "ibc": {
+                          "channels": {
+                            "ics20": {
+                                "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                                "features": {
+                                  "pfm": {},
+                                  "wasm_hooks": {
+                                      "callback": true
+                                  }
+                                }
+                            }
+                          }
+                      }
+                    }                    
+                  },
+
+                  {
+                    "force_network": {
+                      "network_id": 3,
+                      "accounts": {
+                          "bech": "osmo"
+                      },
+                      "gateway": {
+                          "cosm_wasm": {
+                            "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
+                            "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
+                            "admin": "$OSMOSIS_ADDRESS"
+                          }
+                      },
+                      "ibc": {
+                          "channels": {
+                            "ics20": {
+                                "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                                "features": {
+                                  "pfm": {},
+                                  "wasm_hooks": {
+                                      "callback": true
+                                  }
+                                }
+                            }
+                          }
+                      }
+                    }                    
+                  },
+                  
+                  {
+                    "force_network_to_network": {
+                      "from": 2,
+                      "to": 3,
+                      "other": {
+                          "counterparty_timeout": {
+                            "seconds" : 120
+                          },
+                          "ics_20": {
+                            "source" : "channel-20", 
+                            "sink" : "channel-124" 
+                          }                                                
+                      }
+                    }                    
+                  },
+                  
+                  {
+                    "force_network_to_network": {
+                      "from": 3,
+                      "to": 2,
+                      "other": {
+                          "counterparty_timeout": {
+                            "seconds" : 120
+                          },
+                          "ics_20": {
+                            "source" : "channel-124", 
+                            "sink" : "channel-20" 
+                          }                                                
+                      }
+                    }                    
+                  },
+
+                  {
+                    "force_asset": {
+                      "asset_id": "158456325028528675187087900673",
+                      "network_id": 2,
+                      "local": {
+                        "native": {
+                          "denom": "ppica"
+                        }
+                      }
+                    }                    
+                  },
+                  {
+                    "force_asset": {
+                      "asset_id": "237684487542793012780631851010",
+                      "network_id": 3,
+                      "local": {
+                        "native": {
+                          "denom" : "uatom"
+                        }
+                      }
+                    }
+                  },                  
+
+                  {
+                    "force_asset": {
+                      "asset_id": "158456325028528675187087900674",
+                      "network_id": 2,
+                      "local": {
+                        "native": {
+                          "denom": "uatom"
+                        }
+                      },
+                      "bridged": {
+                        "location_on_network": {
+                          "ibc_ics20": {
+                            "base_denom" : "uatom",
+                            "trace_path" : "transfer/channel-20"
+                          }
+                        }
+                      }                      
+                    }                    
+                  },
+
+                  {
+                    "force_asset": {
+                      "asset_id": "237684487542793012780631851009",
+                      "network_id": 3,
+                      "local": {
+                        "native": {
+                          "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
+                        }
+                      },
+                      "bridged": {
+                        "location_on_network": {
+                          "ibc_ics20": {
+                            "base_denom" : "ppica",
+                            "trace_path" : "transfer/channel-124"
+                          }
+                        }
+                      }                      
+                    }                    
+                  },
+                  {
+                    "force_asset": {
+                      "asset_id": "158456325028528675187087901673",
+                      "network_id": 2,
+                      "local": {
+                        "native": {
+                          "denom": "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B"
+                        }
+                      },
+                      "bridged": {
+                        "location_on_network": {
+                          "ibc_ics20": {
+                            "base_denom" : "uosmo",
+                            "trace_path" : "transfer/channel-20"
+                          }
+                        }
+                      }                      
+                    }                    
+                  },                      
+                  {
+                    "force_asset_to_network_map": {
+                      "this_asset": "158456325028528675187087900673",
+                      "other_network": 3,
+                      "other_asset": "237684487542793012780631851009"          
+                    }                    
+                  }
+
+                ]                  
+              }
+            }               
+            EOF
+            )
+
+            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync
+            sleep $BLOCK_TIME
+
+            "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/$DIR
+          '';
+        };
+
+      };
     };
 
-    
 }

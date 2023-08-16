@@ -72,8 +72,7 @@
           inherit env;
         }];
       };
-    in
-    {
+    in {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
@@ -95,9 +94,11 @@
               CHAIN_ID = "banksy-testnet-3";
               DIR = ".centaurid";
               BINARY = "centaurid";
-              NODE = "https://rpc-t.composable.nodestake.top:443";   
-              INTERPRETER="${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
-              GATEWAY="${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";                
+              NODE = "https://rpc-t.composable.nodestake.top:443";
+              INTERPRETER =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
           }];
         };

@@ -5,7 +5,8 @@
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     process-compose-flake = {
-      url = "github:Platonic-Systems/process-compose-flake/bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e";
+      url =
+        "github:Platonic-Systems/process-compose-flake/bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e";
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
