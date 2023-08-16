@@ -6,5 +6,5 @@ account_prefix = 'centauri'
 [networks.testnet]
 chain_id = 'banksy-testnet-3'
 network_variant = 'Shared'
-#grpc_endpoint = 'https://grpc-t.composable.nodestake.top/443'
-rpc_endpoint = 'https://rpc-t.composable.nodestake.top/443'
+grpc_endpoint = 'https://grpc-t.composable.nodestake.top'
+rpc_endpoint = 'https://rpc-t.composable.nodestake.top'
