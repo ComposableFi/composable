@@ -149,9 +149,10 @@ pub(crate) fn handle_execute_program(
 	env: Env,
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
-	tip: Addr,
+	tip: String,
 ) -> Result {
 	let this = msg::Gateway::new(env.contract.address);
+	let tip = deps.api.addr_validate(&tip)?;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
 	let transfers = transfer_from_user(
 		&deps,
