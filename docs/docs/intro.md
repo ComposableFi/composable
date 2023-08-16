@@ -1,16 +1,103 @@
 ---
+title: Composable Documentation
+hide_table_of_contents: true
 slug: /
 ---
 
+<div class="container">
+  <div class="row">
+    <div class="col col--4">
+      <a href="/networks/picasso-parachain-overview">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-1_hhh29c.png" alt="Networks" alt="Networks"/>
+          </div>
+          <div class="card__body">
+            <h3>Networks</h3>
+            Explore the Composable networks on Kusama, Polkadot and Cosmos.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/products/centauri/Dotsama-ibc">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-2_axjozu.png" alt="Networks" alt="Centauri" />
+          </div>
+          <div class="card__body">
+            <h3>Centauri</h3>
+              Composable's IBC-based transfer protocol.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/products/xcvm">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-3_i9exvv.png" alt="Networks" alt="Composable VM" />
+          </div>
+          <div class="card__body">
+            <h3>Composable VM</h3>
+              Cross-ecosystem communication enabled through cross-chain smart contracts.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/nix/install">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-4_bv9m1n.png" alt="Networks" alt="Develop" />
+          </div>
+          <div class="card__body">
+            <h3>Develop</h3>
+              Develop with the Picasso testnet, instructions to setup an oracle, collator and validator.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/ecosystem/build-on-composable-ecosystem-development">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-5_xkrsnt.png" alt="Networks" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>Ecosystem</h3>
+             Learn about Pablo, the Composable ecosystem, Team and Press Kit. 
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/accounts-wallets">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-6_qhdswp.png" alt="Networks" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>User Guides</h3>
+              Navigate Composable products and infrastructure via User Guides.
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 
-# Introduction
+
+
 
 *Composable Finance: Composing DeFi for mass adoption*
-
 
 ![composable_finance](./composable-face-banner.png)
 *any money, any chain, anywhere*
 
+:::note
+The documentation for Composable is presently undergoing development, consequently resulting in an usual display.
+:::
 ## The Vision
 
 In an ideal cross-chain world, developers and users interact unhindered across ecosystems and protocols, regardless of 
@@ -22,14 +109,13 @@ finance stakeholders into DeFi.
 ## The Problem
 
 While centralized solutions continue to pose setbacks in the space, decentralized finance (DeFi) continues to gain 
-traction. It's still a good time to be in DeFi, with many top protocols experiencing an influx of users and high total 
-value locked (TVL), as well as a promising amount of stablecoins in circulation.
+traction. 
 
-While DeFi continues to expand and scale, **fragmentation of the industry and its market is worsening**. 
+As DeFi continues to expand and scale, **fragmentation of the industry and its market is worsening**. 
 Projects continue to launch on layer 2 (L2) or layer 1 (L1) networks instead of or in addition to the original Ethereum mainnet. 
 DeFi has thus expanded and is therefore characterized by several ecosystems beyond Ethereum, each with its own unique benefits, that often exist in silos.
 
-A lack of interoperability solutions exists between these ecosystems creating barriers to value transfer across layers and chains. 
+A lack of secure interoperability solutions exists between these ecosystems creating barriers to value transfer across layers and chains. 
 While it has become easier to move assets between ecosystems, it has wrongfully been accomplished via 
 **centralized, custodial, and trusted methods of asset transfer, which are vulnerable to hacks.** 
 Additionally, managing cross-chain assets is still a challenge as several applications are segregated inside the various ecosystems. 
@@ -39,8 +125,7 @@ Resultantly, in the race for market share and users, two key functionalities are
 for remaining competitive in the quickly evolving landscape: Capital efficiency and trustless interoperability. 
 Both developers and users will seek methods to interface with different ecosystems in a scalable, provable, secure, and decentralized manner. 
 
-It is clear that we are approaching a world in which the future of DeFi will be fully blockchain-agnostic. 
-In other words, the solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. 
+The solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. 
 Instead, it is the unification of all ecosystems via a natively cross-chain infrastructure.
 
 ## Limitations in Current Approaches
@@ -49,46 +134,35 @@ Current approaches to solving these problems are limited by at least one of the 
 - They are focused on creating an entirely new security model, based on a segregated chain
 - They are creating new messaging protocols instead of leveraging existing messaging protocols
 - They depend on oracles for finality
-- They do not provide a framework for users to navigate these different ecosystems
 - They do not focus on the cross-ecosystem user experience (UX)
 - They take centralized, trusted, or custodial approaches
 
 ## The Composable Solution
 
-Composable Finance’s full technical stack 
+Composable's full technical stack 
 has been designed to usher in an era of cross-ecosystem interoperability 
 without abandoning the trustless, decentralized, permissionless, and non-custodial aspects of web3. 
-Subsequently, this allows for the unification of functionality across all connected blockchain ecosystems.
 
-Specifically, we are building infrastructure that allows developers to deploy applications natively capable of 
-cross-chain functions. This infrastructure also allows users to access previously disparate ecosystems simultaneously, 
-autonomously interoperating across layers and chains, all through the same fabric and entry point: the Composable ecosystem.
+Composable is building infrastructure that allows developers to deploy applications natively capable of 
+cross-chain functions. This infrastructure also allows users to access previously disparate ecosystems and simultaneously interoperating across layers and chains, all through the same fabric and entry point: [Composable Virtual Machine](./products/xcvm.md).
 
 The result is that DeFi users will be able to have their actions reduced to parameters that determine a cascade of 
-automated cross-chain transactions to achieve their objectives instead of requiring users to navigate each step in 
+automated cross-chain transactions to achieve their intentions instead of requiring users to navigate each step in 
 the process themselves:
 
 ![routing](./xcvm-routing.png)
 
 Our interoperable infrastructure forms the foundation for DeFi's mass adoption. 
-Additionally it enables modular functionality for any application. The basis of modular functionality is that a program, 
-or in this case a decentralized application, can be separated into interchangeable modules capable of functioning independently. 
-This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: 
+This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: for example, 
 users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for
 a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi.
 
 We are accomplishing these goals through a multifaceted technical stack
-where we begin by bridging gaps between today’s isolated blockchains and layer 2 scaling solutions in order to create a 
+where we begin by bridging gaps between today’s isolated blockchains in order to create a 
 single and unified access point that is the 
-[Composable Cross-Chain VM (XCVM)](https://medium.com/composable-finance/composable-finance-emerging-as-the-first-cross-chain-smart-contracting-l1-4e837b8bd57e) 
-— that serves to orchestrate and compute smart contract functions across the array of EVM, Polkadot and IBC ecosystems autonomously, 
+[Composable VM](./products/xcvm.md) 
+— that serves to orchestrate and compute smart contract functions across the array of EVM, Polkadot and IBC-enabled Cosmos ecosystems autonomously, 
 with the purpose of optimizing for best execution and mitigating all user experience constraints for developers and end-users.
-
-Composable Labs is devoted to pushing new protocols that harness the composable tech stack, while Composable Research is 
-on a quest to solidify new interoperability and development standards across Web3 and DeFi. 
-One of our key objectives overall is to develop and deploy a novel set of financial primitives and for developers to 
-utilize the suite of new tools and technologies we are building. All our efforts are serving to highlight 
-the technical and UX benefits Composable offers to applications built atop our ecosystem.
 
 ## Get Involved
 

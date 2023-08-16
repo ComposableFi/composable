@@ -6,9 +6,13 @@ The Composable team consists of approximately 35 individuals, with 20 members de
 
 Brainjar brings a deep understanding of the blockchain space and a comprehensive vision on cross-chain DeFi. He is focused on researching blockchain infrastructure and relevant trends to advise on Composable’s development as well as designing products that can best leverage the Composable tech stack.  He’s also advising Composable Labs, the incubation arm that births and supports projects using Composable’s tech stack. Brainjar writes about the R&D at Composable on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
 
-## Blas Rodriguez Irizar | Chief Technology Officer
+## Blas Rodriguez Irizar | Co-Founder & CTO
 
 Blas has 8 years of experience as a Software Engineer. He started his blockchain experience at LayerTwo, moving to Consensys where he worked on building zk-rollups. Blas has expertise in building high performance systems and working with different blockchains like Solana, Ethereum, and Bitcoin. He holds a Bachelor’s Degree in Science and a Masters Degree in Finance. In his role at Composable, Blas oversees the Research and Engineering departments with the critical responsibility of creating the technology strategy behind Composable’s products. [Twitter](https://mobile.twitter.com/blasrodri)
+
+## Miguel Santefé | Co-Founder & Head of Design
+
+Formerly identified as 0xslenderman, Miguel started his career in technology consultancy. Given his passion for aesthetics and design, he became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in creative direction. He has been in crypto since 2014 and has been designing applications since 2018. Previous to joining Composable, he led the creative strategy at various DeFi projects. Miguel has a background in IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
 
 ## Eoin Whelan | Chief Finance Officer
 
@@ -21,14 +25,6 @@ Jeffrey has specialized experience spanning the different dimensions of finance 
 ## Ahmad Wehbi | Chief Operations Officer
 
 Ahmad has 11 years of experience and spent most of his career advising institutions on strategy, operations, and organizational topics. Ahmad is focused on the operational side of Composable and holds a B.B.A. in Entrepreneurial Studies and an MBA from INSEAD. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. At Composable, Ahmad is responsible for overseeing the day-to-day operations and ensuring that business processes are efficient, effective, and aligned with the overall strategy. [Twitter](https://twitter.com/wehbix)
-
-## 0xslenderman | Head of Design
-
-0xslenderman started his career in technology consultancy. Given his passion for aesthetics and design, he became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in creative direction. He has been in crypto since 2014 and has been designing applications since 2018. Previous to joining Composable, he led the creative strategy at various DeFi projects. 0xslenderman has a background in IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
-
-## Robert Zhuang | Head of Product Delivery
-
-Rob has more than 16 years of experience in project management and delivery. He started his career in traditional finance working at ANZ Bank and HSBC as Project Manager and Digital Transformation Lead. He then moved to digital banking at BABB leading delivery efforts. Before joining Composable, Rob gathered entrepreneurial experience founding the blockchain company Footballnet. With two bachelor degrees in Commerce and Law, Rob brings broad experience to Composable and unites product, design, and development in order to bring Composable’s vision to life. [Twitter](https://twitter.com/GosuRZ)
 
 ## Joseph DeTommasso | Head of Strategy
 

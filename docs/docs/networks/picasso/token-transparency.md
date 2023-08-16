@@ -1,4 +1,4 @@
-# Picasso (PICA) Token Transparency Commitment Statement
+# Picasso Token Transparency Commitment Statement
 
 Composable Finance (“Composable”) remains committed to transparency at all levels of the Composable ecosystem and our infrastructure offerings. 
 Thus, we provide the community with the following information on the Picasso (PICA) token holdings, actions, and supply.

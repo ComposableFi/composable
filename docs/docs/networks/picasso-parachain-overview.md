@@ -14,16 +14,12 @@ and its proprietary technology stack.
 Picasso houses a suite of modular and interoperable Substrate pallets:
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
-- [xPICA] - fNFTs: tradable and yield-bearing representation of a user's staked $PICA
 - [Centauri] - trustless bridging between major DeFi ecosystems
 - [Apollo] - Picasso’s native oracle pallet
-- [Cubic] - Picasso’s native vault pallet
 
 [Pablo]: ../products/pablo-overview.md
-[xPICA]: ../products/xpica-fnft-overview.md
 [Centauri]: ../products/centauri-overview.md
 [Apollo]: ../products/apollo-overview.md
-[Cubic]: ../products/cubic-overview.md
 
 ## How is Picasso enabling interoperable DeFi
 
@@ -63,16 +59,15 @@ liquidity, leveraging new technologies and aligning itself closely with user req
 
 [Pablo Dex]: ../products/pablo-overview.md
 
-### Composable’s XCVM on Picasso
+### Composable’s VM on Picasso
 
-Composable’s Cross-chain Virtual Machine [(XCVM)] 
+Composable’s Virtual Machine [CVM](./products/xcvm.md) 
 will be able to leverage the pallets above to facilitate the creation of non-custodial, 
 natively cross-chain smart contracts.
-The XCVM serves as a top-layer orchestration layer, 
+The CVM serves as a top-layer orchestration layer, 
 capable of calling into existing applications and pallets across multiple ecosystems asynchronously. 
-XCVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances. 
+CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances. 
 
-[(XCVM)]: https://docs.composable.finance/products/xcvm
 
 ### Insights into Picasso’s Security
 
@@ -85,8 +80,7 @@ such as ours, benefit from the shared security of the Relay Chain.
 Meaning that all parachains who secure a slot to either Kusama or Polkadot benefit from the economic security 
 provided by the Relay Chain’s validators. 
 Therefore, as a parachain connected to the Kusama Relay Chain, 
-Picasso benefits from Kusama’s extensive validator set and is guaranteed 
-that any other parachain on Kusama shares the same degree of security.
+Picasso benefits from Kusama’s extensive validator set for shared security.
 
 ## What is Picasso’s vision?
 
@@ -99,11 +93,10 @@ aims to become an ecosystem flush with liquidity from multiple different blockch
 Developers interested in Picasso’s interoperability framework will find the core pallets and SDKs beneficial 
 as they stimulate the development process for building on Picasso. 
 Picasso’s modular base-level infrastructure allows developers to easily integrate, stack, 
-or leverage core pallets such as the Oracle [(Apollo)], Vaults [(Cubic)], 
+or leverage core pallets such as the Oracle [(Apollo)], 
 DEX [(Pablo)] and Trustless Bridging [(Centauri)] pallets. 
 These pallets and their functionalities are the foundation for Picasso that will lead us to enable interoperable DeFi.
 
 [(Apollo)]: ../products/apollo-overview.md
-[(Cubic)]: ../products/cubic-overview.md
 [(Pablo)]: ../products/pablo-overview.md
 [(Centauri)]: ../products/centauri-overview.md

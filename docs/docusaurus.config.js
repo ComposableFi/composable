@@ -66,6 +66,36 @@ const config = {
 				},
 				items: [
 					{
+						to: '/networks/picasso-parachain-overview',
+						position: 'left',
+						label: 'Networks',
+					  },
+					{
+						to: '/products/centauri-overview',
+						position: 'left',
+						label: 'Centauri',
+					  },
+					{
+						to: '/products/xcvm',
+						position: 'left',
+						label: 'Composable VM',
+					  },
+					{
+						to: '/nix/install',
+						position: 'left',
+						label: 'Develop',
+					  },
+					{
+						to: '/ecosystem/build-on-composable-ecosystem-development',
+						position: 'left',
+						label: 'Ecosystem',
+					  },	
+					{
+						to: '/accounts-wallets',
+						position: 'left',
+						label: 'User Guides',
+					  },				
+					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
 						position: 'right',
