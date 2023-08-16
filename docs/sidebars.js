@@ -303,24 +303,32 @@
        ],
      },
      {
-       type: "doc",
-       label: "Mosaic (Discontinued)",
-       id: "products/mosaic/mosaic-withdrawal-guide",
-     },
-     {
-       type: "category",
-       label: "Parachain Vault Strategy (Discontinued)",
-       link: {
-         type: "doc",
-         id: "products/parachain-vault-strategy/composable-strategies-withdrawal-guide",
-       },
-       collapsible: true,
-       collapsed: true,
-       items: [
-         "products/parachain-vault-strategy/vault-process-in-detail",
-         "products/parachain-vault-strategy/contracts-technical-details",
-       ],
-     },
+      "type": "category",
+      "label": "Archived",
+      "collapsible": true,
+      "collapsed": true,
+      "items": [
+        {
+          "type": "doc",
+          "label": "Mosaic (Discontinued)",
+          "id": "products/mosaic/mosaic-withdrawal-guide"
+        },
+        {
+          "type": "category",
+          "label": "Parachain Vault Strategy (Discontinued)",
+          "link": {
+            "type": "doc",
+            "id": "products/parachain-vault-strategy/composable-strategies-withdrawal-guide"
+          },
+          "collapsible": true,
+          "collapsed": true,
+          "items": [
+            "products/parachain-vault-strategy/vault-process-in-detail",
+            "products/parachain-vault-strategy/contracts-technical-details"
+          ],
+        },
+      ],
+    },    
    ],
  };
  
