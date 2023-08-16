@@ -206,6 +206,8 @@
             DIR=.centaurid
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
+
+            
             
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"

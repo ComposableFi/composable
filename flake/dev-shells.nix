@@ -88,14 +88,16 @@
           inherit pkgs;
           inputs = self.inputs;
           modules = [{
-            packages = [ self.inputs.devenv.packages.${system}.centaurid ];
+            packages = [ self'.packages.centaurid ];
             env = {
               FEE = "ppica";
               NETWORK_ID = 2;
               CHAIN_ID = "banksy-testnet-3";
               DIR = ".centaurid";
               BINARY = "centaurid";
-              NODE = "https://rpc-t.composable.nodestake.top:443";              
+              NODE = "https://rpc-t.composable.nodestake.top:443";   
+              INTERPRETER="${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY="${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";                
             };
           }];
         };

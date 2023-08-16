@@ -5,7 +5,7 @@
     nixpkgs-latest.url =
       "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
     process-compose-flake = {
-      url = "github:Platonic-Systems/process-compose-flake";
+      url = "github:Platonic-Systems/process-compose-flake/bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e";
     };
 
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -45,7 +45,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/00fccea13af8142c7abee42b6ff75d05338d29f7";
+        "github:dzmitry-lahoda-forks/cosmos.nix/6224ec2242695b4c3b1e902936643a6dce5d791b";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -120,7 +120,6 @@
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/flake-module.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix
-        ./inputs/osmosis-labs/beaker/flake-module.nix
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix
