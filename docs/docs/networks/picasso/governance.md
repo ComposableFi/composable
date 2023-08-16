@@ -23,9 +23,9 @@ Members of the First Council will consist of:
 - 0xBrainJar, Composable Founder/CEO
 - Jeff Smith, Composable General Counsel (GC)
 - Eoin Whelan, Composable CFO
-- Blas Rodriguez Irizar, Composable Principal Bridging Lead
-- 0xc0dejug, Composable Principal XCVM Lead
-- 0xslenderman, Composable Head of Design
+- Blas Rodriguez Irizar, Composable Co-Founder & CTO
+- Don DeTommasso, Composable Head of Governance & Strategy
+- Miguel Santefé, Composable Co-Founder & Head of Design
 - Jafar Azam, Composable Devrel
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer
 - Will Pankiewicz, Parity Master of Validators

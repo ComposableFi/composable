@@ -1,5 +1,5 @@
 ---
-title: Welcome to the Future of France
+title: Composable Documentation
 hide_table_of_contents: true
 slug: /
 ---
@@ -10,7 +10,7 @@ slug: /
       <a href="/networks/picasso-parachain-overview">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Networks"/>
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-1_hhh29c.png" alt="Networks" alt="Networks"/>
           </div>
           <div class="card__body">
             <h3>Networks</h3>
@@ -23,7 +23,7 @@ slug: /
       <a href="/products/centauri/Dotsama-ibc">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Centauri" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-2_axjozu.png" alt="Networks" alt="Centauri" />
           </div>
           <div class="card__body">
             <h3>Centauri</h3>
@@ -36,7 +36,7 @@ slug: /
       <a href="/products/xcvm">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Composable VM" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-3_i9exvv.png" alt="Networks" alt="Composable VM" />
           </div>
           <div class="card__body">
             <h3>Composable VM</h3>
@@ -49,7 +49,7 @@ slug: /
       <a href="/nix/install">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Develop" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-4_bv9m1n.png" alt="Networks" alt="Develop" />
           </div>
           <div class="card__body">
             <h3>Develop</h3>
@@ -62,7 +62,7 @@ slug: /
       <a href="/ecosystem/build-on-composable-ecosystem-development">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-5_xkrsnt.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>Ecosystem</h3>
@@ -75,7 +75,7 @@ slug: /
       <a href="/accounts-wallets">
         <div class="card">
           <div class="card__image">
-            <img src="" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-6_qhdswp.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>User Guides</h3>
@@ -144,7 +144,7 @@ has been designed to usher in an era of cross-ecosystem interoperability
 without abandoning the trustless, decentralized, permissionless, and non-custodial aspects of web3. 
 
 Composable is building infrastructure that allows developers to deploy applications natively capable of 
-cross-chain functions. This infrastructure also allows users to access previously disparate ecosystems and simultaneously interoperating across layers and chains, all through the same fabric and entry point: the Composable virtual machine.
+cross-chain functions. This infrastructure also allows users to access previously disparate ecosystems and simultaneously interoperating across layers and chains, all through the same fabric and entry point: [Composable Virtual Machine](./products/xcvm.md).
 
 The result is that DeFi users will be able to have their actions reduced to parameters that determine a cascade of 
 automated cross-chain transactions to achieve their intentions instead of requiring users to navigate each step in 
@@ -160,7 +160,7 @@ a range of other possibilities across new pool types, arbitrage opportunities, a
 We are accomplishing these goals through a multifaceted technical stack
 where we begin by bridging gaps between today’s isolated blockchains in order to create a 
 single and unified access point that is the 
-[Composable Virtual Machine](./products/xcvm.md) 
+[Composable VM](./products/xcvm.md) 
 — that serves to orchestrate and compute smart contract functions across the array of EVM, Polkadot and IBC-enabled Cosmos ecosystems autonomously, 
 with the purpose of optimizing for best execution and mitigating all user experience constraints for developers and end-users.
 

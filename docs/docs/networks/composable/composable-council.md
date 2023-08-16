@@ -15,9 +15,9 @@ Composable’s Polkadot parachain governance will initially be carried out via a
 Composable Council members are as follows:
 - 0xBrainJar, Composable Founder/CRO
 - Henry Love, Fundamental Labs Managing Partner
-- Blas Rodriguez Irizar, Composable CTO
-- 0xc0dejug, Protocol Engineer
-- 0xslenderman, Composable Head of Design
+- Blas Rodriguez Irizar, Composable Co-Founder & CTO
+- Don DeTommasso, Composable Head of Governance & Strategy
+- Miguel Santefé, Composable Co-Founder & Head of Design
 - Joon W., Composable FE Lead
 - Jafar Azam, Composable Devrel
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer

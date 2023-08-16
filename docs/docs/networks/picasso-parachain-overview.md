@@ -59,16 +59,15 @@ liquidity, leveraging new technologies and aligning itself closely with user req
 
 [Pablo Dex]: ../products/pablo-overview.md
 
-### Composable’s XCVM on Picasso
+### Composable’s VM on Picasso
 
-Composable’s Cross-chain Virtual Machine [(XCVM)] 
+Composable’s Virtual Machine [CVM](./products/xcvm.md) 
 will be able to leverage the pallets above to facilitate the creation of non-custodial, 
 natively cross-chain smart contracts.
-The XCVM serves as a top-layer orchestration layer, 
+The CVM serves as a top-layer orchestration layer, 
 capable of calling into existing applications and pallets across multiple ecosystems asynchronously. 
-XCVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances. 
+CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances. 
 
-[(XCVM)]: https://docs.composable.finance/products/xcvm
 
 ### Insights into Picasso’s Security
 
@@ -81,8 +80,7 @@ such as ours, benefit from the shared security of the Relay Chain.
 Meaning that all parachains who secure a slot to either Kusama or Polkadot benefit from the economic security 
 provided by the Relay Chain’s validators. 
 Therefore, as a parachain connected to the Kusama Relay Chain, 
-Picasso benefits from Kusama’s extensive validator set and is guaranteed 
-that any other parachain on Kusama shares the same degree of security.
+Picasso benefits from Kusama’s extensive validator set for shared security.
 
 ## What is Picasso’s vision?
 
