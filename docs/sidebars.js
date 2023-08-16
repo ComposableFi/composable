@@ -114,6 +114,22 @@
              "products/apollo/apollo-deployment",
            ],
          },
+         {
+          type: "category",
+          label: "Pablo",
+          link: {
+            type: "doc",
+            id: "products/pablo-overview",
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            "products/pablo/swaps-trading",
+            "products/pablo/launch-pools",
+            "products/pablo/auctions-bonding",
+            "products/pablo/cross-chain-DEX",
+          ],
+        },
        ],
      },
  
@@ -284,22 +300,6 @@
          "faqs/disclaimers-disclosures-for-composable-tokens",
          "faqs/risk-factors",
          "faqs/terms-of-use",
-       ],
-     },
-     {
-       type: "category",
-       label: "Pablo",
-       link: {
-         type: "doc",
-         id: "products/pablo-overview",
-       },
-       collapsible: false,
-       collapsed: false,
-       items: [
-         "products/pablo/swaps-trading",
-         "products/pablo/launch-pools",
-         "products/pablo/auctions-bonding",
-         "products/pablo/cross-chain-DEX",
        ],
      },
      {
