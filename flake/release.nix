@@ -199,19 +199,20 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
           name = "release-xcvm-centauri";
-          text = ''
-            if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
-              CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
-            fi
+          text = ''            
             FEE=ppica
             NETWORK_ID=2
             CHAIN_ID=banksy-testnet-3
-            CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
-            NETWORK_ID=''${2-$NETWORK_ID}
             DIR=.centaurid
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
-
+            
+            if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
+              CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
+            fi            
+            CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"            
+            NETWORK_ID=''${2-$NETWORK_ID}
+            BLOCK_TIME=5
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
             INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
@@ -222,12 +223,13 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
 
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
-            GATEWAY=$("$BINARY" tx wasm store "$GATEWAY" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block)
+            GATEWAY=$("$BINARY" tx wasm store "$GATEWAY" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync)
             echo "$GATEWAY"
             GATEWAY_CODE_ID=$(echo "$GATEWAY" | jq -r '.logs[0].events[1].attributes[1].value')
             echo "$GATEWAY_CODE_ID" > .secret/$DIR/GATEWAY_CODE_ID
 
-            INTERPRETER=$("$BINARY" tx wasm store "$INTERPRETER" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block)
+            sleep $BLOCK_TIME
+            INTERPRETER=$("$BINARY" tx wasm store "$INTERPRETER" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync)
             echo "$INTERPRETER"
 
             INTERPRETER_CODE_ID=$(echo "$INTERPRETER" | jq -r '.logs[0].events[1].attributes[1].value')
@@ -241,14 +243,15 @@
             EOF
             )
 
-            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-2" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block --admin "$ADDRESS")
+            sleep $BLOCK_TIME
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-2" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
             echo "$INSTANTIATE"
             GATEWAY_CONTRACT_ADDRESS=$(echo "$INSTANTIATE" | jq -r '.logs[0].events[] | select(.type == "instantiate") | .attributes[0].value')
             echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
           '';
         };
-
-      };
-
+      };      
     };
+
+    
 }

@@ -72,7 +72,8 @@
           inherit env;
         }];
       };
-    in {
+    in
+    {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
@@ -82,6 +83,21 @@
         all = self.inputs.devenv.lib.mkShell allattrs;
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
+        };
+        centaurid = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self.inputs.devenv.packages.${system}.centaurid ];
+            env = {
+              FEE = "ppica";
+              NETWORK_ID = 2;
+              CHAIN_ID = "banksy-testnet-3";
+              DIR = ".centaurid";
+              BINARY = "centaurid";
+              NODE = "https://rpc-t.composable.nodestake.top:443";              
+            };
+          }];
         };
       };
     };
