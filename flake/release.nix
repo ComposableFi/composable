@@ -197,7 +197,7 @@
 
         release-xcvm-centauri = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
-            ++ [ packages.centaurid pkgs.jq ];
+            ++ [ packages.centaurid pkgs.jq packages.beaker ];
           name = "release-xcvm-centauri";
           text = ''            
             FEE=ppica
@@ -207,8 +207,7 @@
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
 
-            
-            
+                      
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            
@@ -217,6 +216,9 @@
             BLOCK_TIME=5
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
+
+            beaker key set CI_COSMOS_MNEMONIC "$CI_COSMOS_MNEMONIC" --yes
+
             INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
             GATEWAY="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
 
