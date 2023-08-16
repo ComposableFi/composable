@@ -106,3 +106,5 @@ data-agent/**
 wasm_client_data/**
 
 *.wasm
+
+.secret/**
