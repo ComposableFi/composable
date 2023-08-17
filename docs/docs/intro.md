@@ -10,7 +10,7 @@ slug: /
       <a href="/networks/picasso-parachain-overview">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-1_hhh29c.png" alt="Networks" alt="Networks"/>
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300392/Frame-1_wkr6kl.png" alt="Networks" alt="Networks"/>
           </div>
           <div class="card__body">
             <h3>Networks</h3>
@@ -23,7 +23,7 @@ slug: /
       <a href="/products/centauri/Dotsama-ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-2_axjozu.png" alt="Networks" alt="Centauri" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-2_zoatit.png" alt="Networks" alt="Centauri" />
           </div>
           <div class="card__body">
             <h3>Centauri</h3>
@@ -36,7 +36,7 @@ slug: /
       <a href="/products/xcvm">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-3_i9exvv.png" alt="Networks" alt="Composable VM" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-3_cb5rl0.png" alt="Networks" alt="Composable VM" />
           </div>
           <div class="card__body">
             <h3>Composable VM</h3>
@@ -49,7 +49,7 @@ slug: /
       <a href="/nix/install">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213429/Frame-4_bv9m1n.png" alt="Networks" alt="Develop" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-4_wrrwga.png" alt="Networks" alt="Develop" />
           </div>
           <div class="card__body">
             <h3>Develop</h3>
@@ -62,7 +62,7 @@ slug: /
       <a href="/ecosystem/build-on-composable-ecosystem-development">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-5_xkrsnt.png" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-5_lyc6as.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>Ecosystem</h3>
@@ -75,7 +75,7 @@ slug: /
       <a href="/accounts-wallets">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692213430/Frame-6_qhdswp.png" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300392/Frame-6_tscayb.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>User Guides</h3>
