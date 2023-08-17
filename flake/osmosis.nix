@@ -104,6 +104,7 @@
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
             add-genesis-account "${cosmosTools.xcvm.mnemonic}" "xcvm"
+            add-genesis-account "${cosmosTools.mnemonics.pools}" "pools"
 
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
             osmosisd collect-gentxs --home "$CHAIN_DATA"
@@ -198,6 +199,8 @@
             init_xcvm "$INSTANTIATE"           
           '';
         };
+
+# osmosisd tx gamm create-pool --pool-file=$1
 
         osmosisd-xcvm-config = pkgs.writeShellApplication {
           name = "osmosisd-xcvm-config";
