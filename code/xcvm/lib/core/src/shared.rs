@@ -63,6 +63,12 @@ impl From<Vec<u8>> for XcAddr {
 	}
 }
 
+impl From<Binary> for XcAddr {
+	fn from(bytes: Binary) -> Self {
+		Self(CanonicalAddr(bytes))
+	}
+}
+
 impl parity_scale_codec::Encode for XcAddr {
 	fn size_hint(&self) -> usize {
 		self.as_slice().size_hint()

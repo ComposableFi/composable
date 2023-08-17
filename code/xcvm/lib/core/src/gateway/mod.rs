@@ -225,8 +225,6 @@ impl Gateway {
 
 #[cfg(test)]
 mod tests {
-	use cosmwasm_std::CanonicalAddr;
-
 	use crate::{
 		gateway::{ExecuteMsg, ExecuteProgramMsg},
 		generate_asset_id,
@@ -405,9 +403,9 @@ mod tests {
 						program: XcProgram {
 							tag: b"spawn_with_asset".to_vec(),
 							instructions: [XcInstruction::Transfer {
-								to: crate::Destination::Account(CanonicalAddr(
-									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=").unwrap(),
-								)),
+								to: crate::Destination::Account(
+									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=").unwrap().into(),
+								),
 								assets: crate::Funds(vec![(
 									pica_on_osmosis,
 									1_000_000_000u128.into(),
