@@ -113,50 +113,6 @@ parameter_types! {
 
 }
 
-use pallet_ibc::ics20::Ics20RateLimiter;
-
-pub struct ConstantAny;
-
-impl Ics20RateLimiter for ConstantAny {
-	fn allow(
-		msg: &pallet_ibc::ics20::Ics20TransferMsg,
-		_flow_type: pallet_ibc::ics20::FlowType,
-	) -> Result<(), ()> {
-		let pica_denom =
-			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
-				Runtime,
-			>>::from_asset_id_to_denom(CurrencyId::PICA);
-
-		let limit: u128 = match msg.token.denom.to_string().as_str() {
-			denom if Some(denom) == pica_denom.as_deref() => 500_000,
-			_ => 10_000,
-		};
-
-		// adjust the number of decimals based on the currency id, as different assets have
-		// different decimals places and not doing it would defeat the purpose of fixing the nominal
-		// amount tha we are allowing users to transfer.
-		let token = &msg.token;
-		let asset_id: Option<CurrencyId> =
-			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
-				Runtime,
-			>>::from_denom_to_asset_id(&token.denom.to_string())
-			.map_err(|_| ())
-			.ok();
-
-		let decimals = asset_id
-			.map(|x| <assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&x))
-			.flatten()
-			.unwrap_or(12);
-
-		if msg.token.amount.as_u256() <=
-			::ibc::bigint::U256::from(limit.checked_mul(10_u128.pow(decimals as _)).ok_or(())?)
-		{
-			return Ok(())
-		}
-		Err(())
-	}
-}
-
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct Router {
 	ics20: pallet_ibc::ics20::memo::Memo<
@@ -220,7 +176,6 @@ impl pallet_ibc::Config for Runtime {
 	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = IbcMemoHandler<(), Runtime>;
 	type MemoMessage = alloc::string::String;
-	type Ics20RateLimiter = ConstantAny;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
