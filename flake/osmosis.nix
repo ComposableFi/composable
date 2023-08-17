@@ -236,13 +236,14 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-
+            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
+              (name: value: "export ${name}=${builtins.toString value};") env)}
             NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
 
-            GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
+            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
-            INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
+            INTERPRETER_CODE_ID=$(cat "$CHAIN_DATA/interpreter_code_id")
 
             FORCE_NETWORK_OSMOSIS=$(cat << EOF
               {
