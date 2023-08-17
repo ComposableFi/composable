@@ -232,8 +232,7 @@
                         "ics_20": {
                           "source" : "channel-0", 
                           "sink" : "channel-0" 
-                        }
-                                                
+                        }                                                
                     }
                   }
               }
