@@ -4,13 +4,13 @@ use crate::{
 	state::{GATEWAY, NETWORK},
 };
 use cosmwasm_std::{
-	wasm_execute, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-	StdError, StdResult,
+	wasm_execute, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError, StdResult,
 };
 use cw2::set_contract_version;
 use cw_utils::ensure_from_older_version;
 use xc_core::{
 	cosmwasm::{FlatCosmosMsg, FlatWasmMsg},
+	shared::XcAddr,
 	Balance, Centauri, Funds, Network, Picasso, ProgramBuilder, UserId, UserOrigin,
 };
 
@@ -31,7 +31,7 @@ fn make_program<T: Network<EncodedCall = Vec<u8>>, U: Network<EncodedCall = Vec<
 	remote_address: UserId,
 	msg: ExecuteMsg,
 ) -> Result<xc_core::shared::XcProgram, ContractError> {
-	Ok(ProgramBuilder::<T, CanonicalAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
+	Ok(ProgramBuilder::<T, XcAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
 		.spawn::<U, (), _, _>(
 			"PONG".as_bytes().to_vec(),
 			vec![0x01, 0x02, 0x03],
