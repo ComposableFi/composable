@@ -404,7 +404,9 @@ mod tests {
 							tag: b"spawn_with_asset".to_vec(),
 							instructions: [XcInstruction::Transfer {
 								to: crate::Destination::Account(
-									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=").unwrap().into(),
+									Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=")
+										.unwrap()
+										.into(),
 								),
 								assets: crate::Funds(vec![(
 									pica_on_osmosis,
