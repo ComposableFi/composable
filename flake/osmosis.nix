@@ -4,6 +4,16 @@
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
+      env = rec {
+        HOME = "/tmp/composable-devnet";
+        CHAIN_DATA = "$HOME/.osmosisd";
+        KEYRING_TEST = CHAIN_DATA;
+        CHAIN_ID = "osmosis-dev";
+        PORT = 36657;
+        BLOCK_SECONDS = 5;
+        FEE = "uosmo";
+        BINARY = "osmosisd";
+      };
     in {
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
@@ -18,6 +28,7 @@
           name = "osmosisd-gen";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq ];
+
           text = ''
             HOME=${devnet-root-directory}
             export HOME
@@ -46,9 +57,10 @@
 
             dasel-genesis '.app_state.staking.params.bond_denom' 'uosmo'
             dasel-genesis '.app_state.staking.params.unbonding_time' '960s'
-            dasel  put --type json --file "$GENESIS" --value "[{},{}]" 'app_state.bank.denom_metadata'
-            dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
+            dasel  put --type json --file "$GENESIS" --value "[{},{},{}]" 'app_state.bank.denom_metadata'
+
             dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
+            dasel-genesis '.app_state.bank.denom_metadata.[0].description' 'Registered denom uion for localosmosis testing'
             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].denom' 'uion'
             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].exponent' 0
             dasel-genesis '.app_state.bank.denom_metadata.[0].base' 'uion'
@@ -64,6 +76,16 @@
             dasel-genesis '.app_state.bank.denom_metadata.[1].display' 'uosmo'
             dasel-genesis '.app_state.bank.denom_metadata.[1].name' 'uosmo'
             dasel-genesis '.app_state.bank.denom_metadata.[1].symbol' 'uosmo'
+
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.bank.denom_metadata.[2].denom_units'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].description' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].denom_units.[0].denom' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].denom_units.[0].exponent' 0
+            dasel-genesis '.app_state.bank.denom_metadata.[2].base' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].display' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].name' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+            dasel-genesis '.app_state.bank.denom_metadata.[2].symbol' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
+
 
             dasel-genesis '.app_state.crisis.constant_fee.denom' 'uosmo'
             dasel-genesis '.app_state.gov.voting_params.voting_period' '30s'
@@ -97,7 +119,7 @@
               ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$CHAIN_DATA" )
               echo "===================================="
               echo "$ACCOUNT"
-              osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake --home "$CHAIN_DATA"
+              osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake,10000000000000ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B --home "$CHAIN_DATA"
             }
 
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
@@ -153,14 +175,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            HOME=/tmp/composable-devnet
-            export HOME
-            CHAIN_DATA="$HOME/.osmosisd"             
-            KEYRING_TEST=$CHAIN_DATA
-            CHAIN_ID="osmosis-dev"            
-            PORT=36657
-            BLOCK_SECONDS=5
-            FEE=uosmo
+            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
+              (name: value: "export ${name}=${builtins.toString value};") env)}
             NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
             BINARY=osmosisd
@@ -200,24 +216,29 @@
           '';
         };
 
-# osmosisd tx gamm create-pool --pool-file=$1
+        osmosisd-pool-init = pkgs.writeShellApplication {
+          name = "osmosisd-pool-init";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ osmosisd pkgs.jq pkgs.dasel ];
+          text = ''
+            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
+              (name: value: "export ${name}=${builtins.toString value};") env)}
+
+            "$BINARY" tx gamm create-pool --pool-file=${
+              ./osmosis-gamm-pool-pica-osmo.json
+            } --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from pools --keyring-dir "$KEYRING_TEST" --trace --log_level trace --broadcast-mode block  
+            "$BINARY" query gamm pools --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"           
+          '';
+        };
 
         osmosisd-xcvm-config = pkgs.writeShellApplication {
           name = "osmosisd-xcvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            HOME=/tmp/composable-devnet
-            export HOME
-            CHAIN_DATA="$HOME/.osmosisd"             
-            KEYRING_TEST=$CHAIN_DATA
-            CHAIN_ID="osmosis-dev"            
-            PORT=36657
-            BLOCK_SECONDS=5
-            FEE=uosmo
+
             NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
-            BINARY=osmosisd
 
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
