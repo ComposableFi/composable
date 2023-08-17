@@ -6,7 +6,7 @@
       validator-key = cosmosTools.validators.osmosis;
       env = rec {
         HOME = "/tmp/composable-devnet";
-        CHAIN_DATA = "$HOME/.osmosisd";
+        CHAIN_DATA = "${HOME}/.osmosisd";
         KEYRING_TEST = CHAIN_DATA;
         CHAIN_ID = "osmosis-dev";
         PORT = 36657;
@@ -199,8 +199,8 @@
               "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY"
 
               sleep "$BLOCK_SECONDS"
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
-              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)                    
+              echo "$GATEWAY_CONTRACT_ADDRESS" | tee "$CHAIN_DATA/gateway_contract_address"
               echo "$INTERPRETER_CODE_ID" > "$CHAIN_DATA/interpreter_code_id"
             }
 
