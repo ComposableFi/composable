@@ -36,8 +36,22 @@ pub struct InstantiateMsg {
 	pub network_id: NetworkId,
 	/// Address of a local XCVM gateway contract.
 	pub gateway_address: String,
+	/// Location of the accounts contract.
+	pub accounts_contract: AccountsContract,
 	/// Admins which are allowed to use the break glass feature.
 	pub admins: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub enum AccountsContract {
+	/// Address of the accounts contract on the local network.
+	Local(String),
+	/// IBC channel name with accounts contract on the other side.
+	Remote(String),
+	/// No accounts contract configured yet.
+	None,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -59,6 +73,9 @@ pub enum ExecuteMsg {
 	/// `msg` which is JSON-serialised [`ReceiveMsgBody`].
 	#[cfg(feature = "cw20")]
 	Receive(cw20::Cw20ReceiveMsg),
+
+	/// Sets accounts contract address to the one given.
+	SetAccountsContract(AccountsContract),
 
 	Relay(RelayRequest),
 	BreakGlass,

@@ -143,8 +143,7 @@ fn send_deposit(
 		account: deposit.account,
 		deposits,
 	};
-	let send_packet = ibc::make_message(&msg::accounts::Packet::from(packet));
-
+	let send_packet = ibc::make_accounts_message(storage, packet.into())?;
 	let data = to_vec(&msg::DepositAssetsResponse { deposit_id: deposit_id.into() })?;
 	Ok(response.add_message(send_packet).set_data(data))
 }
