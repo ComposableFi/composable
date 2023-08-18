@@ -38,7 +38,7 @@ As the first instance of an IBC implementation outside of the Cosmos ecosystem,
 novel strategies can now be built that leverage the best of Substrate and Cosmos SDK blockchains. 
 This is made possible through some key innovations by our bridging team.
 
-As the first instance of CosmWasm outside of Cosmos, existing projects can deploy a satelite protocol on Picasso and gain access to a completely new ecosystem of users and builers.
+As the first instance of CosmWasm outside of Cosmos, existing projects can deploy a satelite protocol on Picasso and gain access to a completely new ecosystem of users and builders.
 
 ### Insights into Picasso's Pallets
 
