@@ -11,7 +11,7 @@ and its proprietary technology stack.
 [$PICA]: ./picasso/tokenomics.md
 
 ![picasso_diagram](./picasso/picasso-diagram.png)
-Picasso houses a suite of modular and interoperable Substrate pallets:
+**Picasso houses a suite of modular and interoperable Substrate pallets:**
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
 - [Centauri] - trustless bridging between major DeFi ecosystems
@@ -31,43 +31,24 @@ The actual passing of messages between parachains is done through the use of Cro
 
 ### CosmWasm & IBC
 
-Picasso exists as the only CosmWasm and IBC-enabled parachain. 
+Picasso exists as the only [CosmWasm](../products/cosmwasm-vm-overview.md) and IBC-enabled parachain. 
 Thus, Picasso will be able to seamlessly integrate with other parachains 
 as well as IBC-enabled blockchains in the Cosmos ecosystem. 
 As the first instance of an IBC implementation outside of the Cosmos ecosystem, 
 novel strategies can now be built that leverage the best of Substrate and Cosmos SDK blockchains. 
 This is made possible through some key innovations by our bridging team.
 
+As the first instance of CosmWasm outside of Cosmos, existing projects can deploy a satelite protocol on Picasso and gain access to a completely new ecosystem of users and builers.
+
 ### Insights into Picasso's Pallets
 
-The Substrate blockchain development framework allows for parachain teams, 
-such as ours, to quickly bootstrap a sovereign layer 1 blockchain through the utilization of core building blocks 
-provided in the form of pallets. 
-A pallet could be compared to a Lego brick 
-that can be stacked in various arrangements to create a highly customizable runtime environment. 
-With Substrate, developers can choose to reuse fundamental and proven pallets where possible 
-or choose to create their own pallets to add new functionality when necessary.
+The Substrate blockchain development framework enables parachain teams to rapidly establish autonomous layer 1 blockchains using core building blocks referred to as pallets. These pallets, akin to Cosmos SDK modules, can be combined in various ways to create a customized runtime environment. Substrate offers developers the option to either reuse existing pallets or develop new ones to introduce additional functionalities as needed.
 
-Picasso delivers an extensive offering of Substrate pallets 
-that come together to form DeFi’s most robust interoperable platform.
-By reducing transaction costs, constructing modular applications that enable flexible liquidity movement,
-and implementing innovative solutions,
-Picasso is tackling some of the key difficulties of interoperable DeFi such as liquidity fragmentation,
-asset transfer security, and the lack of generalized cross-chain communication standards.
-Picasso, which houses DeFi primitives like [Centauri] and the [Pablo DEX], is designed to bring and maintain deep 
-liquidity, leveraging new technologies and aligning itself closely with user requirements.
-
-[Pablo Dex]: ../products/pablo-overview.md
+Picasso offers an extensive range of Substrate pallets that synergize to form a highly robust interoperable DeFi platform. By reducing transaction costs, creating modular applications for adaptable liquidity movement, and implementing pioneering solutions, Picasso effectively addresses key challenges within the realm of interoperable DeFi. These challenges encompass liquidity fragmentation, asset transfer security, and the absence of standardized cross-chain communication protocols. Within the realm of Picasso, DeFi essentials such as [Centauri] and [Pablo] thrive.
 
 ### Composable’s VM on Picasso
 
-Composable’s Virtual Machine [CVM](./products/xcvm.md) 
-will be able to leverage the pallets above to facilitate the creation of non-custodial, 
-natively cross-chain smart contracts.
-The CVM serves as a top-layer orchestration layer, 
-capable of calling into existing applications and pallets across multiple ecosystems asynchronously. 
-CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances. 
-
+Composable’s Virtual Machine [CVM](../products/xcvm.md) powered by CosmWasm will be able to leverage the pallets above to facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. Applications on any IBC-enabled chain can leverage the CVM to interact via cross-chain contracts in order to simplify cross-chain user experiences.
 
 ### Insights into Picasso’s Security
 

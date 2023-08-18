@@ -1,4 +1,4 @@
-# PICA use cases
+# PICA Use Cases
 
 PICA is the native token of [Picasso](../picasso-parachain-overview.md) and the [Centauri chain](../centauri-chain.md). We have made a concerted effort to ensure that the PICA token holds as much utility as possible by incorporating various value accrual methods, and governance features. While the PICA token provides the community with a strong voice and rewards for participating within the ecosystem, it is also fundamental for the operation of collators, validators, oracles, and our other cross-ecosystem strategies. Thus, the PICA token is fundamental for governance, network usage, and the security of Picasso.
 
