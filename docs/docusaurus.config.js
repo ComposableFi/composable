@@ -123,7 +123,7 @@ const config = {
 							},
 							{
 								label: 'Telegram',
-								href: 'https://t.me/composablefinance',
+								href: 'https://t.me/https://t.me/composablefinance',
 							},
 							{
 								label: 'Discord',
@@ -149,6 +149,10 @@ const config = {
 							{
 								label: 'Picasso Medium',
 								href: 'https://medium.com/@picasso_network',
+							},
+							{
+								label: 'Press Kit',
+								href: 'https://docs.composable.finance/ecosystem/press-kit',
 							},
 						],
 					},

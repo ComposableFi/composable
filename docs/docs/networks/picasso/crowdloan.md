@@ -44,5 +44,5 @@ and restake the same amount or greater. The bonus will be subject to the amount 
 ### KSM purchase logs
 
 You can find the purchase/sell logs corresponding to the Ethereum address for stablecoin contributors
-[on our Github.](https://github.com/ComposableFi/composable/tree/main/docs/docs/parachains/picasso/crowdloan-contributors/crowdloan-logs.csv) 
+[on our Github.](https://github.com/ComposableFi/composable/blob/main/docs/docs/networks/picasso/crowdloan-contributors/crowdloan-logs.csv) 
 They catalogue all of the Picasso stable coin conversions to KSM via TPS (the OTC desk of 3AC).

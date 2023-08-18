@@ -77,13 +77,12 @@
        collapsible: false,
        collapsed: false,
        items: [
-         "networks/picasso/crowdloan",
          "networks/picasso/governance",
          "networks/picasso/asset-list",
          "networks/picasso/pica-use-cases",
          "networks/picasso/tokenomics",
          "networks/picasso/token-transparency",
- 
+         "networks/picasso/crowdloan",
          {
            type: "category",
            label: "CosmWasm",
