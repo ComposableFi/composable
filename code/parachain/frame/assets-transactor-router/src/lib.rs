@@ -16,9 +16,7 @@
 //! - Minting and burn new assets by per asset governance.
 //! - Crediting and debiting of created asset balances.
 //! - By design similar to [orml_currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
-//!   and [substrate_assets](https://github.com/paritytech/substrate/tree/master/frame/assets)
-//! Functions requiring authorization are checked via asset's governance registry origin. Example,
-//! minting.
+//!   and [substrate_assets](https://github.com/paritytech/substrate/tree/master/frame/assets).
 //!
 //! ### Implementations
 //!
@@ -59,7 +57,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -128,7 +126,6 @@ pub mod pallet {
 			MutateRegistryMetadata,
 		},
 		currency::{AssetIdLike, BalanceLike},
-		governance::{GovernanceRegistry, SignedRawOrigin},
 		xcm::assets::RemoteAssetRegistryMutate,
 	};
 	use frame_support::{
@@ -140,7 +137,7 @@ pub mod pallet {
 		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-	use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+	use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 	use sp_runtime::{DispatchError, FixedPointOperand};
 	use sp_std::{fmt::Debug, str};
 
@@ -194,7 +191,6 @@ pub mod pallet {
 				CurrencyId = Self::AssetId,
 			>;
 
-		// TODO(benluelo): Move trait bounds here, rename to NativeTransactor
 		type NativeTransactor: fungible::Inspect<Self::AccountId, Balance = Self::Balance>
 			+ fungible::Transfer<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
@@ -205,9 +201,6 @@ pub mod pallet {
 			+ Currency<Self::AccountId, Balance = Self::Balance>
 			+ LockableCurrency<Self::AccountId, Balance = Self::Balance>
 			+ ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
-
-		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
-			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -396,7 +389,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			amount: T::Balance,
 		) -> DispatchResult {
-			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as fungibles::Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(())
@@ -411,44 +404,10 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			amount: T::Balance,
 		) -> DispatchResult {
-			Pallet::<T>::ensure_admin_or_governance(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as fungibles::Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(())
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
-		pub(crate) fn ensure_admin_or_governance(
-			origin: OriginFor<T>,
-			asset_id: &T::AssetId,
-		) -> Result<(), DispatchError> {
-			// TODO: that must be ensure_asset_origin(origin, asset_id))
-			if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
-				return Ok(())
-			}
-
-			match origin.into() {
-				Ok(frame_system::RawOrigin::Signed(account)) => {
-					match T::GovernanceRegistry::get(asset_id) {
-						Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
-						// (call_origin.is_signed &&
-						// asst_owner.is_root) then allow
-						// mint/burn -> anybody can mint and
-						// burn PICA?
-						// TODO: https://app.clickup.com/t/37h4edu
-						Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
-						_ => Err(DispatchError::BadOrigin),
-					}
-				},
-				Ok(frame_system::RawOrigin::Root) => Ok(()),
-				_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
-													* origin which is reasonable to have for
-													* governance
-													https://app.clickup.com/t/37h4edu
-													*/
-			}
 		}
 	}
 

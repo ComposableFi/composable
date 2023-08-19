@@ -133,9 +133,6 @@ pub mod pallet {
 		MaxRewardCurrencies,
 	}
 
-	#[pallet::hooks]
-	impl<T: Config<I>, I: 'static> Hooks<T::BlockNumber> for Pallet<T, I> {}
-
 	/// The total stake deposited to this reward pool.
 	#[pallet::storage]
 	#[pallet::getter(fn total_stake)]

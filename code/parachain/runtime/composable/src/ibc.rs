@@ -7,8 +7,6 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	governance::native::EnsureRootOrOneThirdNativeTechnical,
 };
-use composable_traits::assets::InspectRegistryMetadata;
-use frame_system::EnsureSigned;
 use pallet_ibc::{
 	ics20::{IbcMemoHandler, MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,

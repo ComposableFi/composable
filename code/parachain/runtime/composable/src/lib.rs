@@ -10,7 +10,7 @@
 		// clippy::panic
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -483,7 +483,6 @@ impl assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
@@ -679,7 +678,6 @@ construct_runtime!(
 		CurrencyFactory: currency_factory = 53,
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: assets = 57,
-		GovernanceRegistry: governance_registry = 58,
 		AssetsRegistry: assets_registry = 59,
 
 		CallFilter: call_filter = 100,

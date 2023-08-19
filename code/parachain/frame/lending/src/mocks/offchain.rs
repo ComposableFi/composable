@@ -5,7 +5,7 @@ use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
-	governance::{GovernanceRegistry, SignedRawOrigin},
+	governance::SignedRawOrigin,
 	oracle::Price,
 };
 use frame_support::{
@@ -242,20 +242,6 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = *ALICE;
 }
 
-pub struct NoopRegistry;
-
-impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
-	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<CurrencyId> GetByKey<CurrencyId, Result<SignedRawOrigin<AccountId>, sp_runtime::DispatchError>>
-	for NoopRegistry
-{
-	fn get(_k: &CurrencyId) -> Result<SignedRawOrigin<AccountId>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 impl pallet_assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
@@ -265,7 +251,6 @@ impl pallet_assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 

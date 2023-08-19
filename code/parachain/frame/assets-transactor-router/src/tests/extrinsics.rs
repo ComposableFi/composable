@@ -1,7 +1,7 @@
 use crate::*;
 use composable_traits::assets::AssetInfo;
 use frame_support::{assert_noop, assert_ok};
-use mocks::{new_test_ext, Balance, GovernanceRegistry, RuntimeOrigin, Test};
+use mocks::{new_test_ext, Balance, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
 use sp_runtime::DispatchError;
 
@@ -20,35 +20,6 @@ fn create_asset_id(protocol_id: [u8; 4], nonce: u64) -> u128 {
 		.try_into()
 		.expect("[u8; 8] + bytes(u64) = [u8; 16]");
 	u128::from_be_bytes(bytes)
-}
-
-mod ensure_admin_or_governance {
-	use super::*;
-
-	#[test]
-	fn should_only_be_set_by_root() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), 1, 1));
-			assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::root(), &2));
-			assert_noop!(
-				Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &2),
-				DispatchError::BadOrigin
-			);
-			assert_noop!(
-				Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(2), &1),
-				DispatchError::BadOrigin
-			);
-			assert_ok!(Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::signed(1), &1));
-			assert_noop!(
-				Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &1),
-				DispatchError::BadOrigin
-			);
-			assert_noop!(
-				Pallet::<Test>::ensure_admin_or_governance(RuntimeOrigin::none(), &2),
-				DispatchError::BadOrigin
-			);
-		});
-	}
 }
 
 mod transfer {
@@ -196,7 +167,6 @@ mod mint_into {
 	fn should_mint_into_single_account() {
 		let asset_id = 1;
 		new_test_ext().execute_with(|| {
-			assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT));
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), 0);
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), 0);
 
@@ -250,7 +220,6 @@ mod burn_from {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Pallet::<Test>::deposit(asset_id, &FROM_ACCOUNT, INIT_AMOUNT));
 			assert_ok!(Pallet::<Test>::deposit(asset_id, &TO_ACCOUNT, INIT_AMOUNT));
-			assert_ok!(GovernanceRegistry::set(RuntimeOrigin::root(), asset_id, FROM_ACCOUNT));
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &FROM_ACCOUNT), INIT_AMOUNT);
 			assert_eq!(Pallet::<Test>::total_balance(asset_id, &TO_ACCOUNT), INIT_AMOUNT);
 

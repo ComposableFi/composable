@@ -1,8 +1,5 @@
 use composable_tests_helpers::test::currency::PICA;
-use composable_traits::{
-	account_proxy::ProxyType,
-	governance::{GovernanceRegistry, SignedRawOrigin},
-};
+use composable_traits::{account_proxy::ProxyType, governance::SignedRawOrigin};
 use frame_support::pallet_prelude::*;
 use primitives::currency::ForeignAssetId;
 use sp_core::{
@@ -164,25 +161,6 @@ impl orml_tokens::Config for Test {
 	type CurrencyHooks = CurrencyHooks;
 }
 
-pub struct NoopRegistry;
-
-impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
-	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<CurrencyId>
-	GetByKey<
-		CurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for NoopRegistry
-{
-	fn get(
-		_k: &CurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
 	pub const NativeAssetId: CurrencyId = PICA::ID;
@@ -208,7 +186,6 @@ impl pallet_assets_transactor_router::Config for Test {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetLocation = ForeignAssetId;

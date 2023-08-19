@@ -23,7 +23,6 @@ use sp_runtime::{
 };
 use xcm::latest::SendXcm;
 
-use super::governance_registry::GovernanceRegistry;
 use primitives::currency::ValidateCurrencyId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
@@ -164,7 +163,6 @@ impl pallet_assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 

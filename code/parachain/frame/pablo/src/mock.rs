@@ -2,7 +2,7 @@
 
 use crate as pablo;
 use composable_tests_helpers::test::currency;
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
+use composable_traits::governance::SignedRawOrigin;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{EitherOfDiverse, Everything},
@@ -171,20 +171,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct NoopRegistry;
-
-impl<AssetId, AccountId> GovernanceRegistry<AssetId, AccountId> for NoopRegistry {
-	fn set(_k: AssetId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<AssetId> GetByKey<AssetId, Result<SignedRawOrigin<u128>, sp_runtime::DispatchError>>
-	for NoopRegistry
-{
-	fn get(_k: &AssetId) -> Result<SignedRawOrigin<u128>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
@@ -214,7 +200,6 @@ impl pallet_assets_transactor_router::Config for Test {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetLocation = ForeignAssetId;

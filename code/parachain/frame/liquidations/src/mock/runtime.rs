@@ -27,8 +27,6 @@ use sp_runtime::{
 };
 use xcm::latest::SendXcm;
 
-use super::governance_registry::GovernanceRegistry;
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type Balance = u128;
@@ -179,7 +177,6 @@ impl pallet_assets_transactor_router::Config for Runtime {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetLocation = ForeignAssetId;

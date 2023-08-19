@@ -62,7 +62,6 @@ frame_support::construct_runtime!(
 		AssetsRegistry: pallet_assets_registry,
 		Assets: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp,
-		GovernanceRegistry: governance_registry,
 		Tokens: orml_tokens,
 	}
 );
@@ -103,12 +102,6 @@ impl frame_system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<2>;
-}
-
-impl governance_registry::Config for Test {
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {
@@ -205,7 +198,6 @@ impl pallet_assets_transactor_router::Config for Test {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetLocation = ForeignAssetId;

@@ -9,7 +9,6 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	ibc::{ForeignIbcIcs20Assets, MinimumConnectionDelaySeconds},
 };
-use composable_traits::assets::InspectRegistryMetadata;
 use frame_system::EnsureSigned;
 use hex_literal::hex;
 pub(crate) use pallet_ibc::{

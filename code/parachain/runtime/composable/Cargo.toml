@@ -18,7 +18,6 @@ normal = [
   "oracle",
   "vault",
   "assets",
-  "governance-registry",
   "call-filter",
   "orml-unknown-tokens",
   "orml-xtokens",
@@ -66,7 +65,6 @@ common = { path = "../common", default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false, optional = true }
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false, optional = true }
@@ -183,8 +181,6 @@ std = [
   "executive/std",
   "frame-support/std",
   "frame-system/std",
-  "governance-registry/std",
-  "governance-registry/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
   "ibc/std",
