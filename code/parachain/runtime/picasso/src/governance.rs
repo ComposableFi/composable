@@ -1,8 +1,8 @@
 //! Runtime setup for the governance and democracy only.
 
 use super::*;
-use common::governance::native::*;
-use frame_support::traits::LockIdentifier;
+use common::{governance::native::*, MINUTES};
+use frame_support::{instances::Instance1, traits::LockIdentifier};
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -70,6 +70,58 @@ parameter_types! {
 	// cspell:disable-next
 	pub const DemocracyId: LockIdentifier = *b"democrac";
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
+}
+
+type NativeTokenReferenda = Instance1;
+
+impl pallet_referenda::Config<Instance1> for Runtime {
+	type RuntimeCall = RuntimeCall;
+
+	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = ();
+
+	type Scheduler = Scheduler;
+
+	type Currency = Balances;
+
+	type SubmitOrigin = frame_support::traits::EnsureSigned<AccountId>;
+
+	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
+
+	type KillOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
+
+	type Slash = Treasury;
+
+	type Votes = Balance;
+
+	type Tally = ConvictionVoting;
+
+	type SubmissionDeposit = ConstU128<50_000_000_000_000_000>;
+
+	type MaxQueued = ConstU32<16>;
+
+	type UndecidingTimeout = ConstU32<{ 7 * DAYS }>;
+
+	type AlarmInterval = ConstU32<{ 30 * MINUTES }>;
+
+	type Tracks;
+
+	type Preimages = Preimage;
+}
+
+impl pallet_conviction_voting::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type Currency = Balances;
+
+	type Polls = Balances;
+
+	type MaxTurnout = Balances;
+
+	type MaxVotes = ConstU32<16>;
+
+	type VoteLockingPeriod = ConstU32<{ 1 * DAYS }>;
 }
 
 impl democracy::Config for Runtime {
