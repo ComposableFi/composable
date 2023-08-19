@@ -80,7 +80,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> R
 	};
 	Ok(Response::default().add_message(wasm_execute(
 		gateway,
-		&xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program, tip: info.sender },
+		&xc_core::gateway::ExecuteMsg::ExecuteProgram { execute_program, tip: info.sender.into() },
 		Default::default(),
 	)?))
 }
