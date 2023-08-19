@@ -5,7 +5,6 @@ use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
-	governance::SignedRawOrigin,
 	oracle::Price,
 };
 use frame_support::{
@@ -16,7 +15,7 @@ use frame_support::{
 };
 use frame_system::{ChainContext, EnsureRoot, EnsureSignedBy};
 use once_cell::sync::Lazy;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use orml_traits::parameter_type_with_key;
 use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
