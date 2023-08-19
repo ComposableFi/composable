@@ -3,9 +3,7 @@ use super::framework::{
 };
 use crate::tests::framework::{BlockchainTransaction, TestVM};
 use cosmwasm_orchestrate::vm::{Account, AddressHandler, SubstrateAddressHandler};
-use cosmwasm_std::{
-	Attribute, Binary, BlockInfo, CanonicalAddr, Event, IbcOrder, MessageInfo, Timestamp,
-};
+use cosmwasm_std::{Attribute, Binary, BlockInfo, Event, IbcOrder, MessageInfo, Timestamp};
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 
@@ -13,9 +11,8 @@ use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{
-	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX,
-	shared::{Salt, XcProgram},
-	AssetId, Balance, Centauri, Destination, Funds, Network, Picasso, ProgramBuilder,
+	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX, shared, AssetId, Balance, Centauri,
+	Destination, Funds, Network, Picasso, ProgramBuilder,
 };
 
 #[macro_export]
@@ -207,8 +204,8 @@ impl<T> CrossChainScenario<XCVMState<T>, Connected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 		sender: Account,
-		program: XcProgram,
-		salt: impl Into<Salt>,
+		program: shared::XcProgram,
+		salt: impl Into<shared::Salt>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 		allowance_expiration: Option<Expiration>,
 	) -> Result<CrossChainDispatchResult, TestError> {
@@ -236,8 +233,8 @@ impl<T> CrossChainScenario<XCVMState<T>, Connected> {
 		relayer: Account,
 		relayer_counterparty: Account,
 		sender: Account,
-		program: XcProgram,
-		salt: impl Into<Salt>,
+		program: shared::XcProgram,
+		salt: impl Into<shared::Salt>,
 		assets: impl IntoIterator<Item = (AssetId, u128)>,
 		allowance_expiration: Option<Expiration>,
 	) -> Result<CrossChainDispatchResult, TestError> {
@@ -276,7 +273,7 @@ fn mk_tx(acc: Account) -> BlockchainTransaction {
 	}
 }
 
-fn to_canonical(account: Account) -> CanonicalAddr {
+fn to_xc_addr(account: Account) -> shared::XcAddr {
 	SubstrateAddressHandler::addr_canonicalize(&String::from(account))
 		.expect("impossible")
 		.into()
@@ -592,8 +589,8 @@ mod single_chain {
 		)
 		.expect("Must be able to create an XCVM network.");
 		let assets_to_transfer = [(1u128.into(), transfer_amount)];
-		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
-			.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer)
+		let program = ProgramBuilder::<Picasso, shared::XcAddr, Funds<Balance>>::new([])
+			.transfer(Destination::Account(to_xc_addr(bob.clone())), assets_to_transfer)
 			.build();
 		let CrossChainDispatchResult { dispatch_data, dispatch_events, relay_data, relay_events } =
 			network
@@ -710,10 +707,10 @@ mod cross_chain {
 		)
 		.expect("Must be able to create an XCVM network.");
 		let assets_to_transfer = [(1u128.into(), transfer_amount)];
-		let program = ProgramBuilder::<Picasso, CanonicalAddr, Funds<Balance>>::new([])
+		let program = ProgramBuilder::<Picasso, shared::XcAddr, Funds<Balance>>::new([])
 			.spawn::<Centauri, (), _, _>([], [], assets_to_transfer, |Centauri_program| {
 				Ok(Centauri_program
-					.transfer(Destination::Account(to_canonical(bob.clone())), assets_to_transfer))
+					.transfer(Destination::Account(to_xc_addr(bob.clone())), assets_to_transfer))
 			})
 			.expect("Must be able to build an XCVM program.")
 			.build();

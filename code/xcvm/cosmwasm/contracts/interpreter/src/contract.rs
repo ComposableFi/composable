@@ -8,9 +8,8 @@ use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, CanonicalAddr, Coin, CosmosMsg, Deps,
-	DepsMut, Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
-	WasmQuery,
+	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
+	Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -19,8 +18,7 @@ use num::Zero;
 use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
-	shared::{encode_base64, XcProgram},
-	Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
+	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -42,7 +40,7 @@ pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: Instantiate
 
 	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
 		XCVM_INTERPRETER_EVENT_DATA_ORIGIN,
-		encode_base64(&config.interpreter_origin)?.as_str(),
+		shared::encode_base64(&config.interpreter_origin)?,
 	)))
 }
 
@@ -85,7 +83,7 @@ fn initiate_execution(
 	deps: DepsMut,
 	env: Env,
 	tip: Addr,
-	program: XcProgram,
+	program: shared::XcProgram,
 ) -> Result {
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
@@ -264,7 +262,7 @@ pub fn interpret_spawn(
 	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
-	program: XcProgram,
+	program: shared::XcProgram,
 ) -> Result {
 	let Config { interpreter_origin, gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 
@@ -338,7 +336,7 @@ pub fn interpret_transfer(
 	deps: &mut DepsMut,
 	env: &Env,
 	tip: &Addr,
-	to: Destination<CanonicalAddr>,
+	to: Destination<shared::XcAddr>,
 	assets: Funds<Balance>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
