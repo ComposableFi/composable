@@ -101,6 +101,7 @@ pub fn ibc_packet_receive(
 			program: packet.program,
 			assets: packet.assets,
 		};
+		
 		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
 			call_origin,
 			execute_program,

@@ -1,5 +1,7 @@
 use crate::{prelude::*, NetworkId};
 
+pub mod osmosis_std;
+
 pub type ExchangeId = crate::shared::Displayed<u128>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

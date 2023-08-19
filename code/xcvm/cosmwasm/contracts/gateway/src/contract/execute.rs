@@ -215,7 +215,7 @@ pub(crate) fn handle_execute_program_privilleged(
 
 		// Secondly, call itself again with the same parameters, so that this functions goes
 		// into `Ok` state and properly executes the interpreter
-		let execute_program =
+		let execute_program: msg::ExecuteProgramMsg =
 			xc_core::gateway::ExecuteProgramMsg { salt: interpreter_origin.salt, program, assets };
 		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
 		let self_call_message = this.execute(msg)?;
