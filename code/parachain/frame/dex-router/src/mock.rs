@@ -3,7 +3,7 @@ use crate::mock_fnft::MockFnft;
 use composable_traits::governance::SignedRawOrigin;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
-use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 use primitives::currency::ForeignAssetId;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;

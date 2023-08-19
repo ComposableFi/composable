@@ -1,5 +1,5 @@
 use composable_tests_helpers::test::currency::PICA;
-use composable_traits::{account_proxy::ProxyType, governance::SignedRawOrigin};
+use composable_traits::account_proxy::ProxyType;
 use frame_support::pallet_prelude::*;
 use primitives::currency::ForeignAssetId;
 use sp_core::{

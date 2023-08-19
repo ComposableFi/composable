@@ -1,9 +1,8 @@
 use crate::*;
 use composable_traits::assets::AssetInfo;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::assert_ok;
 use mocks::{new_test_ext, Balance, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
-use sp_runtime::DispatchError;
 
 const FROM_ACCOUNT: u128 = 1;
 const TO_ACCOUNT: u128 = 2;

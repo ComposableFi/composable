@@ -16,7 +16,6 @@ pub(crate) use pallet_ibc::{
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use super::*;
 
@@ -146,7 +145,7 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(feature = "testnet")]
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(not(feature = "testnet"))]
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 
 	type FeeAccount = FeeAccount;
 	type CleanUpPacketsPeriod = ConstU32<100>;

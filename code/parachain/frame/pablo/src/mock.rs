@@ -9,7 +9,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 use primitives::currency::ForeignAssetId;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
