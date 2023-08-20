@@ -20,7 +20,8 @@ pub const OWNERS: Map<Addr, ()> = Map::new("owners");
 /// This register hold the latest program instruction (index) executed.
 pub const IP_REGISTER: Item<u16> = Item::new("ip_register");
 
-/// This register contains the latest executed program result.
+/// This register contains the latest executed instruction result for the program.
+/// It can be either a success `SubMsgResponse` or an error message (in this case changes of message were not applied).
 pub const RESULT_REGISTER: Item<Result<SubMsgResponse, String>> = Item::new("result_register");
 
 pub const TIP_REGISTER: Item<Addr> = Item::new("tip_register");

@@ -17,14 +17,17 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
-	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register, service::dex::ExchangeId,
+	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg, Gateway},
+	service::dex::ExchangeId,
+	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
+const EXCHANGE_ID: u64 = 3;
 pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
 pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
@@ -145,7 +148,7 @@ pub fn handle_execute_step(
 				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
-			Instruction::Exchange { give, id, want,} => interpret_execute(give, want, id)?,
+			Instruction::Exchange { give, id, want } => interpret_execute(deps, give, want, id),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -173,11 +176,36 @@ pub fn handle_execute_step(
 	})
 }
 
-fn interpret_execute(give: Funds, want: Funds, id: ExchangeId) -> Result {
-    // 1. get data from gateway
-	
-	// 2. send message
-	// 3. handle response
+fn interpret_execute(deps: DepsMut, give: Funds, want: Funds, id: ExchangeId) -> Result {
+	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
+	let gateway = Gateway::new(gateway);
+	let exchange = gateway.get_exchange_by_id(deps.querier, exchange_id)?;
+
+	use prost::Message;
+	use xc_core::service::dex::{
+		osmosis_std::types::osmosis::poolmanager::v1beta1::MsgSwapExactAmountIn, ExchangeType::*,
+	};
+	let response = match exchange.exchange {
+		OsmosisCrossChainSwap(routes) => {
+			let msg = MsgSwapExactAmountIn {
+				routes,
+				sender: todo!(),
+				token_in: todo!(),
+				token_out_min_amount: todo!(),
+			};
+			let msg = CosmosMsg::Stargate {
+				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
+				value: Binary::from(msg.encode_to_vec()),
+			};
+			let msg = SubMsg::reply_on_error(msg, EXCHANGE_ID);
+			Response::default().add_submessage(msg)
+		},
+	};
+	Ok(response.add_event(
+		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
+			.add_attribute("instruction", "exchange")
+			.add_attribute("exchange_id", exchange.exchange_id.to_string()),
+	))
 }
 
 /// Interpret the `Call` instruction
@@ -409,6 +437,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 	match msg.id {
 		CALL_ID => handle_call_result(deps, msg),
 		SELF_CALL_ID => handle_self_call_result(deps, msg),
+		EXCHANGE_ID => handle_exchange_result(deps, msg),
 		id => Err(StdError::generic_err(format!("Unknown reply id: {}", id))),
 	}
 }
@@ -431,6 +460,12 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	let response = msg.result.into_result().map_err(StdError::generic_err)?;
+	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
+	Ok(Response::default())
+}
+
+fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
 	Ok(Response::default())
