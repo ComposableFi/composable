@@ -127,6 +127,7 @@ impl scale_info::TypeInfo for XcAddr {
 	derive_more::Deref,
 	derive_more::From,
 )]
+
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
 
@@ -209,6 +210,36 @@ macro_rules! impl_conversions {
 			)*
 	};
 }
+
+// impl prost::Message for Displayed<u64> {
+//     fn encoded_len(&self) -> usize {
+//         self.0.encoded_len()
+//     }
+
+//     fn clear(&mut self) {
+//         self.0.clear()
+//     }	
+
+// 	fn encode_raw<B>(&self, buf: &mut B)
+// 		where
+// 			B: prost::bytes::BufMut,
+// 			Self: Sized {
+// 		self.0.encode_raw(buf)		
+// 	}
+
+// 	fn merge_field<B>(
+// 			&mut self,
+// 			tag: u32,
+// 			wire_type: prost::encoding::WireType,
+// 			buf: &mut B,
+// 			ctx: prost::encoding::DecodeContext,
+// 		) -> Result<(), prost::DecodeError>
+// 		where
+// 			B: prost::bytes::Buf,
+// 			Self: Sized {
+// 		self.0.merge_field(tag, wire_type, buf, ctx)
+// 	}
+// }
 
 // Due to Rust orphan rules it’s not possible to make generic `impl<T>
 // From<Displayed<T>> for T` so we’re defining common conversions explicitly.
