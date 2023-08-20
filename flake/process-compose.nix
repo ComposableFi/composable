@@ -490,6 +490,13 @@
                 };
                 log_location = "${devnet-root-directory}/osmosis.log";
               };
+              osmosis-pools-init = {
+                command = self'.packages.osmosisd-pools-init;
+                depends_on."osmosis".condition = "process_healthy";
+                log_location =
+                  "${devnet-root-directory}/osmosisd-pools-init.log";
+                availability = { restart = "on_failure"; };
+              };
               osmosis-xcvm-init = {
                 command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
