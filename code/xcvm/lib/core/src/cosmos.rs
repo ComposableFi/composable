@@ -57,30 +57,20 @@ mod tests {
 	}
 }
 
-
 /// Coin defines a token with a denomination and an amount.
 ///
 /// NOTE: The amount field is an Int which implements the custom method
 /// signatures required by gogoproto.
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(
-    Clone,
-    PartialEq,
-    Eq,
-    prost::Message,
-    Serialize,
-    Deserialize,    
-)]
-
+#[derive(Clone, PartialEq, Eq, prost::Message, Serialize, Deserialize)]
 #[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Coin {
-    #[prost(string, tag = "1")]
-    pub denom: String,
-    #[prost(string, tag = "2")]
-    pub amount: String,
+	#[prost(string, tag = "1")]
+	pub denom: String,
+	#[prost(string, tag = "2")]
+	pub amount: String,
 }
 
-impl Coin  {
-    pub const PROTO_MESSAGE_URL:&str = "/cosmos.base.v1beta1.Coin"; 
+impl Coin {
+	pub const PROTO_MESSAGE_URL: &str = "/cosmos.base.v1beta1.Coin";
 }
-

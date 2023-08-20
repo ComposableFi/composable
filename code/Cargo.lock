@@ -3347,6 +3347,7 @@ dependencies = [
  "cw20",
  "hex",
  "num",
+ "prost",
  "schemars",
  "serde",
  "serde-cw-value",

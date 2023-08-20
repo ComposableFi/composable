@@ -9,6 +9,7 @@ pub mod batch;
 pub mod contract;
 pub mod error;
 mod events;
+pub mod exchange;
 pub mod interpreter;
 mod network;
 mod prelude;

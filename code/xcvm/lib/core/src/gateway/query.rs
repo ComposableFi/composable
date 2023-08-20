@@ -1,4 +1,10 @@
-use crate::prelude::*;
+use crate::{
+	prelude::*,
+	service::dex::{ExchangeId, ExchangeItem},
+	AssetId, NetworkId,
+};
+
+use super::{AssetItem, AssetReference};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]

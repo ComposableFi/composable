@@ -3,7 +3,7 @@ use crate::{
 	batch::BatchResponse,
 	error::{ContractError, Result},
 	events::make_event,
-	interpreter, msg,
+	exchange, interpreter, msg,
 	network::{self, load_this},
 	state,
 };
@@ -72,6 +72,7 @@ fn handle_config_msg(
 		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
 			network::force_network_to_network(auth, deps, msg),
 		ConfigSubMsg::ForceAsset(msg) => assets::force_asset(auth, deps, msg),
+		ConfigSubMsg::ForceExchange(msg) => exchange::force_exchange(auth, deps, msg),
 		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
 			assets::force_remove_asset(auth, deps, asset_id),
 		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>

@@ -1,6 +1,4 @@
-use crate::prelude::*;
-
-use crate::{assets, error::Result, msg};
+use crate::{assets, error::Result, exchange, msg, prelude::*};
 
 use cosmwasm_std::{Binary, Deps, Env};
 
@@ -17,5 +15,7 @@ pub fn query(deps: Deps, _env: Env, msg: msg::QueryMsg) -> Result<Binary> {
 		msg::QueryMsg::GetIbcIcs20Route { to_network, for_asset } =>
 			get_route(deps.storage, to_network, for_asset)
 				.and_then(|route| Ok(to_binary(&msg::GetIbcIcs20RouteResponse { route })?)),
+		msg::QueryMsg::GetExchangeById { exchange_id } => exchange::get_by_id(deps, exchange_id)
+			.and_then(|exchange| Ok(to_binary(&msg::GetExchangeResponse { exchange })?)),
 	}
 }

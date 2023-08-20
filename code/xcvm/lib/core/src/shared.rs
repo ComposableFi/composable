@@ -127,7 +127,6 @@ impl scale_info::TypeInfo for XcAddr {
 	derive_more::Deref,
 	derive_more::From,
 )]
-
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
 
@@ -218,13 +217,13 @@ macro_rules! impl_conversions {
 
 //     fn clear(&mut self) {
 //         self.0.clear()
-//     }	
+//     }
 
 // 	fn encode_raw<B>(&self, buf: &mut B)
 // 		where
 // 			B: prost::bytes::BufMut,
 // 			Self: Sized {
-// 		self.0.encode_raw(buf)		
+// 		self.0.encode_raw(buf)
 // 	}
 
 // 	fn merge_field<B>(

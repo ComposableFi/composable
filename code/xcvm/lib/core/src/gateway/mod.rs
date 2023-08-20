@@ -4,11 +4,11 @@ mod query;
 pub use config::*;
 pub use query::*;
 
-use crate::prelude::*;
-
-use crate::service::dex::{ExchangeId, ExchangeItem};
 use crate::{
-	transport::ibc::XcMessageData, AssetId, CallOrigin, Funds, InterpreterOrigin, NetworkId,
+	prelude::*,
+	service::dex::{ExchangeId, ExchangeItem},
+	transport::ibc::XcMessageData,
+	AssetId, CallOrigin, Funds, InterpreterOrigin, NetworkId,
 };
 
 /// Prefix used for all events attached to gateway responses.
@@ -98,7 +98,6 @@ pub struct BridgeForwardMsg {
 	pub msg: ExecuteProgramMsg,
 }
 
-
 /// Wrapper for interfacing with a gateway contract.
 ///
 /// Provides convenience methods for querying the gateway and sending execute
@@ -177,8 +176,9 @@ impl Gateway {
 		querier: cosmwasm_std::QuerierWrapper,
 		exchange_id: ExchangeId,
 	) -> cosmwasm_std::StdResult<ExchangeItem> {
-		let query = QueryMsg::GetExchangeById { exchange_id};
-		self.do_query::<GetExchangeResponse>(querier, query).map(|response| response.exchange)
+		let query = QueryMsg::GetExchangeById { exchange_id };
+		self.do_query::<GetExchangeResponse>(querier, query)
+			.map(|response| response.exchange)
 	}
 
 	/// Queries the gateway for definition of an asset with given local

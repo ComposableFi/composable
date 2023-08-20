@@ -17,7 +17,7 @@ use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg, Gateway},
+	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
 	service::dex::ExchangeId,
 	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
@@ -148,7 +148,8 @@ pub fn handle_execute_step(
 				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
-			Instruction::Exchange { give, id, want } => interpret_execute(deps, give, want, id),
+			Instruction::Exchange { give, id, want } =>
+				interpret_execute(&mut deps, give, want, id, env.contract.address.clone()),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -176,22 +177,47 @@ pub fn handle_execute_step(
 	})
 }
 
-fn interpret_execute(deps: DepsMut, give: Funds, want: Funds, id: ExchangeId) -> Result {
-	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-	let gateway = Gateway::new(gateway);
-	let exchange = gateway.get_exchange_by_id(deps.querier, exchange_id)?;
+fn interpret_execute(
+	deps: &mut DepsMut,
+	give: Funds,
+	want: Funds,
+	exchange_id: ExchangeId,
+	sender: Addr,
+) -> Result {
+	let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
+	let exchange = gateway_address.get_exchange_by_id(deps.querier, exchange_id)?;
 
 	use prost::Message;
 	use xc_core::service::dex::{
 		osmosis_std::types::osmosis::poolmanager::v1beta1::MsgSwapExactAmountIn, ExchangeType::*,
 	};
+	assert_eq!(
+		give.0.len(),
+		1,
+		"because default osmosis API for 1, can should handle multiple later"
+	);
+	assert_eq!(
+		want.0.len(),
+		1,
+		"because default osmosis API for 1, can should handle multiple later"
+	);
+	let asset = gateway_address.get_asset_by_id(deps.querier, give.0[0].0)?;
+	let give: xc_core::cosmos::Coin = xc_core::cosmos::Coin {
+		denom: asset.denom(),
+		amount: give.0[0].1.amount.intercept.to_string(),
+	};
+	let asset = gateway_address.get_asset_by_id(deps.querier, want.0[0].0)?;
+	let want = xc_core::cosmos::Coin {
+		denom: asset.denom(),
+		amount: want.0[0].1.amount.intercept.to_string(),
+	};
 	let response = match exchange.exchange {
 		OsmosisCrossChainSwap(routes) => {
 			let msg = MsgSwapExactAmountIn {
 				routes,
-				sender: todo!(),
-				token_in: todo!(),
-				token_out_min_amount: todo!(),
+				sender: sender.to_string(),
+				token_in: Some(give),
+				token_out_min_amount: want.amount,
 			};
 			let msg = CosmosMsg::Stargate {
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
