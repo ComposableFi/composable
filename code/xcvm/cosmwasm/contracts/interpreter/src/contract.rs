@@ -18,7 +18,7 @@ use num::Zero;
 use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
-	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
+	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register, service::dex::ExchangeId,
 };
 
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
@@ -145,7 +145,7 @@ pub fn handle_execute_step(
 				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
-			Instruction::Exchange { .. } => Err(ContractError::NotImplemented)?,
+			Instruction::Exchange { give, id, want,} => interpret_execute(give, want, id)?,
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -171,6 +171,13 @@ pub fn handle_execute_step(
 		}
 		Response::default().add_event(event)
 	})
+}
+
+fn interpret_execute(give: Funds, want: Funds, id: ExchangeId) -> Result {
+    // 1. get data from gateway
+	
+	// 2. send message
+	// 3. handle response
 }
 
 /// Interpret the `Call` instruction
