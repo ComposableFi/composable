@@ -34,14 +34,11 @@ num-traits = { version = "0.2.14", default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
-governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 orml-tokens = { workspace = true }
 pallet-balances = { workspace = true }
 proptest = "1.0"
 primitives = { path = "../../runtime/primitives", default-features = false }
 
-[package.metadata.cargo-udeps.ignore]
-development = ["governance-registry"]
 
 [features]
 default = ["std"]

@@ -17,8 +17,6 @@
 //! - Crediting and debiting of created asset balances.
 //! - By design similar to [orml_currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
 //!   and [substrate_assets](https://github.com/paritytech/substrate/tree/master/frame/assets)
-//! Functions requiring authorization are checked via asset's governance registry origin. Example,
-//! minting.
 //!
 //! ### Implementations
 //!
@@ -65,7 +63,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -86,10 +84,7 @@ pub mod weights;
 pub mod pallet {
 	use crate::weights::WeightInfo;
 	use composable_support::validation::Validate;
-	use composable_traits::{
-		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
-		governance::{GovernanceRegistry, SignedRawOrigin},
-	};
+	use composable_traits::currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -104,7 +99,6 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Zero;
-	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
 	use sp_runtime::{DispatchError, FixedPointOperand};
 
@@ -118,8 +112,6 @@ pub mod pallet {
 		type GenerateCurrencyId: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type NativeCurrency;
 		type MultiCurrency;
-		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
-			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 		type WeightInfo: WeightInfo;
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -314,13 +306,11 @@ pub mod pallet {
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
 			#[pallet::compact] amount: T::Balance,
-			governance_origin: <T::Lookup as StaticLookup>::Source,
+			_governance_origin: <T::Lookup as StaticLookup>::Source,
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
-			let governance_origin = T::Lookup::lookup(governance_origin)?;
-			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -335,7 +325,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(().into())
@@ -350,42 +340,10 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
 			Ok(().into())
-		}
-	}
-
-	/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
-	pub(crate) fn ensure_admin_or_governance<T: Config>(
-		origin: OriginFor<T>,
-		asset_id: &T::AssetId,
-	) -> Result<(), DispatchError> {
-		// TODO: that must be ensure_asset_origin(origin, asset_id))
-		if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
-			return Ok(())
-		}
-
-		match origin.into() {
-			Ok(frame_system::RawOrigin::Signed(account)) => {
-				match T::GovernanceRegistry::get(asset_id) {
-					Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
-					// (call_origin.is_signed &&
-					// asst_owner.is_root) then allow
-					// mint/burn -> anybody can mint and
-					// burn PICA?
-					// TODO: https://app.clickup.com/t/37h4edu
-					Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
-					_ => Err(DispatchError::BadOrigin),
-				}
-			},
-			Ok(frame_system::RawOrigin::Root) => Ok(()),
-			_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
-												* origin which is reasonable to have for
-												* governance
-												https://app.clickup.com/t/37h4edu
-												*/
 		}
 	}
 

@@ -35,7 +35,6 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system = 1,
 		Balances: pallet_balances = 2,
-		GovernanceRegistry: governance_registry = 3,
 		Tokens: orml_tokens = 4,
 		AssetsRegistry: assets_registry = 5,
 		AssetsTransactorRouter: crate = 6,
@@ -62,7 +61,6 @@ impl Config for Test {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetsRegistry = AssetsRegistry;
@@ -109,12 +107,6 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 	type CurrencyHooks = CurrencyHooks;
-}
-
-impl governance_registry::Config for Test {
-	type AssetId = AssetId;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {

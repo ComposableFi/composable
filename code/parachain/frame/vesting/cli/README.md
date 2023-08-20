@@ -41,10 +41,17 @@ export RUST_LOG=info
 
 ### Adding
 
+Form input as:
+```csv
+account,window_moment_start,window_moment_period,period_count,per_period
+5zEddnhFgz8yyAXwMDew9SMNQveGmcEP73CThfYh6DfkQXMH,1685577600000,2592000000,24,266666670000000000
+15tHCtqr2ct42aaN4oiw2yVfiPUutGLzKMcjnwX5Y5tskwMx,1685577600000,2592000000,24,70175440000000000
+``` 
+
 ```bash
-cargo run -- --client="ws://localhost:8000" add --schedule="./test/add-collators.csv" --key="//Alice" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-collators-output.csv
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add-collators.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
+cargo run -- --client="ws://localhost:8000" add --schedule="./test/add-collators.csv" --key="//Alice" --from="$FUNDS_ACCOUNT"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$FUNDS_ACCOUNT" --out=./test/add-output.csv
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$FUNDS_ACCOUNT" --batch=true
 ```
 
 ### Listing
@@ -63,14 +70,21 @@ cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" unlock --s
 
 ### Deleting
 
+Form input as 
+```csv
+pubkey,account,vesting_schedule_id,total,per_period,period_count,window_start,window_period,already_claimed
+7c9bc8419ec29edaf1316d801a961c763fd39c2d5fc63fffa5c9d23e4516cc46,5Et657z8ozseQccz5LAZTBq1rkSC9kBgnVtE69AEynUwDCKx,100,8333332999999999871,13000519500780031,641,2022-11-25 13:02:24.0 +00:00:00,1m26s400ms,0
+b50def6e2e9e1eeb8b30f52a1078bff36dd4b82ecc88eb736a7d687361fa37cf,5GA6fTj1EmCNyAWD5ZhYtq49XpC52EvMwqsdCCw5jCSTwXAE,158,1249999999999999484,1950078003120124,641,2022-11-25 13:02:24.0 +00:00:00,1m26s400ms,0
+```
+
 ```bash
-cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm"
+cargo run -- --client="ws://localhost:8000" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="$FUNDS_ACCOUNT"
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" delete --schedule="./test/delete-all.csv" --key="//Alice" --to="$FUNDS_ACCOUNT"
 ```
 
 
 
 ```bash
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --out=./test/add-output.csv
-cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm" --batch=true
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$FUNDS_ACCOUNT" --out=./test/add-output.csv
+cargo run -- --client="wss://picasso-rpc-lb.composablenodes.tech:443" add --schedule="./test/add.csv" --key="0xff170d6075538580671f6e45f1c2701f46160dfbe57c551d01e15ecc82b8ffd3" --from="$FUNDS_ACCOUNT" --batch=true
 ```

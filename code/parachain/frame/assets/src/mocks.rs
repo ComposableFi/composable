@@ -48,7 +48,6 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 1,
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 2,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 3,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
 		Assets: crate::{Pallet, Call, Storage} = 5,
 	}
@@ -93,7 +92,6 @@ impl Config for Test {
 	type GenerateCurrencyId = CurrencyIdGenerator;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
@@ -128,12 +126,6 @@ impl orml_tokens::Config for Test {
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 	type CurrencyHooks = CurrencyHooks;
-}
-
-impl governance_registry::Config for Test {
-	type AssetId = AssetId;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {

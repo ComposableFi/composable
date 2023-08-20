@@ -404,12 +404,11 @@ mod set_signer {
 
 		#[test]
 		fn root_can_be_controller_and_set_signer(
-			caller_account in account_id(),
+			_caller_account in account_id(),
 			signer_account in account_id(),
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
-
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), root_account, signer_account));
 				prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account), Some(root_account));

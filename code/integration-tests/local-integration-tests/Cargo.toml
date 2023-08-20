@@ -67,7 +67,6 @@ common = { path = "../../parachain/runtime/common", default-features = false }
 composable-tests-helpers = { path = "../../parachain/frame/composable-tests-helpers", default-features = false }
 composable-traits = { path = "../../parachain/frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../parachain/frame/currency-factory", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../../parachain/frame/governance-registry", default-features = false, optional = true }
 liquidations = { package = "pallet-liquidations", path = "../../parachain/frame/liquidations", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../parachain/frame/oracle", default-features = false }
 primitives = { path = "../../parachain/runtime/primitives", default-features = false }
@@ -234,4 +233,4 @@ runtime-benchmarks = [
   #"statemine-runtime/runtime-benchmarks",
 ]
 
-develop = ["assets", "assets-registry", "governance-registry"]
+develop = ["assets", "assets-registry",]

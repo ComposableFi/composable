@@ -37,7 +37,6 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
-governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 orml-tokens = { workspace = true }
 pallet-balances = { workspace = true }
 proptest = "1.0"

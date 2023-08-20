@@ -1,5 +1,5 @@
 use crate::*;
-use mocks::{new_test_ext, GovernanceRegistry, RuntimeOrigin, Test};
+use mocks::{new_test_ext, RuntimeOrigin, Test};
 use orml_traits::MultiCurrency;
 
 const FROM_ACCOUNT: u64 = 1;
@@ -7,19 +7,6 @@ const TO_ACCOUNT: u64 = 2;
 const ASSET_ID: u64 = 1;
 const INIT_AMOUNT: u64 = 1000;
 const TRANSFER_AMOUNT: u64 = 500;
-
-#[test]
-fn set_only_by_root() {
-	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), 1, 1).unwrap();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::root(), &2).unwrap();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::signed(1), &2).unwrap_err();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::signed(2), &1).unwrap_err();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::signed(1), &1).unwrap();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::none(), &1).unwrap_err();
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::none(), &2).unwrap_err();
-	});
-}
 
 #[test]
 fn test_transfer() {
@@ -148,30 +135,8 @@ fn test_mint_initialize() {
 }
 
 #[test]
-fn test_mint_initialize_with_governance() {
-	new_test_ext().execute_with(|| {
-		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
-		Pallet::<Test>::mint_initialize_with_governance(
-			RuntimeOrigin::root(),
-			TRANSFER_AMOUNT,
-			TO_ACCOUNT,
-			TO_ACCOUNT,
-		)
-		.expect("mint_initialize_with_governance should work");
-		assert_eq!(
-			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
-			INIT_AMOUNT + TRANSFER_AMOUNT
-		);
-		ensure_admin_or_governance::<Test>(RuntimeOrigin::signed(TO_ACCOUNT), &ASSET_ID).expect(
-			"mint_initialize_with_governance should add governance_origin to GovernanceRegistry",
-		);
-	});
-}
-
-#[test]
 fn test_mint_into() {
 	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), ASSET_ID, FROM_ACCOUNT).unwrap();
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 
@@ -193,7 +158,6 @@ fn test_mint_into() {
 #[test]
 fn test_burn_from() {
 	new_test_ext().execute_with(|| {
-		GovernanceRegistry::set(RuntimeOrigin::root(), ASSET_ID, FROM_ACCOUNT).unwrap();
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 

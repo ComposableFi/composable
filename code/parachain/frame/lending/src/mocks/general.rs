@@ -4,7 +4,6 @@ use crate::{self as pallet_lending, *};
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
-	governance::{GovernanceRegistry, SignedRawOrigin},
 	oracle::Price,
 };
 
@@ -17,7 +16,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use once_cell::sync::Lazy;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use orml_traits::parameter_type_with_key;
 use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
@@ -225,25 +224,6 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = *ALICE;
 }
 
-pub struct NoopRegistry;
-
-impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
-	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<CurrencyId>
-	GetByKey<
-		CurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for NoopRegistry
-{
-	fn get(
-		_k: &CurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 impl pallet_assets::Config for Runtime {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = LpTokenFactory;
@@ -253,7 +233,6 @@ impl pallet_assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = NoopRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 

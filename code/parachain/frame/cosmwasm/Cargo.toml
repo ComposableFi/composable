@@ -81,7 +81,6 @@ composable-traits = { path = "../composable-traits", default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 common = { path = "../../runtime/common", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 lazy_static = { version = "1.4.0", default-features = false, features = [
   "spin_no_std",
 ] }

@@ -10,7 +10,7 @@
 		// clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
@@ -95,8 +95,6 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 use frame_system as system;
-#[cfg(feature = "testnet")]
-use frame_system::EnsureSigned;
 pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -273,7 +271,6 @@ impl assets_transactor_router::Config for Runtime {
 	type ForeignTransactor = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
 	type AssetLocation = primitives::currency::ForeignAssetId;
 	type AssetsRegistry = AssetsRegistry;
 }
@@ -287,7 +284,6 @@ impl assets::Config for Runtime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
@@ -842,7 +838,6 @@ construct_runtime!(
 
 		Tokens: orml_tokens = 52,
 		CurrencyFactory: currency_factory = 53,
-		GovernanceRegistry: governance_registry = 54,
 		CrowdloanRewards: crowdloan_rewards = 55,
 		Vesting: vesting = 56,
 		BondedFinance: bonded_finance = 57,
