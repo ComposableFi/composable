@@ -14,7 +14,7 @@ on:
 
 jobs:
   pr-workflow-check:
-    if: ${{ ( github.event_name != 'pull_request' ) || ( ( github.event_name == 'pull_request' ) && !contains('#WIP', github.event.pull_request.title) && !contains('#wip', github.event.pull_request.title) && !contains(github.event.pull_request.labels.*.name, 'wip') ) }} 
+    if: ${{ ( ( github.event_name != 'pull_request' ) || ( ( github.event_name == 'pull_request' ) && !contains('#WIP', github.event.pull_request.title) && !contains('#wip', github.event.pull_request.title) && !contains(github.event.pull_request.labels.*.name, 'wip') ) ) && ( github.event.pull_request.draft != true || contains(github.event.pull_request.labels.*.name, 'check') || contains('#check', github.event.pull_request.title) || contains('#check', github.event.pull_request.title) )  }}
     
     uses: ./.github/workflows/pr-workflow.yml
     with:
