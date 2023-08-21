@@ -5,10 +5,8 @@ pub use config::*;
 pub use query::*;
 
 use crate::{
-	prelude::*,
-	service::dex::{ExchangeId, ExchangeItem},
-	transport::ibc::XcMessageData,
-	AssetId, CallOrigin, Funds, InterpreterOrigin, NetworkId,
+	prelude::*, transport::ibc::XcMessageData, AssetId, CallOrigin, Funds, InterpreterOrigin,
+	NetworkId,
 };
 
 /// Prefix used for all events attached to gateway responses.
@@ -174,8 +172,8 @@ impl Gateway {
 	pub fn get_exchange_by_id(
 		&self,
 		querier: cosmwasm_std::QuerierWrapper,
-		exchange_id: ExchangeId,
-	) -> cosmwasm_std::StdResult<ExchangeItem> {
+		exchange_id: crate::service::dex::ExchangeId,
+	) -> cosmwasm_std::StdResult<crate::service::dex::ExchangeItem> {
 		let query = QueryMsg::GetExchangeById { exchange_id };
 		self.do_query::<GetExchangeResponse>(querier, query)
 			.map(|response| response.exchange)
