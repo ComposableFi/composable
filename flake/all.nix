@@ -36,6 +36,7 @@
 
       all-misc = pkgs.linkFarmFromDrvs "all-misc" (with self'.packages; [
         cargo-fmt-check
+        cargo-clippy-check
         nixfmt-check
         deadnix-check
         taplo-check
