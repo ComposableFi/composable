@@ -149,7 +149,7 @@ pub fn handle_execute_step(
 			Instruction::Spawn { network, salt, assets, program } =>
 				interpret_spawn(&mut deps, &env, network, salt, assets, program),
 			Instruction::Exchange { give, id, want } =>
-				interpret_execute(&mut deps, give, want, id, env.contract.address.clone()),
+				interpret_exchange(&mut deps, give, want, id, env.contract.address.clone()),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -177,7 +177,7 @@ pub fn handle_execute_step(
 	})
 }
 
-fn interpret_execute(
+fn interpret_exchange(
 	deps: &mut DepsMut,
 	give: Funds,
 	want: Funds,
