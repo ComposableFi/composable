@@ -1,11 +1,12 @@
 pub mod config;
+mod query;
 
 pub use config::*;
-
-use crate::prelude::*;
+pub use query::*;
 
 use crate::{
-	transport::ibc::XcMessageData, AssetId, CallOrigin, Funds, InterpreterOrigin, NetworkId,
+	prelude::*, transport::ibc::XcMessageData, AssetId, CallOrigin, Funds, InterpreterOrigin,
+	NetworkId,
 };
 
 /// Prefix used for all events attached to gateway responses.
@@ -95,36 +96,6 @@ pub struct BridgeForwardMsg {
 	pub msg: ExecuteProgramMsg,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema, QueryResponses))]
-pub enum QueryMsg {
-	/// Returns [`AssetReference`] for an asset with given id.
-	#[cfg_attr(feature = "std", returns(GetAssetResponse))]
-	GetAssetById { asset_id: AssetId },
-
-	/// Returns [`AssetItem`] for an asset with given local reference.
-	#[cfg_attr(feature = "std", returns(GetAssetResponse))]
-	GetLocalAssetByReference { reference: AssetReference },
-
-	#[cfg_attr(feature = "std", returns(GetIbcIcs20RouteResponse))]
-	GetIbcIcs20Route { to_network: NetworkId, for_asset: AssetId },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct GetIbcIcs20RouteResponse {
-	pub route: crate::transport::ibc::IbcIcs20Route,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct GetAssetResponse {
-	pub asset: AssetItem,
-}
-
 /// Wrapper for interfacing with a gateway contract.
 ///
 /// Provides convenience methods for querying the gateway and sending execute
@@ -196,6 +167,16 @@ impl Gateway {
 	) -> cosmwasm_std::StdResult<AssetItem> {
 		let query = QueryMsg::GetAssetById { asset_id };
 		self.do_query::<GetAssetResponse>(querier, query).map(|response| response.asset)
+	}
+
+	pub fn get_exchange_by_id(
+		&self,
+		querier: cosmwasm_std::QuerierWrapper,
+		exchange_id: crate::service::dex::ExchangeId,
+	) -> cosmwasm_std::StdResult<crate::service::dex::ExchangeItem> {
+		let query = QueryMsg::GetExchangeById { exchange_id };
+		self.do_query::<GetExchangeResponse>(querier, query)
+			.map(|response| response.exchange)
 	}
 
 	/// Queries the gateway for definition of an asset with given local

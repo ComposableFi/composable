@@ -3,6 +3,7 @@ use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 
 use crate::{
 	prelude::*,
+	service::dex::ExchangeItem,
 	transport::ibc::{ChannelInfo, IbcIcs20Sender},
 	AssetId, NetworkId,
 };
@@ -183,6 +184,8 @@ pub enum ConfigSubMsg {
 		other_network: NetworkId,
 		other_asset: AssetId,
 	},
+
+	ForceExchange(ExchangeItem),
 
 	/// Message sent by an admin to remove an asset from registry.
 	ForceRemoveAsset {

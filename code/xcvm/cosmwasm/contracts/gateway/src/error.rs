@@ -25,6 +25,8 @@ pub enum ContractError {
 	FailedToSerialize,
 	#[error("Asset not been found in the registry.")]
 	AssetNotFound,
+	#[error("Exchange not been found in the registry.")]
+	ExchangeNotFound,
 	#[error("The contract must be initialized first.")]
 	NotInitialized,
 	#[error("An overflow occurred.")]

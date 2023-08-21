@@ -32,6 +32,7 @@ ibc-proto = { workspace = true, default-features = false, features = [
 serde-cw-value = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false, optional = true }
 
+
 [build-dependencies]
 prost-build = { workspace = true }
 
