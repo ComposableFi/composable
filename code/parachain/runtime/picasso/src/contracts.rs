@@ -20,7 +20,6 @@ use super::*;
 parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
 	pub const ChainId: &'static str = "composable-network-picasso";
-	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
 	pub const MaxContractLabelSize: u32 = 64;
 	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
 	pub const MaxInstantiateSaltSize: u32 = 128;
@@ -41,7 +40,7 @@ impl cosmwasm::Config for Runtime {
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxCodeSize = ConstU32<{ 1024 * 1024 }>;
-	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxInstrumentedCodeSize = ConstU32<{ 2 * 1024 * 1024 }>;
 	type MaxMessageSize = ConstU32<{ 64 * 1024 }>;
 	type AccountToAddr = common::cosmwasm::CosmwasmToSubstrateAccount;
 	type AssetToDenom = common::cosmwasm::CosmwasmToSubstrateAssetId;
