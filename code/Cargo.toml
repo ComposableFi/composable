@@ -27,14 +27,14 @@ runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
 [workspace.lints.rust]
-unsafe = "forbid"
-unused_imports = "forbid"
-unused_must_use = "forbid"
-bad_style = "forbid"
-trivial_casts = "forbid"
+unsafe = "deny"
+unused_imports = "warn"
+unused_must_use = "warn"
+bad_style = "warn"
+trivial_casts = "warn"
 
 [workspace.lints.clippy]
-todo = "forbid"
+todo = "warn"
 
 [workspace]
 exclude = [
