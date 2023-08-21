@@ -241,201 +241,167 @@
             NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
 
-            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
-            INTERPRETER_CODE_ID=$(cat "$CHAIN_DATA/interpreter_code_id")
-
-            FORCE_NETWORK_OSMOSIS=$(cat << EOF
+            CENTAURI_INTERPRETER_CODE_ID=$(cat "$HOME/.centaurid/interpreter_code_id")        
+            OSMOSIS_INTERPRETER_CODE_ID=$(cat "$CHAIN_DATA/interpreter_code_id")
+            
+            FORCE_CONFIG=$(cat << EOF
               {
                 "config": {
-                    "force_network": {
-                      "network_id": $NETWORK_ID,
-                      "accounts": {
+                  "force": [
+                    {
+                      "force_network": {
+                        "network_id": $NETWORK_ID,
+                        "accounts": {
                           "bech": "osmo"
-                      },
-                      "gateway": {
+                        },
+                        "gateway": {
                           "cosm_wasm": {
-                            "contract": "$GATEWAY_CONTRACT_ADDRESS",
-                            "interpreter_code_id": $INTERPRETER_CODE_ID,
+                            "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
+                            "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
                             "admin": "$KEY"
                           }
-                      },
-                      "ibc": {
+                        },
+                        "ibc": {
                           "channels": {
                             "ics20": {
-                                "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
-                                "features": {
-                                  "pfm": {},
-                                  "wasm_hooks": {
-                                      "callback": true
-                                  }
+                              "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                              "features": {
+                                "pfm": {},
+                                "wasm_hooks": {
+                                  "callback": true
                                 }
+                              }
                             }
                           }
+                        }
                       }
-                    }
-                }
-              }                                   
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_NETWORK_CENTAURI=$(cat << EOF
-              {
-                "config": {
-                    "force_network": {
-                      "network_id": 2,
-                      "accounts": {
+                    },
+                    {
+                      "force_network": {
+                        "network_id": 2,
+                        "accounts": {
                           "bech": "centauri"
-                      },
-                      "gateway": {
+                        },
+                        "gateway": {
                           "cosm_wasm": {
                             "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
-                            "interpreter_code_id": $INTERPRETER_CODE_ID,
+                            "interpreter_code_id": $CENTAURI_INTERPRETER_CODE_ID,
                             "admin": "$KEY"
                           }
-                      },
-                      "ibc": {
+                        },
+                        "ibc": {
                           "channels": {
                             "ics20": {
-                                "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
-                                "features": {
-                                  "pfm": {},
-                                  "wasm_hooks": {
-                                      "callback": true
-                                  }
+                              "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                              "features": {
+                                "pfm": {},
+                                "wasm_hooks": {
+                                  "callback": true
                                 }
+                              }
                             }
                           }
-                      }
-                    }
-                }
-              }                                   
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
-
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_CENTAURI_TO_OSMOSIS=$(cat << EOF
-              {
-                "config": {
-                    "force_network_to_network": {
-                      "from": 2,
-                      "to": 3,
-                      "other": {
-                          "counterparty_timeout": {
-                            "seconds" : 120
-                          },
-                          "ics_20": {
-                            "source" : "channel-0", 
-                            "sink" : "channel-0" 
-                          }
-                                                  
-                      }
-                    }
-                }
-              }                                 
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_OSMOSIS_TO_CENTAURI=$(cat << EOF
-              {
-                "config": {
-                    "force_network_to_network": {
-                      "from": 3,
-                      "to": 2,
-                      "other": {
-                          "counterparty_timeout": {
-                            "seconds" : 120
-                          },
-                          "ics_20": {
-                            "source" : "channel-0", 
-                            "sink" : "channel-0" 
-                          }
-                                                  
-                      }
-                    }
-                }
-              }                                 
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_OSMOSIS_TO_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_PICA=$(cat << EOF
-            {
-              "config": {
-                "force_asset": {
-                  "asset_id": "237684487542793012780631851009",
-                  "network_id": 3,
-                  "local": {
-                    "native": {
-                      "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
-                    }
-                  },
-                  "bridged": {
-                    "location_on_network": {
-                      "ibc_ics20": {
-                        "base_denom" : "ppica",
-                        "trace_path" : "transfer/channel-0"
-                      }
-                    }
-                  }
-                }
-              }
-            }                               
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_OSMO_DIRECT_ON_CENTAURI=$(cat << EOF
-              {
-                "config": {
-                    "force_asset": {
-                      "asset_id": "158456325028528675187087901673",
-                      "network_id": 2,
-                      "local": {
-                        "native": {
-                          "denom" : "transfer/channel-0/uosmo"
                         }
                       }
-                    }
-                }
-              }                                 
-            EOF
-            )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_OSMO_DIRECT_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-
-            sleep "$BLOCK_SECONDS"
-            FORCE_OSMO_ON_OSMOSIS=$(cat << EOF
-              {
-                "config": {
-                    "force_asset": {
-                      "asset_id": "237684487542793012780631852009",
-                      "network_id": 3,
-                      "local": {
-                        "native": {
-                          "denom" : "uosmo"
+                    },
+                    {
+                      "force_network_to_network": {
+                        "from": 2,
+                        "to": 3,
+                        "other": {
+                          "counterparty_timeout": {
+                            "seconds": 120
+                          },
+                          "ics_20": {
+                            "source": "channel-0",
+                            "sink": "channel-0"
+                          }
                         }
                       }
+                    },
+                    {
+                      "force_network_to_network": {
+                        "from": 3,
+                        "to": 2,
+                        "other": {
+                            "counterparty_timeout": {
+                              "seconds" : 120
+                            },
+                            "ics_20": {
+                              "source" : "channel-0", 
+                              "sink" : "channel-0" 
+                            }
+                                                    
+                        }
+                      }
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "237684487542793012780631851009",
+                        "network_id": 3,
+                        "local": {
+                          "native": {
+                            "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom" : "ppica",
+                              "trace_path" : "transfer/channel-0"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "158456325028528675187087901673",
+                        "network_id": 2,
+                        "local": {
+                          "native": {
+                            "denom" : "transfer/channel-0/uosmo"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "237684487542793012780631852009",
+                        "network_id": 3,
+                        "local": {
+                          "native": {
+                            "denom" : "uosmo"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "force_exchange" : {
+                        "exchange" : {
+                          "osmosis_cross_chain_swap" : [
+                                {
+                                  "pool_id" : 1,
+                                  "token_out_denom" : "osmo"
+                                }
+                          ]
+                        },
+                        "exchange_id" : "237684489387467420151587012609",
+                        "network_id" : 3
+                      }
                     }
+                  ]
                 }
               }                                 
             EOF
             )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_OSMO_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
 
 
             sleep "$BLOCK_SECONDS"
-            "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+            "$BINARY" query wasm contract-state all "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
           '';
         };
 

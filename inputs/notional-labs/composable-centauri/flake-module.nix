@@ -363,7 +363,7 @@
         '';
       };
 
-      xc-transfer-pica-from-centauri-to-osmosis = pkgs.writeShellApplication {
+      xc-swap-pica-to-osmos = pkgs.writeShellApplication {
         name = "centaurid-execute-program";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
@@ -377,76 +377,127 @@
           BINARY=centaurid
           GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
-          TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
-          {
+          SWAP_PICA_TO_OSMOSIS=$(cat << EOF
+            {
               "execute_program": {
-                  "execute_program": {
-                      "salt": "737061776e5f776974685f6173736574",
-                      "program": {
-                          "tag": "737061776e5f776974685f6173736574",
-                          "instructions": [
+                "execute_program": {
+                  "salt": "737061776e5f776974685f6173736574",
+                  "program": {
+                    "tag": "737061776e5f776974685f6173736574",
+                    "instructions": [
+                      {
+                        "spawn": {
+                          "network": 3,
+                          "salt": "737061776e5f776974685f6173736574",
+                          "assets": [
+                            [
+                              "237684487542793012780631851009",
                               {
-                                  "spawn": {
-                                      "network": 3,
-                                      "salt": "737061776e5f776974685f6173736574",
-                                      "assets": [
-                                          [
-                                              "158456325028528675187087900673",
-                                              {
-                                                  "amount": {
-                                                      "intercept": "1234567890",
-                                                      "slope": "0"
-                                                  },
-                                                  "is_unit": false
-                                              }
-                                          ]
-                                      ],
-                                      "program": {
-                                          "tag": "737061776e5f776974685f6173736574",
-                                          "instructions": [
-                                              {
-                                                  "transfer": {
-                                                      "to": {
-                                                          "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
-                                                      },
-                                                      "assets": [
-                                                          [
-                                                              "237684487542793012780631851009",
-                                                              {
-                                                                  "amount": {
-
-                                                                      "intercept": "123456789",
-                                                                      "slope": "0"
-                                                                  },
-                                                                  "is_unit": false
-                                                              }
-                                                          ]
-                                                      ]
-                                                  }
-                                              }
-                                          ]
-                                      }
-                                  }
+                                "amount": {
+                                  "intercept": "1000000000",
+                                  "slope": "0"
+                                },
+                                "is_unit": false
                               }
-                          ]
-                      },
-                      "assets": [
-                          [
-                              "158456325028528675187087900673",
-                              "1234567890"
-                          ]
-                      ]
+                            ]
+                          ],
+                          "program": {
+                            "tag": "737061776e5f776974685f6173736574",
+                            "instructions": [
+                              {
+                                "exchange": {
+                                  "id": "237684489387467420151587012609",
+                                  "give": [
+                                    [
+                                      "237684487542793012780631851009",
+                                      {
+                                        "amount": {
+                                          "intercept": "1000000000",
+                                          "slope": "0"
+                                        },
+                                        "is_unit": false
+                                      }
+                                    ]
+                                  ],
+                                  "want": [
+                                    [
+                                      "237684487542793012780631851010",
+                                      {
+                                        "amount": {
+                                          "intercept": "1000",
+                                          "slope": "0"
+                                        },
+                                        "is_unit": false
+                                      }
+                                    ]
+                                  ]
+                                }
+                              },
+                              {
+                                "spawn": {
+                                  "network": 2,
+                                  "salt": "737061776e5f776974685f6173736574",
+                                  "assets": [
+                                    [
+                                      "158456325028528675187087900674",
+                                      {
+                                        "amount": {
+                                          "intercept": "0",
+                                          "slope": "1000000000000000000"
+                                        },
+                                        "is_unit": false
+                                      }
+                                    ]
+                                  ],
+                                  "program": {
+                                    "tag": "737061776e5f776974685f6173736574",
+                                    "instructions": [
+                                      {
+                                        "transfer": {
+                                          "to": {
+                                            "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+                                          },
+                                          "assets": [
+                                            [
+                                              "158456325028528675187087900674",
+                                              {
+                                                "amount": {
+                                                  "intercept": "0",
+                                                  "slope": "1000000000000000000"
+                                                },
+                                                "is_unit": false
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
                   },
-                  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+                  "assets": [
+                    [
+                      "158456325028528675187087900673",
+                      "1000000000"
+                    ]
+                  ]
+                },
+                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
               }
-          }                             
+            }
           EOF
           )                  
 
           # check route
           "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
 
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           sleep "$BLOCK_SECONDS"
         '';
       };
@@ -540,7 +591,7 @@
     in {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
-          ics10-grandpa-cw-proposal xc-transfer-pica-from-centauri-to-osmosis
+          ics10-grandpa-cw-proposal xc-swap-pica-to-osmos
           centaurid-xcvm-init centaurid-xcvm-config;
 
         centauri-exec = pkgs.writeShellApplication {

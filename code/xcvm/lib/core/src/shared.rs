@@ -1,10 +1,13 @@
-use crate::{prelude::*, AssetId};
+use crate::{prelude::*, AssetId, };
 use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub type Salt = Vec<u8>;
 pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
-pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, crate::Funds>;
+// like XcFunds, but allow relative(percentages) amounts. Similar to assets filters in XCM
+pub type XcBalanceFilter = crate::asset::Balance;
+pub type XcFundsFilter = crate::Funds<XcBalanceFilter>;
+pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
 pub type XcPacket = crate::Packet<XcProgram>;
 pub type XcProgram = crate::Program<VecDeque<XcInstruction>>;
 
@@ -100,7 +103,7 @@ impl scale_info::TypeInfo for XcAddr {
 /// `Display` and `FromStr` traits.
 ///
 /// ```
-/// # use xc_core::Displayed;
+/// # use xc_core::shared::Displayed;
 ///
 /// #[derive(serde::Serialize, serde::Deserialize)]
 /// struct Foo {

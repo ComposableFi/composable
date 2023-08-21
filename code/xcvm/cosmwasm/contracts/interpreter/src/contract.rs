@@ -9,7 +9,7 @@ use alloc::borrow::Cow;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
-	Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
+	Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery, ensure_eq,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -140,7 +140,7 @@ pub fn handle_execute_step(
 	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
-		deps.api.debug(&format!("xcvm::interpreter:: executing {:?}", &instruction));
+		deps.api.debug(&format!("xcvm::interpreter::execute:: {:?}", &instruction));
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, &tip, to, assets),
@@ -191,12 +191,12 @@ fn interpret_execute(
 	use xc_core::service::dex::{
 		osmosis_std::types::osmosis::poolmanager::v1beta1::MsgSwapExactAmountIn, ExchangeType::*,
 	};
-	assert_eq!(
+	ensure_eq!(
 		give.0.len(),
 		1,
 		"because default osmosis API for 1, can should handle multiple later"
 	);
-	assert_eq!(
+	ensure_eq!(
 		want.0.len(),
 		1,
 		"because default osmosis API for 1, can should handle multiple later"
@@ -224,6 +224,7 @@ fn interpret_execute(
 				value: Binary::from(msg.encode_to_vec()),
 			};
 			let msg = SubMsg::reply_on_error(msg, EXCHANGE_ID);
+			deps.api.debug(&format!("xcvm::interpreter::execute::exchange {:?}", &msg));
 			Response::default().add_submessage(msg)
 		},
 	};
@@ -401,7 +402,7 @@ pub fn interpret_transfer(
 	assets: Funds<Balance>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-	deps.api.debug(&format!("xcvm::interpreter:: transfer to {:?}", &to));
+	deps.api.debug(&format!("xcvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
 		Destination::Tip => tip.into(),
@@ -492,6 +493,7 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	deps.api.debug(&format!("xcvm::interpreter::exchange {:?}", &msg));
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
 	Ok(Response::default())
