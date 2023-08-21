@@ -26,6 +26,16 @@ picasso = []
 runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
+[workspace.lints.rust]
+unsafe = "forbid"
+unused_imports = "forbid"
+unused_must_use = "forbid"
+bad_style = "forbid"
+trivial_casts = "forbid"
+
+[workspace.lints.clippy]
+todo = "forbid"
+
 [workspace]
 exclude = [
   "utils/submetrics",
