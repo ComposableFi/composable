@@ -8,7 +8,7 @@ locals {
     "needs-benchmarks" = "bot: Runs benchmarks on target hardware"
     "stale-item"       = "bot: Stale PRs and issues handling"
     "stale-branch"     = "bot: Stale branches handling"
-    "check"            = "Forces CI to run all checks even for draft PRs"
+    "check"            = "run checks for draft PRs"
   }
 }
 
