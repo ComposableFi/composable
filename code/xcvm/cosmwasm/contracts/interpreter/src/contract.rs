@@ -186,7 +186,9 @@ fn interpret_exchange(
 	sender: Addr,
 ) -> Result {
 	let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
-	let exchange = gateway_address.get_exchange_by_id(deps.querier, exchange_id)?;
+	let exchange: xc_core::service::dex::ExchangeItem = gateway_address
+		.get_exchange_by_id(deps.querier, exchange_id)
+		.map_err(ContractError::ExchangeNotFound)?;
 
 	use prost::Message;
 	use xc_core::service::dex::{
@@ -194,12 +196,16 @@ fn interpret_exchange(
 	};
 	ensure_eq!(give.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
 	ensure_eq!(want.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
-	let asset = gateway_address.get_asset_by_id(deps.querier, give.0[0].0)?;
+	let asset = gateway_address
+		.get_asset_by_id(deps.querier, give.0[0].0)
+		.map_err(ContractError::AssetNotFound)?;
 	let give: xc_core::cosmos::Coin = xc_core::cosmos::Coin {
 		denom: asset.denom(),
 		amount: give.0[0].1.amount.intercept.to_string(),
 	};
-	let asset = gateway_address.get_asset_by_id(deps.querier, want.0[0].0)?;
+	let asset = gateway_address
+		.get_asset_by_id(deps.querier, want.0[0].0)
+		.map_err(ContractError::AssetNotFound)?;
 	let want = xc_core::cosmos::Coin {
 		denom: asset.denom(),
 		amount: want.0[0].1.amount.intercept.to_string(),

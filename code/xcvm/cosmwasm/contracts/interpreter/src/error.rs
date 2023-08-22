@@ -68,4 +68,9 @@ pub enum ContractError {
 
 	#[error("Only single asset exchange is supported by pool")]
 	OnlySingleAssetExchangeIsSupportedByPool,
+
+	#[error("Asset not found: {0}")]
+	AssetNotFound(StdError),
+	#[error("Exchange not found: {0}")]
+	ExchangeNotFound(StdError),
 }
