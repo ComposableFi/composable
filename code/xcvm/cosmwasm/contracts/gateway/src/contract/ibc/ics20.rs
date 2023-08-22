@@ -172,10 +172,12 @@ pub(crate) fn ics20_message_hook(
 }
 
 fn ensure_anonymous(program: &XcProgram) -> Result<()> {
+	use xc_core::Instruction::*;
 	for ix in &program.instructions {
 		match ix {
-			xc_core::Instruction::Transfer { .. } => {},
-			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(program)?,
+			Transfer { .. } => {},
+			Exchange { .. } => {},
+			Spawn { program, .. } => ensure_anonymous(program)?,
 			_ => Err(ContractError::AnonymousCallsCanDoOnlyLimitedSetOfActions)?,
 		}
 	}
