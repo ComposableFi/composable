@@ -192,16 +192,8 @@ fn interpret_exchange(
 	use xc_core::service::dex::{
 		osmosis_std::types::osmosis::poolmanager::v1beta1::MsgSwapExactAmountIn, ExchangeType::*,
 	};
-	ensure_eq!(
-		give.0.len(),
-		1,
-		"because default osmosis API for 1, can should handle multiple later"
-	);
-	ensure_eq!(
-		want.0.len(),
-		1,
-		"because default osmosis API for 1, can should handle multiple later"
-	);
+	ensure_eq!(give.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
+	ensure_eq!(want.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
 	let asset = gateway_address.get_asset_by_id(deps.querier, give.0[0].0)?;
 	let give: xc_core::cosmos::Coin = xc_core::cosmos::Coin {
 		denom: asset.denom(),
