@@ -208,7 +208,7 @@ impl Gateway {
 mod tests {
 	use crate::{
 		gateway::{ExecuteMsg, ExecuteProgramMsg},
-		generate_asset_id,
+		generate_asset_id, generate_network_prefixed_id,
 		prelude::*,
 		shared::*,
 		Instruction,
@@ -389,10 +389,7 @@ mod tests {
 										.unwrap()
 										.into(),
 								),
-								assets: crate::Funds(vec![(
-									pica_on_osmosis,
-									1_000_000_000u128.into(),
-								)]),
+								assets: XcFundsFilter::one(pica_on_osmosis, 1_000_000_000u128),
 							}]
 							.into(),
 						},
@@ -403,8 +400,6 @@ mod tests {
 			},
 			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
 		};
-
-		//pica_on_osmosis
 
 		let program = serde_json_wasm::to_string(&program).expect("serde");
 		let expected = serde_json_wasm::to_string(
@@ -453,6 +448,186 @@ mod tests {
 																	}
 																]
 															]
+														}
+													}
+												]
+											}
+										}
+									}
+								]
+							},
+							"assets": [
+								[
+									"158456325028528675187087900673",
+									"1000000000"
+								]
+							]
+						},
+						"tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+					}
+				}
+				"#,
+			)
+			.unwrap(),
+		)
+		.unwrap();
+		assert_eq!(program, expected)
+	}
+
+	#[test]
+	fn spawn_with_asset_swap_and_transfer_back() {
+		let pica_on_centauri = generate_asset_id(2.into(), 0, 1);
+		let pica_on_osmosis = generate_asset_id(3.into(), 0, 1);
+		let osmo_on_osmosis = generate_asset_id(3.into(), 0, 2);
+		let osmo_on_centauri = generate_asset_id(2.into(), 0, 2);
+		let pica_osmo_on_osmosis = generate_network_prefixed_id(3.into(), 100, 1);
+
+		let program = ExecuteMsg::ExecuteProgram {
+			execute_program: ExecuteProgramMsg {
+				salt: b"spawn_with_asset".to_vec(),
+				program: XcProgram {
+					tag: b"spawn_with_asset".to_vec(),
+					instructions: [Instruction::Spawn {
+						network: 3.into(),
+						salt: b"spawn_with_asset".to_vec(),
+						assets: vec![(pica_on_osmosis, 1_000_000_000u128)].into(),
+						program: XcProgram {
+							tag: b"spawn_with_asset".to_vec(),
+							instructions: [
+								XcInstruction::Exchange {
+									id: pica_osmo_on_osmosis.into(),
+									give: XcFundsFilter::one(pica_on_osmosis, 1_000_000_000u128),
+									want: XcFundsFilter::one(osmo_on_osmosis, 1_000u128),
+								},
+								XcInstruction::Spawn {
+									network: 2.into(),
+									salt: b"spawn_with_asset".to_vec(),
+									assets: XcFundsFilter::one(osmo_on_centauri, (100, 100)),
+									program: XcProgram {
+										tag: b"spawn_with_asset".to_vec(),
+										instructions: 
+										[XcInstruction::Transfer {
+											to: crate::Destination::Account(
+												Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=")
+													.unwrap()
+													.into(),
+											),
+											assets: XcFundsFilter::one(osmo_on_centauri, (100, 100)),
+										}].into(),
+									},
+								},
+							]
+							.into(),
+						},
+					}]
+					.into(),
+				},
+				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+			},
+			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+		};
+
+		//pica_on_osmosis
+
+		let program = serde_json_wasm::to_string(&program).expect("serde");
+		let expected = serde_json_wasm::to_string(
+			&serde_json_wasm::from_str::<ExecuteMsg>(
+				r#"
+				{
+					"execute_program": {
+						"execute_program": {
+							"salt": "737061776e5f776974685f6173736574",
+							"program": {
+								"tag": "737061776e5f776974685f6173736574",
+								"instructions": [
+									{
+										"spawn": {
+											"network": 3,
+											"salt": "737061776e5f776974685f6173736574",
+											"assets": [
+												[
+													"237684487542793012780631851009",
+													{
+														"amount": {
+															"intercept": "1000000000",
+															"slope": "0"
+														},
+														"is_unit": false
+													}
+												]
+											],
+											"program": {
+												"tag": "737061776e5f776974685f6173736574",
+												"instructions": [
+													{
+														"exchange": {
+															"id": "237684489387467420151587012609",
+															"give": [
+																[
+																	"237684487542793012780631851009",
+																	{
+																		"amount": {
+																			"intercept": "1000000000",
+																			"slope": "0"
+																		},
+																		"is_unit": false
+																	}
+																]
+															],
+															"want": [
+																[
+																	"237684487542793012780631851010",
+																	{
+																		"amount": {
+																			"intercept": "1000",
+																			"slope": "0"
+																		},
+																		"is_unit": false
+																	}
+																]
+															]
+														}
+													},
+													{
+														"spawn": {
+															"network": 2,
+															"salt": "737061776e5f776974685f6173736574",
+															"assets": [
+																[
+																	"158456325028528675187087900674",
+																	{
+																		"amount": {
+																			"intercept": "0",
+																			"slope": "1000000000000000000"
+																		},
+																		"is_unit": false
+																	}
+																]
+															],
+															"program": {
+																"tag": "737061776e5f776974685f6173736574",
+																"instructions": [
+																	{
+																		"transfer": {
+																			"to": {
+																				"account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+																			},
+																			"assets": [
+																				[
+																					"158456325028528675187087900674",
+																					{
+																						"amount": {
+																							"intercept": "0",
+																							"slope": "1000000000000000000"
+																						},
+																						"is_unit": false
+																					}
+																				]
+																			]
+																		}
+																	}
+																]
+															}
 														}
 													}
 												]

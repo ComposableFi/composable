@@ -45,8 +45,8 @@ message Instruction {
 
 
 message Ratio {
-  Uint128 nominator = 1;
-  Uint128 denominator = 2;
+  uint64 nominator = 1;
+  uint64 denominator = 2;
 }
 
 message Unit {
