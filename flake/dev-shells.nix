@@ -83,7 +83,7 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
-        centaurid = self.inputs.devenv.lib.mkShell {
+        centauri-testnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
           modules = [{

@@ -326,14 +326,13 @@
                         "from": 3,
                         "to": 2,
                         "other": {
-                            "counterparty_timeout": {
-                              "seconds" : 120
-                            },
-                            "ics_20": {
-                              "source" : "channel-0", 
-                              "sink" : "channel-0" 
-                            }
-                                                    
+                          "counterparty_timeout": {
+                            "seconds": 120
+                          },
+                          "ics_20": {
+                            "source": "channel-0",
+                            "sink": "channel-0"
+                          }
                         }
                       }
                     },
@@ -349,8 +348,8 @@
                         "bridged": {
                           "location_on_network": {
                             "ibc_ics20": {
-                              "base_denom" : "ppica",
-                              "trace_path" : "transfer/channel-0"
+                              "base_denom": "ppica",
+                              "trace_path": "transfer/channel-0"
                             }
                           }
                         }
@@ -358,43 +357,98 @@
                     },
                     {
                       "force_asset": {
-                        "asset_id": "158456325028528675187087901673",
+                        "asset_id": "158456325028528675187087900673",
                         "network_id": 2,
                         "local": {
                           "native": {
-                            "denom" : "transfer/channel-0/uosmo"
+                            "denom": "ppica"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom": "1",
+                              "trace_path": "transfer/channel-1"
+                            }
                           }
                         }
                       }
                     },
                     {
                       "force_asset": {
-                        "asset_id": "237684487542793012780631852009",
-                        "network_id": 3,
+                        "asset_id": "158456325028528675187087900674",
+                        "network_id": 2,
                         "local": {
                           "native": {
-                            "denom" : "uosmo"
+                            "denom": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom": "uosmo",
+                              "trace_path": "transfer/channel-0"
+                            }
                           }
                         }
                       }
                     },
                     {
-                      "force_exchange" : {
-                        "exchange" : {
-                          "osmosis_cross_chain_swap" : [
-                                {
-                                  "pool_id" : 1,
-                                  "token_out_denom" : "osmo"
-                                }
+                      "force_asset": {
+                        "asset_id": "237684487542793012780631851010",
+                        "network_id": 3,
+                        "local": {
+                          "native": {
+                            "denom": "uosmo"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "force_exchange": {
+                        "exchange": {
+                          "osmosis_cross_chain_swap": [
+                            {
+                              "pool_id": 1,
+                              "token_out_denom": "uosmo"
+                            }
                           ]
                         },
-                        "exchange_id" : "237684489387467420151587012609",
-                        "network_id" : 3
+                        "exchange_id": "237684489387467420151587012609",
+                        "network_id": 3
+                      }
+                    },
+                    {
+                      "force_asset_to_network_map": {
+                        "this_asset": "158456325028528675187087900673",
+                        "other_network": 3,
+                        "other_asset": "237684487542793012780631851009"
+                      }
+                    },
+                    {
+                      "force_asset_to_network_map": {
+                        "this_asset": "237684487542793012780631851009",
+                        "other_network": 2,
+                        "other_asset": "158456325028528675187087900673"
+                      }
+                    },
+                    {
+                      "force_asset_to_network_map": {
+                        "this_asset": "158456325028528675187087900674",
+                        "other_network": 3,
+                        "other_asset": "237684487542793012780631851010"
+                      }
+                    },
+                    {
+                      "force_asset_to_network_map": {
+                        "this_asset": "237684487542793012780631851010",
+                        "other_network": 2,
+                        "other_asset": "158456325028528675187087900674"
                       }
                     }
                   ]
                 }
-              }                                 
+              }
             EOF
             )
             "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace             

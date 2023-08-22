@@ -142,9 +142,10 @@
           FEE=ppica 
           BINARY=centaurid
 
-          GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
-          INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
+          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
+          CENTAURI_INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
           OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")  
+          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")  
 
           FORCE_NETWORK_OSMOSIS=$(cat << EOF
             {
@@ -157,7 +158,7 @@
                     "gateway": {
                         "cosm_wasm": {
                           "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
-                          "interpreter_code_id": $INTERPRETER_CODE_ID,
+                          "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
                           "admin": "$KEY"
                         }
                     },
@@ -179,7 +180,7 @@
             }                                   
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
 
           sleep $BLOCK_SECONDS
           FORCE_NETWORK_CENTAURI=$(cat << EOF
@@ -192,8 +193,8 @@
                     },
                     "gateway": {
                         "cosm_wasm": {
-                          "contract": "$GATEWAY_CONTRACT_ADDRESS",
-                          "interpreter_code_id": $INTERPRETER_CODE_ID,
+                          "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
+                          "interpreter_code_id": $CENTAURI_INTERPRETER_CODE_ID,
                           "admin": "$KEY"
                         }
                     },
@@ -215,7 +216,7 @@
             }                                   
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_NETWORK_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace    
 
 
           sleep $BLOCK_SECONDS
@@ -239,7 +240,7 @@
             }                                 
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
           sleep $BLOCK_SECONDS
           FORCE_PICA=$(cat << EOF
@@ -266,7 +267,7 @@
           }                               
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
           sleep $BLOCK_SECONDS
@@ -278,13 +279,13 @@
                 "network_id": 2,
                 "local": {
                   "native": {
-                    "denom": "uatom"
+                    "denom": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518"
                   }
                 },
                 "bridged": {
                   "location_on_network": {
                     "ibc_ics20": {
-                      "base_denom" : "uatom",
+                      "base_denom" : "uosmo",
                       "trace_path" : "transfer/channel-0"
                     }
                   }
@@ -294,7 +295,7 @@
           }                               
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_CENTAURI" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
           sleep $BLOCK_SECONDS
@@ -306,7 +307,7 @@
                 "network_id": 3,
                 "local": {
                   "native": {
-                    "denom": "ppica"
+                    "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
                   }
                 },
                 "bridged": {
@@ -322,7 +323,7 @@
           }                               
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_ON_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
 
           sleep $BLOCK_SECONDS
@@ -338,7 +339,7 @@
           }                               
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_FROM_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_PICA_FROM_CENTAURI_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
 
           sleep $BLOCK_SECONDS
           FORCE_UATOM=$(cat << EOF
@@ -357,9 +358,9 @@
             }                                 
           EOF
           )
-          "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_UATOM" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           sleep $BLOCK_SECONDS
-          "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+          "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
         '';
       };
 
@@ -391,10 +392,10 @@
                           "salt": "737061776e5f776974685f6173736574",
                           "assets": [
                             [
-                              "237684487542793012780631851009",
+                              "158456325028528675187087900673",
                               {
                                 "amount": {
-                                  "intercept": "1000000000",
+                                  "intercept": "1234567890",
                                   "slope": "0"
                                 },
                                 "is_unit": false
@@ -412,7 +413,7 @@
                                       "237684487542793012780631851009",
                                       {
                                         "amount": {
-                                          "intercept": "1000000000",
+                                          "intercept": "123456789",
                                           "slope": "0"
                                         },
                                         "is_unit": false
@@ -439,7 +440,7 @@
                                   "salt": "737061776e5f776974685f6173736574",
                                   "assets": [
                                     [
-                                      "158456325028528675187087900674",
+                                      "237684487542793012780631851010",
                                       {
                                         "amount": {
                                           "intercept": "0",
@@ -484,7 +485,7 @@
                   "assets": [
                     [
                       "158456325028528675187087900673",
-                      "1000000000"
+                      "1234567890"
                     ]
                   ]
                 },
@@ -623,7 +624,7 @@
             PORT=26657
             FEE=ppica 
             BINARY=centaurid
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --memo '{ "wasm" : { "contract" : "osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8" } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
       };
