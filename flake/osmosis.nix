@@ -311,7 +311,7 @@
                         "to": 3,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 120
+                            "seconds": 240
                           },
                           "ics_20": {
                             "source": "channel-0",
@@ -326,7 +326,7 @@
                         "to": 2,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 120
+                            "seconds": 240
                           },
                           "ics_20": {
                             "source": "channel-0",
@@ -532,7 +532,7 @@
           text = ''
             ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
               (name: value: "export ${name}=${builtins.toString value};") env)}
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 9876543210uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 42100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
 
