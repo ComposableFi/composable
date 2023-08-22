@@ -119,7 +119,7 @@
               ACCOUNT=$(osmosisd keys show --address "$2" --keyring-backend test --home "$CHAIN_DATA" )
               echo "===================================="
               echo "$ACCOUNT"
-              osmosisd add-genesis-account "$ACCOUNT" 100000000000uosmo,100000000000uion,100000000000stake,10000000000000ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B --home "$CHAIN_DATA"
+              osmosisd add-genesis-account "$ACCOUNT" 100000000000000000uosmo,100000000000uion,100000000000stake,10000000000000ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B --home "$CHAIN_DATA"
             }
 
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
@@ -311,7 +311,7 @@
                         "to": 3,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 240
+                            "seconds": 300
                           },
                           "ics_20": {
                             "source": "channel-0",
@@ -326,7 +326,7 @@
                         "to": 2,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 240
+                            "seconds": 300
                           },
                           "ics_20": {
                             "source": "channel-0",

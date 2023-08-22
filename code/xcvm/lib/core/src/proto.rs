@@ -477,7 +477,7 @@ impl TryFrom<Unit> for crate::Balance {
 		Ok(crate::Balance::new(
 			Amount::new(
 				integer.into(),
-				Amount::from((ratio.nominator.into(), ratio.denominator.into())).slope.into(),
+				Amount::from((ratio.nominator, ratio.denominator)).slope.into(),
 			),
 			true,
 		))
@@ -497,8 +497,8 @@ impl From<crate::Balance> for Balance {
 			balance::BalanceType::Unit(Unit {
 				integer: Some(balance.amount.intercept.0.into()),
 				ratio: Some(Ratio {
-					nominator: balance.amount.slope.0.into(),
-					denominator: Amount::MAX_PARTS.into(),
+					nominator: balance.amount.slope.0,
+					denominator: Amount::MAX_PARTS,
 				}),
 			})
 		} else if balance.amount.is_absolute() {
@@ -507,8 +507,8 @@ impl From<crate::Balance> for Balance {
 			})
 		} else {
 			balance::BalanceType::Ratio(Ratio {
-				nominator: balance.amount.slope.0.into(),
-				denominator: Amount::MAX_PARTS.into(),
+				nominator: balance.amount.slope.0,
+				denominator: Amount::MAX_PARTS,
 			})
 		};
 		Balance { balance_type: Some(balance_type) }
