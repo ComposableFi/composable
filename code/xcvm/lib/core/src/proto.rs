@@ -464,7 +464,7 @@ impl TryFrom<Ratio> for Amount {
 	fn try_from(ratio: Ratio) -> core::result::Result<Self, Self::Error> {
 		let nominator = ratio.nominator;
 		let denominator = ratio.denominator;
-		Ok(Amount::from((nominator.into(), denominator.into())))
+		Ok(Amount::from((nominator, denominator)))
 	}
 }
 
