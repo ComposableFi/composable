@@ -359,8 +359,8 @@
         '';
       };
 
-      xc-swap-pica-to-osmos = pkgs.writeShellApplication {
-        name = "centaurid-execute-program";
+      xc-swap-pica-to-osmo = pkgs.writeShellApplication {
+        name = "xc-swap-pica-to-osmo";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
         text = ''
@@ -587,7 +587,7 @@
     in {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
-          ics10-grandpa-cw-proposal xc-swap-pica-to-osmos centaurid-xcvm-init
+          ics10-grandpa-cw-proposal xc-swap-pica-to-osmo centaurid-xcvm-init
           centaurid-xcvm-config;
 
         centauri-exec = pkgs.writeShellApplication {

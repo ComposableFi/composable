@@ -524,6 +524,17 @@
               sleep "$BLOCK_SECONDS"
             '';
           };
+        osmosis-tx = pkgs.writeShellApplication {
+          name = "osmosis-tx";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ osmosisd pkgs.jq ];
+
+          text = ''
+            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
+              (name: value: "export ${name}=${builtins.toString value};") env)}
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 9876543210uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+          '';
+        };
 
       };
     };
