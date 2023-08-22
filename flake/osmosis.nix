@@ -238,7 +238,6 @@
           text = ''
             ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
               (name: value: "export ${name}=${builtins.toString value};") env)}
-            NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
 
             OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
@@ -252,7 +251,7 @@
                   "force": [
                     {
                       "force_network": {
-                        "network_id": $NETWORK_ID,
+                        "network_id": 3,
                         "accounts": {
                           "bech": "osmo"
                         },
