@@ -218,12 +218,12 @@ fn interpret_exchange(
 				token_in: Some(give),
 				token_out_min_amount: want.amount,
 			};
+			deps.api.debug(&format!("xcvm::interpreter::execute::exchange {:?}", &msg));
 			let msg = CosmosMsg::Stargate {
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
 				value: Binary::from(msg.encode_to_vec()),
 			};
 			let msg = SubMsg::reply_on_error(msg, EXCHANGE_ID);
-			deps.api.debug(&format!("xcvm::interpreter::execute::exchange {:?}", &msg));
 			Response::default().add_submessage(msg)
 		},
 	};
