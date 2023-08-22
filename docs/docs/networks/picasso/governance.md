@@ -1,4 +1,4 @@
-# A look into Picasso Governance
+# Governance
 
 As we plan to completely decentralize the governance on the Picasso network, 
 we have designed the decisions affecting the parachain to go through a fair 

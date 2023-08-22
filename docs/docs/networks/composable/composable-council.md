@@ -1,6 +1,6 @@
 # Composable Parachain's Governance
 
-Similar to the [governance of Picasso](../parachains/picasso/governance), Composable’s Polkadot parachain will ultimately become completely decentralized and democratic. This requires a sufficient user base, so in the initial stages of parachain deployment, the Composable Council will aid in governance. 
+Similar to the [governance of Picasso](../picasso/governance), Composable’s Polkadot parachain will ultimately become completely decentralized and democratic. This requires a sufficient user base, so in the initial stages of parachain deployment, the Composable Council will aid in governance. 
 
 :::info
 Governance processes on Composable are carried out similarly to the V1 governance model of the Kusama and Polkadot networks. Governance also involves referenda, ensuring that the majority of our community supports any implemented changes and decisions. This further ensures transparency in alterations to the Composable parachain.
