@@ -591,8 +591,8 @@
     in {
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
-          ics10-grandpa-cw-proposal xc-swap-pica-to-osmos
-          centaurid-xcvm-init centaurid-xcvm-config;
+          ics10-grandpa-cw-proposal xc-swap-pica-to-osmos centaurid-xcvm-init
+          centaurid-xcvm-config;
 
         centauri-exec = pkgs.writeShellApplication {
           name = "centaurid-xcvm-config";

@@ -1,4 +1,4 @@
-use crate::{prelude::*, AssetId, };
+use crate::{prelude::*, AssetId};
 use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 

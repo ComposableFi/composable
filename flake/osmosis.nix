@@ -245,7 +245,7 @@
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
             CENTAURI_INTERPRETER_CODE_ID=$(cat "$HOME/.centaurid/interpreter_code_id")        
             OSMOSIS_INTERPRETER_CODE_ID=$(cat "$CHAIN_DATA/interpreter_code_id")
-            
+
             FORCE_CONFIG=$(cat << EOF
               {
                 "config": {

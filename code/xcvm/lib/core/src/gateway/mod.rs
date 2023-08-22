@@ -505,15 +505,18 @@ mod tests {
 									assets: XcFundsFilter::one(osmo_on_centauri, (100, 100)),
 									program: XcProgram {
 										tag: b"spawn_with_asset".to_vec(),
-										instructions: 
-										[XcInstruction::Transfer {
+										instructions: [XcInstruction::Transfer {
 											to: crate::Destination::Account(
 												Binary::from_base64("AB9vNpqXOevUvR5+JDnlljDbHhw=")
 													.unwrap()
 													.into(),
 											),
-											assets: XcFundsFilter::one(osmo_on_centauri, (100, 100)),
-										}].into(),
+											assets: XcFundsFilter::one(
+												osmo_on_centauri,
+												(100, 100),
+											),
+										}]
+										.into(),
 									},
 								},
 							]

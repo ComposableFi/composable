@@ -8,8 +8,9 @@ use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
-	Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery, ensure_eq,
+	ensure, ensure_eq, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps,
+	DepsMut, Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
+	WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
