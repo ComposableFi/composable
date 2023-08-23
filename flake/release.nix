@@ -266,7 +266,6 @@
           text = ''
             FEE=ppica
             CHAIN_ID=banksy-testnet-3
-            DIR=.centaurid
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
                       
@@ -275,12 +274,12 @@
             fi            
             CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"            
             BLOCK_TIME=6
-            GATEWAY_CONTRACT_ADDRESS=$(cat .secret/$DIR/GATEWAY_CONTRACT_ADDRESS)
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat .secret/.centaurid/GATEWAY_CONTRACT_ADDRESS)
             OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat .secret/.osmosisd/GATEWAY_CONTRACT_ADDRESS)
-            INTERPRETER_CODE_ID=$(cat .secret/$DIR/INTERPRETER_CODE_ID)
+            CENTAURI_INTERPRETER_CODE_ID=$(cat .secret/.centaurid/INTERPRETER_CODE_ID)
             OSMOSIS_INTERPRETER_CODE_ID=$(cat .secret/.osmosisd/INTERPRETER_CODE_ID)
-            ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
-            OSMOSIS_ADDRESS=$(osmosisd keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/.osmosisd --output json | jq -r '.address')
+            CENTAURI_ADMIN_ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/.centaurid --output json | jq -r '.address')
+            OSMOSIS_ADMIN_ADDRESS=$(osmosisd keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/.osmosisd --output json | jq -r '.address')
 
             FORCE=$(cat << EOF
             {
@@ -294,9 +293,9 @@
                       },
                       "gateway": {
                           "cosm_wasm": {
-                            "contract": "$GATEWAY_CONTRACT_ADDRESS",
-                            "interpreter_code_id": $INTERPRETER_CODE_ID,
-                            "admin": "$ADDRESS"
+                            "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
+                            "interpreter_code_id": $CENTAURI_INTERPRETER_CODE_ID,
+                            "admin": "$CENTAURI_ADMIN_ADDRESS"
                           }
                       },
                       "ibc": {
@@ -324,7 +323,7 @@
                           "cosm_wasm": {
                             "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
                             "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
-                            "admin": "$OSMOSIS_ADDRESS"
+                            "admin": "$OSMOSIS_ADMIN_ADDRESS"
                           }
                       },
                       "ibc": {
@@ -469,10 +468,10 @@
             EOF
             )
 
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync
+            "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/.centaurid --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync
             sleep $BLOCK_TIME
 
-            "$BINARY" query wasm contract-state all "$GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/$DIR
+            "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/.centaurid
           '';
         };
 
