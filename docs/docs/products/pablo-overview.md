@@ -11,15 +11,14 @@ and relying solely on a high inflationary reward token.
 
 Pablo is set to provide sustainable yield and strong utility to the Composable ecosystem. 
 As a result, it provides deep liquidity for asset swaps, yields for liquidity providers, 
-and plays a significant role in kick starting the flywheel of DeFI activity on the Picasso chain. 
-For example, Pablo will support future planned protocols such as our isolated lending market - Angular.
+and plays a significant role in kick starting the flywheel of DeFi activity on the Picasso chain. 
 
 Pablo will focus on achieving strong liquidity for Substrate-native assets on our Kusama and Polkadot parachains, and then continue to evolve as future Centauri, establishes new connections. Therefore, Pablo is positioned not only to capture liquidity from the DotSama ecosystem but also to become a cross-chain DEX that can natively tap into liquidity from IBC-enabled blockchains. 
 
 
 Pablo will kickstart the Composable DeFi ecosystem and act as a catalyst for our broader cross-chain vision.
 
-[BalancerFi weighted math]: https://docs.balancer.fi/concepts/math/weighted-math
+[BalancerFi weighted math]: https://docs.balancer.fi/reference/math/weighted-math.html#weighted-math
 
 :::tip
 
@@ -28,5 +27,6 @@ Explore the following user guides for interacting with the [Pablo dApp](https://
 - [How to trade PICA on Pablo](../user-guides/how-to-trade-pica-on-pablo.md)
 - [How to provide liquidity on Pablo](../user-guides/how-to-provide-liquidity.md)
 - [How to LP DOT on Pablo via Centauri](../user-guides/centauri-guide.md)
+- [How to stake your LP tokens on Pablo](../user-guides/how-to-provide-liquidity.md) 
 
 :::

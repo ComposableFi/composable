@@ -48,7 +48,7 @@ Here's an example of how the architecture of Apollo submits the price of an asse
 - Firstly, a price is requested using the request price function (this can be built into pallets using Apollo)
 - The request triggers an offchain worker to go out and query a local price feed. For more 
   information 
-  on off-chain workers see [here} (https://substrate.dev/docs/en/knowledgebase/learn-substrate/off-chain-features)
+  on off-chain workers see [here](https://substrate.dev/docs/en/knowledgebase/learn-substrate/off-chain-features)
 - As the off-chain worker fetches the proper price from the oracle’s price feed, it prepares a transaction and 
   submits it back on-chain
 - On the top of the next block if the threshold is met, 
@@ -59,6 +59,3 @@ Here's an example of how the architecture of Apollo submits the price of an asse
 - Finally, the price and block number that was identified will be stored and available to the entire chain
 
 Apollo is built to fulfill one task - provide an honest and non front-runnable price on-chain.
-
-[Design Documentation](https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/design.md)
-

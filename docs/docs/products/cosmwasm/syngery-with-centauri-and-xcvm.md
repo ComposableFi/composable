@@ -1,4 +1,4 @@
-# Synergy with Centauri & XCVM
+# Synergy with Centauri & CVM
 
 __Connecting Satellite protocols & orchestrating smart contracts across satellites__
 
@@ -18,16 +18,16 @@ to utilize Centauri as a transport layer to communicate and transfer assets betw
 This would lead to an array of protocols existing on multiple chains without any orchestration between them, 
 easing the user's experience.
 
-This is where the [Cross-chain Virtual Machine (XCVM)] comes in. 
-The XCVM will be beneficial for developers 
+This is where the Composable Virtual Machine (CVM) comes in. 
+The CVM will be beneficial for developers 
 who have deployed satellite protocols on multiple chains that are currently incapable of cross-chain communication. 
 It is important to understand the difference here, multi-chain applications are often redeployed 
 or slightly modified codebases that provide the same functionality across different chains and layers. 
 While this may provide users with a familiar experience, it is not really cross-chain, 
 since liquidity itself is fragmented due to the absence of an interoperability standard. 
-With XCVM, applications are natively cross-chain as they can operate cohesively across multiple chains and layers.
+With CVM, applications are natively cross-chain as they can operate cohesively across multiple chains and layers.
 
-In short, the XCVM abstracts complexity from the process of sending instructions to the Routing Layer, 
+In short, the CVM abstracts complexity from the process of sending instructions to the Routing Layer, 
 initiates call-backs into smart contracts, handles circuit failure such as network outages, provides finality, 
 and perhaps most notably, allows for the deployment of natively cross-chain protocols and smart contracts. 
 Throughout this experience, we enable users 
@@ -37,6 +37,4 @@ to call into applications on Solidity based chains through use of our Rust SDK.
 
 Our goal is not to create a new standard for cross-chain communication, 
 which is already the subject of numerous projects. 
-Instead, the XCVM will serve as the orchestration layer for existing bridging protocols.
-
-[Cross-chain Virtual Machine (XCVM)]: https://github.com/ComposableFi/composable/blob/main/code/xcvm/SPEC.md
+Instead, the CVM will serve as the orchestration layer for existing bridging protocols.

@@ -1,8 +1,8 @@
 # Nix
 
-[Install and configure Nix](./nix/install).
+Nix is a requirement to set up and start a local development environment with Composable's code. We recommend using the Zero-to-Nix installer. Refer to our docs for how to [install and configure Nix](./nix/install).
 
-After proper configuration, next and more things are possible:
+After configuration, familiarise yourself with the following commands:
 
 `nix develop` in to enter dev shell (command line, variables, tools, compilers).
 
@@ -11,6 +11,3 @@ After proper configuration, next and more things are possible:
 `nix run "composable#fmt"` format all files.
 
 `nix build "composable#unit-tests"` check unit tests.
-
-
-

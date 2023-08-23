@@ -20,7 +20,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/products/centauri/Dotsama-ibc">
+      <a href="/products/centauri-overview">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-2_zoatit.png" alt="Networks" alt="Centauri" />
@@ -46,7 +46,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/nix/install">
+      <a href="/nix">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-4_wrrwga.png" alt="Networks" alt="Develop" />
@@ -72,7 +72,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/accounts-wallets">
+      <a href="/user-guides">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300392/Frame-6_tscayb.png" alt="Networks" alt="Networks" />

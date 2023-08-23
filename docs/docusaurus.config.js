@@ -81,7 +81,7 @@ const config = {
 						label: 'Composable VM',
 					  },
 					{
-						to: '/nix/install',
+						to: '/nix',
 						position: 'left',
 						label: 'Develop',
 					  },
@@ -91,7 +91,7 @@ const config = {
 						label: 'Ecosystem',
 					  },	
 					{
-						to: '/accounts-wallets',
+						to: '/user-guides',
 						position: 'left',
 						label: 'User Guides',
 					  },				

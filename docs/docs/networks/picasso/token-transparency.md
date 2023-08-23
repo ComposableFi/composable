@@ -1,4 +1,4 @@
-# Picasso Token Transparency Commitment Statement
+# Token Transparency Commitment Statement
 
 Composable Finance (“Composable”) remains committed to transparency at all levels of the Composable ecosystem and our infrastructure offerings. 
 Thus, we provide the community with the following information on the Picasso (PICA) token holdings, actions, and supply.
@@ -108,7 +108,7 @@ Pursuant to [Council motion #19](https://picasso.polkassembly.io/motion/19), the
 
 Are located at the crowdloan pallet: 5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u
 
-A detailed list of the crowdloan contributions and rewards can be found [on our GitHub](https://raw.githubusercontent.com/ComposableFi/composable/main/frontend/apps/picasso/defi/polkadot/constants/pica-rewards-contributions.json).
+A detailed list of the crowdloan contributions and rewards can be found [on our GitHub](https://github.com/ComposableFi/composable/blob/main/docs/docs/networks/picasso/crowdloan-contributors/crowdloan-logs.csv).
 
 #### Token Purchasers' Funds
 

@@ -125,7 +125,6 @@
           items: [
             "products/pablo/swaps-trading",
             "products/pablo/launch-pools",
-            "products/pablo/auctions-bonding",
             "products/pablo/cross-chain-DEX",
           ],
         },
