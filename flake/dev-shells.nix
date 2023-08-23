@@ -95,9 +95,28 @@
               DIR = ".centaurid";
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
-              INTERPRETER =
+              INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
-              GATEWAY =
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+          }];
+        };
+        osmosis-testnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.centaurid ];
+            env = {
+              FEE = "uosmo";
+              NETWORK_ID = 3;
+              CHAIN_ID = "osmo-test-5";
+              DIR = ".osmosisd";
+              BINARY = "osmosisd";
+              NODE = "https://rpc.testnet.osmosis.zone:443";
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
           }];

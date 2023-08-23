@@ -314,7 +314,6 @@
                       }
                     }                    
                   },
-
                   {
                     "force_network": {
                       "network_id": 3,
