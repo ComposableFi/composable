@@ -351,8 +351,8 @@
                             "seconds" : 120
                           },
                           "ics_20": {
-                            "source" : "channel-20", 
-                            "sink" : "channel-124" 
+                            "source" : "channel-11", 
+                            "sink" : "channel-329" 
                           }                                                
                       }
                     }                    
@@ -367,8 +367,8 @@
                             "seconds" : 120
                           },
                           "ics_20": {
-                            "source" : "channel-124", 
-                            "sink" : "channel-20" 
+                            "source" : "channel-329", 
+                            "sink" : "channel-11" 
                           }                                                
                       }
                     }                    
@@ -410,7 +410,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "uatom",
-                            "trace_path" : "transfer/channel-20"
+                            "trace_path" : "transfer/channel-11"
                           }
                         }
                       }                      
@@ -429,7 +429,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "ppica",
-                            "trace_path" : "transfer/channel-124"
+                            "trace_path" : "transfer/channel-329"
                           }
                         }
                       }                      
@@ -448,7 +448,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "uosmo",
-                            "trace_path" : "transfer/channel-20"
+                            "trace_path" : "transfer/channel-11"
                           }
                         }
                       }                      
@@ -468,10 +468,20 @@
             EOF
             )
 
-            "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/.centaurid --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync
+            #"$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/.centaurid --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync
             sleep $BLOCK_TIME
 
-            "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/.centaurid
+            #"$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/.centaurid
+
+            FEE=uosmo
+            CHAIN_ID=osmo-test-5
+            BINARY=osmosisd
+            NODE=https://rpc.testnet.osmosis.zone:443
+
+            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE" --keyring-backend test --home .secret/.osmosisd --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block
+            sleep $BLOCK_TIME
+
+            "$BINARY" query wasm contract-state all "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "$NODE" --output json --home .secret/.osmosisd         
           '';
         };
 

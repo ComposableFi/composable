@@ -106,7 +106,7 @@
           inherit pkgs;
           inputs = self.inputs;
           modules = [{
-            packages = [ self'.packages.centaurid ];
+            packages = [ self'.packages.osmosisd ];
             env = {
               FEE = "uosmo";
               NETWORK_ID = 3;
