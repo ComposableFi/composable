@@ -99,6 +99,7 @@
         ./flake/cargo-tools.nix
         ./flake/check.nix
         ./flake/darwin-configurations.nix
+        ./flake/bash.nix
         ./flake/dev-shells.nix
         ./flake/devnet.nix
         ./flake/docker.nix

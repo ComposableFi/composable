@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
-    , devnetTools, ... }: {
+    , devnetTools, centauri, ... }: {
       packages = let
         nix-config = ''
           --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed'';
@@ -146,6 +146,59 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
           name = "release-testnet-xcvm-osmosis";
+          text = ''
+            if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
+              CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
+            fi
+            FEE=uosmo
+            NETWORK_ID=3
+            CHAIN_ID=osmo-test-5
+            CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
+            NETWORK_ID=''${2-$NETWORK_ID}
+            DIR=.osmosisd
+            BINARY=osmosisd
+            NODE=https://rpc.testnet.osmosis.zone:443
+
+            rm --force --recursive .secret/$DIR 
+            mkdir --parents .secret/$DIR
+            INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            GATEWAY="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
+
+            echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
+
+            ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
+
+            echo "$ADDRESS"
+            GATEWAY=$("$BINARY" tx wasm store "$GATEWAY" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block)
+            echo "$GATEWAY"
+            GATEWAY_CODE_ID=$(echo "$GATEWAY" | jq -r '.logs[0].events[1].attributes[1].value')
+            echo "$GATEWAY_CODE_ID" > .secret/$DIR/GATEWAY_CODE_ID
+
+            INTERPRETER=$("$BINARY" tx wasm store "$INTERPRETER" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1uosmo --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block)
+            echo "$INTERPRETER"
+
+            INTERPRETER_CODE_ID=$(echo "$INTERPRETER" | jq -r '.logs[0].events[1].attributes[1].value')
+            echo "$INTERPRETER_CODE_ID" > .secret/$DIR/INTERPRETER_CODE_ID
+
+            INSTANTIATE=$(cat << EOF
+                {
+                    "admin" : "$ADDRESS", 
+                    "network_id" : $NETWORK_ID
+                }                                 
+            EOF
+            )
+
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-2" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block --admin "$ADDRESS")
+            echo "$INSTANTIATE"
+            GATEWAY_CONTRACT_ADDRESS=$(echo "$INSTANTIATE" | jq -r '.logs[0].events[] | select(.type == "instantiate") | .attributes[0].value')
+            echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
+          '';
+        };
+
+        release-prod-xcvm = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ packages.osmosisd pkgs.jq ];
+          name = "release-prod-xcvm-osmosis";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
