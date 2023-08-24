@@ -732,7 +732,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
-			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(
 				author_stake >=
 					T::MinStake::get().saturating_add(
@@ -990,18 +989,21 @@ pub mod pallet {
 					};
 				};
 				total_weight += one_read;
-				if let Ok((removed_pre_prices_len, pre_prices)) =
-					Self::update_pre_prices(asset_id, &asset_info, block)
-				{
-					total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
-					let pre_prices_len = pre_prices.len();
+				if Self::is_requested(&asset_id) {
+					if let Ok((removed_pre_prices_len, pre_prices)) =
+						Self::update_pre_prices(asset_id, &asset_info, block)
+					{
+						total_weight +=
+							T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
+						let pre_prices_len = pre_prices.len();
 
-					// We can ignore `Error::<T>::MaxHistory` because it can not be
-					// because we control the length of items of `PriceHistory`.
-					// TODO this doesnt include weight inside
-					let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
-					total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
-				};
+						// We can ignore `Error::<T>::MaxHistory` because it can not be
+						// because we control the length of items of `PriceHistory`.
+						// TODO this doesnt include weight inside
+						let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
+						total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
+					};
+				}
 			}
 			total_weight
 		}
