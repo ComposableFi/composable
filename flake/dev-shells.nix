@@ -118,6 +118,20 @@
           }];
         };
 
+        osmosis-mainnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.centaurid ];
+            env = centauri.env.mainnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+          }];
+        };
+
         osmosis-testnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;

@@ -142,10 +142,10 @@
           '';
         };
 
-        release-xcvm-osmosis = pkgs.writeShellApplication {
+        release-testnet-xcvm-osmosis = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
-          name = "release-xcvm-osmosis";
+          name = "release-testnet-xcvm-osmosis";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -195,10 +195,10 @@
           '';
         };
 
-        release-xcvm-centauri = pkgs.writeShellApplication {
+        release-testnet-xcvm-centauri = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
-          name = "release-xcvm-centauri";
+          name = "release-testnet-xcvm-centauri";
           text = ''
             FEE=ppica
             NETWORK_ID=2
@@ -206,7 +206,7 @@
             DIR=.centaurid
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
-                      
+                    
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            
@@ -259,16 +259,210 @@
           '';
         };
 
-        release-xcvm-config = pkgs.writeShellApplication {
+        release-prod-xcvm-config = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
-          name = "release-xcvm-centauri";
+          name = "release-testnet-xcvm-centauri";
+          text = ''
+
+              FORCE=$(cat << EOF
+              {
+                "config": {
+                  "force": [
+                    {
+                      "force_network": {
+                        "network_id": 2,
+                        "accounts": {
+                            "bech": "centauri"
+                        },
+                        "gateway": {
+                            "cosm_wasm": {
+                              "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
+                              "interpreter_code_id": $CENTAURI_INTERPRETER_CODE_ID,
+                              "admin": "$CENTAURI_ADMIN_ADDRESS"
+                            }
+                        },
+                        "ibc": {
+                            "channels": {
+                              "ics20": {
+                                  "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                                  "features": {
+                                    "pfm": {},
+                                    "wasm_hooks": {
+                                        "callback": true
+                                    }
+                                  }
+                              }
+                            }
+                        }
+                      }                    
+                    },
+                    {
+                      "force_network": {
+                        "network_id": 3,
+                        "accounts": {
+                            "bech": "osmo"
+                        },
+                        "gateway": {
+                            "cosm_wasm": {
+                              "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
+                              "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
+                              "admin": "$OSMOSIS_ADMIN_ADDRESS"
+                            }
+                        },
+                        "ibc": {
+                            "channels": {
+                              "ics20": {
+                                  "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                                  "features": {
+                                    "pfm": {},
+                                    "wasm_hooks": {
+                                        "callback": true
+                                    }
+                                  }
+                              }
+                            }
+                        }
+                      }                    
+                    },                
+                    {
+                      "force_network_to_network": {
+                        "from": 2,
+                        "to": 3,
+                        "other": {
+                            "counterparty_timeout": {
+                              "seconds" : 120
+                            },
+                            "ics_20": {
+                              "source" : "channel-11", 
+                              "sink" : "channel-329" 
+                            }                                                
+                        }
+                      }                    
+                    },                
+                    {
+                      "force_network_to_network": {
+                        "from": 3,
+                        "to": 2,
+                        "other": {
+                            "counterparty_timeout": {
+                              "seconds" : 120
+                            },
+                            "ics_20": {
+                              "source" : "channel-329", 
+                              "sink" : "channel-11" 
+                            }                                                
+                        }
+                      }                    
+                    },
+
+                    {
+                      "force_asset": {
+                        "asset_id": "158456325028528675187087900673",
+                        "network_id": 2,
+                        "local": {
+                          "native": {
+                            "denom": "ppica"
+                          }
+                        }
+                      }                    
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "237684487542793012780631851010",
+                        "network_id": 3,
+                        "local": {
+                          "native": {
+                            "denom" : "uatom"
+                          }
+                        }
+                      }
+                    },                  
+                    {
+                      "force_asset": {
+                        "asset_id": "158456325028528675187087900674",
+                        "network_id": 2,
+                        "local": {
+                          "native": {
+                            "denom": "uatom"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom" : "uatom",
+                              "trace_path" : "transfer/channel-11"
+                            }
+                          }
+                        }                      
+                      }                    
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "237684487542793012780631851009",
+                        "network_id": 3,
+                        "local": {
+                          "native": {
+                            "denom": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom" : "ppica",
+                              "trace_path" : "transfer/channel-329"
+                            }
+                          }
+                        }                      
+                      }                    
+                    },
+                    {
+                      "force_asset": {
+                        "asset_id": "158456325028528675187087901673",
+                        "network_id": 2,
+                        "local": {
+                          "native": {
+                            "denom": "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B"
+                          }
+                        },
+                        "bridged": {
+                          "location_on_network": {
+                            "ibc_ics20": {
+                              "base_denom" : "uosmo",
+                              "trace_path" : "transfer/channel-11"
+                            }
+                          }
+                        }                      
+                      }                    
+                    },                      
+                    {
+                      "force_asset_to_network_map": {
+                        "this_asset": "158456325028528675187087900673",
+                        "other_network": 3,
+                        "other_asset": "237684487542793012780631851009"          
+                      }                    
+                    }
+
+                  ]                  
+                }
+              }               
+              EOF
+              )
+
+            echo $FORCE            
+          '';
+        };
+
+        release-testnet-xcvm-config = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
+          name = "release-testnet-xcvm-centauri";
           text = ''
             FEE=ppica
             CHAIN_ID=banksy-testnet-3
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
-                      
+                    
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            
@@ -340,8 +534,7 @@
                           }
                       }
                     }                    
-                  },
-                  
+                  },                
                   {
                     "force_network_to_network": {
                       "from": 2,
@@ -356,8 +549,7 @@
                           }                                                
                       }
                     }                    
-                  },
-                  
+                  },                
                   {
                     "force_network_to_network": {
                       "from": 3,
@@ -396,7 +588,6 @@
                       }
                     }
                   },                  
-
                   {
                     "force_asset": {
                       "asset_id": "158456325028528675187087900674",
