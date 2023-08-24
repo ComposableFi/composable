@@ -286,19 +286,15 @@
             ++ [ packages.centaurid pkgs.jq ];
           name = "release-testnet-xcvm-centauri";
           text = ''
-            FEE=ppica
-            NETWORK_ID=2
-            CHAIN_ID=banksy-testnet-3
-            DIR=.centaurid
-            BINARY=centaurid
-            NODE=https://rpc-t.composable.nodestake.top:443
-                  
+
+            ${bashTools.export centauri.env.testnet}       
+
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            
             CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"            
             NETWORK_ID=''${2-$NETWORK_ID}
-            BLOCK_TIME=6
+
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
 
@@ -317,8 +313,8 @@
 
             sleep $BLOCK_TIME
             echo "$GATEWAY_HASH"
-            GATEWAY_CODE_ID=$("$BINARY" query wasm list-code --home .secret/$DIR --output json --node "$NODE" | jq -r ".code_infos[] | select(.data_hash == \"$GATEWAY_HASH\" and .creator == \"$ADDRESS\" ) | .code_id " | tail --lines 1)
-            echo "$GATEWAY_CODE_ID" > .secret/$DIR/GATEWAY_CODE_ID
+            CENTAURI_GATEWAY_CODE_ID=$("$BINARY" query wasm list-code --home .secret/$DIR --output json --node "$NODE" | jq -r ".code_infos[] | select(.data_hash == \"$GATEWAY_HASH\" and .creator == \"$ADDRESS\" ) | .code_id " | tail --lines 1)
+            echo "$CENTAURI_GATEWAY_CODE_ID" > .secret/$DIR/GATEWAY_CODE_ID
 
 
             INTERPRETER_TX=$("$BINARY" tx wasm store "$INTERPRETER" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync)
@@ -337,10 +333,10 @@
             EOF
             )
 
-            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-3" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-4" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
             echo "$INSTANTIATE"
             sleep $BLOCK_TIME
-            GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code 23 --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
+            GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$CENTAURI_GATEWAY_CODE_ID" --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
             echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
           '';
         };
@@ -420,8 +416,8 @@
                               "seconds" : 120
                             },
                             "ics_20": {
-                              "source" : "channel-11", 
-                              "sink" : "channel-329" 
+                              "source" : "channel-17", 
+                              "sink" : "channel-1408" 
                             }                                                
                         }
                       }                    
@@ -435,8 +431,8 @@
                               "seconds" : 120
                             },
                             "ics_20": {
-                              "source" : "channel-329", 
-                              "sink" : "channel-11" 
+                              "source" : "channel-1408", 
+                              "sink" : "channel-17" 
                             }                                                
                         }
                       }                    
@@ -477,7 +473,7 @@
                           "location_on_network": {
                             "ibc_ics20": {
                               "base_denom" : "uatom",
-                              "trace_path" : "transfer/channel-11"
+                              "trace_path" : "transfer/channel-17"
                             }
                           }
                         }                      
@@ -496,7 +492,7 @@
                           "location_on_network": {
                             "ibc_ics20": {
                               "base_denom" : "ppica",
-                              "trace_path" : "transfer/channel-329"
+                              "trace_path" : "transfer/channel-1408"
                             }
                           }
                         }                      
@@ -515,7 +511,7 @@
                           "location_on_network": {
                             "ibc_ics20": {
                               "base_denom" : "uosmo",
-                              "trace_path" : "transfer/channel-11"
+                              "trace_path" : "transfer/channel-17"
                             }
                           }
                         }                      
@@ -630,8 +626,8 @@
                             "seconds" : 120
                           },
                           "ics_20": {
-                            "source" : "channel-11", 
-                            "sink" : "channel-329" 
+                            "source" : "channel-17", 
+                            "sink" : "channel-1408" 
                           }                                                
                       }
                     }                    
@@ -645,8 +641,8 @@
                             "seconds" : 120
                           },
                           "ics_20": {
-                            "source" : "channel-329", 
-                            "sink" : "channel-11" 
+                            "source" : "channel-1408", 
+                            "sink" : "channel-17" 
                           }                                                
                       }
                     }                    
@@ -687,7 +683,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "uatom",
-                            "trace_path" : "transfer/channel-11"
+                            "trace_path" : "transfer/channel-17"
                           }
                         }
                       }                      
@@ -706,7 +702,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "ppica",
-                            "trace_path" : "transfer/channel-329"
+                            "trace_path" : "transfer/channel-1408"
                           }
                         }
                       }                      
@@ -725,7 +721,7 @@
                         "location_on_network": {
                           "ibc_ics20": {
                             "base_denom" : "uosmo",
-                            "trace_path" : "transfer/channel-11"
+                            "trace_path" : "transfer/channel-17"
                           }
                         }
                       }                      

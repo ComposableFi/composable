@@ -1,6 +1,7 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, devnetTools, cosmosTools, ... }:
+    , systemCommonRust, subnix, devnetTools, cosmosTools, bashTools, centauri
+    , ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
@@ -597,6 +598,15 @@
             DIR = "prod/.centaurid";
             BINARY = "centaurid";
             NODE = "https://rpc.composable.nodestake.top:443";
+            BLOCK_TIME = 7;
+          };
+          testnet = {
+            FEE = "ppica";
+            NETWORK_ID = 2;
+            CHAIN_ID = "banksy-testnet-3";
+            DIR = "testnet/.centaurid";
+            BINARY = "centaurid";
+            NODE = "https://rpc-t.composable.nodestake.top:443";
             BLOCK_TIME = 7;
           };
         };
