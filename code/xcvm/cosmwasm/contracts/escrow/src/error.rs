@@ -24,6 +24,9 @@ pub enum ContractError {
 	#[error("Invalid packet.")]
 	InvalidPacket,
 
+	#[error("Accounts contract not found")]
+	NoAccountsContract,
+
 	#[error("Internal contract error.")]
 	InternalError,
 }

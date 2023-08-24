@@ -1,7 +1,10 @@
-use cosmwasm_std::Storage;
+use cosmwasm_std::{Api, Storage};
 use xc_core::NetworkId;
 
-use crate::error::{ContractError, Result};
+use crate::{
+	error::{ContractError, Result},
+	msg,
+};
 
 const CONFIG_NS: &str = "config";
 pub(crate) const ADMINS_NS: &str = "admins";
@@ -13,11 +16,34 @@ const CONFIG: cw_storage_plus::Item<Config> = cw_storage_plus::Item::new(CONFIG_
 
 /// Configuration of the contract.
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub(crate) struct Config {
 	/// Network id of the chain this contract is running on.
 	pub network_id: NetworkId,
+
+	/// Location of the accounts contract.
+	pub accounts_contract: AccountsContract,
+
 	/// The XCVM gateway contract.
 	pub gateway: xc_core::gateway::Gateway,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum AccountsContract {
+	Local(cosmwasm_std::Addr),
+	Remote(String),
+	None,
+}
+
+impl AccountsContract {
+	pub fn from_msg(api: &dyn Api, ac: msg::AccountsContract) -> Result<Self> {
+		Ok(match ac {
+			msg::AccountsContract::Local(addr) => Self::Local(api.addr_validate(addr.as_str())?),
+			msg::AccountsContract::Remote(channel_id) => Self::Remote(channel_id),
+			msg::AccountsContract::None => Self::None,
+		})
+	}
 }
 
 impl Config {

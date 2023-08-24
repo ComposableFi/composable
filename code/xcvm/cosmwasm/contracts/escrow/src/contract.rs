@@ -28,7 +28,8 @@ pub fn instantiate(
 
 	let network_id = msg.network_id;
 	let gateway = xc_core::gateway::Gateway::addr_validate(deps.api, &msg.gateway_address)?;
-	state::Config { network_id, gateway }.save(deps.storage)?;
+	let accounts_contract = state::AccountsContract::from_msg(deps.api, msg.accounts_contract)?;
+	state::Config { network_id, accounts_contract, gateway }.save(deps.storage)?;
 
 	for admin in msg.admins {
 		auth::Admin::add(deps.storage, deps.api.addr_validate(&admin)?)?;
@@ -53,6 +54,15 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			let auth = auth::User::authorise(deps.storage, &env)?;
 			handle_relay(auth, deps, env, info, req)
 		},
+		msg::ExecuteMsg::SetAccountsContract(ac) => {
+			// TODO(mina86): Eventually this needs to be a governance operation.
+			auth::Admin::authorise(deps.storage, &info)?;
+			let mut cfg = state::Config::load(deps.storage)?;
+			cfg.accounts_contract = state::AccountsContract::from_msg(deps.api, ac)?;
+			cfg.save(deps.storage)?;
+			Ok(Response::default())
+		},
+
 		msg::ExecuteMsg::BreakGlass => {
 			let auth = auth::Admin::authorise(deps.storage, &info)?;
 			auth::handle_break_glass(auth, deps, env, info)
@@ -127,7 +137,7 @@ pub fn ibc_channel_close(
 /// Relays a message to the accounts contract.
 fn handle_relay(
 	_: auth::User,
-	_deps: DepsMut,
+	deps: DepsMut,
 	_env: Env,
 	info: MessageInfo,
 	req: msg::RelayRequest,
@@ -137,8 +147,8 @@ fn handle_relay(
 		account: req.account,
 		request: req.request,
 	};
-	let packet = msg::accounts::Packet::from(packet);
-	Ok(Response::default().add_message(crate::ibc::make_message(&packet)))
+	let msg = ibc::make_accounts_message(deps.storage, packet.into())?;
+	Ok(Response::default().add_message(msg))
 }
 
 #[cosmwasm_std::entry_point]
