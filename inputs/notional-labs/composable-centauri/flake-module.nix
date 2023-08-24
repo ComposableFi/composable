@@ -588,6 +588,19 @@
         '';
       };
     in {
+      _module.args.centauri = rec {
+        env = {
+          mainnet = {
+            FEE = "ppica";
+            NETWORK_ID = 2;
+            CHAIN_ID = "centauri-1";
+            DIR = ".centaurid";
+            BINARY = "centaurid";
+            NODE = "https://rpc.composable.nodestake.top:443";
+          };
+        };
+      };
+
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
           ics10-grandpa-cw-proposal xc-swap-pica-to-osmo centaurid-xcvm-init

@@ -15,6 +15,19 @@
         BINARY = "osmosisd";
       };
     in {
+      _module.args.osmosis = rec {
+        env = {
+          mainnet = {
+            FEE = "uosmo";
+            NETWORK_ID = 3;
+            CHAIN_ID = "osmosis-1";
+            DIR = ".osmosisd";
+            BINARY = "osmosisd";
+            NODE = "https://rpc.osmosis.zone:443";
+          };
+        };
+      };
+
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
           name = "osmosisd";
