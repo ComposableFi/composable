@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, crane, systemCommonRust
-    , devnetTools, centauri, bashTools, ... }: {
+    , devnetTools, centauri, osmosis, bashTools, ... }: {
       packages = let
         nix-config = ''
           --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed'';
@@ -194,10 +194,41 @@
           '';
         };
 
-        release-prod-xcvm = pkgs.writeShellApplication {
+        gov-prod-xcvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
-          name = "release-prod-xcvm-osmosis";
+          name = "gov-prod-xcvm";
+          text = ''
+             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
+               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
+             fi
+             CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
+
+             ${bashTools.export osmosis.env.mainnet}
+
+             rm --force --recursive .secret/$DIR 
+             mkdir --parents .secret/$DIR
+
+            echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
+            ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
+            echo "$ADDRESS" > .secret/$DIR/ADDRESS
+
+             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
+             echo "$GATEWAY_WASM_FILE"
+
+             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
+               --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --source 'nix build composable#xc-cw-contracts' \
+               --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
+               --gas 9000000 --gas-prices 0.025$FEE
+          '';
+        };
+
+        release-prod-xcvm = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ packages.centaurid pkgs.jq ];
+          name = "release-prod-xcvm";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -208,7 +239,6 @@
 
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
-
 
             INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
             GATEWAY="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
@@ -247,7 +277,7 @@
 
             INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-3" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
             echo "$INSTANTIATE"
-
+            sleep $BLOCK_TIME
             GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$CENTAURI_GATEWAY_CODE_ID" --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
             echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
           '';
@@ -264,7 +294,7 @@
             DIR=.centaurid
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
-                    
+                  
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            
@@ -320,7 +350,7 @@
         release-prod-xcvm-config = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
-          name = "release-testnet-xcvm-centauri";
+          name = "release-prod-xcvm-config-centauri";
           text = ''
 
               FORCE=$(cat << EOF
@@ -520,7 +550,7 @@
             CHAIN_ID=banksy-testnet-3
             BINARY=centaurid
             NODE=https://rpc-t.composable.nodestake.top:443
-                    
+                  
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi            

@@ -21,7 +21,7 @@
             FEE = "uosmo";
             NETWORK_ID = 3;
             CHAIN_ID = "osmosis-1";
-            DIR = ".osmosisd";
+            DIR = "prod/.osmosisd";
             BINARY = "osmosisd";
             NODE = "https://rpc.osmosis.zone:443";
           };

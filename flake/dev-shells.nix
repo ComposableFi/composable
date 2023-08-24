@@ -122,8 +122,8 @@
           inherit pkgs;
           inputs = self.inputs;
           modules = [{
-            packages = [ self'.packages.centaurid ];
-            env = centauri.env.mainnet // {
+            packages = [ self'.packages.osmosisd ];
+            env = osmosis.env.mainnet // {
               INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
