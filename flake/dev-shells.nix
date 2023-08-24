@@ -93,7 +93,7 @@
               FEE = "ppica";
               NETWORK_ID = 2;
               CHAIN_ID = "banksy-testnet-3";
-              DIR = ".centaurid";
+              DIR = "testnet/.centaurid";
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
               INTERPRETER_WASM_FILE =
@@ -137,13 +137,7 @@
           inputs = self.inputs;
           modules = [{
             packages = [ self'.packages.osmosisd ];
-            env = {
-              FEE = "uosmo";
-              NETWORK_ID = 3;
-              CHAIN_ID = "osmo-test-5";
-              DIR = ".osmosisd";
-              BINARY = "osmosisd";
-              NODE = "https://rpc.testnet.osmosis.zone:443";
+            env = osmosis.env.testnet // {
               INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =

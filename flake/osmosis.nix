@@ -1,32 +1,39 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , cosmosTools, ... }:
+    , cosmosTools, bashTools, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
-      env = rec {
-        HOME = "/tmp/composable-devnet";
-        CHAIN_DATA = "${HOME}/.osmosisd";
-        KEYRING_TEST = CHAIN_DATA;
-        CHAIN_ID = "osmosis-dev";
-        PORT = 36657;
-        BLOCK_SECONDS = 5;
-        FEE = "uosmo";
-        BINARY = "osmosisd";
-      };
-    in {
-      _module.args.osmosis = rec {
-        env = {
-          mainnet = {
-            FEE = "uosmo";
-            NETWORK_ID = 3;
-            CHAIN_ID = "osmosis-1";
-            DIR = "prod/.osmosisd";
-            BINARY = "osmosisd";
-            NODE = "https://rpc.osmosis.zone:443";
-          };
+      env = {
+        mainnet = {
+          FEE = "uosmo";
+          NETWORK_ID = 3;
+          CHAIN_ID = "osmosis-1";
+          DIR = "prod/.osmosisd";
+          BINARY = "osmosisd";
+          NODE = "https://rpc.osmosis.zone:443";
+        };
+        devnet = rec {
+          HOME = "/tmp/composable-devnet";
+          CHAIN_DATA = "${HOME}/.osmosisd";
+          KEYRING_TEST = CHAIN_DATA;
+          CHAIN_ID = "osmosis-dev";
+          PORT = 36657;
+          BLOCK_SECONDS = 5;
+          FEE = "uosmo";
+          BINARY = "osmosisd";
+        };
+        testnet = {
+          FEE = "uosmo";
+          NETWORK_ID = 3;
+          CHAIN_ID = "osmo-test-5";
+          DIR = "testnet/.osmosisd";
+          BINARY = "osmosisd";
+          NODE = "https://rpc.testnet.osmosis.zone:443";
         };
       };
+    in {
+      _module.args.osmosis = rec { inherit env; };
 
       packages = rec {
         osmosisd = pkgs.writeShellApplication {
@@ -188,8 +195,8 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
-              (name: value: "export ${name}=${builtins.toString value};") env)}
+            ${bashTools.export env.devnet}
+
             NETWORK_ID=3
             KEY=${cosmosTools.xcvm.osmosis}
             BINARY=osmosisd
@@ -234,8 +241,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
-              (name: value: "export ${name}=${builtins.toString value};") env)}
+            ${bashTools.export env.devnet}
 
             "$BINARY" tx gamm create-pool --pool-file=${
               ./osmosis-gamm-pool-pica-osmo.json
@@ -249,8 +255,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
-              (name: value: "export ${name}=${builtins.toString value};") env)}
+            ${bashTools.export env.devnet}
             KEY=${cosmosTools.xcvm.osmosis}
 
             OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
@@ -543,8 +548,7 @@
             ++ [ osmosisd pkgs.jq ];
 
           text = ''
-            ${builtins.foldl' (a: b: "${a}${b}") "" (pkgs.lib.mapAttrsToList
-              (name: value: "export ${name}=${builtins.toString value};") env)}
+            ${bashTools.export env.devnet}
             "$BINARY" tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 42100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };

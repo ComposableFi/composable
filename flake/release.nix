@@ -150,14 +150,9 @@
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
             fi
-            FEE=uosmo
-            NETWORK_ID=3
-            CHAIN_ID=osmo-test-5
             CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
+
             NETWORK_ID=''${2-$NETWORK_ID}
-            DIR=.osmosisd
-            BINARY=osmosisd
-            NODE=https://rpc.testnet.osmosis.zone:443
 
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
