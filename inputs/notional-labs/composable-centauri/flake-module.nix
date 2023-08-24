@@ -594,9 +594,10 @@
             FEE = "ppica";
             NETWORK_ID = 2;
             CHAIN_ID = "centauri-1";
-            DIR = ".centaurid";
+            DIR = "prod/.centaurid";
             BINARY = "centaurid";
             NODE = "https://rpc.composable.nodestake.top:443";
+            BLOCK_TIME = 7;
           };
         };
       };
