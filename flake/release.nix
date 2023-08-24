@@ -214,14 +214,17 @@
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+             INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
              GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
              echo "$GATEWAY_WASM_FILE"
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
-               --source 'nix build composable#xc-cw-contracts' \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/interpreter' \
+               --builder "composablefi/composable:latest-prerelease" \
+               --code-hash "$INTERPRETER_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
-               --gas 9000000 --gas-prices 0.025$FEE
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR
           '';
         };
 
