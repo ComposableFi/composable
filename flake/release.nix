@@ -202,11 +202,12 @@
              fi
              CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
 
-             ${bashTools.export osmosis.env.mainnet}
+             ${bashTools.export osmosis.env.testnet}
 
              rm --force --recursive .secret/$DIR 
              mkdir --parents .secret/$DIR
 
+            DEPOSIT=125000000$FEE
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
@@ -216,6 +217,7 @@
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$INTERPRETER_WASM_CODE_HASH" \
@@ -231,6 +233,7 @@
                --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
+               --deposit="$DEPOSIT" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
                --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |sh
@@ -253,6 +256,7 @@
              rm --force --recursive .secret/$DIR 
              mkdir --parents .secret/$DIR
 
+            DEPOSIT=125000000$FEE
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
@@ -262,6 +266,7 @@
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$INTERPRETER_WASM_CODE_HASH" \
@@ -277,6 +282,7 @@
                --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
+               --deposit="$DEPOSIT" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
                --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |sh
