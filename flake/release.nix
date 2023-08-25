@@ -215,8 +215,8 @@
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
 
-             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
-               --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
+               --description "Upload Composable cross-chain Virtual Machine interpreter contract " --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
@@ -229,7 +229,7 @@
              GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
 
              sleep "$BLOCK_SECONDS" 
-             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Add CW CVM Gateway code" \
+             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine gateway contract" \
                --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
@@ -264,7 +264,7 @@
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
 
-             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
+             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
@@ -278,7 +278,7 @@
              GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
 
              sleep "$BLOCK_SECONDS" 
-             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Add CW CVM Gateway code" \
+             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine gateway contract" \
                --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
