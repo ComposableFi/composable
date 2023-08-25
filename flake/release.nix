@@ -213,8 +213,6 @@
 
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
-             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
-             echo "$GATEWAY_WASM_FILE"
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
@@ -227,16 +225,15 @@
 
              GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
              GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
-             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
-             echo "$GATEWAY_WASM_FILE"
 
+             sleep "$BLOCK_SECONDS" 
              "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Add CW CVM Gateway code" \
                --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
-               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |sh
                tee .secret/$DIR/GATEWAY_PROPOSAL
           '';
         };

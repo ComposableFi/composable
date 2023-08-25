@@ -29,6 +29,7 @@
           CHAIN_ID = "osmo-test-5";
           DIR = "testnet/.osmosisd";
           BINARY = "osmosisd";
+          BLOCK_SECONDS = 6;
           NODE = "https://rpc.testnet.osmosis.zone:443";
         };
       };
