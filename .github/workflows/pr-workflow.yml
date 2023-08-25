@@ -250,7 +250,6 @@ jobs:
     continue-on-error: false
     needs: 
       - privilege-check
-      - lfs-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
@@ -311,7 +310,7 @@ jobs:
         if: ${{ inputs.flow != 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-benchmarks
+          command: nix -- build .#all-rust-qa-packages
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
@@ -356,7 +355,6 @@ jobs:
       ok: ${{ steps.ok.outputs.ok }}        
     needs: 
       - privilege-check
-      - lfs-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB      
     concurrency:

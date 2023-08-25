@@ -55,7 +55,7 @@ pub use crate::ibc::NoRelayer;
 pub mod entrypoint;
 mod mapping;
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
 #[cfg(test)]
@@ -103,7 +103,8 @@ use frame_support::{
 	pallet_prelude::*,
 	storage::child::ChildInfo,
 	traits::{
-		fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+		fungibles::{Inspect as FungiblesInspect, Mutate as FungiblesMutate},
+		tokens::Preservation,
 		Get, ReservableCurrency, UnixTime,
 	},
 	ReversibleStorageHasher, StorageHasher,
@@ -132,7 +133,7 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		traits::{
-			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+			fungibles::{Inspect as FungiblesInspect, Mutate as FungiblesMutate},
 			tokens::{AssetId, Balance},
 			Get, ReservableCurrency, UnixTime,
 		},
@@ -322,11 +323,7 @@ pub mod pallet {
 				AccountIdOf<Self>,
 				Balance = BalanceOf<Self>,
 				AssetId = AssetIdOf<Self>,
-			> + FungiblesTransfer<
-				AccountIdOf<Self>,
-				Balance = BalanceOf<Self>,
-				AssetId = AssetIdOf<Self>,
-			>;
+			> + FungiblesMutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		/// Source of time.
 		type UnixTime: UnixTime;
@@ -350,7 +347,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// A mapping from an original code id to the original code, untouched by instrumentation.
@@ -451,7 +447,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[transactional]
 		// must depend on message too
-		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
+		#[pallet::weight(T::WeightInfo::instantiate(funds.len() as u32).saturating_add(Weight::from_parts(*gas, 0)))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_identifier: CodeIdentifier,
@@ -466,7 +462,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::instantiate(funds.len() as u32)
-				.saturating_add(Weight::from_ref_time(gas))
+				.saturating_add(Weight::from_parts(gas, 0))
 				.ref_time();
 			let outcome = Self::do_instantiate(
 				&mut shared,
@@ -496,7 +492,7 @@ pub mod pallet {
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[pallet::call_index(2)]
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(Weight::from_ref_time(*gas)))]
+		#[pallet::weight(T::WeightInfo::execute(funds.len() as u32).saturating_add(Weight::from_parts(*gas, 0)))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -508,7 +504,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::execute(funds.len() as u32)
-				.saturating_add(Weight::from_ref_time(gas))
+				.saturating_add(Weight::from_parts(gas, 0))
 				.ref_time();
 			let outcome = Self::do_execute(&mut shared, who, contract, funds, message);
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
@@ -529,7 +525,7 @@ pub mod pallet {
 		/// * `message` MigrateMsg, that will be passed to the contract.
 		#[pallet::call_index(3)]
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::migrate().saturating_add(Weight::from_ref_time(*gas)))]
+		#[pallet::weight(T::WeightInfo::migrate().saturating_add(Weight::from_parts(*gas, 0)))]
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -541,7 +537,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas =
-				T::WeightInfo::migrate().saturating_add(Weight::from_ref_time(gas)).ref_time();
+				T::WeightInfo::migrate().saturating_add(Weight::from_parts(gas, 0)).ref_time();
 			let outcome =
 				Self::do_migrate(&mut shared, who, contract, new_code_identifier, message);
 			Self::refund_gas(outcome, initial_gas, shared.gas.remaining())
@@ -559,7 +555,7 @@ pub mod pallet {
 		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[pallet::call_index(4)]
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(Weight::from_ref_time(*gas)))]
+		#[pallet::weight(T::WeightInfo::update_admin().saturating_add(Weight::from_parts(*gas, 0)))]
 		pub fn update_admin(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
@@ -570,7 +566,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let initial_gas = T::WeightInfo::update_admin()
-				.saturating_add(Weight::from_ref_time(gas))
+				.saturating_add(Weight::from_parts(gas, 0))
 				.ref_time();
 			let outcome =
 				Self::do_update_admin(&mut shared, who, contract.clone(), new_admin.clone());
@@ -743,7 +739,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		log::debug!(target: "runtime::contracts", "outcome: {:?}", outcome);
 		let post_info = PostDispatchInfo {
-			actual_weight: Some(Weight::from_ref_time(initial_gas.saturating_sub(remaining_gas))),
+			actual_weight: Some(Weight::from_parts(initial_gas.saturating_sub(remaining_gas), 0)),
 			pays_fee: Pays::Yes,
 		};
 		match outcome {
@@ -1299,13 +1295,12 @@ impl<T: Config> Pallet<T> {
 		from: &AccountIdOf<T>,
 		to: &AccountIdOf<T>,
 		funds: &[Coin],
-		keep_alive: bool,
+		preservation: Preservation,
 	) -> Result<(), Error<T>> {
-		// Move funds to contract.
 		for Coin { denom, amount } in funds {
 			let asset = Self::cosmwasm_asset_to_native_asset(denom.clone())?;
 			let amount = amount.u128().saturated_into();
-			T::Assets::transfer(asset, from, to, amount, keep_alive)
+			T::Assets::transfer(asset, from, to, amount, preservation)
 				.map_err(|_| Error::<T>::TransferFailed)?;
 		}
 		Ok(())

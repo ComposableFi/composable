@@ -2,11 +2,9 @@
 pub mod asset_tx_payment;
 pub mod assets_registry;
 pub mod balances;
-pub mod bonded_finance;
 pub mod collator_selection;
 pub mod collective;
 pub mod crowdloan_rewards;
-pub mod currency_factory;
 pub mod frame_system;
 pub mod identity;
 pub mod indices;

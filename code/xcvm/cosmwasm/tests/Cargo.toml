@@ -11,8 +11,8 @@ edition = "2021"
 default = ["std"]
 std = [
   "cosmwasm-std/std",
-  "cosmwasm-vm/std",
   "cosmwasm-vm-wasmi/std",
+  "cosmwasm-vm/std",
   "cw20/std",
 ]
 

@@ -15,6 +15,7 @@ polkadot-parachain = { workspace = true, default-features = false }
 proxy = { default-features = false, workspace = true }
 sp-arithmetic = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 xcm = { default-features = false, workspace = true }
@@ -58,7 +59,7 @@ version = "3.0.0"
 proptest = { version = "1.0.0" }
 
 [features]
-default = ["std", "centauri"]
+default = ["centauri", "std"]
 std = [
   "codec/std",
   "composable-support/std",

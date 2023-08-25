@@ -1,17 +1,19 @@
 use crate::{self as farming, Config, Error};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Everything},
 	PalletId,
 };
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::FixedI128;
 use sp_core::H256;
 use sp_runtime::{
 	generic::Header as GenericHeader,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	DispatchError,
 };
-
 type Header = GenericHeader<BlockNumber, BlakeTwo256>;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -28,6 +30,10 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, /*Config<T>,*/ Event<T>},
 		Rewards: reward::{Pallet, Call, Storage, Event<T>},
 		Farming: farming::{Pallet, Call, Storage, Event<T>},
+
+		Assets: pallet_assets::{Pallet, Call, Storage},
+		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
+
 	}
 );
 
@@ -43,7 +49,28 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
+parameter_types! {
+	pub const ExistentialDeposit: u64 = 1;
+}
 
+impl pallet_balances::Config for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type FreezeIdentifier = [u8; 8];
+
+	type HoldIdentifier = [u8; 8];
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
+}
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
@@ -95,6 +122,31 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = (); // we don't use named reserves
 }
 
+pub type AssetId = u128;
+parameter_types! {
+	pub const NativeAssetId: AssetId = 1;
+}
+pub struct Valid;
+impl composable_support::validation::Validate<CurrencyId, primitives::currency::ValidateCurrencyId>
+	for Valid
+{
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		Ok(input)
+	}
+}
+
+impl pallet_assets::Config for Test {
+	type RuntimeHoldReason = ();
+	type NativeAssetId = NativeAssetId;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = Balances;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type CurrencyValidator = Valid;
+}
+
 impl reward::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type SignedFixedPoint = SignedFixedPoint;
@@ -117,7 +169,7 @@ impl Config for Test {
 	type RewardPeriod = RewardPeriod;
 	type RewardPools = Rewards;
 	type AssetId = CurrencyId;
-	type MultiCurrency = Tokens;
+	type MultiCurrency = Assets;
 	type WeightInfo = ();
 }
 

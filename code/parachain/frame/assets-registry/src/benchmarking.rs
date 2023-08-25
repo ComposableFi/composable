@@ -30,7 +30,7 @@ benchmarks! {
 	}
 
 	register_asset {
-		let location = T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
+		let location = T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).expect("ok");
 		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -43,7 +43,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, protocol_id, nonce, Some(location), asset_info)
 
 	update_asset {
-		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
+		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).expect("ok");
 		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -76,14 +76,14 @@ benchmarks! {
 	}: _(RawOrigin::Root, local_asset_id, asset_info_update)
 
 	set_min_fee {
-		let target_parachain_id = 100_u32.into();
-		let foreign_asset_id =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
+		let target_parachain_id = 100_u32;
+		let foreign_asset_id =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).expect("ok");
 		let balance = 100_500.into();
 
 	}: _(RawOrigin::Root, target_parachain_id, foreign_asset_id, Some(balance))
 
 	update_asset_location {
-		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).unwrap();
+		let location =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::here())).encode().as_ref()).expect("ok");
 		let protocol_id = *b"benc";
 		let nonce = 1_u64;
 		let asset_info = AssetInfo {
@@ -103,9 +103,9 @@ benchmarks! {
 		)
 		.expect("Asset details are non-duplicate and valid");
 
-		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone())
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location)
 			.expect("Asset exists");
-		let location_new =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(1, X1(Parachain(4321))))).encode().as_ref()).unwrap();
+		let location_new =T::ForeignAssetId::decode(&mut ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(1, X1(Parachain(4321))))).encode().as_ref()).expect("ok");
 	}: _(RawOrigin::Root, local_asset_id, Some(location_new))
 }
 

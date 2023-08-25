@@ -118,7 +118,7 @@
         "type": "github"
       }
     },
-    "centauri-src": {
+    "centauri-old-src": {
       "flake": false,
       "locked": {
         "lastModified": 1692289034,
@@ -132,6 +132,23 @@
         "owner": "ComposableFi",
         "repo": "centauri",
         "rev": "629eb0da075350ae514bacfde70e15a1c93debd7",
+        "type": "github"
+      }
+    },
+    "centauri-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1693602974,
+        "narHash": "sha256-G7GDPqvCj9LH3DGjDwEq2pgVSp2nbD3LTypw0aBLY2Y=",
+        "owner": "ComposableFi",
+        "repo": "centauri",
+        "rev": "f41efb289a4815dc0ebc9727769c382b0a9c550d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ComposableFi",
+        "repo": "centauri",
+        "rev": "f41efb289a4815dc0ebc9727769c382b0a9c550d",
         "type": "github"
       }
     },
@@ -1978,6 +1995,7 @@
         "arion-src": "arion-src",
         "bech32cli": "bech32cli",
         "bundlers": "bundlers",
+        "centauri-old-src": "centauri-old-src",
         "centauri-src": "centauri-src",
         "cosmos": "cosmos",
         "crane": "crane",
@@ -2518,17 +2536,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1684497169,
-        "narHash": "sha256-tmjoViIbRFC3JS8FF2TGzfhMlWiKbG8Nuh3wpdbnpG0=",
+        "lastModified": 1693868442,
+        "narHash": "sha256-2cYja0zBmJThkR3Fzb6uOye2VO1MirW/89bDKVFvxjc=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "zombienet",
-        "rev": "6d0b4cc3cca26e250f160d1979accc7e7318d347",
+        "rev": "a169bff1516c93114253ff6479956eeff66b0e2e",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "zombienet",
-        "rev": "6d0b4cc3cca26e250f160d1979accc7e7318d347",
+        "rev": "a169bff1516c93114253ff6479956eeff66b0e2e",
         "type": "github"
       }
     }

@@ -1,5 +1,4 @@
 #![allow(clippy::disallowed_methods)]
-
 use super::helpers::*;
 use crate::{
 	mock::*, runtimes::abstraction::CosmwasmAccount, weights::WeightInfo, CodeHashToId,
@@ -15,6 +14,8 @@ use sp_runtime::AccountId32;
 #[test]
 fn db_read() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -48,6 +49,8 @@ fn db_read() {
 #[test]
 fn db_write() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -99,6 +102,8 @@ fn db_write() {
 #[test]
 fn db_remove() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -129,6 +134,8 @@ fn db_remove() {
 #[test]
 fn db_scan_next() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -180,6 +187,8 @@ fn db_scan_next() {
 #[test]
 fn addr_canonicalize_humanize_validate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -238,6 +247,8 @@ fn addr_canonicalize_humanize_validate() {
 #[test]
 fn set_contract_meta() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 =
@@ -315,6 +326,8 @@ fn set_contract_meta() {
 #[test]
 fn running_contract_meta() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -369,6 +382,8 @@ fn running_contract_meta() {
 #[test]
 fn query_contract_info() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -404,6 +419,8 @@ fn query_contract_info() {
 #[test]
 fn query_code_info() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -432,6 +449,7 @@ fn query_code_info() {
 #[test]
 fn transfer_balance_supply() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());

@@ -32,7 +32,7 @@
 //! This pallet wraps FRAME's transaction payment pallet and functions as a replacement. This means
 //! you should include both pallets in your `construct_runtime` macro, but only include this
 //! pallet's [`SignedExtension`] ([`ChargeAssetTxPayment`]).
-
+#![feature(associated_type_defaults)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_std::prelude::*;
@@ -42,9 +42,10 @@ use frame_support::{
 	dispatch::{DispatchInfo, DispatchResult, GetDispatchInfo, PostDispatchInfo},
 	pallet_prelude::*,
 	traits::{
+		fungibles::Credit,
 		tokens::{
-			fungibles::{Balanced, CreditOf, Inspect, MutateHold},
-			BalanceConversion, WithdrawConsequence,
+			fungibles::{Balanced, Inspect, MutateHold},
+			ConversionToAssetBalance, WithdrawConsequence,
 		},
 		Get, IsSubType, IsType,
 	},
@@ -72,9 +73,11 @@ pub mod weights;
 pub use payment::*;
 pub use weights::*;
 
-// Default implementation for [`BalanceConversion`].
-pub struct OneToOneBalanceConversion;
-impl<Balance, AssetId> BalanceConversion<Balance, AssetId, Balance> for OneToOneBalanceConversion {
+// Default implementation for [`ConversionToAssetBalance`].
+pub struct OneToOneConversionToAssetBalance;
+impl<Balance, AssetId> ConversionToAssetBalance<Balance, AssetId, Balance>
+	for OneToOneConversionToAssetBalance
+{
 	type Error = DispatchError;
 	fn to_asset_balance(balance: Balance, _asset_id: AssetId) -> Result<Balance, Self::Error> {
 		Ok(balance)
@@ -118,13 +121,15 @@ pub enum InitialPayment<T: Config> {
 	/// The initial fee was payed in the native currency.
 	Native(LiquidityInfoOf<T>),
 	/// The initial fee was payed in an asset.
-	Asset(CreditOf<T::AccountId, T::Fungibles>),
+	Asset(Credit<T::AccountId, T::Fungibles>),
 }
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use frame_support::traits::tokens::Precision;
+
 	use super::*;
 
 	#[pallet::config]
@@ -161,10 +166,15 @@ pub mod pallet {
 			Self::AccountId,
 			AssetId = ChargeAssetIdOf<Self>,
 			Balance = ChargeAssetBalanceOf<Self>,
+			Reason = Self::HoldIdentifier,
 		>;
 
+		type HoldIdentifierValue: Get<Self::HoldIdentifier>;
+		/// The ID type for holds.
+		type HoldIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
+
 		/// To covert ED to other asset amount.
-		type BalanceConverter: BalanceConversion<
+		type BalanceConverter: ConversionToAssetBalance<
 			BalanceOf<Self>,
 			ChargeAssetIdOf<Self>,
 			ChargeAssetBalanceOf<Self>,
@@ -172,7 +182,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Stores default payment asset of user with ED locked.
@@ -207,7 +216,13 @@ pub mod pallet {
 
 			// clean previous configuration
 			if let Some((asset_id, ed)) = <PaymentAssets<T>>::get(&payer) {
-				T::Lock::release(asset_id, &payer, ed, true)?;
+				T::Lock::release(
+					asset_id,
+					&T::HoldIdentifierValue::get(),
+					&payer,
+					ed,
+					Precision::BestEffort,
+				)?;
 				<PaymentAssets<T>>::remove(&payer);
 			}
 
@@ -218,7 +233,7 @@ pub mod pallet {
 					asset_id,
 				)
 				.map_err(|_| DispatchError::Other("Cannot convert ED to asset balance"))?;
-				T::Lock::hold(asset_id, &payer, ed)?;
+				T::Lock::hold(asset_id, &T::HoldIdentifierValue::get(), &payer, ed)?;
 				<PaymentAssets<T>>::insert(payer, (asset_id, ed));
 			}
 
@@ -246,7 +261,7 @@ where
 	AssetBalanceOf<T>: Send + Sync + FixedPointOperand,
 	BalanceOf<T>: Send + Sync + FixedPointOperand + IsType<ChargeAssetBalanceOf<T>>,
 	ChargeAssetIdOf<T>: Send + Sync,
-	CreditOf<T::AccountId, T::Fungibles>: IsType<ChargeAssetLiquidityOf<T>>,
+	Credit<T::AccountId, T::Fungibles>: IsType<ChargeAssetLiquidityOf<T>>,
 {
 	/// Utility constructor. Used only in client/factory code.
 	pub fn from(tip: BalanceOf<T>, asset_id: Option<ChargeAssetIdOf<T>>) -> Self {
@@ -327,7 +342,7 @@ where
 	AssetBalanceOf<T>: Send + Sync + FixedPointOperand,
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand + IsType<ChargeAssetBalanceOf<T>>,
 	ChargeAssetIdOf<T>: Send + Sync,
-	CreditOf<T::AccountId, T::Fungibles>: IsType<ChargeAssetLiquidityOf<T>>,
+	Credit<T::AccountId, T::Fungibles>: IsType<ChargeAssetLiquidityOf<T>>,
 {
 	const IDENTIFIER: &'static str = "ChargeAssetTxPayment";
 	type AccountId = T::AccountId;

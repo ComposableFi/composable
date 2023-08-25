@@ -4,7 +4,6 @@ pub mod assets_registry;
 pub mod balances;
 pub mod collator_selection;
 pub mod collective;
-pub mod currency_factory;
 pub mod frame_system;
 pub mod indices;
 pub mod membership;

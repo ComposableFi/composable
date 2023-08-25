@@ -1,5 +1,5 @@
 use crate::{
-	mock::{AccountId, Extrinsic, RuntimeCall, RuntimeEvent, *},
+	mock::{AccountId, Extrinsic, RuntimeCall, RuntimeEvent, MINIMUM_BALANCE, *},
 	AssetInfo, Error, PrePrice, Withdraw, *,
 };
 use codec::Decode;
@@ -12,14 +12,13 @@ use frame_support::{
 	traits::{Currency as _, Hooks},
 	BoundedVec,
 };
-use pallet_balances::Error as BalancesError;
 use parking_lot::RwLock;
 use sp_core::offchain::{testing, OffchainDbExt, OffchainWorkerExt, TransactionPoolExt};
 use sp_io::TestExternalities;
-use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
+use sp_keystore::KeystoreExt;
 use sp_runtime::{
 	traits::{BadOrigin, Zero},
-	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic,
+	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic, TokenError,
 };
 use std::sync::Arc;
 
@@ -409,6 +408,7 @@ mod set_signer {
 		) {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
+				Balances::make_free_balance_be(&signer_account, MINIMUM_BALANCE);
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), root_account, signer_account));
 				prop_assert_eq!(Oracle::controller_to_signer(root_account), Some(signer_account));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account), Some(root_account));
@@ -430,12 +430,14 @@ mod set_signer {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
+				Balances::make_free_balance_be(&signer_account_1, MINIMUM_BALANCE);
 
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account_1));
 				prop_assert_eq!(Oracle::controller_to_signer(controller_account), Some(signer_account_1));
 				prop_assert_eq!(Oracle::signer_to_controller(signer_account_1), Some(controller_account));
 
 				Balances::make_free_balance_be(&signer_account_1, signer_1_balance);
+				Balances::make_free_balance_be(&signer_account_2, MINIMUM_BALANCE);
 
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), signer_account_1, signer_account_2));
 				prop_assert_eq!(Oracle::controller_to_signer(signer_account_1), Some(signer_account_2));
@@ -459,7 +461,7 @@ mod set_signer {
 				let root_account = get_root_account();
 				prop_assert_noop!(
 					Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account),
-					BalancesError::<Test>::InsufficientBalance
+					TokenError::FundsUnavailable
 				);
 
 				Ok(())
@@ -481,6 +483,7 @@ mod set_signer {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_1_account, controller_1_balance);
+				Balances::make_free_balance_be(&signer_account, MINIMUM_BALANCE);
 				Balances::make_free_balance_be(&controller_2_account, controller_2_balance);
 
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_1_account, signer_account));
@@ -508,6 +511,7 @@ mod set_signer {
 			new_test_ext().execute_with(|| {
 			let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
+				Balances::make_free_balance_be(&signer_1_account, MINIMUM_BALANCE);
 
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_1_account));
 
@@ -592,7 +596,7 @@ mod add_stake {
 			controller_account in account_id(),
 			signer_account in account_id(),
 			controller_balance in (MinStake::get() + 1)..(Balance::MAX/2), // +1 so that the controller lives after setting signer
-			signer_balance in 0..(Balance::MAX/2),
+			signer_balance in MINIMUM_BALANCE..(Balance::MAX/2),
 		) {
 			prop_assume!(controller_account != signer_account);
 
@@ -612,7 +616,7 @@ mod add_stake {
 				// Try to stake the entire controller balance
 				prop_assert_noop!(
 					Oracle::add_stake(RuntimeOrigin::signed(controller_account), new_controller_balance),
-					BalancesError::<Test>::KeepAlive
+					TokenError::NotExpendable
 				);
 
 				Ok(())
@@ -654,6 +658,7 @@ mod reclaim_stake {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
+				Balances::make_free_balance_be(&signer_account, MINIMUM_BALANCE);
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				prop_assert_noop!(
@@ -677,6 +682,7 @@ mod reclaim_stake {
 			new_test_ext().execute_with(|| {
 				let root_account = get_root_account();
 				Balances::make_free_balance_be(&controller_account, controller_balance);
+				Balances::make_free_balance_be(&signer_account, MINIMUM_BALANCE);
 				prop_assert_ok!(Oracle::set_signer(RuntimeOrigin::signed(root_account), controller_account, signer_account));
 
 				System::set_block_number(start_block);
@@ -698,7 +704,7 @@ mod reclaim_stake {
 			controller_account in account_id(),
 			controller_balance in (MinStake::get()+1)..(Balance::MAX/4), // +1 to keep alive
 			signer_account in account_id(),
-			signer_balance in 0..(Balance::MAX/4),
+			signer_balance in MINIMUM_BALANCE..(Balance::MAX/4),
 			stake_to_add in 0..(Balance::MAX/4),
 			start_block in 0..(BlockNumber::MAX / 4),
 			wait_after_unlock in 0..(BlockNumber::MAX / 4),
@@ -776,15 +782,15 @@ fn calculate_reward_per_block() {
 		let account_1_controller = get_account_1();
 		let account_1_signer = get_account_3();
 		Balances::make_free_balance_be(&account_1_controller, 1000);
-		Balances::make_free_balance_be(&account_1_signer, 0);
+		Balances::make_free_balance_be(&account_1_signer, MINIMUM_BALANCE);
 		let account_2_controller = get_account_4();
 		let account_2_signer = get_account_5();
 		Balances::make_free_balance_be(&account_2_controller, 1000);
-		Balances::make_free_balance_be(&account_2_signer, 0);
+		Balances::make_free_balance_be(&account_2_signer, MINIMUM_BALANCE);
 		let account_3_controller = get_account_6();
 		let account_3_signer = get_account_7();
 		Balances::make_free_balance_be(&account_3_controller, 1000);
-		Balances::make_free_balance_be(&account_3_signer, 0);
+		Balances::make_free_balance_be(&account_3_signer, MINIMUM_BALANCE);
 		let treasury_account = get_treasury_account();
 		Balances::make_free_balance_be(&treasury_account, 10000);
 		let rewards_account = Oracle::account_id();
@@ -937,15 +943,15 @@ fn calculate_reward_per_block_min_aswers_eq_3() {
 		let account_1_controller = get_account_1();
 		let account_1_signer = get_account_3();
 		Balances::make_free_balance_be(&account_1_controller, 1000);
-		Balances::make_free_balance_be(&account_1_signer, 0);
+		Balances::make_free_balance_be(&account_1_signer, MINIMUM_BALANCE);
 		let account_2_controller = get_account_4();
 		let account_2_signer = get_account_5();
 		Balances::make_free_balance_be(&account_2_controller, 1000);
-		Balances::make_free_balance_be(&account_2_signer, 0);
+		Balances::make_free_balance_be(&account_2_signer, MINIMUM_BALANCE);
 		let account_3_controller = get_account_6();
 		let account_3_signer = get_account_7();
 		Balances::make_free_balance_be(&account_3_controller, 1000);
-		Balances::make_free_balance_be(&account_3_signer, 0);
+		Balances::make_free_balance_be(&account_3_signer, MINIMUM_BALANCE);
 		let treasury_account = get_treasury_account();
 		Balances::make_free_balance_be(&treasury_account, 10000);
 		let rewards_account = Oracle::account_id();
@@ -1034,21 +1040,6 @@ mod submit_price {
 		#![proptest_config(ProptestConfig::with_cases(10_000))]
 
 		#[test]
-		fn cannot_submit_prices_when_not_requested(
-			account_id in account_id(),
-			asset_id in asset_id(),
-			price_value in price_value(),
-		) {
-			new_test_ext().execute_with(|| {
-				prop_assert_noop!(
-					Oracle::submit_price(RuntimeOrigin::signed(account_id), asset_id, price_value),
-					Error::<Test>::PriceNotRequested
-				);
-				Ok(())
-			})?;
-		}
-
-		#[test]
 		fn cannot_submit_price_when_stake_too_low(
 			submitter_account in account_id(),
 			asset_id in asset_id(),
@@ -1088,6 +1079,7 @@ mod submit_price {
 
 	}
 
+	#[test]
 	fn submit_price_fails_stake_less_than_asset_slash() {
 		new_test_ext().execute_with(|| {
 			let account_1 = get_account_1();
@@ -1187,16 +1179,10 @@ fn add_price() {
 		System::set_block_number(2);
 		Oracle::on_initialize(2);
 
-		// fails price not requested
-		assert_noop!(
-			Oracle::submit_price(RuntimeOrigin::signed(account_1), 100_u128, 0_u128),
-			Error::<Test>::PriceNotRequested
-		);
-
 		// non existent asset_id
 		assert_noop!(
 			Oracle::submit_price(RuntimeOrigin::signed(account_1), 100_u128, 10_u128),
-			Error::<Test>::PriceNotRequested
+			Error::<Test>::InvalidAssetId
 		);
 	});
 }
@@ -1231,6 +1217,7 @@ fn submit_price_fails_stake_less_than_asset_slash() {
 	});
 }
 
+#[test]
 fn halborn_test_price_manipulation() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u128 = 0;
@@ -1400,7 +1387,7 @@ fn test_payout_slash() {
 		// but current_block_reward was distributed on every handle_payout call
 		// here checking for initial value of AccumulatedRewarsPerAsset which is None
 		assert_ok!(Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info));
-		assert_eq!(Balances::free_balance(account_1), 100);
+		assert_eq!(Balances::free_balance(account_1), 101);
 		assert_eq!(Balances::free_balance(Oracle::account_id()), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
@@ -1427,7 +1414,7 @@ fn test_payout_slash() {
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
-		assert_eq!(Balances::free_balance(treasury_account), 100);
+		assert_eq!(Balances::free_balance(treasury_account), 101);
 
 		// reward per block is 100, weight of an asset is 18
 		AccumulatedRewardsPerAsset::<Test>::mutate(0, |balance| *balance = Some(18_u128));
@@ -1445,14 +1432,14 @@ fn test_payout_slash() {
 		// 5 gets 2's reward and its own
 		let reward_tracker = RewardTrackerStore::<Test>::get().unwrap();
 		assert_eq!(reward_tracker.total_already_rewarded, 18);
-		assert_eq!(Balances::free_balance(account_5), 117);
-		assert_eq!(Balances::free_balance(account_2), 99);
+		assert_eq!(Balances::free_balance(account_5), 118);
+		assert_eq!(Balances::free_balance(account_2), 100);
 
-		assert_eq!(Balances::free_balance(account_3), 100);
-		assert_eq!(Balances::free_balance(account_4), 100);
+		assert_eq!(Balances::free_balance(account_3), 101);
+		assert_eq!(Balances::free_balance(account_4), 101);
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
 		// treasury gets 1 from both account1 and account4's stake
-		assert_eq!(Balances::free_balance(treasury_account), 102);
+		assert_eq!(Balances::free_balance(treasury_account), 103);
 		// 18/100 of the reward goes to the oracle accounts as rewards
 		assert_eq!(Balances::free_balance(Oracle::account_id()), 82);
 
@@ -1479,15 +1466,15 @@ fn test_payout_slash() {
 		));
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 99);
+		assert_eq!(Balances::free_balance(account_1), 100);
 		// 5 gets 2's reward and its own
-		assert_eq!(Balances::free_balance(account_5), 135);
-		assert_eq!(Balances::free_balance(account_2), 99);
+		assert_eq!(Balances::free_balance(account_5), 136);
+		assert_eq!(Balances::free_balance(account_2), 100);
 
-		assert_eq!(Balances::free_balance(account_3), 100);
+		assert_eq!(Balances::free_balance(account_3), 101);
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
-		assert_eq!(Balances::free_balance(treasury_account), 102);
-		assert_eq!(Balances::free_balance(account_4), 100);
+		assert_eq!(Balances::free_balance(treasury_account), 103);
+		assert_eq!(Balances::free_balance(account_4), 101);
 		// 36/100 of the reward goes to the oracle accounts as rewards
 		assert_eq!(Balances::free_balance(Oracle::account_id()), 64);
 	});
@@ -1710,10 +1697,10 @@ fn halborn_test_bypass_slashing() {
 		println!("TreasuryAccount Balance: {}", balance_treasury);
 		// account4 (signer) with controller account5 has reported skewed price.
 		// So account5 's stake is slashed and slashed amount is transferred to treasury_account
-		assert_eq!(balance5, 95_u128);
-		assert_eq!(balance_treasury, 105_u128);
-		assert_eq!(Balances::free_balance(account_1), 51);
-		assert_eq!(Balances::free_balance(account_4), 0);
+		assert_eq!(balance5, 95_u128 + MINIMUM_BALANCE);
+		assert_eq!(balance_treasury, 105_u128 + MINIMUM_BALANCE);
+		assert_eq!(Balances::free_balance(account_1), 51 + MINIMUM_BALANCE);
+		assert_eq!(Balances::free_balance(account_4), 0 + MINIMUM_BALANCE);
 	});
 }
 
@@ -1743,11 +1730,12 @@ fn on_init() {
 		let account_1 = get_account_1();
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
-			add_price_storage(price, 0, account_1, 2);
+			add_price_storage(price, 0, account_1, 5);
 		}
 
-		Oracle::on_initialize(2);
-		let price = Price { price: 101, block: 2 };
+		System::set_block_number(6);
+		Oracle::on_initialize(6);
+		let price = Price { price: 101, block: 6 };
 
 		assert_eq!(Oracle::prices(0), price);
 		// prunes state
@@ -1756,11 +1744,12 @@ fn on_init() {
 		// doesn't prune state if under min prices
 		for i in 0..2 {
 			let price = i as u128 + 100_u128;
-			add_price_storage(price, 0, account_1, 3);
+			add_price_storage(price, 0, account_1, 11);
 		}
 
 		// does not fire under min answers
-		Oracle::on_initialize(3);
+		System::set_block_number(12);
+		Oracle::on_initialize(12);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
 		assert_eq!(Oracle::prices(0), price);
 	});
@@ -1786,7 +1775,7 @@ fn update_price() {
 		));
 
 		// Update price for KSM.
-		do_price_update(4, 2);
+		do_price_update(4, 6);
 
 		// `PriceChanged` Event should NOT be emitted.
 		Test::assert_no_event(RuntimeEvent::Oracle(crate::Event::PriceChanged(0, 101)));
@@ -1805,7 +1794,7 @@ fn update_price() {
 		));
 
 		// Update price for PICA.
-		do_price_update(1, 3);
+		do_price_update(1, 7);
 
 		// `PriceChanged` Event should be emitted.
 		System::assert_has_event(RuntimeEvent::Oracle(crate::Event::PriceChanged(1, 101)));
@@ -1814,10 +1803,11 @@ fn update_price() {
 		//				 -----
 		for _ in 0..3 {
 			let price = 100_u128;
-			add_price_storage(price, 1, account_1, 2);
+			add_price_storage(price, 1, account_1, 13);
 		}
 
 		// Process next block
+		System::set_block_number(13);
 		process_and_progress_blocks::<Oracle, Test>(1);
 
 		// `PriceChanged` event for last price (100) should NOT be emitted, as prices didn't
@@ -1837,15 +1827,13 @@ fn historic_pricing() {
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
-			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(4).unwrap(),
 			5,
 			5,
 			false,
 		));
 
 		let mut price_history = vec![];
-
-		do_price_update(0, 0);
 
 		assert_eq!(Oracle::price_history(0).len(), 0);
 		assert_eq!(Oracle::price_history(0), price_history);
@@ -2048,7 +2036,8 @@ fn on_init_prune_scenarios() {
 			add_price_storage(price, 0, account_1, 0);
 		}
 		// all pruned
-		Oracle::on_initialize(3);
+		System::set_block_number(6);
+		Oracle::on_initialize(6);
 		let price = Price { price: 0, block: 0 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
@@ -2060,12 +2049,14 @@ fn on_init_prune_scenarios() {
 
 		for i in 0..3 {
 			let price = i as u128 + 100_u128;
-			add_price_storage(price, 0, account_1, 3);
+			add_price_storage(price, 0, account_1, 5);
 		}
 
 		// more than half pruned
-		Oracle::on_initialize(3);
-		let price = Price { price: 101, block: 3 };
+		System::set_block_number(6);
+		Oracle::on_initialize(6);
+		let price = Price { price: 101, block: 6 };
+		assert_eq!(Oracle::pre_prices(0).len(), 0);
 		assert_eq!(Oracle::prices(0), price);
 
 		for i in 0..5 {
@@ -2075,12 +2066,13 @@ fn on_init_prune_scenarios() {
 
 		for i in 0..2 {
 			let price = i as u128 + 300_u128;
-			add_price_storage(price, 0, account_1, 3);
+			add_price_storage(price, 0, account_1, 11);
 		}
 
 		// more than half pruned not enough for a price call, same as previous
-		Oracle::on_initialize(5);
-		let price = Price { price: 101, block: 3 };
+		System::set_block_number(12);
+		Oracle::on_initialize(12);
+		let price = Price { price: 101, block: 6 };
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
 		assert_eq!(Oracle::prices(0), price);
 	});
@@ -2166,15 +2158,16 @@ fn on_init_over_max_answers() {
 		let account_1 = get_account_1();
 		for i in 0..5 {
 			let price = i as u128 + 100_u128;
-			add_price_storage(price, 0, account_1, 0);
+			add_price_storage(price, 0, account_1, 5);
 		}
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(25));
 
 		// all pruned
-		Oracle::on_initialize(0);
+		System::set_block_number(6);
+		Oracle::on_initialize(6);
 		// price prunes all but last 2 answers, median went from 103
-		let price = Price { price: 103, block: 0 };
+		let price = Price { price: 103, block: 6 };
 		assert_eq!(Oracle::prices(0), price);
 		assert_eq!(Oracle::pre_prices(0).len(), 0);
 
@@ -2386,19 +2379,16 @@ fn offchain_worker_env(
 
 	let (offchain, offchain_state) = testing::TestOffchainExt::new();
 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
-	let keystore = KeyStore::new();
-	let account_id = SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap();
+	let keystore = KeystoreExt::new(sp_keystore::testing::MemoryKeystore::new());
+	let account_id = keystore
+		.sr25519_generate_new(crate::crypto::Public::ID, Some(&format!("{}/hunter1", PHRASE)))
+		.unwrap();
 
 	let mut t = sp_io::TestExternalities::default();
 	t.register_extension(OffchainDbExt::new(offchain.clone()));
 	t.register_extension(OffchainWorkerExt::new(offchain));
 	t.register_extension(TransactionPoolExt::new(pool));
-	t.register_extension(KeystoreExt(Arc::new(keystore)));
+	t.register_extension(keystore);
 
 	state_updater(&mut offchain_state.write());
 

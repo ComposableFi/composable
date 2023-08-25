@@ -1,31 +1,12 @@
 # Assets 
 
-The Asset's pallet provides implementations for common currency traits and functionality for handling transfers and minting.
+Unifies native(runtime base) currency and multi(other minted) tokens under same interface and implements all useful traits to fit into other pallets.  
+
+The `asset` pallet provides implementations for common currency traits and functionality for handling transfers and minting.
 E.g. from [orml](https://docs.rs/orml-traits) or [frame_support](https://github.com/paritytech/substrate/tree/master/frame/support)
 
-## Overview
-
-The Asset's pallet provides functions for:
-- Transferring balances of native and other assets between accounts.
-- Mint and burn assets decided by governance on a per-asset basis.
-- Crediting and debiting of created asset balances.
-- By design, similar to [orml currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
+By design, similar to [orml currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
 and [Substrate assets](https://github.com/paritytech/substrate/tree/master/frame/assets).
-
-### Implementations
-
-The Assets' pallet provides implementations for the following traits:
-- [Currency](https://github.com/paritytech/substrate/blob/master/frame/support/src/traits/tokens/currency.rs):
-Functions for dealing with a fungible asset's system.
-- [ReservableCurrency](https://github.com/paritytech/substrate/blob/master/frame/support/src/traits/tokens/currency/reservable.rs):
-Functions for dealing with assets that an account can reserve.
-- [MultiCurrency](https://docs.rs/orml-traits/latest/orml_traits/currency/trait.MultiCurrency.html):
-Abstraction over a fungible multi-currency system.
-- [MultiLockableCurrency](https://docs.rs/orml-traits/latest/orml_traits/currency/trait.MultiLockableCurrency.html):
-A fungible multi-currency system whose accounts can have liquidity restrictions.
-- [MultiReservableCurrency](https://docs.rs/orml-traits/latest/orml_traits/currency/trait.MultiReservableCurrency.html):
-A fungible multi-currency system where a user can reserve funds.
-- `frame_support::traits::tokens::fungibles::{MutateHold, *}`
 
 
 ### Workflows

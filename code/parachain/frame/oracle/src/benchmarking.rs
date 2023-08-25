@@ -67,6 +67,7 @@ benchmarks! {
 		whitelist!(signer);
 		let stake = T::MinStake::get();
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
+		T::Currency::make_free_balance_be(&signer, T::Currency::minimum_balance());
 	}:{
 		assert_ok!(
 			<Oracle<T>>::set_signer(RawOrigin::Root.into(), caller.clone(), signer.clone())
@@ -81,6 +82,7 @@ benchmarks! {
 		let stake = T::MinStake::get();
 		T::Currency::make_free_balance_be(&caller, stake * 2u32.into());
 		let signer: T::AccountId = account("candidate", 0, SEED);
+		T::Currency::make_free_balance_be(&signer, T::Currency::minimum_balance());
 		ControllerToSigner::<T>::insert(&caller, signer.clone());
 	}: _(RawOrigin::Signed(caller.clone()), stake)
 	verify {
@@ -104,7 +106,8 @@ benchmarks! {
 		whitelist!(signer);
 		let stake = T::MinStake::get();
 		T::Currency::make_free_balance_be(&caller, stake + T::Currency::minimum_balance());
-		<Oracle<T>>::set_signer(RawOrigin::Root.into(), caller.clone(), signer.clone());
+		T::Currency::make_free_balance_be(&signer, T::Currency::minimum_balance());
+		<Oracle<T>>::set_signer(RawOrigin::Root.into(), caller.clone(), signer.clone())?;
 	}:{
 		assert_ok!(
 			<Oracle<T>>::remove_signer(RawOrigin::Root.into(), caller.clone())

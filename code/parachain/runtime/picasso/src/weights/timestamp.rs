@@ -39,8 +39,8 @@ impl<T: frame_system::Config> timestamp::WeightInfo for WeightInfo<T> {
 		//  Measured:  `256`
 		//  Estimated: `1006`
 		// Minimum execution time: 15_970 nanoseconds.
-		Weight::from_ref_time(16_601_000)
-			.saturating_add(Weight::from_proof_size(1006))
+		Weight::from_parts(16_601_000, 0)
+			.saturating_add(Weight::from_parts(0, 1006))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -49,7 +49,7 @@ impl<T: frame_system::Config> timestamp::WeightInfo for WeightInfo<T> {
 		//  Measured:  `128`
 		//  Estimated: `0`
 		// Minimum execution time: 6_335 nanoseconds.
-		Weight::from_ref_time(6_435_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(6_435_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 }

@@ -134,9 +134,10 @@
 
         inherit zombienet-rococo-local-picasso-dev;
 
-        zombienet-westend-local-composable-dev =
-          zombieTools.writeZombienetShellApplication
-          "zombienet-westend-local-composable-dev" (overrideZombienet {
+        zombienet-westend-local-composable-dev = zombieTools.writeZombienet {
+          dir = "/tmp/composable-devnet/composable-westend";
+          name = "zombienet-westend-local-composable-dev";
+          config = (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
               chain = "westend-local";
@@ -153,6 +154,7 @@
               rpc_port = 32240;
             }];
           });
+        };
 
         zombienet-picasso-centauri-a =
           zombieTools.writeZombienetShellApplication
@@ -218,9 +220,10 @@
             chain = "picasso-dev";
           });
 
-        zombienet-composable-centauri-b =
-          zombieTools.writeZombienetShellApplication
-          "zombienet-composable-centauri-b" (overrideZombienet {
+        zombienet-composable-westend-b = zombieTools.writeZombienet {
+          name = "zombienet-composable-westend-b";
+          dir = "/tmp/composable-devnet/composable-westend-b";
+          config = (overrideZombienet {
             ws_port = 29988;
             rpc_port = 32201;
             relay_ws_port = 29944;
@@ -238,6 +241,8 @@
               rpc_port = 32240;
             }];
           });
+        };
+
       };
 
       apps = rec {

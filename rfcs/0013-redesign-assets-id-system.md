@@ -158,62 +158,6 @@ assets.
 To enable this, instead of only passing a multi-location, we switch to an enum 
 of either multi-location or local ID.
 
-## Create Assets Transactor Router (Assets Manager)
-
-Assets Manager will be a migration of the current pallet-assets that we created 
-to route between pallet-balances and orml-tokens. The primary difference being 
-that assets-transactor-router will also need to handle routing between our two instances 
-of orml-tokens as well as pallet-balances.
-
-As stated in the design, we can depend on information provided by Assets 
-Registry to route between our two instances of pallet-assets. 
-
-**Dependency Graph of the New Assets System:**
-
-```mermaid
-classDiagram
-    AssetsTransactorRouter <|-- AssetsRegistry
-    AssetsTransactorRouter <|-- Balances
-    AssetsTransactorRouter <|-- LocalAssetsTransactor
-    AssetsTransactorRouter <|-- ForeignAssetsTransactor
-    AssetsTransactorRouter : frame_support.traits.tokens.fungible.*
-    AssetsTransactorRouter : .. .currency.*
-    AssetsTransactorRouter : .. .fungibles.*
-    AssetsTransactorRouter : orml_traits.currency.MultiCurrency*
-    class AssetsRegistry{
-      composable_traits.assets.AssetTypeInspect
-      .. .AssetRatioInspect
-      .. .MutateMetadata
-      .. .InspectRegistryMetadata
-      composable_traits.xcm.assets.RemoteAssetRegistryMutate
-      .. RemoteAssetRegistryInspect
-    }
-    class Balances{
-      frame_support.traits.tokens.currency.*
-      .. .fungible.*
-    }
-    class LocalAssetsTransactor{
-      orml_traits.currency.MultiCurrency*
-      frame_support.traits.tokens.fungibles.*
-    }
-    class ForeignAssetsTransactor{
-      orml_traits.currency.MultiCurrency*
-      frame_support.traits.tokens.fungibles.*
-    }
-```
-
-**Steps:**
-
-* Rename our `pallet-assets` to `pallet-assets-transactor-router`
-
-* Add routes for both instances to existing functions
-
-* Expose the `metadata::Inspect` and `InspectMetadata` traits from the manager
-
-* Use a call filter to block calls into the individual instances of 
-pallet-assets
-
-* Provide assets-transactor-router as the XCM Asset Transactor
 
 ### Asset ID Creation
 

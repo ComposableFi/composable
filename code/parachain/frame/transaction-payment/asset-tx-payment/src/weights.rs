@@ -53,9 +53,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetTxPayment SetPaymentAsset (r:1 w:1)
 	// Storage: AssetTxPayment Calls (r:1 w:1)
 	fn set_payment_asset() -> Weight {
-		Weight::from_ref_time(51_254_000_u64)
+		Weight::from_parts(51_254_000_u64, 0)
 			// Standard Error: 1_000
-			.saturating_add(Weight::from_ref_time(118_000))
+			.saturating_add(Weight::from_parts(118_000, 0))
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
@@ -66,9 +66,9 @@ impl WeightInfo for () {
 	// Storage: AssetTxPayment SetPaymentAsset (r:1 w:1)
 	// Storage: AssetTxPayment Calls (r:1 w:1)
 	fn set_payment_asset() -> Weight {
-		Weight::from_ref_time(51_254_000_u64)
+		Weight::from_parts(51_254_000_u64, 0)
 			// Standard Error: 1_000
-			.saturating_add(Weight::from_ref_time(118_000))
+			.saturating_add(Weight::from_parts(118_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}

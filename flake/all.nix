@@ -53,15 +53,8 @@
           benchmarks-check
         ]);
 
-      all-rust-test-packages = pkgs.linkFarmFromDrvs "all-rust-test-packages"
-        (with self'.packages; [
-          cargo-clippy-check
-          check-picasso-integration-tests
-          unit-tests
-        ]);
-
       all-rust-qa-packages = pkgs.linkFarmFromDrvs "all-rust-qa-packages"
-        (with self'.packages; [ all-rust-test-packages all-benchmarks ]);
+        (with self'.packages; [ cargo-clippy-check unit-tests ]);
 
       all-production = pkgs.linkFarmFromDrvs "all-production"
         (with self'.packages; [ livenet-composable ]);

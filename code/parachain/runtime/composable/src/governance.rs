@@ -26,6 +26,10 @@ impl membership::Config<NativeCouncilMembership> for Runtime {
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+}
+
 impl collective::Config<NativeCouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
@@ -36,6 +40,8 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeCouncilCollective>;
+
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
@@ -61,6 +67,7 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 parameter_types! {
@@ -162,4 +169,5 @@ impl treasury::Config<NativeTreasury> for Runtime {
 impl sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }

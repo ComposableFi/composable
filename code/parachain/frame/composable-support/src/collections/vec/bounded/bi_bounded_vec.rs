@@ -29,7 +29,7 @@ use sp_std::{
 	serde::Serialize,
 	serde::Deserialize,
 )]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(transparent)]
 pub struct BiBoundedVec<T, const L: usize, const U: usize> {
 	inner: Vec<T>,

@@ -486,6 +486,12 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+
+	type MaxRemoteLockConsumers = ConstU32<32>;
+
+	type RemoteLockConsumerIdentifier = BalanceIdentifier;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

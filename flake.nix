@@ -33,7 +33,7 @@
     devenv.url = "github:cachix/devenv";
     zombienet = {
       url =
-        "github:dzmitry-lahoda-forks/zombienet/6d0b4cc3cca26e250f160d1979accc7e7318d347";
+        "github:dzmitry-lahoda-forks/zombienet/a169bff1516c93114253ff6479956eeff66b0e2e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -55,10 +55,18 @@
         "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    centauri-src = {
+
+    # https://github.com/ComposableFi/centauri/pull/397#issuecomment-1704320448
+    centauri-old-src = {
       flake = false;
       url =
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
+    };
+
+    centauri-src = {
+      flake = false;
+      url =
+        "github:ComposableFi/centauri/f41efb289a4815dc0ebc9727769c382b0a9c550d";
     };
   };
 

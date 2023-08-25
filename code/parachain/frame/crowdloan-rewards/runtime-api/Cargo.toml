@@ -17,7 +17,6 @@ composable-support = { path = "../../composable-support", default-features = fal
 sp-api = { default-features = false, workspace = true }
 
 
-# REVIEW: Does the runtime API need features?
 [features]
 default = ["std"]
-std = ["sp-api/std", "composable-support/std"]
+std = ["composable-support/std", "sp-api/std"]

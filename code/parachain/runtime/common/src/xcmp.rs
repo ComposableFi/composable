@@ -3,12 +3,12 @@ use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
 use frame_support::{
 	dispatch::Weight,
 	log, match_types, parameter_types,
-	traits::{tokens::BalanceConversion, Contains, Get, PalletInfoAccess},
+	traits::{tokens::ConversionToAssetBalance, Contains, Get, PalletInfoAccess},
 	weights::{WeightToFee, WeightToFeePolynomial},
 };
 use num_traits::{One, Zero};
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
-use polkadot_primitives::v2::Id;
+use polkadot_primitives::v4::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
@@ -25,11 +25,11 @@ match_types! {
 }
 
 parameter_types! {
-	pub const BaseXcmWeight: Weight = Weight::from_ref_time(100_000_000);
+	pub const BaseXcmWeight: Weight = Weight::from_parts(100_000_000, 0);
 	pub const XcmMaxAssetsForTransfer: usize = 2;
 	pub RelayNativeLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: cumulus_pallet_xcm::Origin = cumulus_pallet_xcm::Origin::Relay;
-	pub const UnitWeightCost: Weight = Weight::from_ref_time(200_000_000);
+	pub const UnitWeightCost: Weight = Weight::from_parts(200_000_000, 0);
 	pub const MaxInstructions: u32 = 100;
 }
 pub struct ThisChain<T>(PhantomData<T>);
@@ -60,16 +60,19 @@ pub struct TransactionFeePoolTrader<
 
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
+		PriceConverter: ConversionToAssetBalance<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
 {
 	pub fn weight_to_asset(
-		weight: Weight,
+		weight: xcm::latest::Weight,
 		asset_id: CurrencyId,
 	) -> Result<(Balance, Balance), XcmError> {
-		let fee = WeightToFeeConverter::weight_to_fee(&weight);
+		let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_parts(
+			weight.ref_time(),
+			weight.proof_size(),
+		));
 		log::trace!(target : "xcmp::weight_to_asset", "required payment in native token is: {:?}", fee );
 		let price =
 			PriceConverter::to_asset_balance(fee, asset_id).map_err(|_| XcmError::TooExpensive)?;
@@ -80,7 +83,7 @@ impl<
 }
 impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
-		PriceConverter: BalanceConversion<NativeBalance, CurrencyId, Balance>,
+		PriceConverter: ConversionToAssetBalance<NativeBalance, CurrencyId, Balance>,
 		Treasury: TakeRevenue,
 		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
 	> WeightTrader
@@ -96,7 +99,11 @@ impl<
 		}
 	}
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(
+		&mut self,
+		weight: xcm::latest::Weight,
+		payment: Assets,
+	) -> Result<Assets, XcmError> {
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -126,9 +133,12 @@ impl<
 		Err(XcmError::TooExpensive)
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: xcm::latest::Weight) -> Option<MultiAsset> {
 		if let Some(ref asset_location) = self.asset_location {
-			let fee = WeightToFeeConverter::weight_to_fee(&weight);
+			let fee = WeightToFeeConverter::weight_to_fee(&Weight::from_parts(
+				weight.ref_time(),
+				weight.proof_size(),
+			));
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
 			self.price = self.price.saturating_sub(price);
@@ -271,9 +281,12 @@ pub struct RelayReserveFromParachain;
 
 #[allow(deprecated)]
 impl xcm_executor::traits::FilterAssetLocation for RelayReserveFromParachain {
-	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
-			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+	fn contains(asset: &MultiAsset, origin: &xcm::latest::MultiLocation) -> bool {
+		AbsoluteReserveProvider::reserve(asset) == Some(xcm::latest::MultiLocation::parent()) &&
+			matches!(
+				origin,
+				xcm::latest::MultiLocation { parents: 1, interior: X1(Parachain(_)) }
+			)
 	}
 }
 

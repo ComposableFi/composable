@@ -56,18 +56,20 @@ sp-keystore = { workspace = true }
 default = ["std"]
 std = [
   "codec/std",
-  "log/std",
-  "lite-json/std",
-  "frame-support/std",
-  "frame-system/std",
-  "pallet-balances/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "scale-info/std",
+  "composable-support/std",
+  "composable-tests-helpers/std",
   "composable-traits/std",
   "frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
+  "lite-json/std",
+  "log/std",
+  "pallet-balances/std",
+  "scale-info/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
 ]
 
 runtime-benchmarks = [

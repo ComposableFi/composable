@@ -16,7 +16,7 @@
           src = pkgs.fetchgit {
             url = "https://github.com/paritytech/cumulus.git";
             rev = polkadot-parachain-commit;
-            sha256 = "sha256-nFJiHwpL6LsRs3RkcsAhS2f5RVOCXQl+zPgnI2CQxx8=";
+            sha256 = "sha256-nFC1+sEbXm89Vc+Fqz9uzJCfFTqqVGCZP4jR3TqBjDY=";
             fetchSubmodules = false;
           };
           __noChroot = true;

@@ -14,6 +14,7 @@ workspace = true
 
 [features]
 library = []
+std = ["cw-xc-interpreter/std", "xc-core/std"]
 
 [dependencies]
 bech32-no_std = { workspace = true, features = ["strict"] }

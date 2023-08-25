@@ -29,7 +29,7 @@ pub fn genesis_config(
 	let contracts =
 		[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("CW_XC_INTERPRETER_WASM_PATH")]
 			.into_iter()
-			.filter_map(core::convert::identity)
+			.flatten()
 			.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
 				Ok(Ok(data)) => data,
 				Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),

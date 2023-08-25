@@ -39,28 +39,28 @@ pub trait WeightInfo {
 /// Default weights.
 impl WeightInfo for () {
 	fn vested_transfer() -> Weight {
-		Weight::from_ref_time(69_000_000_u64)
+		Weight::from_parts(69_000_000_u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(4_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
 	}
 	fn claim(i: u32, ) -> Weight {
-		Weight::from_ref_time(31_747_000_u64)
+		Weight::from_parts(31_747_000_u64, 0)
 			// Standard Error: 4_000
-			.saturating_add(Weight::from_ref_time(63_000_u64).saturating_mul(i as u64))
+			.saturating_add(Weight::from_parts(63_000_u64, 0).saturating_mul(i as u64))
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 	fn update_vesting_schedules(i: u32, ) -> Weight {
-		Weight::from_ref_time(29_457_000_u64)
+		Weight::from_parts(29_457_000_u64, 0)
 			// Standard Error: 4_000
-			.saturating_add(Weight::from_ref_time(117_000_u64).saturating_mul(i as u64))
+			.saturating_add(Weight::from_parts(117_000_u64, 0).saturating_mul(i as u64))
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(3_u64))
 	}
 
 	fn claim_for(i: u32, ) -> Weight {
-		Weight::from_ref_time(31_747_000_u64)
+		Weight::from_parts(31_747_000_u64, 0)
 			// Standard Error: 4_000
-			.saturating_add(Weight::from_ref_time(63_000_u64).saturating_mul(i as u64))
+			.saturating_add(Weight::from_parts(63_000_u64, 0).saturating_mul(i as u64))
 	}
 }

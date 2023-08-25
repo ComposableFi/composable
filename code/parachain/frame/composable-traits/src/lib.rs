@@ -52,8 +52,6 @@ pub mod defi;
 pub mod dex;
 pub mod fnft;
 pub mod governance;
-pub mod lending;
-pub mod liquidation;
 pub mod oracle;
 pub mod prelude;
 pub mod privilege;

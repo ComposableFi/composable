@@ -39,6 +39,7 @@ fn pallet_contracts_hook_execute() {
 
 		// The first pallet with a contract hook
 		System::set_block_number(0xDEADBEEF);
+		crate::mock::Timestamp::set_timestamp(1);
 		let depth = 10;
 		assert_ok!(Cosmwasm::execute(
 			RuntimeOrigin::signed(MOCK_PALLET_ACCOUNT_ID_1),
@@ -249,6 +250,8 @@ impl ModuleCallbackContext for Test {}
 #[test]
 fn open_channel_ceremony() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut ibc = Router::<Test>::default();
 		let module_id = ModuleId::from_str("cosmwasm").unwrap();
 		let ibc = ibc.get_route_mut(&module_id).unwrap();
@@ -276,6 +279,8 @@ fn open_channel_ceremony() {
 #[test]
 fn ibc_calls_and_callbacks() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut ibc = Router::<Test>::default();
 		let module_id = ModuleId::from_str("cosmwasm").unwrap();
 		let ibc = ibc.get_route_mut(&module_id).unwrap();

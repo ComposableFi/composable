@@ -59,10 +59,14 @@ impl transaction_payment::Config for Runtime {
 pub type AssetsPaymentHeader = asset_tx_payment::ChargeAssetTxPayment<Runtime>;
 pub struct TransferToTreasuryOrDrop;
 impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
-	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
+	fn handle_credit(credit: fungibles::Credit<AccountId, Tokens>) {
 		let _ =
 			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
 	}
+}
+
+parameter_types! {
+	pub AssetConfigHoldIdentifier: TemporalHoldIdentifier = ();
 }
 
 impl asset_tx_payment::Config for Runtime {
@@ -83,4 +87,8 @@ impl asset_tx_payment::Config for Runtime {
 	type Lock = Assets;
 
 	type BalanceConverter = FinalPriceConverter;
+
+	type HoldIdentifierValue = AssetConfigHoldIdentifier;
+
+	type HoldIdentifier = TemporalHoldIdentifier;
 }

@@ -39,8 +39,8 @@ impl<T: frame_system::Config> session::WeightInfo for WeightInfo<T> {
 		//  Measured:  `298`
 		//  Estimated: `5546`
 		// Minimum execution time: 30_340 nanoseconds.
-		Weight::from_ref_time(31_690_000)
-			.saturating_add(Weight::from_proof_size(5546))
+		Weight::from_parts(31_690_000, 0)
+			.saturating_add(Weight::from_parts(0, 5546))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -53,8 +53,8 @@ impl<T: frame_system::Config> session::WeightInfo for WeightInfo<T> {
 		//  Measured:  `280`
 		//  Estimated: `3035`
 		// Minimum execution time: 22_147 nanoseconds.
-		Weight::from_ref_time(22_533_000)
-			.saturating_add(Weight::from_proof_size(3035))
+		Weight::from_parts(22_533_000, 0)
+			.saturating_add(Weight::from_parts(0, 3035))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}

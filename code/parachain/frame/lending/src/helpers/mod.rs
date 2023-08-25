@@ -1,9 +1,0 @@
-pub mod borrow;
-pub mod collateral;
-pub mod interest;
-pub mod liquidation;
-pub mod market;
-pub mod offchain_workers;
-pub mod on_init;
-pub mod price;
-pub mod repay_borrow;

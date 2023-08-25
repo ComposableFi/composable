@@ -228,7 +228,6 @@ pub mod pallet {
 	type BalanceOf<T> = <T as Config>::Balance;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]

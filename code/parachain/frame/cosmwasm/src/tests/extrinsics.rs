@@ -16,6 +16,8 @@ use sp_runtime::{traits::Convert, AccountId32};
 #[test]
 fn upload() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let origin = create_funded_root_account();
 
 		let wasm_module: code_gen::WasmModule =
@@ -125,6 +127,8 @@ pub fn instantiate_test_cases(
 #[test]
 fn instantiate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let origin = create_funded_account("origin");
 
 		let wasm_module: code_gen::WasmModule =
@@ -173,6 +177,8 @@ pub fn migrate_test_cases(contract: AccountId32, code_id: u64) {
 #[test]
 fn migrate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -236,6 +242,8 @@ pub fn update_admin_test_cases(contract: AccountId32, new_admin: Option<AccountI
 #[test]
 fn update_admin() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());

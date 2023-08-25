@@ -78,8 +78,8 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect, Mutate, Transfer},
-			tokens::WithdrawReasons,
+			fungible::{Inspect, Mutate},
+			tokens::{Preservation, WithdrawReasons},
 			LockIdentifier, LockableCurrency, Time,
 		},
 		PalletId,
@@ -164,7 +164,6 @@ pub mod pallet {
 
 		/// The RewardAsset used to transfer the rewards.
 		type RewardAsset: Inspect<Self::AccountId, Balance = Self::Balance>
-			+ Transfer<Self::AccountId, Balance = Self::Balance>
 			+ Mutate<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Balance = Self::Balance>;
 
@@ -261,7 +260,6 @@ pub mod pallet {
 	pub type RemoveRewardLocks<T: Config> = StorageValue<_, (), OptionQuery>;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
@@ -542,7 +540,7 @@ pub mod pallet {
 						&funds_account,
 						reward_account,
 						available_to_claim,
-						false,
+						Preservation::Expendable,
 					)?;
 
 					// IMPORTANT: Order of execution of this lock matters for proper locking of

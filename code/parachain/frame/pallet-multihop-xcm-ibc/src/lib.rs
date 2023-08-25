@@ -8,9 +8,10 @@
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests
+)]
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![warn(bad_style, trivial_numeric_casts)]
+#![allow(clippy::let_unit_value)]
 #![deny(
 	bare_trait_objects,
 	improper_ctypes,
@@ -71,8 +72,6 @@ pub mod pallet {
 	type ListChainNameAddress = Vec<(ChainInfo, Vec<u8>, [u8; 32])>;
 	use frame_system::pallet_prelude::OriginFor;
 
-	/// ## Configuration
-	/// The pallet's configuration trait.
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_ibc::Config + orml_xtokens::Config {
 		#[allow(missing_docs)]
@@ -169,7 +168,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -304,6 +302,7 @@ pub mod pallet {
 	}
 
 	impl<T> Pallet<T> {
+		/// ```ignore
 		/// Create memo from the route configuration using chain info, name and address
 		///
 		/// This function is called from deposit_asset XCM callback function in
@@ -329,7 +328,7 @@ pub mod pallet {
 		/// 	list_chain_name_address: ListChainNameAddress,
 		/// )
 		/// ```
-		///
+		/// 
 		/// # Note
 		/// Return Ok(None) if `list_chain_name_address` is empty
 		pub fn create_memo(
@@ -723,7 +722,7 @@ pub mod pallet {
 			let result = pallet_ibc::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				transfer_params,
-				asset_id,
+				asset_id.clone(),
 				(*amount).into(),
 				memo.clone(),
 			);

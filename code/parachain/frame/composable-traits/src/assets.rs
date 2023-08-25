@@ -107,7 +107,7 @@ impl BasicAssetMetadata {
 	}
 }
 
-#[derive(Decode, Encode, Debug, Clone, PartialEq, Eq)]
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Eq, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Asset<AssetId, Balance, ForeignId> {
 	pub name: Option<Vec<u8>>,

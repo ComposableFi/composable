@@ -46,13 +46,13 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1510 + s * (67 ±0)`
 		//  Estimated: `15276 + s * (69 ±0)`
 		// Minimum execution time: 77_095 nanoseconds.
-		Weight::from_ref_time(84_406_072)
-			.saturating_add(Weight::from_proof_size(15276))
+		Weight::from_parts(84_406_072, 0)
+			.saturating_add(Weight::from_parts(0, 15276))
 			// Standard Error: 11_400
-			.saturating_add(Weight::from_ref_time(3_595_866).saturating_mul(s.into()))
+			.saturating_add(Weight::from_parts(3_595_866, 0).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(69).saturating_mul(s.into()))
+			.saturating_add(Weight::from_parts(0, 69).saturating_mul(s.into()))
 	}
 	/// Storage: Vesting VestingScheduleNonce (r:1 w:1)
 	/// Proof Skipped: Vesting VestingScheduleNonce (max_values: Some(1), max_size: None, mode: Measured)
@@ -71,8 +71,8 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 		//  Measured:  `951`
 		//  Estimated: `23572`
 		// Minimum execution time: 132_106 nanoseconds.
-		Weight::from_ref_time(133_458_000)
-			.saturating_add(Weight::from_proof_size(23572))
+		Weight::from_parts(133_458_000, 0)
+			.saturating_add(Weight::from_parts(0, 23572))
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(6))
 	}
@@ -94,10 +94,10 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 		//  Measured:  `936`
 		//  Estimated: `15833`
 		// Minimum execution time: 70_510 nanoseconds.
-		Weight::from_ref_time(87_641_298)
-			.saturating_add(Weight::from_proof_size(15833))
+		Weight::from_parts(87_641_298, 0)
+			.saturating_add(Weight::from_parts(0, 15833))
 			// Standard Error: 7_398
-			.saturating_add(Weight::from_ref_time(2_171_895).saturating_mul(s.into()))
+			.saturating_add(Weight::from_parts(2_171_895, 0).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -117,12 +117,12 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1098 + s * (65 ±0)`
 		//  Estimated: `14976 + s * (65 ±0)`
 		// Minimum execution time: 77_397 nanoseconds.
-		Weight::from_ref_time(77_031_627)
-			.saturating_add(Weight::from_proof_size(14976))
+		Weight::from_parts(77_031_627, 0)
+			.saturating_add(Weight::from_parts(0, 14976))
 			// Standard Error: 9_561
-			.saturating_add(Weight::from_ref_time(3_404_378).saturating_mul(s.into()))
+			.saturating_add(Weight::from_parts(3_404_378, 0).saturating_mul(s.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(65).saturating_mul(s.into()))
+			.saturating_add(Weight::from_parts(0, 65).saturating_mul(s.into()))
 	}
 }

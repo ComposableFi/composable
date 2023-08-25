@@ -51,8 +51,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `513`
 		//  Estimated: `3537`
 		// Minimum execution time: 58_460 nanoseconds.
-		Weight::from_ref_time(60_783_000)
-			.saturating_add(Weight::from_proof_size(3537))
+		Weight::from_parts(60_783_000, 0)
+			.saturating_add(Weight::from_parts(0, 3537))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(8))
 	}
@@ -73,8 +73,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1190`
 		//  Estimated: `38035`
 		// Minimum execution time: 278_272 nanoseconds.
-		Weight::from_ref_time(285_640_000)
-			.saturating_add(Weight::from_proof_size(38035))
+		Weight::from_parts(285_640_000, 0)
+			.saturating_add(Weight::from_parts(0, 38035))
 			.saturating_add(T::DbWeight::get().reads(12))
 			.saturating_add(T::DbWeight::get().writes(8))
 	}
@@ -95,8 +95,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1738`
 		//  Estimated: `38583`
 		// Minimum execution time: 173_229 nanoseconds.
-		Weight::from_ref_time(179_619_000)
-			.saturating_add(Weight::from_proof_size(38583))
+		Weight::from_parts(179_619_000, 0)
+			.saturating_add(Weight::from_parts(0, 38583))
 			.saturating_add(T::DbWeight::get().reads(12))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
@@ -115,8 +115,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1649`
 		//  Estimated: `31431`
 		// Minimum execution time: 148_823 nanoseconds.
-		Weight::from_ref_time(152_382_000)
-			.saturating_add(Weight::from_proof_size(31431))
+		Weight::from_parts(152_382_000, 0)
+			.saturating_add(Weight::from_parts(0, 31431))
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(6))
 	}
@@ -135,8 +135,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `1649`
 		//  Estimated: `31431`
 		// Minimum execution time: 152_401 nanoseconds.
-		Weight::from_ref_time(154_783_000)
-			.saturating_add(Weight::from_proof_size(31431))
+		Weight::from_parts(154_783_000, 0)
+			.saturating_add(Weight::from_parts(0, 31431))
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(6))
 	}
@@ -149,8 +149,8 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 		//  Measured:  `109`
 		//  Estimated: `511`
 		// Minimum execution time: 23_062 nanoseconds.
-		Weight::from_ref_time(23_841_000)
-			.saturating_add(Weight::from_proof_size(511))
+		Weight::from_parts(23_841_000, 0)
+			.saturating_add(Weight::from_parts(0, 511))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}

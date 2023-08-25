@@ -34,7 +34,10 @@ use scale_info::TypeInfo;
 pub use types::*;
 
 mod types {
-	use sp_runtime::traits::{IdentifyAccount, Verify};
+	use sp_runtime::{
+		generic,
+		traits::{IdentifyAccount, Verify},
+	};
 
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
@@ -49,6 +52,14 @@ mod types {
 
 	/// An index to a block.
 	pub type BlockNumber = u32;
+
+	/// Unchecked extrinsic type as expected by this runtime.
+	pub type ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra> =
+		generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+
+	/// Block type as expected by this runtime.
+	pub type ComposableBlock<RuntimeCall, SignedExtra> =
+		generic::Block<Header, ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra>>;
 
 	/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 	pub type Signature = sp_runtime::MultiSignature;
@@ -127,7 +138,7 @@ mod constants {
 	/// We allow for 0.5 seconds of compute with a 12 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 		WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),
-		polkadot_primitives::v2::MAX_POV_SIZE as u64,
+		polkadot_primitives::v4::MAX_POV_SIZE as u64,
 	);
 }
 

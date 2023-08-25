@@ -41,14 +41,14 @@ serde-json-wasm = { workspace = true, default-features = false }
 default = ["std"]
 std = [
   "codec/std",
-  "sp-runtime/std",
-  "composable-traits/std",
   "composable-support/std",
-  "serde-json-wasm/std",
+  "composable-traits/std",
   "cosmwasm-std/std",
-  "scale-info/std",
-  "sp-std/std",
   "frame-support/std",
-  "xcm/std",
   "ibc-rs-scale/std",
+  "scale-info/std",
+  "serde-json-wasm/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xcm/std",
 ]
