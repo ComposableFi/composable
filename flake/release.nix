@@ -238,6 +238,52 @@
           '';
         };
 
+        gov-testnet-xcvm = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ packages.osmosisd pkgs.jq ];
+          name = "gov-testnet-xcvm";
+          text = ''
+             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
+               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
+             fi
+             CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
+
+             ${bashTools.export osmosis.env.testnet}
+
+             rm --force --recursive .secret/$DIR 
+             mkdir --parents .secret/$DIR
+
+            echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
+            ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
+            echo "$ADDRESS" > .secret/$DIR/ADDRESS
+
+             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+             INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
+
+             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
+               --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/interpreter' \
+               --builder "composablefi/devnet:v9.10037.1" \
+               --code-hash "$INTERPRETER_WASM_CODE_HASH" \
+               --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
+                tee .secret/$DIR/INTERPRETER_PROPOSAL
+
+             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
+             GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
+
+             sleep "$BLOCK_SECONDS" 
+             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Add CW CVM Gateway code" \
+               --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/gateway' \
+               --builder "composablefi/devnet:v9.10037.1" \
+               --code-hash "$GATEWAY_WASM_CODE_HASH" \
+               --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |sh
+               tee .secret/$DIR/GATEWAY_PROPOSAL
+          '';
+        };
+
         release-prod-xcvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
