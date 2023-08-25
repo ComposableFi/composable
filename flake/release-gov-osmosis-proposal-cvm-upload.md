@@ -1,25 +1,3 @@
-<!-----
-
-Yay, no errors, warnings, or alerts!
-
-Conversion time: 0.579 seconds.
-
-
-Using this Markdown file:
-
-1. Paste this output into your source file
-2. See the notes and action items below regarding this conversion run.
-3. Check the rendered output (headings, lists, code blocks, tables) for proper
-   formatting and use a linkchecker before you publish this page.
-
-Conversion notes:
-
-* Docs to Markdown version 1.0β34
-* Fri Aug 25 2023 09:35:55 GMT-0700 (PDT)
-* Source doc: CVM Contracts on Osmosis
------>
-
-
 Passing this proposal gives the address add OSMO address the ability to upload CosmWasm contracts to Osmosis without seeking further governance approval for each upload. This address is administered by Composable core contributors.
 
 

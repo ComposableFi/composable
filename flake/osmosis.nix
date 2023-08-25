@@ -11,6 +11,7 @@
           CHAIN_ID = "osmosis-1";
           DIR = "prod/.osmosisd";
           BINARY = "osmosisd";
+          BLOCK_SECONDS = 6;
           NODE = "https://rpc.osmosis.zone:443";
         };
         devnet = rec {

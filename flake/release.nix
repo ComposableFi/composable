@@ -202,21 +202,22 @@
              fi
              CI_COSMOS_MNEMONIC="''${1-$CI_COSMOS_MNEMONIC}"
 
-             ${bashTools.export osmosis.env.testnet}
+             ${bashTools.export osmosis.env.mainnet}
 
              rm --force --recursive .secret/$DIR 
              mkdir --parents .secret/$DIR
 
-            DEPOSIT=1$FEE
+            DEPOSIT=400000000$FEE
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
+            DESCRIPTION="Passing this proposal gives the address add OSMO address the ability to upload CosmWasm contracts to Osmosis without seeking further governance approval for each upload. This address is administered by Composable core contributors."
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
-               --description "Upload Composable cross-chain Virtual Machine interpreter contract " --run-as "$ADDRESS"  \
+               --description "$DESCRIPTION" --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
@@ -230,7 +231,7 @@
 
              sleep "$BLOCK_SECONDS" 
              "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine gateway contract" \
-               --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --description "$DESCRIPTION" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
                --deposit="$DEPOSIT" \
@@ -265,7 +266,9 @@
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
-               --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --description '${
+                 builtins.readFile ./release-gov-osmosis-proposal-cvm-upload.md
+               }' --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
@@ -279,7 +282,9 @@
 
              sleep "$BLOCK_SECONDS" 
              "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine gateway contract" \
-               --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --description '${
+                 builtins.readFile ./release-gov-osmosis-proposal-cvm-upload.md
+               }' --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
                --deposit="$DEPOSIT" \
