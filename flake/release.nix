@@ -154,8 +154,11 @@
 
             NETWORK_ID=''${2-$NETWORK_ID}
 
+            ${bashTools.export osmosis.env.testnet}
+
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
+
             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
 
@@ -182,10 +185,10 @@
             EOF
             )
 
-            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-2" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block --admin "$ADDRESS")
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-3" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode block --admin "$ADDRESS")
             echo "$INSTANTIATE"
-            GATEWAY_CONTRACT_ADDRESS=$(echo "$INSTANTIATE" | jq -r '.logs[0].events[] | select(.type == "instantiate") | .attributes[0].value')
-            echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(echo "$INSTANTIATE" | jq -r '.logs[0].events[] | select(.type == "instantiate") | .attributes[0].value')
+            echo "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
           '';
         };
 
@@ -216,10 +219,25 @@
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Add CW CVM Interpreter code" \
                --description "Upload Composable cross-chain Virtual Machine interpreter contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
                --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/interpreter' \
-               --builder "composablefi/composable:latest-prerelease" \
+               --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$INTERPRETER_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
-               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
+                tee .secret/$DIR/INTERPRETER_PROPOSAL
+
+             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
+             GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
+             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
+             echo "$GATEWAY_WASM_FILE"
+
+             "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Add CW CVM Gateway code" \
+               --description "Upload Composable cross-chain Virtual Machine gateway contract https://docs.composable.finance/products/xcvm" --run-as "$ADDRESS"  \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/main/code/xcvm/cosmwasm/contracts/gateway' \
+               --builder "composablefi/devnet:v9.10037.1" \
+               --code-hash "$GATEWAY_WASM_CODE_HASH" \
+               --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
+               tee .secret/$DIR/GATEWAY_PROPOSAL
           '';
         };
 
