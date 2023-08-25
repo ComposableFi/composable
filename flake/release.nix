@@ -214,7 +214,7 @@
 
              INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
-            DESCRIPTION="Passing this proposal gives the address add OSMO address the ability to upload CosmWasm contracts to Osmosis without seeking further governance approval for each upload. This address is administered by Composable core contributors."
+            DESCRIPTION=$(cat ${./release-gov-osmosis-proposal-cvm-upload.md})
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
                --description "$DESCRIPTION" --run-as "$ADDRESS"  \
@@ -237,7 +237,7 @@
                --deposit="$DEPOSIT" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
-               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |sh
+               --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
                tee .secret/$DIR/GATEWAY_PROPOSAL
           '';
         };
