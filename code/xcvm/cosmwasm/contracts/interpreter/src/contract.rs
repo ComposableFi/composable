@@ -8,8 +8,9 @@ use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	ensure, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
-	Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg, WasmQuery,
+	ensure, ensure_eq, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps,
+	DepsMut, Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
+	WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -140,7 +141,7 @@ pub fn handle_execute_step(
 	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
-		deps.api.debug(&format!("xcvm::interpreter:: executing {:?}", &instruction));
+		deps.api.debug(&format!("xcvm::interpreter::execute:: {:?}", &instruction));
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, &tip, to, assets),
@@ -185,28 +186,26 @@ fn interpret_exchange(
 	sender: Addr,
 ) -> Result {
 	let Config { gateway_address, .. } = CONFIG.load(deps.storage)?;
-	let exchange = gateway_address.get_exchange_by_id(deps.querier, exchange_id)?;
+	let exchange: xc_core::service::dex::ExchangeItem = gateway_address
+		.get_exchange_by_id(deps.querier, exchange_id)
+		.map_err(ContractError::ExchangeNotFound)?;
 
 	use prost::Message;
 	use xc_core::service::dex::{
 		osmosis_std::types::osmosis::poolmanager::v1beta1::MsgSwapExactAmountIn, ExchangeType::*,
 	};
-	assert_eq!(
-		give.0.len(),
-		1,
-		"because default osmosis API for 1, can should handle multiple later"
-	);
-	assert_eq!(
-		want.0.len(),
-		1,
-		"because default osmosis API for 1, can should handle multiple later"
-	);
-	let asset = gateway_address.get_asset_by_id(deps.querier, give.0[0].0)?;
+	ensure_eq!(give.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
+	ensure_eq!(want.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
+	let asset = gateway_address
+		.get_asset_by_id(deps.querier, give.0[0].0)
+		.map_err(ContractError::AssetNotFound)?;
 	let give: xc_core::cosmos::Coin = xc_core::cosmos::Coin {
 		denom: asset.denom(),
 		amount: give.0[0].1.amount.intercept.to_string(),
 	};
-	let asset = gateway_address.get_asset_by_id(deps.querier, want.0[0].0)?;
+	let asset = gateway_address
+		.get_asset_by_id(deps.querier, want.0[0].0)
+		.map_err(ContractError::AssetNotFound)?;
 	let want = xc_core::cosmos::Coin {
 		denom: asset.denom(),
 		amount: want.0[0].1.amount.intercept.to_string(),
@@ -219,6 +218,7 @@ fn interpret_exchange(
 				token_in: Some(give),
 				token_out_min_amount: want.amount,
 			};
+			deps.api.debug(&format!("xcvm::interpreter::execute::exchange {:?}", &msg));
 			let msg = CosmosMsg::Stargate {
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
 				value: Binary::from(msg.encode_to_vec()),
@@ -401,7 +401,7 @@ pub fn interpret_transfer(
 	assets: Funds<Balance>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-	deps.api.debug(&format!("xcvm::interpreter:: transfer to {:?}", &to));
+	deps.api.debug(&format!("xcvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
 		Destination::Tip => tip.into(),
@@ -492,6 +492,7 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+	deps.api.debug(&format!("xcvm::interpreter::exchange {:?}", &msg));
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
 	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
 	Ok(Response::default())

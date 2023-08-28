@@ -1,10 +1,10 @@
 [global]
-log_level = 'debug'
+log_level = 'trace'
 [mode]
 [mode.clients]
 enabled = true
 refresh = true
-misbehaviour = true
+misbehaviour = false
 [mode.connections]
 enabled = true
 [mode.channels]
@@ -12,9 +12,9 @@ enabled = true
 
 [mode.packets]
 enabled = true
-clear_interval = 100
-clear_on_start = true
-tx_confirmation = false
+clear_interval = 0
+clear_on_start = false
+tx_confirmation = true
 
 [rest]
 enabled = false
@@ -30,44 +30,47 @@ port = 30041
 id = 'centauri-dev'
 rpc_addr = 'http://127.0.0.1:26657'
 grpc_addr = 'http://127.0.0.1:9090'
-event_source = { mode = 'push', url = 'ws://127.0.0.1:26657/websocket', batch_delay = '500ms' }
-rpc_timeout = '20s'
+#event_source = { mode = 'push', url = 'ws://127.0.0.1:26657/websocket', batch_delay = '1000ms' }
+event_source = { mode = 'pull', interval = '1s' }
+rpc_timeout = '30s'
 account_prefix = 'centauri'
 key_name = 'centauri-dev'
 store_prefix = 'ibc'
 default_gas = 10000000
-max_gas = 400000000
-gas_price = { price = 0.001, denom = 'ppica' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
+max_gas = 4000000000
+gas_price = { price = 1, denom = 'ppica' }
+gas_multiplier = 1.3
+max_msg_num = 5
+max_tx_size = 4097152
+clock_drift = '10s'
 max_block_time = '30s'
-trusting_period = '480s'
+trusting_period = '640s'
 trust_threshold = { numerator = '1', denominator = '3' }
 type = 'CosmosSdk'
 address_type = { derivation = 'cosmos' }
 trusted_node = true
+key_store_type = 'Test'
 
 [[chains]]
 id = 'osmosis-dev'
 rpc_addr = 'http://127.0.0.1:36657'
 grpc_addr = 'http://127.0.0.1:19090'
-event_source = { mode = 'push', url = 'ws://127.0.0.1:36657/websocket', batch_delay = '500ms' }
+#event_source = { mode = 'push', url = 'ws://127.0.0.1:36657/websocket', batch_delay = '1000ms' }
+event_source = { mode = 'pull', interval = '1s' }
 rpc_timeout = '20s'
 account_prefix = 'osmo'
 key_name = 'osmosis-dev'
 store_prefix = 'ibc'
 key_store_type = 'Test'
 default_gas = 10000000
-max_gas = 400000000
-gas_price = { price = 0.01, denom = 'uosmo' }
+max_gas = 4000000000
+gas_price = { price = 1, denom = 'uosmo' }
 gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
+max_msg_num = 5
+max_tx_size = 4097152
+clock_drift = '10s'
 max_block_time = '30s'
-trusting_period = '480s'
+trusting_period = '640s'
 trust_threshold = { numerator = '1', denominator = '3' }
 type = 'CosmosSdk'
 address_type = { derivation = 'cosmos' }

@@ -83,11 +83,6 @@ pub(crate) fn handle_bridge_forward(
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
 	let msg = to_cw_message(deps.api, coin, route, packet, block)?;
-	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20:: payload {}",
-		&serde_json_wasm::to_string(&msg)?
-	));
-
 	Ok(Response::default().add_event(event).add_message(msg))
 }
 
@@ -172,10 +167,12 @@ pub(crate) fn ics20_message_hook(
 }
 
 fn ensure_anonymous(program: &XcProgram) -> Result<()> {
+	use xc_core::Instruction::*;
 	for ix in &program.instructions {
 		match ix {
-			xc_core::Instruction::Transfer { .. } => {},
-			xc_core::Instruction::Spawn { program, .. } => ensure_anonymous(program)?,
+			Transfer { .. } => {},
+			Exchange { .. } => {},
+			Spawn { program, .. } => ensure_anonymous(program)?,
 			_ => Err(ContractError::AnonymousCallsCanDoOnlyLimitedSetOfActions)?,
 		}
 	}

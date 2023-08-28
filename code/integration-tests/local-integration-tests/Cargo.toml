@@ -233,4 +233,4 @@ runtime-benchmarks = [
   #"statemine-runtime/runtime-benchmarks",
 ]
 
-develop = ["assets", "assets-registry",]
+develop = ["assets", "assets-registry"]

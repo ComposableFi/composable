@@ -46,7 +46,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/6224ec2242695b4c3b1e902936643a6dce5d791b";
+        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -99,6 +99,7 @@
         ./flake/cargo-tools.nix
         ./flake/check.nix
         ./flake/darwin-configurations.nix
+        ./flake/bash.nix
         ./flake/dev-shells.nix
         ./flake/devnet.nix
         ./flake/docker.nix

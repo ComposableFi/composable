@@ -164,6 +164,8 @@
         "evmos-src": "evmos-src",
         "flake-utils": "flake-utils_2",
         "gaia-main-src": "gaia-main-src",
+        "gaia10-src": "gaia10-src",
+        "gaia11-src": "gaia11-src",
         "gaia5-src": "gaia5-src",
         "gaia6-ordered-src": "gaia6-ordered-src",
         "gaia6-src": "gaia6-src",
@@ -221,17 +223,17 @@
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1692213783,
-        "narHash": "sha256-xhSHUA6XXLPfum74U4jrUWXAHLuhduAnK653yXlGQvQ=",
+        "lastModified": 1692974255,
+        "narHash": "sha256-KfwXiqlAFPOdvRVILXUiuYDntc8a/EnjMsHr5hqoqMA=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "6224ec2242695b4c3b1e902936643a6dce5d791b",
+        "rev": "3039c8f154b1f9f1fb217c2bc0048eaff0da2472",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "6224ec2242695b4c3b1e902936643a6dce5d791b",
+        "rev": "3039c8f154b1f9f1fb217c2bc0048eaff0da2472",
         "type": "github"
       }
     },
@@ -779,6 +781,40 @@
       },
       "original": {
         "owner": "cosmos",
+        "repo": "gaia",
+        "type": "github"
+      }
+    },
+    "gaia10-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1688401730,
+        "narHash": "sha256-F72AxDI1OdleE8If5s4HJbORqMsDVsdEO5q7nrK07E8=",
+        "owner": "cosmos",
+        "repo": "gaia",
+        "rev": "a2b14cdd568273e12b80579b4e22681df95b4cb9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cosmos",
+        "ref": "v10.0.2",
+        "repo": "gaia",
+        "type": "github"
+      }
+    },
+    "gaia11-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1690464504,
+        "narHash": "sha256-bIegGSPDdDRbznfgsrojsGCwCPSesNknpffTFskc7fE=",
+        "owner": "cosmos",
+        "repo": "gaia",
+        "rev": "541a8d86af28231c767d6db52eb88ba9496ad0c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cosmos",
+        "ref": "v11.0.0",
         "repo": "gaia",
         "type": "github"
       }
@@ -1726,16 +1762,16 @@
     "osmosis-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1689430935,
-        "narHash": "sha256-HTXFitKRuxSM6U2Sq7kgLxZhduPA+MofdWaISe//2kg=",
+        "lastModified": 1692886846,
+        "narHash": "sha256-VdM6hGqcDyCNx7AR8s7SxE3pEMxHiIhCJ7592sDp3uc=",
         "owner": "osmosis-labs",
         "repo": "osmosis",
-        "rev": "0dcae3392f23e44b8de436ff372c1373dc831b04",
+        "rev": "1c5f25d04f19d6302e0bdd585ba1d7a2cc96e397",
         "type": "github"
       },
       "original": {
         "owner": "osmosis-labs",
-        "ref": "v16.1.1",
+        "ref": "v18.0.0",
         "repo": "osmosis",
         "type": "github"
       }

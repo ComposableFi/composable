@@ -4,7 +4,10 @@ use serde::{de::DeserializeOwned, Serialize};
 
 pub type Salt = Vec<u8>;
 pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
-pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, crate::Funds>;
+// like XcFunds, but allow relative(percentages) amounts. Similar to assets filters in XCM
+pub type XcBalanceFilter = crate::asset::Balance;
+pub type XcFundsFilter = crate::Funds<XcBalanceFilter>;
+pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
 pub type XcPacket = crate::Packet<XcProgram>;
 pub type XcProgram = crate::Program<VecDeque<XcInstruction>>;
 
@@ -100,7 +103,7 @@ impl scale_info::TypeInfo for XcAddr {
 /// `Display` and `FromStr` traits.
 ///
 /// ```
-/// # use xc_core::Displayed;
+/// # use xc_core::shared::Displayed;
 ///
 /// #[derive(serde::Serialize, serde::Deserialize)]
 /// struct Foo {
@@ -209,6 +212,36 @@ macro_rules! impl_conversions {
 			)*
 	};
 }
+
+// impl prost::Message for Displayed<u64> {
+//     fn encoded_len(&self) -> usize {
+//         self.0.encoded_len()
+//     }
+
+//     fn clear(&mut self) {
+//         self.0.clear()
+//     }
+
+// 	fn encode_raw<B>(&self, buf: &mut B)
+// 		where
+// 			B: prost::bytes::BufMut,
+// 			Self: Sized {
+// 		self.0.encode_raw(buf)
+// 	}
+
+// 	fn merge_field<B>(
+// 			&mut self,
+// 			tag: u32,
+// 			wire_type: prost::encoding::WireType,
+// 			buf: &mut B,
+// 			ctx: prost::encoding::DecodeContext,
+// 		) -> Result<(), prost::DecodeError>
+// 		where
+// 			B: prost::bytes::Buf,
+// 			Self: Sized {
+// 		self.0.merge_field(tag, wire_type, buf, ctx)
+// 	}
+// }
 
 // Due to Rust orphan rules it’s not possible to make generic `impl<T>
 // From<Displayed<T>> for T` so we’re defining common conversions explicitly.

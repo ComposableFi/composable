@@ -19,9 +19,8 @@ pub use cosmwasm_schema::{cw_serde, QueryResponses};
 #[cfg(feature = "std")]
 pub use schemars::JsonSchema;
 
-use crate::{shared::Displayed, Amount, Destination, Funds, NetworkId, MAX_PARTS};
+use crate::{shared::Displayed, Amount, Destination, Funds, NetworkId};
 use alloc::format;
-use fixed::{types::extra::U16, FixedU128};
 use prost::{DecodeError, Message};
 
 include!(concat!(env!("OUT_DIR"), "/xc.rs"));
@@ -463,9 +462,9 @@ impl TryFrom<Ratio> for Amount {
 	type Error = ();
 
 	fn try_from(ratio: Ratio) -> core::result::Result<Self, Self::Error> {
-		let nominator = ratio.nominator.ok_or(())?;
-		let denominator = ratio.denominator.ok_or(())?;
-		Ok(Amount::ratio(calc_nom(nominator.into(), denominator.into(), MAX_PARTS)))
+		let nominator = ratio.nominator;
+		let denominator = ratio.denominator;
+		Ok(Amount::from((nominator, denominator)))
 	}
 }
 
@@ -478,11 +477,7 @@ impl TryFrom<Unit> for crate::Balance {
 		Ok(crate::Balance::new(
 			Amount::new(
 				integer.into(),
-				calc_nom(
-					ratio.nominator.ok_or(())?.into(),
-					ratio.denominator.ok_or(())?.into(),
-					MAX_PARTS,
-				),
+				Amount::from((ratio.nominator, ratio.denominator)).slope.into(),
 			),
 			true,
 		))
@@ -502,8 +497,8 @@ impl From<crate::Balance> for Balance {
 			balance::BalanceType::Unit(Unit {
 				integer: Some(balance.amount.intercept.0.into()),
 				ratio: Some(Ratio {
-					nominator: Some(balance.amount.slope.0.into()),
-					denominator: Some(MAX_PARTS.into()),
+					nominator: balance.amount.slope.0,
+					denominator: Amount::MAX_PARTS,
 				}),
 			})
 		} else if balance.amount.is_absolute() {
@@ -512,8 +507,8 @@ impl From<crate::Balance> for Balance {
 			})
 		} else {
 			balance::BalanceType::Ratio(Ratio {
-				nominator: Some(balance.amount.slope.0.into()),
-				denominator: Some(MAX_PARTS.into()),
+				nominator: balance.amount.slope.0,
+				denominator: Amount::MAX_PARTS,
 			})
 		};
 		Balance { balance_type: Some(balance_type) }
@@ -650,17 +645,6 @@ where
 	}
 }
 
-/// This can be a helper function in SDK so that users won't
-/// necessarily need to know how the ratio is handled in our SDK
-/// Calculates `x` in the following equation: nom / denom = x / max
-fn calc_nom(nom: u128, denom: u128, max: u128) -> u128 {
-	let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
-	wrap(nom)
-		.saturating_div(wrap(denom))
-		.saturating_mul(wrap(max))
-		.wrapping_to_num::<u128>()
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -669,18 +653,12 @@ mod tests {
 	fn balance_to_amount_works() {
 		let balance = Balance {
 			balance_type: Some(balance::BalanceType::Ratio(Ratio {
-				nominator: Some(3u128.into()),
-				denominator: Some(5u128.into()),
+				nominator: 3u64.into(),
+				denominator: 5u64.into(),
 			})),
 		};
 		let xcvm_balance: crate::Balance = balance.try_into().unwrap();
 		assert_eq!(xcvm_balance.amount.intercept, Displayed(0));
-
-		let wrap = |num: u128| -> FixedU128<U16> { FixedU128::wrapping_from_num(num) };
-		assert_eq!(
-			wrap(3).saturating_div(wrap(5)),
-			wrap(xcvm_balance.amount.slope.0).saturating_div(wrap(MAX_PARTS))
-		)
 	}
 	#[test]
 	fn u128_from_uint128_works() {

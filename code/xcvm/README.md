@@ -96,3 +96,40 @@ So it will not be the case that on one chain 123213 means PEPA and on other chai
 Prefix allows to find network to look at for asset info.
 
 For security reasons when assets sent from chain to chain, asset id changes.
+
+
+
+## How to run local Cosmos nodes(devnet) with XCVM 
+
+There are 2 options to run XCVM enabled devnet.
+
+First is Nix installation guide, and run via nix. Another run via docker.
+
+```bash
+# this runs lightweight chain only with cosmos chains as on latest main branch
+nix run composable#devnet-xc-cosmos-fresh
+```
+
+```bash
+# run all cosmos and dotsama chain with relays
+docker run composablefi/devnet-xc:main
+```
+
+Picasso, Centauri and Osmosis are uploaded with XCVM contracts.
+
+Centauri and Osmosis main target of testing and configuration.
+
+
+Wait for relayer start relaying.
+
+Transfer ppica to Osmosis and uosmo to Centauri using command lines for daemons.
+`nix run .#centauri-tx` and `nix run .#osmosis-tx` do it. 
+
+Use preferred methods to observe transfer happened.
+I look at logs at `/tmp/composable-devnet/`.
+
+And finally run sample XCVM program: 
+```bash
+# ppica on Centauri -> ppica on Osmosis -> swap to uosmo -> uosmo on Centauri
+nix run .#xc-swap-pica-to-osmo
+```

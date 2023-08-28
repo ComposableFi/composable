@@ -119,8 +119,10 @@ pub fn to_cw_message<T>(
 					.map(|x| x.nanos())
 					.unwrap_or_default(),
 				memo,
-			}
-			.encode_to_vec();
+			};
+			api.debug(&format!("xcvm::gateway::ibc::ics20:: payload {:?}", &value));
+
+			let value = value.encode_to_vec();
 			let value = Binary::from(value);
 			Ok(CosmosMsg::Stargate {
 				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),

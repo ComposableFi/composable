@@ -57,12 +57,20 @@ pub enum ContractError {
 	#[error("Unsupported")]
 	Unsupported,
 
-	#[error("An error occured while doing arithmetic operations.")]
+	#[error("An error occured while doing arithmetic operations")]
 	ArithmeticError,
 
 	#[error("Not implemented")]
 	NotImplemented,
 
-	#[error("The asset is not yet supported.")]
+	#[error("The asset is not yet supported")]
 	UnsupportedAsset,
+
+	#[error("Only single asset exchange is supported by pool")]
+	OnlySingleAssetExchangeIsSupportedByPool,
+
+	#[error("Asset not found: {0}")]
+	AssetNotFound(StdError),
+	#[error("Exchange not found: {0}")]
+	ExchangeNotFound(StdError),
 }

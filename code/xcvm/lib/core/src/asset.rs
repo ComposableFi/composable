@@ -103,13 +103,17 @@ impl Balance {
 	}
 }
 
-impl From<u128> for Balance {
-	fn from(value: u128) -> Self {
-		Balance { amount: Amount::absolute(value), is_unit: false }
+impl From<(u64, u64)> for Balance {
+	fn from(value: (u64, u64)) -> Self {
+		Balance { amount: Amount::from(value), is_unit: false }
 	}
 }
 
-pub const MAX_PARTS: u128 = 1000000000000000000;
+impl From<u128> for Balance {
+	fn from(value: u128) -> Self {
+		Self { amount: Amount::absolute(value), is_unit: false }
+	}
+}
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
@@ -119,7 +123,7 @@ pub const MAX_PARTS: u128 = 1000000000000000000;
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 pub struct Amount {
 	pub intercept: Displayed<u128>,
-	pub slope: Displayed<u128>,
+	pub slope: Displayed<u64>,
 }
 
 /// Arithmetic errors.
@@ -133,10 +137,16 @@ pub enum ArithmeticError {
 	DivisionByZero,
 }
 
-impl Amount {
-	pub const MAX_PARTS: u128 = 1000000000000000000;
+impl From<(u64, u64)> for Amount {
+	fn from(value: (u64, u64)) -> Self {
+		Self::new(0, (value.0 as u128 * Self::MAX_PARTS as u128 / value.1 as u128) as u64)
+	}
+}
 
-	pub const fn new(intercept: u128, slope: u128) -> Self {
+impl Amount {
+	pub const MAX_PARTS: u64 = 1_000_000_000_000_000_000;
+
+	pub const fn new(intercept: u128, slope: u64) -> Self {
 		Self { intercept: Displayed(intercept), slope: Displayed(slope) }
 	}
 
@@ -145,8 +155,8 @@ impl Amount {
 		Self { intercept: Displayed(value), slope: Displayed(0) }
 	}
 
-	/// A ratio amount, expressed in u128 parts (x / MAX_PARTS)
-	pub const fn ratio(parts: u128) -> Self {
+	/// A ratio amount, expressed in parts (x / MAX_PARTS)
+	pub const fn ratio(parts: u64) -> Self {
 		Self { intercept: Displayed(0), slope: Displayed(parts) }
 	}
 
@@ -253,6 +263,12 @@ impl From<u128> for Amount {
 #[repr(transparent)]
 pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
 
+impl<T> Funds<T> {
+	pub fn one<A: Into<T>>(id: AssetId, amount: A) -> Self {
+		Self(vec![(id, amount.into())])
+	}
+}
+
 impl<T> Default for Funds<T> {
 	fn default() -> Self {
 		Self(Vec::new())
@@ -308,13 +324,16 @@ impl<T> From<Funds<T>> for Vec<(u128, T)> {
 	}
 }
 
+/// see `generate_network_prefixed_id`
+pub fn generate_asset_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> AssetId {
+	AssetId::from(generate_network_prefixed_id(network_id, protocol_id, nonce))
+}
+
 // `protocol_id` - namespace like thing, default is 0, but can be used for example other consensus
 // to create known ahead
 /// `nonce` - local consensus atomic number, usually increasing monotonic increment
-pub fn generate_asset_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> AssetId {
-	AssetId::from(
-		(u128::from(network_id.0) << 96) | (u128::from(protocol_id) << 64) | (u128::from(nonce)),
-	)
+pub fn generate_network_prefixed_id(network_id: NetworkId, protocol_id: u32, nonce: u64) -> u128 {
+	(u128::from(network_id.0) << 96) | (u128::from(protocol_id) << 64) | u128::from(nonce)
 }
 
 #[cfg(test)]
@@ -322,17 +341,21 @@ mod tests {
 	use super::*;
 	#[test]
 	fn devnet() {
-		let pica = generate_asset_id(0.into(), 0, 1);
-		assert_eq!(pica, 1.into());
-		let pica = generate_asset_id(1.into(), 0, 1);
-		assert_eq!(pica, 79228162514264337593543950337.into());
+		let pica_on_picasso = generate_asset_id(0.into(), 0, 1);
+		assert_eq!(pica_on_picasso, 1.into());
+		let pica_on_composable = generate_asset_id(1.into(), 0, 1);
+		assert_eq!(pica_on_composable, 79228162514264337593543950337.into());
+		let pica_on_centauri = generate_asset_id(2.into(), 0, 1);
+		assert_eq!(pica_on_centauri, 158456325028528675187087900673.into());
+		let pica_on_osmosis = generate_asset_id(3.into(), 0, 1);
+		assert_eq!(pica_on_osmosis, 237684487542793012780631851009.into());
 
-		let pica = generate_asset_id(3.into(), 0, 1);
-		assert_eq!(pica, 237684487542793012780631851009.into());
+		let uosmo_on_centauri = generate_asset_id(2.into(), 0, 2);
+		assert_eq!(uosmo_on_centauri, 158456325028528675187087900674.into());
+		let uosmo_on_osmosis = generate_asset_id(3.into(), 0, 2);
+		assert_eq!(uosmo_on_osmosis, 237684487542793012780631851010.into());
 
-		let atom = generate_asset_id(2.into(), 0, 2);
-		assert_eq!(atom, 158456325028528675187087900674.into());
-		let atom = generate_asset_id(3.into(), 0, 2);
-		assert_eq!(atom, 237684487542793012780631851010.into());
+		let pica_uosmo_on_osmosis = generate_network_prefixed_id(3.into(), 100, 1);
+		assert_eq!(pica_uosmo_on_osmosis, 237684489387467420151587012609);
 	}
 }

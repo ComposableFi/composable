@@ -1,5 +1,6 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, ... }:
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri
+    , osmosis, ... }:
     let
       env = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
@@ -83,7 +84,7 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
-        centaurid = self.inputs.devenv.lib.mkShell {
+        centauri-testnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
           modules = [{
@@ -92,12 +93,54 @@
               FEE = "ppica";
               NETWORK_ID = 2;
               CHAIN_ID = "banksy-testnet-3";
-              DIR = ".centaurid";
+              DIR = "testnet/.centaurid";
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
-              INTERPRETER =
+              INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
-              GATEWAY =
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+          }];
+        };
+
+        centauri-mainnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.centaurid ];
+            env = centauri.env.mainnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+          }];
+        };
+
+        osmosis-mainnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.osmosisd ];
+            env = osmosis.env.mainnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+          }];
+        };
+
+        osmosis-testnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.osmosisd ];
+            env = osmosis.env.testnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
           }];
