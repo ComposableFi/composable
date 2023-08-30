@@ -20,10 +20,7 @@ use cosmwasm_std::{
 };
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId};
 use xc_core::{
-	proto::{decode_packet, Encodable},
-	shared::XcPacket,
-	transport::ibc::ChannelInfo,
-	CallOrigin, XCVMAck,
+	proto::Isomorphism, shared::XcPacket, transport::ibc::ChannelInfo, CallOrigin, XCVMAck,
 };
 
 use super::make_ibc_failure_event;
@@ -94,7 +91,7 @@ pub fn ibc_packet_receive(
 ) -> Result<IbcReceiveResponse> {
 	let response = IbcReceiveResponse::default().add_event(make_event("receive"));
 	let msg = (|| -> Result<_> {
-		let packet: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
+		let packet = XcPacket::try_decode(&msg.packet.data)?;
 		let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
@@ -122,7 +119,7 @@ pub fn ibc_packet_receive(
 pub fn ibc_packet_ack(_deps: DepsMut, _env: Env, msg: IbcPacketAckMsg) -> Result<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	let _: XcPacket = decode_packet(&msg.original_packet.data).map_err(ContractError::Protobuf)?;
+	XcPacket::try_decode(&msg.original_packet.data)?;
 	Ok(IbcBasicResponse::default().add_event(make_event("ack").add_attribute("ack", ack)))
 }
 
@@ -132,7 +129,7 @@ pub fn ibc_packet_timeout(
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse> {
-	let _: XcPacket = decode_packet(&msg.packet.data).map_err(ContractError::Protobuf)?;
+	XcPacket::try_decode(&msg.packet.data)?;
 	// https://github.com/cosmos/ibc/pull/998
 	Ok(IbcBasicResponse::default())
 }

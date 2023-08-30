@@ -1,7 +1,7 @@
 use cosmwasm_std::{IbcOrder, Response, StdError};
 use ibc_rs_scale::core::ics24_host::identifier::IdentifierError;
 use thiserror::Error;
-use xc_core::{proto::DecodingFailure, AssetId, NetworkId};
+use xc_core::{AssetId, NetworkId};
 
 pub type Result<T = Response, E = ContractError> = core::result::Result<T, E>;
 
@@ -37,8 +37,8 @@ pub enum ContractError {
 	ProgramFundsDenomMappingToHostNotFound,
 	#[error("Program amount not equal to host amount")]
 	ProgramAmountNotEqualToHostAmount,
-	#[error("{0:?}")]
-	Protobuf(DecodingFailure),
+	#[error("{0}")]
+	Protobuf(xc_core::proto::DecodeError),
 	#[error("An invalid ACK was provided, this MUST be impossible.")]
 	InvalidAck,
 	#[error("An unknown reply ID was provided, this MUST be impossible.")]
@@ -78,6 +78,12 @@ pub enum ContractError {
 	GatewayForNetworkNotFound(NetworkId),
 	#[error("Anonymous calls can do only limitet set of actions")]
 	AnonymousCallsCanDoOnlyLimitedSetOfActions,
+}
+
+impl From<xc_core::proto::DecodeError> for ContractError {
+	fn from(value: xc_core::proto::DecodeError) -> Self {
+		Self::Protobuf(value)
+	}
 }
 
 impl From<bech32_no_std::Error> for ContractError {
