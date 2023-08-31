@@ -121,7 +121,7 @@ impl Backend {
 mod tests {
 	use super::Backend;
 	use crate::{
-		asset::{Asset, VALID_ASSETS},
+		asset::{Asset, INDEX_TO_ASSET},
 		backend::{FeedNotificationAction, Transition},
 		cache::{PriceCache, ThreadSafePriceCache},
 		feed::{
@@ -146,8 +146,8 @@ mod tests {
 			value: (Price(0xCAFEBABE), Exponent(0x1337)),
 			timestamp: TimeStamp::now(),
 		};
-		VALID_ASSETS.iter().for_each(|&asset| {
-			[
+		for (_, asset) in INDEX_TO_ASSET {
+			for (notification, expected) in [
 				(FeedNotification::AssetOpened { feed, asset }, None),
 				(FeedNotification::AssetClosed { feed, asset }, None),
 				(
@@ -157,23 +157,21 @@ mod tests {
 							key: asset,
 							value: timestamped_price,
 						},
-						[(asset, timestamped_price)].iter().copied().collect(),
+						[(asset, timestamped_price)],
 					)),
 				),
-			]
-			.iter()
-			.for_each(|(notification, expected)| {
+			] {
 				if let (Ok(actual_action), Some((expected_action, expected_state))) = (
-					FeedNotificationAction::<Asset, TimeStampedPrice>::try_from(*notification),
+					FeedNotificationAction::<Asset, TimeStampedPrice>::try_from(notification),
 					expected,
 				) {
-					assert_eq!(&actual_action, expected_action);
+					assert_eq!(actual_action, expected_action);
 					let mut state = HashMap::new();
 					actual_action.apply(&mut state);
-					assert_eq!(&state, expected_state);
+					assert_eq!(state, expected_state.into_iter().collect::<HashMap<_, _>>());
 				}
-			});
-		});
+			}
+		}
 	}
 
 	#[tokio::test]
@@ -182,7 +180,7 @@ mod tests {
 			|x, y| TimeStamped { value: (Price(x), Exponent(y)), timestamp: TimeStamp::now() };
 		let (price1, price2, price3) = (mk_price(123, -3), mk_price(3134, -1), mk_price(93424, -4));
 		let feed = FeedIdentifier::Binance;
-		for &asset in VALID_ASSETS.iter() {
+		for (_, asset) in INDEX_TO_ASSET {
 			let tests = [
 				(
 					vec![
