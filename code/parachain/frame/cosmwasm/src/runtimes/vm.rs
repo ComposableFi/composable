@@ -158,7 +158,7 @@ pub enum InitialStorageMutability {
 }
 
 /// VM shared cache
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CosmwasmVMCache {
 	/// Code cache, a mapping from an identifier to it's code.
 	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
@@ -181,6 +181,18 @@ pub struct CosmwasmVMShared {
 }
 
 impl CosmwasmVMShared {
+	/// Constructs a VM with given gas limits and other fields set to defaults.
+	///
+	/// The arguments have the same meaning as in [`Gas::new`] constructor.
+	pub fn with_gas(max_frames: u8, initial_value: u64) -> Self {
+		Self {
+			storage_readonly_depth: 0,
+			depth: 0,
+			gas: Gas::new(max_frames, initial_value),
+			cache: CosmwasmVMCache::default(),
+		}
+	}
+
 	/// Whether the storage is currently readonly.
 	pub fn storage_is_readonly(&self) -> bool {
 		self.storage_readonly_depth > 0

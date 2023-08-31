@@ -37,15 +37,13 @@ frame-benchmarking = { default-features = false, workspace = true, optional = tr
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex-literal = "0.3.4"
 vec1 = { version = "*", default-features = false, features = ["smallvec-v1"] }
 
 ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false, optional = false }
 pallet-ibc = { workspace = true, default-features = false }
 
-lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [
-  "spin_no_std",
-] }
 libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
@@ -81,9 +79,6 @@ composable-traits = { path = "../composable-traits", default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 common = { path = "../../runtime/common", default-features = false }
-lazy_static = { version = "1.4.0", default-features = false, features = [
-  "spin_no_std",
-] }
 num-traits = { version = "0.2.14", default-features = false }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
@@ -98,7 +93,6 @@ rand = { version = "0.8.5", default-features = false, features = [
 default = ["std"]
 
 runtime-benchmarks = [
-  "lazy_static",
   "rand",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",

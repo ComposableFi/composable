@@ -4,8 +4,8 @@ use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
 	runtimes::{
-		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas},
-		vm::{CosmwasmVMCache, CosmwasmVMShared},
+		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount},
+		vm::CosmwasmVMShared,
 	},
 	types::*,
 	Pallet as Cosmwasm,
@@ -13,7 +13,6 @@ use crate::{
 use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
-use core::cell::SyncUnsafeCell;
 use cosmwasm_std::{Coin, Reply, SubMsgResult};
 use cosmwasm_vm::system::CosmwasmContractMeta;
 use cosmwasm_vm_wasmi::code_gen::{
@@ -23,7 +22,7 @@ use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
 use frame_system::RawOrigin;
-use lazy_static::lazy_static;
+use hex_literal::hex;
 use primitives::currency::CurrencyId;
 use rand::{rngs::SmallRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
@@ -34,19 +33,19 @@ use wasm_instrument::parity_wasm::elements::{
 };
 use wasmi::{AsContext, AsContextMut};
 
-const SECP256K1_MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
-const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
-const SECP256K1_PUBLIC_KEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+const SECP256K1_MESSAGE: [u8; 128] = hex!("5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7");
+const SECP256K1_SIGNATURE: [u8; 64] = hex!("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4");
+const SECP256K1_PUBLIC_KEY: [u8; 65] = hex!("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73");
 
-const ED25519_MESSAGE_HEX: &str = "af82";
-const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
-const ED25519_PUBLIC_KEY_HEX: &str =
-	"fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
+const ED25519_MESSAGE: [u8; 2] = hex!("af82");
+const ED25519_SIGNATURE: [u8; 64] = hex!("6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a");
+const ED25519_PUBLIC_KEY: [u8; 32] =
+	hex!("fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025");
 
-const ED25519_MESSAGE2_HEX: &str = "72";
-const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
-const ED25519_PUBLIC_KEY2_HEX: &str =
-	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
+const ED25519_MESSAGE2: [u8; 1] = hex!("72");
+const ED25519_SIGNATURE2: [u8; 64] = hex!("92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00");
+const ED25519_PUBLIC_KEY2: [u8; 32] =
+	hex!("3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c");
 
 const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
@@ -54,46 +53,18 @@ const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 // This is the first index where the user defined functions start
 const EXTRA_FN_INDEX: u32 = INDEX_OF_USER_DEFINED_FNS;
 
-// Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
-// functions. The upper part is the setup and the lower part is the actual benchmark which is put
-// in a closure. Hence, the benchmark cannot reference to an object from the setup. Since the
-// closure is defined as `move ||`, it moves when references are used. But in our case, `vm` stores
-// a mutable reference to the `shared vm`. Which means it points to a local object. Following
-// alternatives are not used: 1. We could implement a trait and it could work regardless of `shared
-// vm` being reference or owned. But    this would require a lot of changes and it would be useful
-// only to benchmarks. 2. We could use `Rc<RefCell<CosmwasmVMShared>>` but this is an unnecessary
-// performance penalty.
-//
-// We also used `SyncUnsafeCell` to be able to borrow the `shared vm` as  mutable. `Mutex` could
-// have been used but again, we don't want to pay for `Mutex` during benchmarking.
-lazy_static! {
-	static ref SHARED_VM: SyncUnsafeCell<CosmwasmVMShared> = {
-		SyncUnsafeCell::new(CosmwasmVMShared {
-			storage_readonly_depth: 0,
-			depth: 0,
-			gas: Gas::new(64, u64::MAX),
-			cache: CosmwasmVMCache { code: Default::default() },
-		})
-	};
-	// ed25519_batch_verify functions gets a parameter of type `&[&[u8]]`. Since the closure
-	// cannot point to a non-static references data like explained previously, these are done
-	// globally.
-	static ref ED25519_MESSAGE: Vec<u8> = hex::decode(ED25519_MESSAGE_HEX).unwrap();
-	static ref ED25519_MESSAGE2: Vec<u8> = hex::decode(ED25519_MESSAGE2_HEX).unwrap();
-	static ref ED25519_SIGNATURE: Vec<u8> = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
-	static ref ED25519_SIGNATURE2: Vec<u8> = hex::decode(ED25519_SIGNATURE2_HEX).unwrap();
-	static ref ED25519_PUBLIC_KEY: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
-	static ref ED25519_PUBLIC_KEY2: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY2_HEX).unwrap();
-}
-
-/// Get a mutable reference to the shared vm
-fn get_shared_vm() -> &'static mut CosmwasmVMShared {
-	let mut shared = unsafe { SHARED_VM.get().as_mut().unwrap() };
-	shared.gas = Gas::new(64, u64::MAX);
-	shared.depth = 0;
-	shared.storage_readonly_depth = 0;
-	shared.cache = CosmwasmVMCache { code: Default::default() };
-	shared
+/// Construct a shared VM.
+///
+/// Substrate's benchmarks consists of two separate functions: the setup and the
+/// benchmark which is put in a `move ||` closure.  Hence, the benchmark cannot
+/// reference an object from the setup.  But in our case, `vm` stores a mutable
+/// reference to the `shared vm`.
+///
+/// To overcome that limitation, this function returns an unsafe cell allocated
+/// on heap.
+fn make_shared_vm() -> core::pin::Pin<Box<core::cell::SyncUnsafeCell<CosmwasmVMShared>>> {
+	let vm = CosmwasmVMShared::with_gas(64, u64::MAX);
+	Box::pin(core::cell::SyncUnsafeCell::new(vm))
 }
 
 /// Create a CosmWasm module with additional custom functions
@@ -270,6 +241,7 @@ where
 	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
 
 	// 3. Instantiate the contract and get the contract address
+	let shared_vm = make_shared_vm();
 	let contract_addr = setup_instantiate_call::<T>(
 		origin.clone(),
 		1,
@@ -278,7 +250,11 @@ where
 		vec![0x41_u8].try_into().unwrap(),
 	)
 	.unwrap()
-	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
+	.top_level_call(
+		unsafe { &mut *shared_vm.get() },
+		Default::default(),
+		b"message".to_vec().try_into().unwrap(),
+	)
 	.unwrap();
 
 	contract_addr
@@ -456,7 +432,8 @@ benchmarks! {
 	db_read {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_read(vm.0.data_mut(), "hello world".as_bytes()).unwrap();
 	}
@@ -464,8 +441,9 @@ benchmarks! {
 	db_read_other_contract {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-	let info = ContractToInfo::<T>::get(&contract).unwrap();
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let info = ContractToInfo::<T>::get(&contract).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_read_other_contract(vm.0.data_mut(), &info.trie_id, "hello world".as_bytes()).unwrap();
 	}
@@ -473,7 +451,8 @@ benchmarks! {
 	db_write {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}
@@ -481,7 +460,8 @@ benchmarks! {
 	db_scan {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
 	}
@@ -489,7 +469,8 @@ benchmarks! {
 	db_next {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 		let iterator = Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_next(vm.0.data_mut(), iterator).unwrap();
@@ -498,7 +479,8 @@ benchmarks! {
 	db_remove {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_db_remove(vm.0.data_mut(), "hello".as_bytes());
@@ -522,7 +504,8 @@ benchmarks! {
 	set_contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_set_contract_meta(&contract, 1, None, "hello world".into()).unwrap()
 	}
@@ -530,7 +513,8 @@ benchmarks! {
 	running_contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_running_contract_meta(vm.0.data_mut())
 	}
@@ -538,7 +522,8 @@ benchmarks! {
 	contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_contract_meta(contract).unwrap();
 	}
@@ -566,8 +551,7 @@ benchmarks! {
 
 	secp256k1_recover_pubkey {
 		let message = "connect all the things";
-		let signature_hex = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4";
-		let signature = hex::decode(signature_hex).unwrap();
+		let signature = hex!("dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4");
 		let mut hasher = Keccak256::new();
 		hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
 		hasher.update(message);
@@ -577,26 +561,26 @@ benchmarks! {
 	}
 
 	secp256k1_verify {
-		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
+		let message = SECP256K1_MESSAGE;
 		let message_hash = Sha256::digest(message);
-		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
+		let signature = SECP256K1_SIGNATURE;
+		let public_key = SECP256K1_PUBLIC_KEY;
 	}: {
 		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key);
 	}
 
 	ed25519_verify {
-		let message = ED25519_MESSAGE.as_slice();
-		let signature = ED25519_SIGNATURE.as_slice();
-		let public_key = ED25519_PUBLIC_KEY.as_slice();
+		let message = ED25519_MESSAGE;
+		let signature = ED25519_SIGNATURE;
+		let public_key = ED25519_PUBLIC_KEY;
 	}: {
-		Cosmwasm::<T>::do_ed25519_verify(message, signature, public_key)
+		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
 	}
 
 	ed25519_batch_verify {
-		let messages = vec![ED25519_MESSAGE.as_slice(), ED25519_MESSAGE2.as_slice()];
-		let signatures = vec![ED25519_SIGNATURE.as_slice(), ED25519_SIGNATURE2.as_slice()];
-		let public_keys = vec![ED25519_PUBLIC_KEY.as_slice(), ED25519_PUBLIC_KEY2.as_slice()];
+		let messages = [&ED25519_MESSAGE[..], &ED25519_MESSAGE2[..]];
+		let signatures = [&ED25519_SIGNATURE[..], &ED25519_SIGNATURE2[..]];
+		let public_keys = [&ED25519_PUBLIC_KEY[..], &ED25519_PUBLIC_KEY2[..]];
 	}: {
 		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys);
 	}
@@ -608,7 +592,8 @@ benchmarks! {
 	let info = ContractToInfo::<T>::get(&contract).unwrap();
 		let meta: CosmwasmContractMeta<CosmwasmAccount<T>> = CosmwasmContractMeta { code_id: info.code_id, admin: None, label: String::from("test")};
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
@@ -618,7 +603,8 @@ benchmarks! {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_execute(vm.0.data_mut(), contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
@@ -626,7 +612,8 @@ benchmarks! {
 	continue_migrate {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_migrate(vm.0.data_mut(), contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
 	}
@@ -634,7 +621,8 @@ benchmarks! {
 	continue_query {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_query(vm.0.data_mut(), contract, "{}".as_bytes()).unwrap();
 	}
@@ -642,7 +630,8 @@ benchmarks! {
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
 	}
@@ -650,7 +639,8 @@ benchmarks! {
 	query_contract_info {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 	}: {
 		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
 	}
@@ -665,7 +655,8 @@ benchmarks! {
 	query_raw {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let shared_vm = make_shared_vm();
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).unwrap();
 		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
 	}: {
 		Cosmwasm::<T>::do_query_raw(vm.0.data_mut(), contract, "hello".as_bytes()).unwrap();

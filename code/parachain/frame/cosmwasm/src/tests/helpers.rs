@@ -1,8 +1,8 @@
 #![allow(clippy::disallowed_methods)]
 
 use crate::{
-	mock::*, setup_instantiate_call, CosmwasmVMCache, CosmwasmVMShared, CurrentCodeId,
-	DefaultCosmwasmVM, FundsOf, Gas, Pallet as Cosmwasm,
+	mock::*, setup_instantiate_call, CosmwasmVMShared, CurrentCodeId, DefaultCosmwasmVM, FundsOf,
+	Pallet as Cosmwasm,
 };
 use alloc::collections::BTreeMap;
 use cosmwasm_std::{Coin, ContractResult, Empty, Response};
@@ -21,12 +21,7 @@ pub fn charged_gas(vm: &mut OwnedWasmiVM<DefaultCosmwasmVM<Test>>, previous_gas:
 }
 
 pub fn create_vm() -> CosmwasmVMShared {
-	CosmwasmVMShared {
-		storage_readonly_depth: 0,
-		depth: 0,
-		gas: Gas::new(64, u64::MAX),
-		cache: CosmwasmVMCache { code: Default::default() },
-	}
+	CosmwasmVMShared::with_gas(64, u64::MAX)
 }
 
 pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
