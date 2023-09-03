@@ -1,10 +1,14 @@
 syntax = "proto3";
 
-package xc;
+import "common.proto";
+
+package cvm.xcvm;
 
 message PacketAsset {
   AssetId assetId = 1;
-  Uint128 amount = 2;
+  cvm.common.Uint128 amount = 2;
+
+  // next tag: 3
 }
 
 message Packet {
@@ -13,25 +17,28 @@ message Packet {
   Salt salt = 3;
   Program program = 4;
   repeated PacketAsset assets = 5;
+
+  // next tag: 6
 }
 
 message UserOrigin {
   Network network = 1;
   Account account = 2;
-}
 
-message Uint128 {
-  uint64 highBits = 1;
-  uint64 lowBits = 2;
+  // next tag: 3
 }
 
 message Program {
   bytes tag = 1;
   Instructions instructions = 2;
+
+  // next tag: 3
 }
 
 message Instructions {
   repeated Instruction instructions = 1;
+
+  // next tag: 2
 }
 
 message Instruction {
@@ -41,21 +48,29 @@ message Instruction {
     Call call = 3;
     Exchange exchange = 4;
   }
+
+  // next tag: 5
 }
 
 
 message Ratio {
   uint64 nominator = 1;
   uint64 denominator = 2;
+
+  // next tag: 3
 }
 
 message Unit {
-  Uint128 integer = 1;
+  cvm.common.Uint128 integer = 1;
   Ratio ratio = 2;
+
+  // next tag: 3
 }
 
 message Absolute {
-  Uint128 value = 1;
+  cvm.common.Uint128 value = 1;
+
+  // next tag: 2
 }
 
 message Balance {
@@ -64,45 +79,64 @@ message Balance {
     Absolute absolute = 2;
     Unit unit = 3;
   }
+
+  // next tag: 4
 }
 
 message Account {
   bytes account = 1;
+
+  // next tag: 2
 }
 
 message AssetId {
-  Uint128 id = 1;
+  cvm.common.Uint128 id = 1;
+
+  // next tag: 2
 }
 
 message ExchangeId {
-  Uint128 id = 1;
+  cvm.common.Uint128 id = 1;
+
+  // next tag: 2
 }
 
 message Asset {
   AssetId assetId = 1;
   Balance balance = 2;
+
+  // next tag: 3
 }
 
 message Self {
   uint32 self = 1;
+
+  // next tag: 2
 }
 
 message Tip {
   uint32 id = 1;
+
+  // next tag: 2
 }
 
 message Result {
   uint32 result = 1;
-}
 
+  // next tag: 2
+}
 
 message AssetAmount {
   AssetId assetId = 1;
   Balance balance = 2;
+
+  // next tag: 3
 }
 
 message IpRegister {
   uint64 ip = 1;
+
+  // next tag: 2
 }
 
 message BindingValue {
@@ -114,15 +148,21 @@ message BindingValue {
     AssetId assetId = 5;
     IpRegister ipRegister = 6;
   }
+
+  // next tag: 7
 }
 
 message Binding {
   uint32 position = 1;
   BindingValue bindingValue = 2;
+
+  // next tag: 3
 }
 
 message Bindings {
   repeated Binding bindings = 1;
+
+  // next tag: 2
 }
 
 message Transfer {
@@ -131,20 +171,28 @@ message Transfer {
     Tip tip = 2;
   }
   repeated Asset assets = 3;
+
+  // next tag: 4
 }
 
-message Exchange {      
-  ExchangeId id = 1; 
+message Exchange {
+  ExchangeId id = 1;
   repeated Asset give = 5;
   repeated Asset want = 6;
+
+  // next tag: 7
 }
 
 message Salt {
   bytes salt = 1;
+
+  // next tag: 2
 }
 
 message Network {
   uint32 networkId = 1;
+
+  // next tag: 2
 }
 
 message Spawn {
@@ -152,9 +200,13 @@ message Spawn {
   Salt salt = 3;
   Program program = 4;
   repeated Asset assets = 5;
+
+  // next tag: 6
 }
 
 message Call {
   bytes payload = 1;
   Bindings bindings = 2;
+
+  // next tag: 3
 }

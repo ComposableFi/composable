@@ -250,7 +250,7 @@ impl_conversions!(Displayed<u128> => u128, Displayed<u64> => u64);
 #[cfg(feature = "cosmwasm")]
 impl_conversions!(cosmwasm_std::Uint128 = Displayed<u128>,
                   cosmwasm_std::Uint64 = Displayed<u64>);
-impl_conversions!(crate::proto::Uint128 = Displayed<u128>);
+impl_conversions!(crate::proto::pb::common::Uint128 = Displayed<u128>);
 
 impl<T: core::cmp::PartialEq> core::cmp::PartialEq<T> for Displayed<T> {
 	fn eq(&self, rhs: &T) -> bool {
