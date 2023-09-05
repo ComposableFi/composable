@@ -3,7 +3,7 @@ use crate::{fees::NativeBalance, prelude::*, AccountId, Balance};
 use frame_support::{
 	dispatch::Weight,
 	log, match_types, parameter_types,
-	traits::{tokens::BalanceConversion, Contains, Get},
+	traits::{tokens::BalanceConversion, Contains, Get, PalletInfoAccess},
 	weights::{WeightToFee, WeightToFeePolynomial},
 };
 use num_traits::{One, Zero};
@@ -178,45 +178,49 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId>(
-	PhantomData<(AssetRegistry, WellKnownCurrency, ThisParaId)>,
+pub struct CurrencyIdConvert<ForeignAssetsToXcm, WellKnownCurrency, AssetsRegistry, ThisParaId>(
+	PhantomData<(ForeignAssetsToXcm, WellKnownCurrency, AssetsRegistry, ThisParaId)>,
 );
 
 impl<
-		AssetRegistry: Convert<CurrencyId, Option<MultiLocation>>,
+		ForeignAssetsToXcm: Convert<CurrencyId, Option<MultiLocation>>,
 		WellKnown: WellKnownCurrency,
+		AssetsRegistry: PalletInfoAccess,
 		ThisParaId: Get<Id>,
 	> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
-	for CurrencyIdConvert<AssetRegistry, WellKnown, ThisParaId>
+	for CurrencyIdConvert<ForeignAssetsToXcm, WellKnown, AssetsRegistry, ThisParaId>
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		WellKnown::local_to_remote(id).or_else(|| AssetRegistry::convert(id))
+		WellKnown::local_to_remote(id).or_else(|| ForeignAssetsToXcm::convert(id))
 	}
 }
 
 impl<
-		AssetsRegistry: Convert<MultiLocation, Option<CurrencyId>>,
+		ForeignAssetsToXcm: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
+		AssetsRegistry: PalletInfoAccess,
 		ThisParaId: Get<Id>,
 	> Convert<MultiLocation, Option<CurrencyId>>
-	for CurrencyIdConvert<AssetsRegistry, WellKnown, ThisParaId>
+	for CurrencyIdConvert<ForeignAssetsToXcm, WellKnown, AssetsRegistry, ThisParaId>
 {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp::convert", "converting {:?} on {:?}", &location, ThisParaId::get());
 		match location {
 			topology::relay::LOCATION => Some(WellKnown::RELAY_NATIVE),
 			topology::this::LOCAL => Some(WellKnown::NATIVE),
-			MultiLocation { parents, interior: X2(Parachain(id), GeneralIndex(index)) }
-				if parents == 1 && Id::from(id) == ThisParaId::get() =>
-				Some(CurrencyId(index)),
-			MultiLocation { parents: 0, interior: X1(GeneralIndex(index)) } =>
+			MultiLocation {
+				parents,
+				interior: X3(Parachain(id), PalletInstance(pallet_index), GeneralIndex(index)),
+			} if parents == 1 &&
+				Id::from(id) == ThisParaId::get() &&
+				pallet_index == AssetsRegistry::index() as u8 =>
 				Some(CurrencyId(index)),
 			_ =>
 				if let Some(currency_id) = WellKnown::remote_to_local(location) {
 					Some(currency_id)
 				} else {
 					log::trace!(target: "xcmp", "using assets registry for {:?}", location);
-					let result = AssetsRegistry::convert(location).map(Into::into);
+					let result = ForeignAssetsToXcm::convert(location).map(Into::into);
 					if let Some(result) = result {
 						log::trace!(target: "xcmp", "mapped remote to {:?} local", result);
 					} else {
@@ -230,10 +234,12 @@ impl<
 }
 
 impl<
-		T: Convert<MultiLocation, Option<CurrencyId>>,
+		ForeignAssetsToXcm: Convert<MultiLocation, Option<CurrencyId>>,
 		WellKnown: WellKnownCurrency,
+		AssetsRegistry: PalletInfoAccess,
 		ThisParaId: Get<Id>,
-	> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T, WellKnown, ThisParaId>
+	> Convert<MultiAsset, Option<CurrencyId>>
+	for CurrencyIdConvert<ForeignAssetsToXcm, WellKnown, AssetsRegistry, ThisParaId>
 {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		log::trace!(target: "xcmp", "converting {:?}", &asset);
