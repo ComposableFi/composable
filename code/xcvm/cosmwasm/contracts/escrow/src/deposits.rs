@@ -161,10 +161,15 @@ pub(crate) fn handle_deposit_done(
 	packet: msg::accounts::DepositNotificationPacket,
 	ack: Option<Binary>,
 ) -> Result<IbcBasicResponse> {
-	let ack = ack.map(|binary| ibc::decode::<bool>(binary)).transpose()?;
-	let (ok, result) = match ack {
-		Some(ok) => (ok, if ok { "OK" } else { "KO" }),
-		None => (false, "TO"),
+	let (ok, result) = if let Some(ack) = ack {
+		if let Err(msg) = ibc::decode::<Result<(), String>>(&ack)? {
+			deps.api.debug(&msg);
+			(false, "err")
+		} else {
+			(true, "ok")
+		}
+	} else {
+		(false, "timeout")
 	};
 
 	let key = PENDING_DEPOSITS.key(packet.deposit_id.into());

@@ -23,6 +23,8 @@ pub enum ContractError {
 	InvalidIbcOrdering(IbcOrder),
 	#[error("Invalid packet.")]
 	InvalidPacket,
+	#[error("Remote contract error: {0}")]
+	RemoteContractError(String),
 
 	#[error("Accounts contract not found")]
 	NoAccountsContract,

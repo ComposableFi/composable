@@ -3296,6 +3296,8 @@ dependencies = [
  "cw2",
  "derive_more 1.0.0-beta.2",
  "parity-scale-codec",
+ "serde",
+ "serde-json-wasm",
  "strum 0.25.0",
  "thiserror-core",
  "xc-core",

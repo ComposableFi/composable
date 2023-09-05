@@ -1,6 +1,5 @@
 use alloc::{string::String, vec::Vec};
 
-use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 use crate::{AssetId, NetworkId};
@@ -99,7 +98,7 @@ pub struct RemoteAddress {
 ///
 /// The rquest fails if the account has any pending problems or locked
 /// assets, account holds funds and the beneficiary account doesn’t exist.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DropAccountRequest {
@@ -126,7 +125,7 @@ pub struct AssetBalance {
 /// Sends a solution for the virtual wallet to execute.
 ///
 /// The solution involves swapping account balances and executing XCVM programs.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct ExecuteSolutionRequest {
@@ -143,11 +142,7 @@ pub struct ExecuteSolutionResponse {
 
 /// Message from escrow contract to wallet contact updating balances for
 /// given `account`.
-///
-/// In acknowledgement, the contract responses with a single boolean value
-/// indicating whether the deposit was accepted.  If it wasn’t, escrow contract
-/// must refund funds to the sender.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct DepositNotificationPacket {
@@ -161,7 +156,7 @@ pub struct DepositNotificationPacket {
 }
 
 /// Message from escrow contract to accounts contract relaying user request.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct RelayedRequestPacket {
@@ -176,7 +171,7 @@ pub struct RelayedRequestPacket {
 }
 
 /// Request which can be relayed to the accounts contract.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum RelayedRequest {
@@ -185,7 +180,7 @@ pub enum RelayedRequest {
 }
 
 /// A cross-chain packet that the contract accepts.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode, derive_more::From)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, derive_more::From)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum Packet {
