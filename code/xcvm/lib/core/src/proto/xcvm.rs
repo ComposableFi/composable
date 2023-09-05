@@ -36,48 +36,6 @@ where
 	type Message = pb::xcvm::Packet;
 }
 
-impl From<Vec<u8>> for pb::xcvm::Salt {
-	fn from(value: Vec<u8>) -> Self {
-		Self { salt: value }
-	}
-}
-
-impl From<crate::UserId> for pb::xcvm::Account {
-	fn from(crate::UserId(account): crate::UserId) -> Self {
-		Self { account }
-	}
-}
-
-impl From<crate::UserOrigin> for pb::xcvm::UserOrigin {
-	fn from(value: crate::UserOrigin) -> Self {
-		Self { network: Some(value.network_id.into()), account: Some(value.user_id.into()) }
-	}
-}
-
-impl From<(crate::AssetId, Displayed<u128>)> for pb::xcvm::PacketAsset {
-	fn from((asset, amount): (crate::AssetId, Displayed<u128>)) -> Self {
-		Self { asset_id: Some(asset.into()), amount: Some(amount.into()) }
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<XCVMPacket<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::Packet
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(value: XCVMPacket<TAbiEncoded, TAccount, TAssets>) -> Self {
-		Self {
-			interpreter: Some(pb::xcvm::Account { account: value.interpreter }),
-			user_origin: Some(value.user_origin.into()),
-			salt: Some(value.salt.into()),
-			program: Some(value.program.into()),
-			assets: value.assets.0.into_iter().map(pb::xcvm::PacketAsset::from).collect(),
-		}
-	}
-}
-
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
 	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
@@ -88,23 +46,15 @@ where
 	type Message = pb::xcvm::Program;
 }
 
-impl TryFrom<pb::xcvm::UserOrigin> for crate::UserOrigin {
-	type Error = ();
-	fn try_from(value: pb::xcvm::UserOrigin) -> Result<Self, Self::Error> {
-		Ok(crate::UserOrigin {
-			network_id: value.network.ok_or(())?.network_id.into(),
-			user_id: value.account.ok_or(())?.account.into(),
-		})
+impl From<Vec<u8>> for pb::xcvm::Salt {
+	fn from(value: Vec<u8>) -> Self {
+		Self { salt: value }
 	}
 }
 
-impl TryFrom<pb::xcvm::PacketAsset> for (crate::AssetId, Displayed<u128>) {
-	type Error = ();
-	fn try_from(value: pb::xcvm::PacketAsset) -> Result<Self, Self::Error> {
-		Ok((
-			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.id.ok_or(())?)),
-			value.amount.ok_or(())?.into(),
-		))
+impl From<crate::UserId> for pb::xcvm::Account {
+	fn from(crate::UserId(account): crate::UserId) -> Self {
+		Self { account }
 	}
 }
 
@@ -134,6 +84,52 @@ where
 	}
 }
 
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMPacket<TAbiEncoded, TAccount, TAssets>>
+	for pb::xcvm::Packet
+where
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	fn from(value: XCVMPacket<TAbiEncoded, TAccount, TAssets>) -> Self {
+		Self {
+			interpreter: Some(pb::xcvm::Account { account: value.interpreter }),
+			user_origin: Some(value.user_origin.into()),
+			salt: Some(value.salt.into()),
+			program: Some(value.program.into()),
+			assets: value.assets.0.into_iter().map(pb::xcvm::PacketAsset::from).collect(),
+		}
+	}
+}
+
+super::define_conversion! {
+	(value: pb::xcvm::UserOrigin) -> {
+		Ok(crate::UserOrigin {
+			network_id: value.network.ok_or(())?.network_id.into(),
+			user_id: value.account.ok_or(())?.account.into(),
+		})
+	}
+	(value: crate::UserOrigin) -> {
+		Self {
+			network: Some(value.network_id.into()),
+			account: Some(value.user_id.into()),
+		}
+	}
+}
+
+super::define_conversion! {
+	(value: pb::xcvm::PacketAsset) -> {
+		Ok((
+			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.id.ok_or(())?)),
+			value.amount.ok_or(())?.into(),
+		))
+	}
+	(value: (crate::AssetId, Displayed<u128>)) -> {
+		let (asset, amount) = value;
+		Self { asset_id: Some(asset.into()), amount: Some(amount.into()) }
+	}
+}
+
 impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Program>
 	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
@@ -148,6 +144,23 @@ where
 			tag: program.tag,
 			instructions: program.instructions.ok_or(())?.try_into()?,
 		})
+	}
+}
+
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>>
+	for pb::xcvm::Program
+where
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
+		Self {
+			tag: program.tag,
+			instructions: Some(pb::xcvm::Instructions {
+				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
+			}),
+		}
 	}
 }
 
@@ -232,18 +245,17 @@ impl TryFrom<pb::xcvm::Bindings> for crate::Bindings {
 	}
 }
 
-impl TryFrom<pb::xcvm::BindingValue> for crate::BindingValue {
-	type Error = ();
-
-	fn try_from(binding_value: pb::xcvm::BindingValue) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(binding_value: pb::xcvm::BindingValue) -> {
 		binding_value.r#type.ok_or(())?.try_into()
+	}
+	(binding_value: crate::BindingValue) -> {
+		Self { r#type: Some(binding_value.into()) }
 	}
 }
 
-impl TryFrom<pb::xcvm::binding_value::Type> for crate::BindingValue {
-	type Error = ();
-
-	fn try_from(binding_val: pb::xcvm::binding_value::Type) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(binding_val: pb::xcvm::binding_value::Type) -> {
 		use pb::xcvm::binding_value::Type;
 		Ok(match binding_val {
 			Type::Self_(_) => crate::BindingValue::Register(crate::Register::This),
@@ -257,6 +269,25 @@ impl TryFrom<pb::xcvm::binding_value::Type> for crate::BindingValue {
 				),
 			Type::AssetId(asset_id) => crate::BindingValue::Asset(asset_id.try_into()?),
 		})
+	}
+
+	(binding_value: crate::BindingValue) -> {
+		match binding_value {
+			crate::BindingValue::Register(crate::Register::Ip) =>
+				Self::IpRegister(pb::xcvm::IpRegister { ip: 0 }),
+			crate::BindingValue::Register(crate::Register::Tip) =>
+				Self::Tip(pb::xcvm::Tip { id: 0 }),
+			crate::BindingValue::Register(crate::Register::Result) =>
+				Self::Result(pb::xcvm::Result { result: 0 }),
+			crate::BindingValue::Register(crate::Register::This) =>
+				Self::Self_(pb::xcvm::Self_ { self_: 0 }),
+			crate::BindingValue::Asset(asset_id) => Self::AssetId(asset_id.into()),
+			crate::BindingValue::AssetAmount(asset_id, balance) =>
+				Self::AssetAmount(pb::xcvm::AssetAmount {
+					asset_id: Some(asset_id.into()),
+					balance: Some(balance.into()),
+				}),
+		}
 	}
 }
 
@@ -361,29 +392,29 @@ where
 	}
 }
 
-impl TryFrom<pb::xcvm::Asset> for (crate::AssetId, crate::Balance) {
-	type Error = ();
-
-	fn try_from(asset: pb::xcvm::Asset) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(asset: pb::xcvm::Asset) -> {
 		let asset_id = asset.asset_id.ok_or(())?.try_into()?;
 		let amount = asset.balance.ok_or(())?.try_into()?;
-
 		Ok((asset_id, amount))
 	}
-}
-
-impl TryFrom<pb::xcvm::AssetId> for crate::AssetId {
-	type Error = ();
-
-	fn try_from(asset_id: pb::xcvm::AssetId) -> Result<Self, Self::Error> {
-		Ok(crate::AssetId(asset_id.id.ok_or(())?.into()))
+	(value: (crate::AssetId, crate::Balance)) -> {
+		let (asset_id, amount) = value;
+		Self { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
 	}
 }
 
-impl TryFrom<pb::xcvm::Balance> for crate::Balance {
-	type Error = ();
+super::define_conversion! {
+	(asset_id: pb::xcvm::AssetId) -> {
+		Ok(crate::AssetId(asset_id.id.ok_or(())?.into()))
+	}
+	(asset_id: crate::AssetId) -> {
+		Self { id: Some(asset_id.0 .0.into()) }
+	}
+}
 
-	fn try_from(balance: pb::xcvm::Balance) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(balance: pb::xcvm::Balance) -> {
 		use pb::xcvm::balance::BalanceType;
 
 		let balance_type = balance.balance_type.ok_or(())?;
@@ -396,6 +427,35 @@ impl TryFrom<pb::xcvm::Balance> for crate::Balance {
 			},
 			BalanceType::Unit(unit) => unit.try_into(),
 		}
+	}
+
+	(balance: crate::Balance) ->  {
+		// Note that although functionally nothing changes, there is no
+		// guarantee of getting the same protobuf when you convert protobuf to
+		// XCVM types and convert back again. Because `intercept = 0 & ratio =
+		// 0` is always converted to `Absolute`. But this can be also expressed
+		// with `Ratio` and `Unit` as well. Also, since the ratio is expanded to
+		// use denominator `MAX_PARTS`, it also won't be the same.
+
+		let balance_type = if balance.is_unit {
+			pb::xcvm::balance::BalanceType::Unit(pb::xcvm::Unit {
+				integer: Some(balance.amount.intercept.0.into()),
+				ratio: Some(pb::xcvm::Ratio {
+					nominator: balance.amount.slope.0,
+					denominator: Amount::MAX_PARTS,
+				}),
+			})
+		} else if balance.amount.is_absolute() {
+			pb::xcvm::balance::BalanceType::Absolute(pb::xcvm::Absolute {
+				value: Some(balance.amount.intercept.0.into()),
+			})
+		} else {
+			pb::xcvm::balance::BalanceType::Ratio(pb::xcvm::Ratio {
+				nominator: balance.amount.slope.0,
+				denominator: Amount::MAX_PARTS,
+			})
+		};
+		Self { balance_type: Some(balance_type) }
 	}
 }
 
@@ -422,75 +482,6 @@ impl TryFrom<pb::xcvm::Unit> for crate::Balance {
 			),
 			true,
 		))
-	}
-}
-
-impl From<crate::Balance> for pb::xcvm::Balance {
-	fn from(balance: crate::Balance) -> Self {
-		// Note that although functionally nothing changes, there is no guarantee of getting the
-		// same protobuf when you convert protobuf to XCVM types and convert back again. Because
-		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also
-		// expressed with `Ratio` and `Unit` as well. Also, since the ratio is expanded to use
-		// denominator `MAX_PARTS`, it also won't be the same.
-
-		let balance_type = if balance.is_unit {
-			pb::xcvm::balance::BalanceType::Unit(pb::xcvm::Unit {
-				integer: Some(balance.amount.intercept.0.into()),
-				ratio: Some(pb::xcvm::Ratio {
-					nominator: balance.amount.slope.0,
-					denominator: Amount::MAX_PARTS,
-				}),
-			})
-		} else if balance.amount.is_absolute() {
-			pb::xcvm::balance::BalanceType::Absolute(pb::xcvm::Absolute {
-				value: Some(balance.amount.intercept.0.into()),
-			})
-		} else {
-			pb::xcvm::balance::BalanceType::Ratio(pb::xcvm::Ratio {
-				nominator: balance.amount.slope.0,
-				denominator: Amount::MAX_PARTS,
-			})
-		};
-		Self { balance_type: Some(balance_type) }
-	}
-}
-
-impl From<crate::AssetId> for pb::xcvm::AssetId {
-	fn from(asset_id: crate::AssetId) -> Self {
-		Self { id: Some(asset_id.0 .0.into()) }
-	}
-}
-
-impl From<(crate::AssetId, crate::Balance)> for pb::xcvm::Asset {
-	fn from((asset_id, amount): (crate::AssetId, crate::Balance)) -> Self {
-		Self { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
-	}
-}
-
-impl From<crate::BindingValue> for pb::xcvm::binding_value::Type {
-	fn from(binding_value: crate::BindingValue) -> Self {
-		match binding_value {
-			crate::BindingValue::Register(crate::Register::Ip) =>
-				Self::IpRegister(pb::xcvm::IpRegister { ip: 0 }),
-			crate::BindingValue::Register(crate::Register::Tip) =>
-				Self::Tip(pb::xcvm::Tip { id: 0 }),
-			crate::BindingValue::Register(crate::Register::Result) =>
-				Self::Result(pb::xcvm::Result { result: 0 }),
-			crate::BindingValue::Register(crate::Register::This) =>
-				Self::Self_(pb::xcvm::Self_ { self_: 0 }),
-			crate::BindingValue::Asset(asset_id) => Self::AssetId(asset_id.into()),
-			crate::BindingValue::AssetAmount(asset_id, balance) =>
-				Self::AssetAmount(pb::xcvm::AssetAmount {
-					asset_id: Some(asset_id.into()),
-					balance: Some(balance.into()),
-				}),
-		}
-	}
-}
-
-impl From<crate::BindingValue> for pb::xcvm::BindingValue {
-	fn from(binding_value: crate::BindingValue) -> Self {
-		Self { r#type: Some(binding_value.into()) }
 	}
 }
 
@@ -563,23 +554,6 @@ where
 {
 	fn from(instruction: crate::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
 		Self { instruction: Some(instruction.into()) }
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::Program
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
-		Self {
-			tag: program.tag,
-			instructions: Some(pb::xcvm::Instructions {
-				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
-			}),
-		}
 	}
 }
 
