@@ -81,7 +81,7 @@ benchmarking = { package = "frame-benchmarking", git = "https://github.com/parit
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
-hex-literal = { version = "0.3.3", optional = true }
+hex-literal = { workspace = true, optional = true }
 system-benchmarking = { package = "frame-system-benchmarking", git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.36" }
 
 # Parachain Utilities
