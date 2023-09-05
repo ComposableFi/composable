@@ -144,7 +144,6 @@ impl CurrencyId {
 		pub const KSM: CurrencyId = CurrencyId(
 			4
 		);
-		pub const COMPOSABLE_KSM: CurrencyId = CurrencyId(79228162514264337593543950340);
 
 		// From Picasso
 		pub const PBLO: CurrencyId = CurrencyId(

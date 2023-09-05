@@ -111,10 +111,6 @@ orml-xtokens = { workspace = true, default-features = false }
 ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
-ibc-rs-scale = { workspace = true, default-features = false, features = [
-  "parity-scale-codec",
-  "serde",
-] }
 pallet-ibc = { workspace = true, default-features = false }
 
 pallet-proxy = { default-features = false, workspace = true }
