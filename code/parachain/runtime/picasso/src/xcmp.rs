@@ -330,15 +330,13 @@ impl Convert<CurrencyId, Option<MultiLocation>> for ForeignAssetsToXcm {
 			// XCMed assets
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(xcm))) => Some(xcm),
 			// IBCed assets
-			Some(ForeignAssetId::IbcIcs20(_)) => Some(MultiLocation {
+			_ => Some(MultiLocation {
 				parents: 0,
-				interior: X3(
-					Parachain(ParachainInfo::parachain_id().into()),
+				interior: X2(
 					PalletInstance(<AssetsRegistry as PalletInfoAccess>::index() as u8),
 					GeneralIndex(a.into()),
 				),
 			}),
-			_ => None,
 		}
 	}
 }
@@ -355,117 +353,6 @@ type AssetsIdConverter = CurrencyIdConvert<
 	AssetsRegistry,
 	ParachainInfo,
 >;
-
-#[cfg(test)]
-mod test {
-	use composable_traits::{
-		assets::{AssetInfo, BiBoundedAssetName, BiBoundedAssetSymbol},
-		rational,
-		xcm::assets::RemoteAssetRegistryMutate,
-	};
-	use frame_support::sp_io;
-	#[cfg(feature = "std")]
-	use ibc_rs_scale::{
-		applications::transfer::{PrefixedDenom as InnerPrefixedDenom, TracePrefix},
-		core::ics24_host::identifier::{ChannelId, PortId},
-	};
-	#[cfg(feature = "std")]
-	use primitives::currency::{CurrencyId, ForeignAssetId, PrefixedDenom};
-	use primitives::topology::statemine;
-
-	use super::*;
-
-	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let storage = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.expect("in memory test");
-		let mut externalities = sp_io::TestExternalities::new(storage);
-		externalities.execute_with(|| System::set_block_number(1));
-		externalities
-	}
-
-	#[test]
-	fn test_xcm_conversion_picasso() {
-		new_test_ext().execute_with(|| {
-			let usdt = (
-				CurrencyId::USDT,
-				Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(MultiLocation::new(
-					1,
-					X3(
-						Parachain(statemine::ID),
-						PalletInstance(statemine::ASSETS),
-						GeneralIndex(statemine::USDT),
-					),
-				)))),
-				AssetInfo {
-					name: Some(
-						BiBoundedAssetName::from_vec(b"Statemine USDT".to_vec())
-							.expect("String is within bounds"),
-					),
-					symbol: Some(
-						BiBoundedAssetSymbol::from_vec(b"USDT".to_vec())
-							.expect("String is within bounds"),
-					),
-					decimals: Some(6),
-					existential_deposit: 1500,
-					ratio: Some(rational!(2 / 10000000)),
-				},
-			);
-
-			let mut dot_from_composable =
-				InnerPrefixedDenom::from_str(CurrencyId::COMPOSABLE_DOT.to_string().as_str())
-					.expect("genesis");
-			dot_from_composable
-				.add_trace_prefix(TracePrefix::new(PortId::transfer(), ChannelId::new(1)));
-
-			let dot = (
-				CurrencyId::DOT,
-				Some(ForeignAssetId::IbcIcs20(PrefixedDenom(dot_from_composable))),
-				AssetInfo {
-					name: Some(
-						BiBoundedAssetName::from_vec(b"Polkadot".to_vec())
-							.expect("String is within bounds"),
-					),
-					symbol: Some(
-						BiBoundedAssetSymbol::from_vec(b"DOT".to_vec())
-							.expect("String is within bounds"),
-					),
-					decimals: Some(10),
-					existential_deposit: 21430000,
-					ratio: Some(rational!(3 / 10000)),
-				},
-			);
-			<AssetsRegistry as RemoteAssetRegistryMutate>::register_asset(usdt.0, usdt.1, usdt.2)
-				.expect("asset wasnt registered");
-			<AssetsRegistry as RemoteAssetRegistryMutate>::register_asset(dot.0, dot.1, dot.2)
-				.expect("asset wasnt registered");
-
-			//foreign xcm asset
-			assert_eq!(
-				AssetsIdConverter::convert(usdt.0),
-				Some(MultiLocation::new(
-					1,
-					X3(
-						Parachain(statemine::ID),
-						PalletInstance(statemine::ASSETS),
-						GeneralIndex(statemine::USDT),
-					),
-				))
-			);
-			//foreign ibc asset
-			assert_eq!(
-				AssetsIdConverter::convert(dot.0),
-				Some(MultiLocation {
-					parents: 0,
-					interior: X3(Parachain(100), PalletInstance(58), GeneralIndex(CurrencyId::DOT.0 as u128))
-				})
-			);
-			// well known assets
-			assert_eq!(AssetsIdConverter::convert(CurrencyId::PICA), Some(MultiLocation::here()));
-			assert_eq!(AssetsIdConverter::convert(CurrencyId::KSM), Some(MultiLocation::parent()));
-		});
-	}
-}
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

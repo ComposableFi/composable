@@ -215,6 +215,12 @@ impl<
 				Id::from(id) == ThisParaId::get() &&
 				pallet_index == AssetsRegistry::index() as u8 =>
 				Some(CurrencyId(index)),
+			MultiLocation {
+					parents,
+					interior: X2(PalletInstance(pallet_index), GeneralIndex(index)),
+				} if parents == 0 &&
+					pallet_index == AssetsRegistry::index() as u8 =>
+					Some(CurrencyId(index)),
 			_ =>
 				if let Some(currency_id) = WellKnown::remote_to_local(location) {
 					Some(currency_id)
