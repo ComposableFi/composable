@@ -129,6 +129,7 @@
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
+            enterShell = "osmosisd set-env mainnet";
           }];
         };
 
@@ -141,7 +142,7 @@
               INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";              
             };
           }];
         };
