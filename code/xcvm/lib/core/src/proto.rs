@@ -82,6 +82,8 @@ macro_rules! define_conversion {
 	}
 }
 
+use define_conversion;
+
 /// Maps elements of one sequence and produces the other.
 ///
 /// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
@@ -121,8 +123,6 @@ impl NonEmptyExt for alloc::string::String {
 		}
 	}
 }
-
-use define_conversion;
 
 impl<T> NonEmptyExt for alloc::vec::Vec<T> {
 	type Output = Self;
