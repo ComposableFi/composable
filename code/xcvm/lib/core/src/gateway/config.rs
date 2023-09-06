@@ -227,7 +227,7 @@ pub struct HereItem {
 pub enum GatewayId {
 	CosmWasm {
 		contract: Addr,
-		/// Address of the XCVM interpreter contract code
+		/// CVM interpreter contract code
 		interpreter_code_id: u64,
 		/// admin of everything
 		admin: Addr,
