@@ -322,25 +322,37 @@ impl<
 	}
 }
 
-pub struct ForeignXcm;
+pub struct ForeignAssetsToXcm;
 
-impl Convert<CurrencyId, Option<MultiLocation>> for ForeignXcm {
+impl Convert<CurrencyId, Option<MultiLocation>> for ForeignAssetsToXcm {
 	fn convert(a: CurrencyId) -> Option<MultiLocation> {
 		match AssetsRegistry::asset_to_remote(a) {
+			// XCMed assets
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(xcm))) => Some(xcm),
-			_ => None,
+			// IBCed assets
+			_ => Some(MultiLocation {
+				parents: 0,
+				interior: X2(
+					PalletInstance(<AssetsRegistry as PalletInfoAccess>::index() as u8),
+					GeneralIndex(a.into()),
+				),
+			}),
 		}
 	}
 }
 
-impl Convert<MultiLocation, Option<CurrencyId>> for ForeignXcm {
+impl Convert<MultiLocation, Option<CurrencyId>> for ForeignAssetsToXcm {
 	fn convert(a: MultiLocation) -> Option<CurrencyId> {
 		AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(VersionedMultiLocation::V3(a)))
 	}
 }
 
-type AssetsIdConverter =
-	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo>;
+type AssetsIdConverter = CurrencyIdConvert<
+	ForeignAssetsToXcm,
+	primitives::topology::Picasso,
+	AssetsRegistry,
+	ParachainInfo,
+>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,

@@ -49,7 +49,7 @@ xcm = { workspace = true, default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, workspace = true }
-hex-literal = { version = "0.3.3" }
+hex-literal.workspace = true
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 pallet-assets = { path = "../assets" }

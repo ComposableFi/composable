@@ -58,6 +58,30 @@ impl core::fmt::Display for DecodeError {
 	}
 }
 
+/// Defines conversions between protocol buffer message `$pb` and Rust type
+/// `$ty`.
+///
+/// Specifically, implements `TryFrom<$pb> for $ty` and `From<$ty> for $pb`.
+/// That is, conversion from protocol message is fallible while conversion to
+/// protocol message isn’t.  The error for the `TryFrom` conversion is `()`.
+macro_rules! define_conversion {
+	(($pb_name:ident: $pb:ty) -> { $($from_pb:tt)* }
+	 ($ty_name:ident: $ty:ty) -> { $($from_ty:tt)* }) => {
+		impl TryFrom<$pb> for $ty {
+			type Error = ();
+			fn try_from($pb_name: $pb) -> Result<Self, Self::Error> {
+				$($from_pb)*
+			}
+		}
+
+		impl From<$ty> for $pb {
+			fn from($ty_name: $ty) -> $pb {
+				$($from_ty)*
+			}
+		}
+	}
+}
+
 /// Maps elements of one sequence and produces the other.
 ///
 /// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
@@ -97,6 +121,8 @@ impl NonEmptyExt for alloc::string::String {
 		}
 	}
 }
+
+use define_conversion;
 
 impl<T> NonEmptyExt for alloc::vec::Vec<T> {
 	type Output = Self;

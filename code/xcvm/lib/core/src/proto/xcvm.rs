@@ -40,31 +40,25 @@ where
 	type Message = pb::xcvm::Program;
 }
 
-impl TryFrom<pb::xcvm::UserOrigin> for crate::UserOrigin {
-	type Error = ();
-	fn try_from(value: pb::xcvm::UserOrigin) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(value: pb::xcvm::UserOrigin) -> {
 		Ok(crate::UserOrigin {
 			network_id: value.network_id.into(),
 			user_id: value.account.non_empty()?.into(),
 		})
 	}
-}
-
-impl From<crate::UserOrigin> for pb::xcvm::UserOrigin {
-	fn from(value: crate::UserOrigin) -> Self {
+	(value: crate::UserOrigin) -> {
 		Self { network_id: value.network_id.into(), account: value.user_id.into() }
 	}
 }
 
-impl TryFrom<pb::xcvm::PacketAsset> for (crate::AssetId, Displayed<u128>) {
-	type Error = ();
-	fn try_from(value: pb::xcvm::PacketAsset) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(value: pb::xcvm::PacketAsset) -> {
 		Ok((value.asset_id.non_empty()?.into(), value.amount.non_empty()?.into()))
 	}
-}
 
-impl From<(crate::AssetId, Displayed<u128>)> for pb::xcvm::PacketAsset {
-	fn from((asset, amount): (crate::AssetId, Displayed<u128>)) -> Self {
+	(value: (crate::AssetId, Displayed<u128>)) -> {
+		let (asset, amount) = value;
 		Self { asset_id: Some(asset.into()), amount: Some(amount.into()) }
 	}
 }
@@ -277,10 +271,8 @@ where
 	}
 }
 
-impl TryFrom<pb::xcvm::BindingValue> for crate::BindingValue {
-	type Error = ();
-
-	fn try_from(binding_value: pb::xcvm::BindingValue) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(binding_value: pb::xcvm::BindingValue) -> {
 		use pb::xcvm::binding_value::Type;
 		Ok(match binding_value.r#type.non_empty()? {
 			Type::Register(reg) => {
@@ -294,10 +286,8 @@ impl TryFrom<pb::xcvm::BindingValue> for crate::BindingValue {
 			),
 		})
 	}
-}
 
-impl From<crate::BindingValue> for pb::xcvm::BindingValue {
-	fn from(binding_value: crate::BindingValue) -> Self {
+	(binding_value: crate::BindingValue) -> {
 		use pb::xcvm::binding_value::Type;
 		let typ = match binding_value {
 			crate::BindingValue::Register(reg) =>
@@ -313,15 +303,12 @@ impl From<crate::BindingValue> for pb::xcvm::BindingValue {
 	}
 }
 
-impl TryFrom<pb::xcvm::Binding> for (u32, crate::BindingValue) {
-	type Error = ();
-	fn try_from(binding: pb::xcvm::Binding) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(binding: pb::xcvm::Binding) -> {
 		Ok((binding.position, binding.binding_value.non_empty()?.try_into()?))
 	}
-}
-
-impl From<(u32, crate::BindingValue)> for pb::xcvm::Binding {
-	fn from((position, binding_value): (u32, crate::BindingValue)) -> Self {
+	(binding: (u32, crate::BindingValue)) -> {
+		let (position, binding_value) = binding;
 		Self { position, binding_value: Some(binding_value.into()) }
 	}
 }
@@ -375,70 +362,42 @@ where
 	}
 }
 
-impl TryFrom<pb::xcvm::Asset> for (crate::AssetId, crate::Balance) {
-	type Error = ();
-
-	fn try_from(asset: pb::xcvm::Asset) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(asset: pb::xcvm::Asset) -> {
 		let asset_id = asset.asset_id.non_empty()?.into();
 		let amount = asset.balance.non_empty()?.try_into()?;
-
 		Ok((asset_id, amount))
 	}
-}
-
-impl From<(crate::AssetId, crate::Balance)> for pb::xcvm::Asset {
-	fn from((asset_id, amount): (crate::AssetId, crate::Balance)) -> Self {
+	(asset: (crate::AssetId, crate::Balance)) -> {
+		let (asset_id, amount) = asset;
 		Self { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
 	}
 }
 
-impl TryFrom<pb::xcvm::Balance> for crate::Balance {
-	type Error = ();
-
-	fn try_from(balance: pb::xcvm::Balance) -> Result<Self, Self::Error> {
+super::define_conversion! {
+	(balance: pb::xcvm::Balance) -> {
 		use pb::xcvm::balance::BalanceType;
-
-		let balance_type = balance.balance_type.non_empty()?;
-
-		match balance_type {
-			BalanceType::Ratio(ratio) => Ok(crate::Balance::new(ratio.try_into()?, false)),
+		let (amount, is_unit) = match balance.balance_type.non_empty()? {
+			BalanceType::Ratio(pb::xcvm::Ratio { nominator, denominator }) => {
+				let ratio = Amount::from((nominator, denominator));
+				(ratio.into(), false)
+			},
 			BalanceType::Absolute(pb::xcvm::Absolute { value }) => {
 				let value = value.non_empty()?;
-				Ok(crate::Balance::new(Amount::absolute(value.into()), false))
+				(Amount::absolute(value.into()), false)
 			},
-			BalanceType::Unit(unit) => unit.try_into(),
-		}
+			BalanceType::Unit(unit) => {
+				let integer = unit.integer.non_empty()?;
+				let ratio = unit.ratio.non_empty()?;
+				let slope = Amount::from((ratio.nominator, ratio.denominator)).slope;
+				let amount = Amount::new(integer.into(), slope.into());
+				(amount, true)
+			},
+		};
+		Ok(crate::Balance::new(amount, is_unit))
 	}
-}
 
-impl TryFrom<pb::xcvm::Ratio> for crate::Amount {
-	type Error = ();
-
-	fn try_from(ratio: pb::xcvm::Ratio) -> Result<Self, Self::Error> {
-		let nominator = ratio.nominator;
-		let denominator = ratio.denominator;
-		Ok(Self::from((nominator, denominator)))
-	}
-}
-
-impl TryFrom<pb::xcvm::Unit> for crate::Balance {
-	type Error = ();
-
-	fn try_from(unit: pb::xcvm::Unit) -> Result<Self, Self::Error> {
-		let integer = unit.integer.non_empty()?;
-		let ratio = unit.ratio.non_empty()?;
-		Ok(crate::Balance::new(
-			Amount::new(
-				integer.into(),
-				Amount::from((ratio.nominator, ratio.denominator)).slope.into(),
-			),
-			true,
-		))
-	}
-}
-
-impl From<crate::Balance> for pb::xcvm::Balance {
-	fn from(balance: crate::Balance) -> Self {
+	(balance: crate::Balance) -> {
 		// Note that although functionally nothing changes, there is no guarantee of getting the
 		// same protobuf when you convert protobuf to XCVM types and convert back again. Because
 		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also

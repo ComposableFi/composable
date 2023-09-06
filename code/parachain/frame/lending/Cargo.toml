@@ -54,7 +54,7 @@ frame-benchmarking = { workspace = true }
 frame-executive = { default-features = false, features = [
   "try-runtime",
 ], workspace = true }
-hex-literal = "0.3.3"
+hex-literal.workspace = true
 once_cell = "1.8.0"
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
