@@ -327,7 +327,7 @@ mod tests {
 						  "instructions": [
 							{
 							  "spawn": {
-								"network": 3,
+								"network_id": 3,
 								"salt": "737061776e5f776974685f6173736574",
 								"assets": [
 								  [
@@ -414,7 +414,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 3,
+											"network_id": 3,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[
@@ -545,7 +545,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 3,
+											"network_id": 3,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[
@@ -593,7 +593,7 @@ mod tests {
 													},
 													{
 														"spawn": {
-															"network": 2,
+															"network_id": 2,
 															"salt": "737061776e5f776974685f6173736574",
 															"assets": [
 																[
@@ -696,7 +696,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 2,
+											"network_id": 2,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[
