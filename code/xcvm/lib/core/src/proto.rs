@@ -2,6 +2,7 @@ use prost::Message as _;
 
 pub mod common;
 pub mod pb;
+pub mod result;
 pub mod xcvm;
 
 /// Defines an isomorphism between a Rust type `Self` and a protocol message.
@@ -10,33 +11,27 @@ pub mod xcvm;
 /// type from binary representation of the protobuf.
 pub trait Isomorphism: Sized {
 	/// Protobuf self is isomorphic with.
-	type Message: prost::Message;
+	type Message: Default + From<Self> + TryInto<Self> + prost::Message;
 
 	/// Converts object to protobuf and encodes it as byte vector.
-	fn encode(self) -> alloc::vec::Vec<u8>
-	where
-		Self::Message: From<Self>,
-	{
+	fn encode(self) -> alloc::vec::Vec<u8> {
 		Self::Message::encode_to_vec(&self.into())
 	}
 
-	/// Decodes a protobuf and then converts it to `T`.
-	fn decode(buffer: &[u8]) -> Result<Self, prost::DecodeError>
-	where
-		Self::Message: Default + Into<Self>,
-	{
-		Self::Message::decode(buffer).map(|msg| msg.into())
-	}
-
 	/// Decodes a protobuf and then tries to convert it to `T`.
-	fn try_decode(buffer: &[u8]) -> Result<Self, DecodeError>
-	where
-		Self::Message: Default + TryInto<Self>,
-	{
+	fn decode(buffer: &[u8]) -> Result<Self, DecodeError> {
 		Self::Message::decode(buffer)?
 			.try_into()
 			.map_err(|_| DecodeError::BadIsomorphism)
 	}
+}
+
+impl Isomorphism for alloc::string::String {
+	type Message = Self;
+}
+
+impl Isomorphism for () {
+	type Message = ();
 }
 
 /// Error when trying to decode protobuf into a Rust type.

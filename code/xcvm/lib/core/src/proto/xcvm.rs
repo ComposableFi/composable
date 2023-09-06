@@ -23,9 +23,10 @@ pub type XCVMProgram<TAbiEncoded, TAccount, TAssets> =
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
 	for XCVMPacket<TAbiEncoded, TAccount, TAssets>
 where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+	TAbiEncoded: TryFrom<Vec<u8>> + Into<Vec<u8>>,
+	TAccount: TryFrom<Vec<u8>> + Into<Vec<u8>>,
+	TAssets:
+		From<Vec<(crate::AssetId, crate::Balance)>> + Into<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Message = pb::xcvm::Packet;
 }
@@ -33,9 +34,10 @@ where
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
 	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+	TAbiEncoded: TryFrom<Vec<u8>> + Into<Vec<u8>>,
+	TAccount: TryFrom<Vec<u8>> + Into<Vec<u8>>,
+	TAssets:
+		From<Vec<(crate::AssetId, crate::Balance)>> + Into<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Message = pb::xcvm::Program;
 }
