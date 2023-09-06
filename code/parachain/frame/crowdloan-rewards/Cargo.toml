@@ -19,7 +19,7 @@ version = "3.0.0"
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 ed25519-dalek = "1.0.1"
 frame-benchmarking = { default-features = false, workspace = true }
-hex-literal = "0.3.3"
+hex-literal.workspace = true
 libsecp256k1 = { version = "0.7.0" }
 pallet-balances = { workspace = true }
 pallet-timestamp = { workspace = true }

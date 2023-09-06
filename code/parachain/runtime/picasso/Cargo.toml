@@ -100,7 +100,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
   "derive",
 ] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
-hex-literal = { version = "0.3.3" }
+hex-literal.workspace = true
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 collator-selection = { workspace = true, default-features = false }

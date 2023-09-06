@@ -382,6 +382,7 @@ hex = { version = "0.4.3", default-features = false, features = [
   "alloc",
   "serde",
 ] }
+hex-literal = "0.3.4"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 
 cosmwasm-std = { git = "https://github.com/dzmitry-lahoda-forks/cosmwasm", rev = "1277597cbf380a8d04dbe676d9cb344ca31634b6", default-features = false, features = [
