@@ -379,12 +379,10 @@ super::define_conversion! {
 		use pb::xcvm::balance::BalanceType;
 		let (amount, is_unit) = match balance.balance_type.non_empty()? {
 			BalanceType::Ratio(pb::xcvm::Ratio { nominator, denominator }) => {
-				let ratio = Amount::from((nominator, denominator));
-				(ratio.into(), false)
+				(Amount::from((nominator, denominator)), false)
 			},
 			BalanceType::Absolute(pb::xcvm::Absolute { value }) => {
-				let value = value.non_empty()?;
-				(Amount::absolute(value.into()), false)
+				(Amount::absolute(value.non_empty()?.into()), false)
 			},
 			BalanceType::Unit(unit) => {
 				let integer = unit.integer.non_empty()?;
