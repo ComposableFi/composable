@@ -76,7 +76,7 @@ pub enum Instruction<Payload, Account, Assets> {
 	/// The program will be spawned with the desired [`Assets`].
 	/// The salt is used to track the program when events are dispatched in the network.
 	Spawn {
-		network: crate::network::NetworkId,
+		network_id: crate::network::NetworkId,
 		/// If JSON, than hex encoded non prefixed lower case string.
 		#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 		#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
@@ -85,7 +85,7 @@ pub enum Instruction<Payload, Account, Assets> {
 		program: Program<VecDeque<Self>>,
 	},
 	Exchange {
-		id: ExchangeId,
+		exchange_id: ExchangeId,
 		give: Assets,
 		want: Assets,
 	},

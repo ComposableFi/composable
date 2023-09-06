@@ -12,6 +12,18 @@ impl From<u128> for pb::common::Uint128 {
 	}
 }
 
+impl From<pb::common::Uint128> for crate::AssetId {
+	fn from(value: pb::common::Uint128) -> Self {
+		u128::from(value).into()
+	}
+}
+
+impl From<crate::AssetId> for pb::common::Uint128 {
+	fn from(value: crate::AssetId) -> Self {
+		u128::from(value).into()
+	}
+}
+
 #[test]
 fn test_u128_uint128_conversion() {
 	let value = 0xDEAD_0000_0000_0000_BEEF_0000_0000_0000_u128;

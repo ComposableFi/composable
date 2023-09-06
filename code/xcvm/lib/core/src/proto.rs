@@ -57,3 +57,61 @@ impl core::fmt::Display for DecodeError {
 		}
 	}
 }
+
+/// Maps elements of one sequence and produces the other.
+///
+/// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
+/// works for any containers) where infallible `T → U` conversion exists.
+fn from_sequence<R: core::iter::FromIterator<U>, T, U: From<T>>(
+	sequence: impl core::iter::IntoIterator<Item = T>,
+) -> R {
+	sequence.into_iter().map(U::from).collect()
+}
+
+/// Tries to map elements of one sequence and produces the other.
+///
+/// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
+/// works for any containers) where fallible `T → U` conversion exists.  Returns
+/// error on the first conversion that fails.
+fn try_from_sequence<R: core::iter::FromIterator<U>, T, U: TryFrom<T>>(
+	sequence: impl core::iter::IntoIterator<Item = T>,
+) -> Result<R, ()> {
+	sequence.into_iter().map(U::try_from).collect::<Result<R, _>>().map_err(|_| ())
+}
+
+/// Trait providing method which converts ‘empty’ values to ‘Err(())’.
+///
+/// Useful for checking whether fields in protocol buffer messages are set.
+trait NonEmptyExt: Sized {
+	type Output: Sized;
+	fn non_empty(self) -> Result<Self::Output, ()>;
+}
+
+impl NonEmptyExt for alloc::string::String {
+	type Output = Self;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		if self.is_empty() {
+			Err(())
+		} else {
+			Ok(self)
+		}
+	}
+}
+
+impl<T> NonEmptyExt for alloc::vec::Vec<T> {
+	type Output = Self;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		if self.is_empty() {
+			Err(())
+		} else {
+			Ok(self)
+		}
+	}
+}
+
+impl<T> NonEmptyExt for Option<T> {
+	type Output = T;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		self.ok_or(())
+	}
+}

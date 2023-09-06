@@ -11,14 +11,8 @@ pub use serde::{Deserialize, Serialize};
 
 pub use parity_scale_codec::{Decode, Encode};
 
-#[cfg(feature = "std")]
-pub use cosmwasm_schema::{cw_serde, QueryResponses};
-
-#[cfg(feature = "std")]
-pub use schemars::JsonSchema;
-
-use super::pb;
-use crate::{shared::Displayed, Amount, Destination, Funds, NetworkId};
+use super::{pb, NonEmptyExt};
+use crate::{shared::Displayed, Amount, Destination, Funds};
 
 pub type XCVMPacket<TAbiEncoded, TAccount, TAssets> =
 	crate::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>;
@@ -36,48 +30,6 @@ where
 	type Message = pb::xcvm::Packet;
 }
 
-impl From<Vec<u8>> for pb::xcvm::Salt {
-	fn from(value: Vec<u8>) -> Self {
-		Self { salt: value }
-	}
-}
-
-impl From<crate::UserId> for pb::xcvm::Account {
-	fn from(crate::UserId(account): crate::UserId) -> Self {
-		Self { account }
-	}
-}
-
-impl From<crate::UserOrigin> for pb::xcvm::UserOrigin {
-	fn from(value: crate::UserOrigin) -> Self {
-		Self { network: Some(value.network_id.into()), account: Some(value.user_id.into()) }
-	}
-}
-
-impl From<(crate::AssetId, Displayed<u128>)> for pb::xcvm::PacketAsset {
-	fn from((asset, amount): (crate::AssetId, Displayed<u128>)) -> Self {
-		Self { asset_id: Some(asset.into()), amount: Some(amount.into()) }
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<XCVMPacket<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::Packet
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(value: XCVMPacket<TAbiEncoded, TAccount, TAssets>) -> Self {
-		Self {
-			interpreter: Some(pb::xcvm::Account { account: value.interpreter }),
-			user_origin: Some(value.user_origin.into()),
-			salt: Some(value.salt.into()),
-			program: Some(value.program.into()),
-			assets: value.assets.0.into_iter().map(pb::xcvm::PacketAsset::from).collect(),
-		}
-	}
-}
-
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
 	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
@@ -92,19 +44,28 @@ impl TryFrom<pb::xcvm::UserOrigin> for crate::UserOrigin {
 	type Error = ();
 	fn try_from(value: pb::xcvm::UserOrigin) -> Result<Self, Self::Error> {
 		Ok(crate::UserOrigin {
-			network_id: value.network.ok_or(())?.network_id.into(),
-			user_id: value.account.ok_or(())?.account.into(),
+			network_id: value.network_id.into(),
+			user_id: value.account.non_empty()?.into(),
 		})
+	}
+}
+
+impl From<crate::UserOrigin> for pb::xcvm::UserOrigin {
+	fn from(value: crate::UserOrigin) -> Self {
+		Self { network_id: value.network_id.into(), account: value.user_id.into() }
 	}
 }
 
 impl TryFrom<pb::xcvm::PacketAsset> for (crate::AssetId, Displayed<u128>) {
 	type Error = ();
 	fn try_from(value: pb::xcvm::PacketAsset) -> Result<Self, Self::Error> {
-		Ok((
-			crate::AssetId::from(u128::from(value.asset_id.ok_or(())?.id.ok_or(())?)),
-			value.amount.ok_or(())?.into(),
-		))
+		Ok((value.asset_id.non_empty()?.into(), value.amount.non_empty()?.into()))
+	}
+}
+
+impl From<(crate::AssetId, Displayed<u128>)> for pb::xcvm::PacketAsset {
+	fn from((asset, amount): (crate::AssetId, Displayed<u128>)) -> Self {
+		Self { asset_id: Some(asset.into()), amount: Some(amount.into()) }
 	}
 }
 
@@ -112,17 +73,17 @@ impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Packet>
 	for XCVMPacket<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Error = ();
 
 	fn try_from(packet: pb::xcvm::Packet) -> Result<Self, Self::Error> {
 		Ok(XCVMPacket {
-			interpreter: packet.interpreter.ok_or(())?.account,
-			user_origin: packet.user_origin.ok_or(())?.try_into()?,
-			salt: packet.salt.map(|s| s.salt).ok_or(())?,
-			program: packet.program.ok_or(())?.try_into()?,
+			interpreter: packet.interpreter.non_empty()?,
+			user_origin: packet.user_origin.non_empty()?.try_into()?,
+			salt: packet.salt,
+			program: packet.program.non_empty()?.try_into()?,
 			assets: Funds(
 				packet
 					.assets
@@ -134,11 +95,29 @@ where
 	}
 }
 
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMPacket<TAbiEncoded, TAccount, TAssets>>
+	for pb::xcvm::Packet
+where
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	fn from(value: XCVMPacket<TAbiEncoded, TAccount, TAssets>) -> Self {
+		Self {
+			interpreter: value.interpreter,
+			user_origin: Some(value.user_origin.into()),
+			salt: value.salt,
+			program: Some(value.program.into()),
+			assets: value.assets.0.into_iter().map(pb::xcvm::PacketAsset::from).collect(),
+		}
+	}
+}
+
 impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Program>
 	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Error = ();
@@ -146,26 +125,21 @@ where
 	fn try_from(program: pb::xcvm::Program) -> Result<Self, Self::Error> {
 		Ok(XCVMProgram {
 			tag: program.tag,
-			instructions: program.instructions.ok_or(())?.try_into()?,
+			instructions: super::try_from_sequence(program.instructions)?,
 		})
 	}
 }
 
-impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Instructions>
-	for VecDeque<crate::Instruction<TAbiEncoded, TAccount, TAssets>>
+impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>>
+	for pb::xcvm::Program
 where
-	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
 {
-	type Error = ();
-
-	fn try_from(instructions: pb::xcvm::Instructions) -> Result<Self, Self::Error> {
-		let mut instrs = VecDeque::new();
-		for inst in instructions.instructions {
-			instrs.push_back(inst.try_into()?);
-		}
-		Ok(instrs)
+	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
+		let instructions = super::from_sequence(program.instructions);
+		Self { tag: program.tag, instructions }
 	}
 }
 
@@ -173,26 +147,13 @@ impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Instruction>
 	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Error = ();
 
 	fn try_from(instruction: pb::xcvm::Instruction) -> Result<Self, Self::Error> {
-		instruction.instruction.ok_or(())?.try_into()
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::instruction::Instruction>
-	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
-where
-	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	type Error = ();
-
-	fn try_from(instruction: pb::xcvm::instruction::Instruction) -> Result<Self, Self::Error> {
+		let instruction = instruction.instruction.non_empty()?;
 		match instruction {
 			pb::xcvm::instruction::Instruction::Transfer(t) => t.try_into(),
 			pb::xcvm::instruction::Instruction::Spawn(s) => s.try_into(),
@@ -202,110 +163,17 @@ where
 	}
 }
 
-impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Call>
-	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
-where
-	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	type Error = ();
-
-	fn try_from(call: pb::xcvm::Call) -> Result<Self, Self::Error> {
-		let bindings = call.bindings.ok_or(())?.try_into()?;
-		Ok(crate::Instruction::Call { bindings, encoded: call.payload.try_into().map_err(|_| ())? })
-	}
-}
-
-impl TryFrom<pb::xcvm::Bindings> for crate::Bindings {
-	type Error = ();
-
-	fn try_from(bindings: pb::xcvm::Bindings) -> Result<Self, Self::Error> {
-		bindings
-			.bindings
-			.into_iter()
-			.map(|binding| {
-				let binding_value = binding.binding_value.ok_or(())?.try_into()?;
-				Ok((binding.position, binding_value))
-			})
-			.collect()
-	}
-}
-
-impl TryFrom<pb::xcvm::BindingValue> for crate::BindingValue {
-	type Error = ();
-
-	fn try_from(binding_value: pb::xcvm::BindingValue) -> Result<Self, Self::Error> {
-		binding_value.r#type.ok_or(())?.try_into()
-	}
-}
-
-impl TryFrom<pb::xcvm::binding_value::Type> for crate::BindingValue {
-	type Error = ();
-
-	fn try_from(binding_val: pb::xcvm::binding_value::Type) -> Result<Self, Self::Error> {
-		use pb::xcvm::binding_value::Type;
-		Ok(match binding_val {
-			Type::Self_(_) => crate::BindingValue::Register(crate::Register::This),
-			Type::Tip(_) => crate::BindingValue::Register(crate::Register::Tip),
-			Type::Result(_) => crate::BindingValue::Register(crate::Register::Result),
-			Type::IpRegister(_) => crate::BindingValue::Register(crate::Register::Ip),
-			Type::AssetAmount(pb::xcvm::AssetAmount { asset_id, balance }) =>
-				crate::BindingValue::AssetAmount(
-					asset_id.ok_or(())?.try_into()?,
-					balance.ok_or(())?.try_into()?,
-				),
-			Type::AssetId(asset_id) => crate::BindingValue::Asset(asset_id.try_into()?),
-		})
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Spawn>
-	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
-where
-	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
-	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	type Error = ();
-
-	fn try_from(spawn: pb::xcvm::Spawn) -> Result<Self, Self::Error> {
-		let network = spawn.network.ok_or(())?.network_id.into();
-		let salt = spawn.salt.ok_or(())?.salt;
-		Ok(crate::Instruction::Spawn {
-			network,
-			salt,
-			assets: spawn
-				.assets
-				.into_iter()
-				.map(|asset| asset.try_into())
-				.collect::<Result<Vec<_>, _>>()?
-				.into(),
-			program: XCVMProgram {
-				tag: Vec::new(),
-				instructions: spawn.program.ok_or(())?.instructions.ok_or(())?.try_into()?,
-			},
-		})
-	}
-}
-
-impl From<pb::xcvm::Network> for NetworkId {
-	fn from(network: pb::xcvm::Network) -> Self {
-		Self(network.network_id)
-	}
-}
-
 impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Transfer>
 	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Error = ();
 
 	fn try_from(transfer: pb::xcvm::Transfer) -> Result<Self, Self::Error> {
-		let account_type = transfer.account_type.ok_or(())?;
+		let account_type = transfer.account_type.non_empty()?;
 		Ok(crate::Instruction::Transfer {
 			to: account_type.try_into()?,
 			assets: transfer
@@ -318,46 +186,192 @@ where
 	}
 }
 
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Spawn>
+	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
+where
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: TryFrom<Vec<u8>>,
+	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	type Error = ();
+
+	fn try_from(spawn: pb::xcvm::Spawn) -> Result<Self, Self::Error> {
+		let assets: Vec<(crate::AssetId, crate::Balance)> = super::try_from_sequence(spawn.assets)?;
+		Ok(crate::Instruction::Spawn {
+			network_id: spawn.network_id.into(),
+			salt: spawn.salt,
+			assets: assets.into(),
+			program: spawn.program.non_empty()?.try_into()?,
+		})
+	}
+}
+
 impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Exchange>
 	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
 {
 	type Error = ();
 
 	fn try_from(value: pb::xcvm::Exchange) -> Result<Self, Self::Error> {
 		Ok(crate::Instruction::Exchange {
-			id: value.id.and_then(|x| x.id).map(TryInto::try_into).ok_or(())?.map_err(|_| ())?,
-			give: value
-				.give
-				.into_iter()
-				.map(|asset| asset.try_into())
-				.collect::<Result<Vec<_>, _>>()?
-				.into(),
-			want: value
-				.want
-				.into_iter()
-				.map(|asset| asset.try_into())
-				.collect::<Result<Vec<_>, _>>()?
-				.into(),
+			exchange_id: value.exchange_id.non_empty()?.into(),
+			give: super::try_from_sequence::<Vec<_>, _, _>(value.give)?.into(),
+			want: super::try_from_sequence::<Vec<_>, _, _>(value.want)?.into(),
 		})
+	}
+}
+
+impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::xcvm::Call>
+	for crate::Instruction<TAbiEncoded, TAccount, TAssets>
+where
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: TryFrom<Vec<u8>>,
+	TAssets: From<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	type Error = ();
+
+	fn try_from(call: pb::xcvm::Call) -> Result<Self, Self::Error> {
+		let bindings = super::try_from_sequence(call.bindings)?;
+		let encoded = call.payload.try_into().map_err(|_| ())?;
+		Ok(crate::Instruction::Call { bindings, encoded })
+	}
+}
+
+impl<TAbiEncoded, TAccount, TAssets> From<crate::Instruction<TAbiEncoded, TAccount, TAssets>>
+	for pb::xcvm::Instruction
+where
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
+{
+	fn from(instruction: crate::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
+		use crate::Instruction;
+		use pb::xcvm::instruction::Instruction as Msg;
+		let instruction = match instruction {
+			Instruction::Transfer { to, assets } => Msg::Transfer(pb::xcvm::Transfer {
+				assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
+				account_type: Some(to.into()),
+			}),
+			Instruction::Call { bindings, encoded } => Msg::Call(pb::xcvm::Call {
+				payload: encoded.into(),
+				bindings: super::from_sequence(bindings),
+			}),
+			Instruction::Spawn { network_id, salt, assets, program } =>
+				Msg::Spawn(pb::xcvm::Spawn {
+					network_id: network_id.into(),
+					salt,
+					program: Some(program.into()),
+					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
+				}),
+			Instruction::Exchange { exchange_id, give, want } =>
+				Msg::Exchange(pb::xcvm::Exchange {
+					exchange_id: Some(exchange_id.into()),
+					give: give.into().into_iter().map(|asset| asset.into()).collect(),
+					want: want.into().into_iter().map(|asset| asset.into()).collect(),
+				}),
+		};
+		Self { instruction: Some(instruction) }
+	}
+}
+
+impl TryFrom<pb::xcvm::BindingValue> for crate::BindingValue {
+	type Error = ();
+
+	fn try_from(binding_value: pb::xcvm::BindingValue) -> Result<Self, Self::Error> {
+		use pb::xcvm::binding_value::Type;
+		Ok(match binding_value.r#type.non_empty()? {
+			Type::Register(reg) => {
+				let reg = pb::xcvm::Register::from_i32(reg).ok_or(())?;
+				Self::Register(reg.into())
+			},
+			Type::AssetId(asset_id) => Self::Asset(asset_id.into()),
+			Type::AssetAmount(asset_amount) => Self::AssetAmount(
+				asset_amount.asset_id.non_empty()?.into(),
+				asset_amount.balance.non_empty()?.try_into()?,
+			),
+		})
+	}
+}
+
+impl From<crate::BindingValue> for pb::xcvm::BindingValue {
+	fn from(binding_value: crate::BindingValue) -> Self {
+		use pb::xcvm::binding_value::Type;
+		let typ = match binding_value {
+			crate::BindingValue::Register(reg) =>
+				Type::Register(pb::xcvm::Register::from(reg) as i32),
+			crate::BindingValue::Asset(asset_id) => Type::AssetId(asset_id.into()),
+			crate::BindingValue::AssetAmount(asset_id, balance) =>
+				Type::AssetAmount(pb::xcvm::AssetAmount {
+					asset_id: Some(asset_id.into()),
+					balance: Some(balance.into()),
+				}),
+		};
+		Self { r#type: Some(typ) }
+	}
+}
+
+impl TryFrom<pb::xcvm::Binding> for (u32, crate::BindingValue) {
+	type Error = ();
+	fn try_from(binding: pb::xcvm::Binding) -> Result<Self, Self::Error> {
+		Ok((binding.position, binding.binding_value.non_empty()?.try_into()?))
+	}
+}
+
+impl From<(u32, crate::BindingValue)> for pb::xcvm::Binding {
+	fn from((position, binding_value): (u32, crate::BindingValue)) -> Self {
+		Self { position, binding_value: Some(binding_value.into()) }
+	}
+}
+
+impl From<pb::xcvm::Register> for crate::Register {
+	fn from(reg: pb::xcvm::Register) -> Self {
+		match reg {
+			pb::xcvm::Register::Ip => Self::Ip,
+			pb::xcvm::Register::Tip => Self::Tip,
+			pb::xcvm::Register::This => Self::This,
+			pb::xcvm::Register::Result => Self::Result,
+		}
+	}
+}
+
+impl From<crate::Register> for pb::xcvm::Register {
+	fn from(reg: crate::Register) -> Self {
+		match reg {
+			crate::Register::Ip => Self::Ip,
+			crate::Register::Tip => Self::Tip,
+			crate::Register::This => Self::This,
+			crate::Register::Result => Self::Result,
+		}
 	}
 }
 
 impl<TAccount> TryFrom<pb::xcvm::transfer::AccountType> for Destination<TAccount>
 where
-	TAccount: for<'a> TryFrom<&'a [u8]>,
+	TAccount: TryFrom<Vec<u8>>,
 {
 	type Error = ();
 
 	fn try_from(account_type: pb::xcvm::transfer::AccountType) -> Result<Self, Self::Error> {
 		Ok(match account_type {
-			pb::xcvm::transfer::AccountType::Account(acc) =>
-				Destination::Account(acc.account.as_slice().try_into().map_err(|_| ())?),
+			pb::xcvm::transfer::AccountType::Account(account) =>
+				Destination::Account(account.try_into().map_err(|_| ())?),
 			pb::xcvm::transfer::AccountType::Tip(_) => Destination::Tip,
 		})
+	}
+}
+
+impl<TAccount> From<crate::Destination<TAccount>> for pb::xcvm::transfer::AccountType
+where
+	TAccount: Into<Vec<u8>>,
+{
+	fn from(destination: crate::Destination<TAccount>) -> Self {
+		match destination {
+			Destination::Account(account) => Self::Account(account.into()),
+			Destination::Tip => Self::Tip(pb::xcvm::Tip {}),
+		}
 	}
 }
 
@@ -365,18 +379,16 @@ impl TryFrom<pb::xcvm::Asset> for (crate::AssetId, crate::Balance) {
 	type Error = ();
 
 	fn try_from(asset: pb::xcvm::Asset) -> Result<Self, Self::Error> {
-		let asset_id = asset.asset_id.ok_or(())?.try_into()?;
-		let amount = asset.balance.ok_or(())?.try_into()?;
+		let asset_id = asset.asset_id.non_empty()?.into();
+		let amount = asset.balance.non_empty()?.try_into()?;
 
 		Ok((asset_id, amount))
 	}
 }
 
-impl TryFrom<pb::xcvm::AssetId> for crate::AssetId {
-	type Error = ();
-
-	fn try_from(asset_id: pb::xcvm::AssetId) -> Result<Self, Self::Error> {
-		Ok(crate::AssetId(asset_id.id.ok_or(())?.into()))
+impl From<(crate::AssetId, crate::Balance)> for pb::xcvm::Asset {
+	fn from((asset_id, amount): (crate::AssetId, crate::Balance)) -> Self {
+		Self { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
 	}
 }
 
@@ -386,12 +398,12 @@ impl TryFrom<pb::xcvm::Balance> for crate::Balance {
 	fn try_from(balance: pb::xcvm::Balance) -> Result<Self, Self::Error> {
 		use pb::xcvm::balance::BalanceType;
 
-		let balance_type = balance.balance_type.ok_or(())?;
+		let balance_type = balance.balance_type.non_empty()?;
 
 		match balance_type {
 			BalanceType::Ratio(ratio) => Ok(crate::Balance::new(ratio.try_into()?, false)),
 			BalanceType::Absolute(pb::xcvm::Absolute { value }) => {
-				let value = value.ok_or(())?;
+				let value = value.non_empty()?;
 				Ok(crate::Balance::new(Amount::absolute(value.into()), false))
 			},
 			BalanceType::Unit(unit) => unit.try_into(),
@@ -413,8 +425,8 @@ impl TryFrom<pb::xcvm::Unit> for crate::Balance {
 	type Error = ();
 
 	fn try_from(unit: pb::xcvm::Unit) -> Result<Self, Self::Error> {
-		let integer = unit.integer.ok_or(())?;
-		let ratio = unit.ratio.ok_or(())?;
+		let integer = unit.integer.non_empty()?;
+		let ratio = unit.ratio.non_empty()?;
 		Ok(crate::Balance::new(
 			Amount::new(
 				integer.into(),
@@ -452,134 +464,6 @@ impl From<crate::Balance> for pb::xcvm::Balance {
 			})
 		};
 		Self { balance_type: Some(balance_type) }
-	}
-}
-
-impl From<crate::AssetId> for pb::xcvm::AssetId {
-	fn from(asset_id: crate::AssetId) -> Self {
-		Self { id: Some(asset_id.0 .0.into()) }
-	}
-}
-
-impl From<(crate::AssetId, crate::Balance)> for pb::xcvm::Asset {
-	fn from((asset_id, amount): (crate::AssetId, crate::Balance)) -> Self {
-		Self { asset_id: Some(asset_id.into()), balance: Some(amount.into()) }
-	}
-}
-
-impl From<crate::BindingValue> for pb::xcvm::binding_value::Type {
-	fn from(binding_value: crate::BindingValue) -> Self {
-		match binding_value {
-			crate::BindingValue::Register(crate::Register::Ip) =>
-				Self::IpRegister(pb::xcvm::IpRegister { ip: 0 }),
-			crate::BindingValue::Register(crate::Register::Tip) =>
-				Self::Tip(pb::xcvm::Tip { id: 0 }),
-			crate::BindingValue::Register(crate::Register::Result) =>
-				Self::Result(pb::xcvm::Result { result: 0 }),
-			crate::BindingValue::Register(crate::Register::This) =>
-				Self::Self_(pb::xcvm::Self_ { self_: 0 }),
-			crate::BindingValue::Asset(asset_id) => Self::AssetId(asset_id.into()),
-			crate::BindingValue::AssetAmount(asset_id, balance) =>
-				Self::AssetAmount(pb::xcvm::AssetAmount {
-					asset_id: Some(asset_id.into()),
-					balance: Some(balance.into()),
-				}),
-		}
-	}
-}
-
-impl From<crate::BindingValue> for pb::xcvm::BindingValue {
-	fn from(binding_value: crate::BindingValue) -> Self {
-		Self { r#type: Some(binding_value.into()) }
-	}
-}
-
-impl From<crate::NetworkId> for pb::xcvm::Network {
-	fn from(network_id: crate::NetworkId) -> Self {
-		Self { network_id: network_id.0 }
-	}
-}
-
-impl<TAccount> From<crate::Destination<TAccount>> for pb::xcvm::transfer::AccountType
-where
-	TAccount: Into<Vec<u8>>,
-{
-	fn from(destination: crate::Destination<TAccount>) -> Self {
-		match destination {
-			Destination::Account(account) =>
-				Self::Account(pb::xcvm::Account { account: account.into() }),
-			Destination::Tip => Self::Tip(pb::xcvm::Tip { id: 0 }),
-		}
-	}
-}
-
-impl From<(u32, crate::BindingValue)> for pb::xcvm::Binding {
-	fn from((position, binding_value): (u32, crate::BindingValue)) -> Self {
-		Self { position, binding_value: Some(binding_value.into()) }
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<crate::Instruction<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::instruction::Instruction
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(instruction: crate::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
-		match instruction {
-			crate::Instruction::Transfer { to, assets } => Self::Transfer(pb::xcvm::Transfer {
-				assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
-				account_type: Some(to.into()),
-			}),
-			crate::Instruction::Call { bindings, encoded } => Self::Call(pb::xcvm::Call {
-				payload: encoded.into(),
-				bindings: Some(pb::xcvm::Bindings {
-					bindings: bindings.into_iter().map(|binding| binding.into()).collect(),
-				}),
-			}),
-			crate::Instruction::Spawn { network, salt, assets, program } =>
-				Self::Spawn(pb::xcvm::Spawn {
-					network: Some(pb::xcvm::Network { network_id: network.into() }),
-					salt: Some(pb::xcvm::Salt { salt }),
-					program: Some(program.into()),
-					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
-				}),
-			crate::Instruction::Exchange { id, give, want } => Self::Exchange(pb::xcvm::Exchange {
-				id: Some(pb::xcvm::ExchangeId { id: Some(id.into()) }),
-				give: give.into().into_iter().map(|asset| asset.into()).collect(),
-				want: want.into().into_iter().map(|asset| asset.into()).collect(),
-			}),
-		}
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<crate::Instruction<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::Instruction
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(instruction: crate::Instruction<TAbiEncoded, TAccount, TAssets>) -> Self {
-		Self { instruction: Some(instruction.into()) }
-	}
-}
-
-impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>>
-	for pb::xcvm::Program
-where
-	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
-	TAssets: Into<Vec<(crate::AssetId, crate::Balance)>>,
-{
-	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
-		Self {
-			tag: program.tag,
-			instructions: Some(pb::xcvm::Instructions {
-				instructions: program.instructions.into_iter().map(|instr| instr.into()).collect(),
-			}),
-		}
 	}
 }
 
