@@ -76,6 +76,7 @@ impl ExecuteMsg {
 	}
 }
 
+// see pallet-xcm interface for data encoding for now
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema, cosmwasm_schema::QueryResponses))]
