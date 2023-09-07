@@ -63,7 +63,7 @@
 //! Note that if you don't need `IndexedBinding` or `StaticBinding`, you can always use `None`
 //! variants of both of them.
 
-#![cfg(feature = "substrate")]
+//#![cfg(feature = "xcm")]
 pub mod xcm;
 
 use super::{BindingValue, Bindings};
