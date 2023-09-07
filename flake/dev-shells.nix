@@ -114,7 +114,17 @@
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              FEE = "ppica";
             };
+
+            enterShell = ''
+              rm --force --recursive ~/.centauri
+              mkdir --parents ~/.centauri/config
+              echo 'keyring-backend = "os"' >> ~/.centauri/config/client.toml
+              echo 'output = "json"' >> ~/.centauri/config/client.toml
+              echo 'node = "https://rpc-composable-ia.cosmosia.notional.ventures:443"' >> ~/.centauri/config/client.toml
+              echo 'chain-id = "centauri-1"' >> ~/.centauri/config/client.toml
+            '';
           }];
         };
 
@@ -142,8 +152,8 @@
               INTERPRETER_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";   
-              FEE="uatom";           
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              FEE = "uatom";
             };
           }];
         };

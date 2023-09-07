@@ -37,9 +37,9 @@
           },
           "gateway": {
             "cosm_wasm": {
-              "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
-              "interpreter_code_id": 0,
-              "admin": "$KEY"
+              "contract": "centauri18tq76p8zmj49jr5zmsytulrzluljvd6m7he2uavvy6f8lsp77jwqzp84md",
+              "interpreter_code_id": 11,
+              "admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k"
             }
           },
           "ibc": {
@@ -66,7 +66,7 @@
               "seconds": 300
             },
             "ics_20": {
-              "source": "channel-0",
+              "source": "channel-3",
               "sink": "channel-0"
             }
           }
@@ -82,7 +82,7 @@
             },
             "ics_20": {
               "source": "channel-0",
-              "sink": "channel-0"
+              "sink": "channel-3"
             }
           }
         }
@@ -138,7 +138,7 @@
             "location_on_network": {
               "ibc_ics20": {
                 "base_denom": "uosmo",
-                "trace_path": "transfer/channel-0"
+                "trace_path": "transfer/channel-3"
               }
             }
           }
