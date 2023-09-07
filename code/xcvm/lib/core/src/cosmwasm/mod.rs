@@ -63,6 +63,9 @@
 //! Note that if you don't need `IndexedBinding` or `StaticBinding`, you can always use `None`
 //! variants of both of them.
 
+#![cfg(feature = "substrate")]
+pub mod xcm;
+
 use super::{BindingValue, Bindings};
 use crate::{InterpreterOrigin, NetworkId, OrderedBindings, UserId, UserOrigin};
 use alloc::{fmt::Debug, string::String, vec, vec::Vec};
