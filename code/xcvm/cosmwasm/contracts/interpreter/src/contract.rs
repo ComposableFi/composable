@@ -243,78 +243,105 @@ pub fn interpret_call(
 	deps: Deps,
 	env: &Env,
 	bindings: Vec<(u32, BindingValue)>,
-	payload: Vec<u8>,
+	mut payload: Vec<u8>,
 	instruction_pointer: u16,
 	tip: &Addr,
 ) -> Result {
-	// we hacky using json, but we always know ABI encoding dependng on chain we run on send to
-	let flat_cosmos_msg: xc_core::cosmwasm::FlatCosmosMsg<serde_cw_value::Value> = if !bindings
-		.is_empty()
-	{
-		let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-
-		// Len here is the maximum possible length
-		let mut formatted_call =
-			vec![0; env.contract.address.as_bytes().len() * bindings.len() + payload.len()];
-
-		apply_bindings(payload, bindings, &mut formatted_call, |binding| {
-			let data = match binding {
-				BindingValue::Register(Register::Ip) =>
-					Cow::Owned(instruction_pointer.to_string().into_bytes()),
-				BindingValue::Register(Register::Tip) => Cow::Owned(tip.to_string().into_bytes()),
-				BindingValue::Register(Register::This) =>
-					Cow::Borrowed(env.contract.address.as_bytes()),
-				BindingValue::Register(Register::Result) => Cow::Owned(
-					serde_json_wasm::to_vec(&RESULT_REGISTER.load(deps.storage)?)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				),
-				BindingValue::Asset(asset_id) => {
-					let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
-					match reference.local {
-						AssetReference::Cw20 { contract } =>
-							Cow::Owned(contract.into_string().into()),
-						AssetReference::Native { denom } => Cow::Owned(denom.into()),
-					}
-				},
-				BindingValue::AssetAmount(asset_id, balance) => {
-					let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
-					let amount = match reference.local {
-						AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
-							deps,
-							&balance,
-							&contract,
-							&env.contract.address,
-						),
-						AssetReference::Native { denom } =>
-							if balance.is_unit {
-								return Err(ContractError::InvalidBindings)
-							} else {
-								let coin = deps
-									.querier
-									.query_balance(env.contract.address.clone(), denom)?;
-								balance
-									.amount
-									.apply(coin.amount.into())
-									.map_err(|_| ContractError::ArithmeticError)
-							},
-					}?;
-					Cow::Owned(amount.to_string().into_bytes())
-				},
-			};
-			Ok(data)
-		})?;
-
-		serde_json_wasm::from_slice(&formatted_call)
-			.map_err(|_| ContractError::InvalidCallPayload)?
-	} else {
-		serde_json_wasm::from_slice(&payload).map_err(|_| ContractError::InvalidCallPayload)?
-	};
-
-	let cosmos_msg: CosmosMsg =
-		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
+	if !bindings.is_empty() {
+		let resolver = BindingResolver::new(&deps, env, instruction_pointer, tip)?;
+		let p = core::mem::take(&mut payload);
+		payload = apply_bindings(p, &bindings, |binding| resolver.resolve(binding))?;
+	}
+	// we hacky using json, but we always know ABI encoding dependng on chain we
+	// run on send to
+	let cosmos_msg: CosmosMsg = serde_json_wasm::from_slice::<
+		xc_core::cosmwasm::FlatCosmosMsg<serde_cw_value::Value>,
+	>(&payload)
+	.map_err(|_| ContractError::InvalidCallPayload)?
+	.try_into()
+	.map_err(|_| ContractError::DataSerializationError)?;
 	Ok(Response::default()
 		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
 		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
+}
+
+/// Resolver for `BindingValue`s.
+struct BindingResolver<'a> {
+	deps: &'a Deps<'a>,
+	env: &'a Env,
+	instruction_pointer: u16,
+	tip: &'a Addr,
+	gateway: xc_core::gateway::Gateway,
+}
+
+impl<'a> BindingResolver<'a> {
+	/// Creates a new binding resolver.
+	///
+	/// Fetches gateway configuration from storage thus it may fail with storage
+	/// read error.
+	fn new(deps: &'a Deps, env: &'a Env, instruction_pointer: u16, tip: &'a Addr) -> Result<Self> {
+		let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
+		Ok(Self { deps, env, instruction_pointer, tip, gateway })
+	}
+
+	/// Resolves a single binding returning it’s value.
+	fn resolve(&'a self, binding: &BindingValue) -> Result<Cow<'a, [u8]>> {
+		match binding {
+			BindingValue::Register(reg) => self.resolve_register(*reg),
+			BindingValue::Asset(asset_id) => self.resolve_asset(*asset_id),
+			BindingValue::AssetAmount(asset_id, balance) =>
+				self.resolve_asset_amount(*asset_id, balance),
+		}
+	}
+
+	fn resolve_register(&'a self, reg: Register) -> Result<Cow<'a, [u8]>> {
+		Ok(match reg {
+			Register::Ip => Cow::Owned(self.instruction_pointer.to_string().into_bytes()),
+			Register::Tip => Cow::Owned(self.tip.to_string().into_bytes()),
+			Register::This => Cow::Borrowed(self.env.contract.address.as_bytes()),
+			Register::Result => Cow::Owned(
+				serde_json_wasm::to_vec(&RESULT_REGISTER.load(self.deps.storage)?)
+					.map_err(|_| ContractError::DataSerializationError)?,
+			),
+		})
+	}
+
+	fn resolve_asset(&'a self, asset_id: xc_core::AssetId) -> Result<Cow<'a, [u8]>> {
+		let reference = self.gateway.get_asset_by_id(self.deps.querier, asset_id)?;
+		let value = match reference.local {
+			AssetReference::Cw20 { contract } => contract.into_string(),
+			AssetReference::Native { denom } => denom,
+		};
+		Ok(Cow::Owned(value.into()))
+	}
+
+	fn resolve_asset_amount(
+		&'a self,
+		asset_id: xc_core::AssetId,
+		balance: &Balance,
+	) -> Result<Cow<'a, [u8]>> {
+		let reference = self.gateway.get_asset_by_id(self.deps.querier, asset_id)?;
+		let amount = match reference.local {
+			AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
+				*self.deps,
+				balance,
+				&contract,
+				&self.env.contract.address,
+			)?,
+			AssetReference::Native { denom } => {
+				if balance.is_unit {
+					return Err(ContractError::InvalidBindings)
+				}
+				let coin =
+					self.deps.querier.query_balance(self.env.contract.address.clone(), denom)?;
+				balance
+					.amount
+					.apply(coin.amount.into())
+					.map_err(|_| ContractError::ArithmeticError)?
+			},
+		};
+		Ok(Cow::Owned(amount.to_string().into_bytes()))
+	}
 }
 
 pub fn interpret_spawn(
