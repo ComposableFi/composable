@@ -87,6 +87,7 @@
           }
         }
       },
+
       {
         "force_asset": {
           "asset_id": "237684487542793012780631851009",
@@ -100,12 +101,14 @@
             "location_on_network": {
               "ibc_ics20": {
                 "base_denom": "ppica",
-                "trace_path": "transfer/transfer/channel-1279"
+                "trace_path": "transfer/channel-1279"
               }
             }
           }
         }
       },
+
+
       {
         "force_asset": {
           "asset_id": "158456325028528675187087900673",

@@ -135,7 +135,7 @@ nix run .#xc-swap-pica-to-osmo
 
 ## Deployment 
 
-Interpreter can be instantiated only from code identifiers accepted by gateway.
+Interpreter MUST be instantiated only from code identifiers accepted by gateway.
 
 Gateway queries interpreter code id and owner, ensuring it is gateway only.
 
@@ -151,4 +151,11 @@ For interpreter
 
 ```
 cargo run --package cw-xc-interpreter --bin interpreter
+
+## How to configure
+
+Shell into relevant net, and run (with relevant modifications):
+
+```sh
+osmosisd tx wasm execute "osmo18tq76p8zmj49jr5zmsytulrzluljvd6m7he2uavvy6f8lsp77jwqwr0z6a" "$(cat code/xcvm/cvm.json)" --gas=427753 --fees=2000$FEE --from=dz
 ```
