@@ -67,7 +67,7 @@
             },
             "ics_20": {
               "source": "channel-3",
-              "sink": "channel-0"
+              "sink": "transfer/channel-1279"
             }
           }
         }
@@ -81,7 +81,7 @@
               "seconds": 300
             },
             "ics_20": {
-              "source": "channel-0",
+              "source": "transfer/channel-1279",
               "sink": "channel-3"
             }
           }
@@ -100,7 +100,7 @@
             "location_on_network": {
               "ibc_ics20": {
                 "base_denom": "ppica",
-                "trace_path": "transfer/channel-0"
+                "trace_path": "transfer/transfer/channel-1279"
               }
             }
           }
@@ -131,7 +131,7 @@
           "network_id": 2,
           "local": {
             "native": {
-              "denom": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518"
+              "denom": "ibc/47BD209179859CDE4A2806763D7189B6E6FE13A17880FE2B42DE1E6C1E329E23"
             }
           },
           "bridged": {
