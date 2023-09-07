@@ -1,0 +1,113 @@
+{
+    "execute_program": {
+      "execute_program": {
+        "salt": "737061776e5f776974685f6173736574",
+        "program": {
+          "tag": "737061776e5f776974685f6173736574",
+          "instructions": [
+            {
+              "spawn": {
+                "network": 3,
+                "salt": "737061776e5f776974685f6173736574",
+                "assets": [
+                  [
+                    "158456325028528675187087900673",
+                    {
+                      "amount": {
+                        "intercept": "1234567890",
+                        "slope": "0"
+                      },
+                      "is_unit": false
+                    }
+                  ]
+                ],
+                "program": {
+                  "tag": "737061776e5f776974685f6173736574",
+                  "instructions": [
+                    {
+                      "exchange": {
+                        "id": "237684489387467420151587012609",
+                        "give": [
+                          [
+                            "237684487542793012780631851009",
+                            {
+                              "amount": {
+                                "intercept": "123456789",
+                                "slope": "0"
+                              },
+                              "is_unit": false
+                            }
+                          ]
+                        ],
+                        "want": [
+                          [
+                            "237684487542793012780631851010",
+                            {
+                              "amount": {
+                                "intercept": "10",
+                                "slope": "0"
+                              },
+                              "is_unit": false
+                            }
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "spawn": {
+                        "network": 2,
+                        "salt": "737061776e5f776974685f6173736574",
+                        "assets": [
+                          [
+                            "237684487542793012780631851010",
+                            {
+                              "amount": {
+                                "intercept": "0",
+                                "slope": "1000000000000000000"
+                              },
+                              "is_unit": false
+                            }
+                          ]
+                        ],
+                        "program": {
+                          "tag": "737061776e5f776974685f6173736574",
+                          "instructions": [
+                            {
+                              "transfer": {
+                                "to": {
+                                  "account": "4qA3hVL1E8yLhVTSZFHbrpHFKI4="
+                                },
+                                "assets": [
+                                  [
+                                    "158456325028528675187087900674",
+                                    {
+                                      "amount": {
+                                        "intercept": "0",
+                                        "slope": "1000000000000000000"
+                                      },
+                                      "is_unit": false
+                                    }
+                                  ]
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "assets": [
+          [
+            "158456325028528675187087900673",
+            "1234567890"
+          ]
+        ]
+      },
+      "tip": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k"
+    }
+  }

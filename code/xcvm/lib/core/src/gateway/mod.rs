@@ -369,7 +369,11 @@ mod tests {
 	fn spawn_with_asset_and_transfer() {
 		let pica_on_centauri = generate_asset_id(2.into(), 0, 1);
 		let pica_on_osmosis = generate_asset_id(3.into(), 0, 1);
-
+		let (_, addr, _) = bech32_no_std::decode("centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k").unwrap();
+		let addr: Vec<u8> = bech32_no_std::FromBase32::from_base32(&addr).unwrap();
+		let addr =Binary(addr).to_base64();
+		assert_eq!(addr, "4qA3hVL1E8yLhVTSZFHbrpHFKI4=");
+		
 		let program = ExecuteMsg::ExecuteProgram {
 			execute_program: ExecuteProgramMsg {
 				salt: b"spawn_with_asset".to_vec(),

@@ -67,7 +67,7 @@
             },
             "ics_20": {
               "source": "channel-3",
-              "sink": "transfer/channel-1279"
+              "sink": "channel-1279"
             }
           }
         }
@@ -81,7 +81,7 @@
               "seconds": 300
             },
             "ics_20": {
-              "source": "transfer/channel-1279",
+              "source": "channel-1279",
               "sink": "channel-3"
             }
           }
