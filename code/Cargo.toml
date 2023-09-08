@@ -46,7 +46,7 @@ exclude = [
 ]
 members = [
   "services/cmc-api",
-  "parachain/frame/*",
+  "parachain/frame/*", 
   "parachain/node",
   "parachain/runtime/*",
   "utils/common",
