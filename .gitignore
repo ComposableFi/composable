@@ -108,3 +108,4 @@ wasm_client_data/**
 *.wasm
 
 .secret/**
+.ssh/**
