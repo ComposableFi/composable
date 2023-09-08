@@ -9,7 +9,7 @@ resource "github_repository_collaborators" "roles" {
   repository = github_repository.composable-nix.name
   user {
     permission = "admin"
-    username   = "dzmitry-lahoda"
+    username   = data.github_user.ops
   }
 }
 

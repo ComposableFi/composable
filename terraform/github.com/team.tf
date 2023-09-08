@@ -3,11 +3,6 @@ data "github_user" "docs" {
   username = "JafarAz"
 }
 
-
-data "github_user" "ops" {
-  username = "dzmitry-lahoda"
-}
-
 data "github_team" "sre" {
   slug = "sre"
 }
