@@ -279,7 +279,7 @@ pub fn run() -> Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
-			
+
 			runner.run_node_until_exit(|config| async move {
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
