@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use ::cosmwasm::pallet_hook::PalletHook;
 use cosmwasm::{
 	instrument::CostRules,
@@ -136,6 +137,7 @@ impl PalletHook<Runtime> for Precompiles {
 			String::from_utf8_lossy(message)
 		);
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		let xcm = PolkadotXcm::check_account();
 		match contract_address {
 			address if address == dex => {
 				let message: composable_traits::dex::ExecuteMsg =
@@ -143,6 +145,22 @@ impl PalletHook<Runtime> for Precompiles {
 						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 
 				let result = common::dex::DexPrecompile::<Pablo>::execute(
+					vm.0.data().cosmwasm_message_info.sender.as_str(),
+					message,
+				)
+				.map_err(|_| CosmwasmVMError::<Runtime>::Precompile);
+
+				match result {
+					Ok(result) => Ok(ContractResult::Ok(result)),
+					Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
+				}
+			},
+			address if address == xcm => {
+				let message: xc_core::transport::xcm::ExecuteMsg =
+					serde_json_wasm::from_slice(message)
+						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+
+				let result = XcmPrecompile::execute(
 					vm.0.data().cosmwasm_message_info.sender.as_str(),
 					message,
 				)
@@ -189,5 +207,15 @@ impl PalletHook<Runtime> for Precompiles {
 			},
 			_ => Err(CosmwasmVMError::ContractNotFound),
 		}
+	}
+}
+
+struct XcmPrecompile {}
+impl XcmPrecompile {
+	pub fn execute(
+		sender: &str,
+		msg: xc_core::transport::xcm::ExecuteMsg,
+	) -> Result<Response, CosmwasmSubstrateError> {
+		todo!()
 	}
 }

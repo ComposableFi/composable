@@ -10356,6 +10356,7 @@ dependencies = [
  "sp-std 5.0.0",
  "sp-transaction-pool",
  "sp-version",
+ "xc-core",
  "xcm",
  "xcm-builder",
  "xcm-executor",
