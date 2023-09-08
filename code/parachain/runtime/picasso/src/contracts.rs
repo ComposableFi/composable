@@ -213,6 +213,9 @@ impl PalletHook<Runtime> for Precompiles {
 	}
 }
 
+/// refactoring will be when request would be to do Composable,
+/// in this case need to generalize on Runtime and make account converter generic too
+/// and also when we would need proxy usage (as account delegation in cosmos)
 struct XcmPrecompile {}
 impl XcmPrecompile {
 	pub fn execute(
