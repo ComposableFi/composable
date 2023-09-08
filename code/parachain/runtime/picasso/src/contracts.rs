@@ -110,6 +110,12 @@ impl PalletHook<Runtime> for Precompiles {
 				false,
 				PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
 			)),
+			address if address == &xcm => Some(PalletContractCodeInfo::new(
+				xcm,
+				false,
+				// they did not made pallet to be public
+				PalletId(*b"py/xcmch").0.to_vec().try_into().unwrap_or_default(),
+			)),
 			_ => None,
 		}
 	}
