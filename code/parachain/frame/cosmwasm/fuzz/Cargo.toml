@@ -12,10 +12,33 @@ libfuzzer-sys = "0.4"
 
 [dependencies.pallet-cosmwasm]
 path = ".."
+features = ["fuzzing", "std"]
 
-# Prevent this from interfering with workspaces
-[workspace]
-members = ["."]
+[dependencies.common]
+path = "../../../runtime/common"
+features = ["std"]
+
+# composable_traits::account_proxy::ProxyType;
+#     |
+# 119 | impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
+#     |      ^^^^^^^^^^^ use of undeclared crate or module `orml_traits`
+
+# use num_traits::Zero;
+#    |     ^^^^^^^^^^ use of undeclared crate or module `num_traits`
+
+# error[E0433]: failed to resolve: use of undeclared crate or module `orml_tokens`
+#   --> /home/dz/github.com/ComposableFi/composable/code/parachain/frame/cosmwasm/src/mock.rs:63:11
+#    |
+# 63 |         Tokens: orml_tokens,
+#    |                 ^^^^^^^^^^^ use of undeclared crate or module `orml_tokens`
+
+# 112 | parameter_type_with_key! {
+#     | ^^^^^^^^^^^^^^^^^^^^^^^
+#     |
+
+
+# [workspace]
+# members = ["."]
 
 [profile.release]
 debug = 1
