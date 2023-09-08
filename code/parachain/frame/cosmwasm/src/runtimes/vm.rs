@@ -93,7 +93,7 @@ impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
 			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
 			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
 			CosmwasmSubstrateError::Ibc => Self::Ibc("CosmwasmSubstrate".to_string()),
-    		CosmwasmSubstrateError::Xcm => Self::Ibc("CosmwasmSubstrate".to_string()),
+			CosmwasmSubstrateError::Xcm => Self::Ibc("CosmwasmSubstrate".to_string()),
 		}
 	}
 }

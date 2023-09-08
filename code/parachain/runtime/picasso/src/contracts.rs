@@ -13,10 +13,11 @@ use cosmwasm_vm::{
 	vm::{VMBase, VmErrorOf},
 };
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
+use cumulus_primitives_core::WeightLimit;
 use sp_core::ConstU32;
 
 use sp_runtime::traits::AccountIdConversion;
-use xcm::{VersionedMultiLocation, VersionedXcm, VersionedMultiAssets};
+use xcm::{VersionedMultiAssets, VersionedMultiLocation, VersionedXcm};
 
 use super::*;
 
@@ -239,7 +240,7 @@ impl XcmPrecompile {
 				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
 				Ok(Response::new().add_event(Event::new("xcm.sent")))
 			},
-			ReserveTransferAssets { dest, beneficiary, message, assets, fee_asset_item } => {
+			ReserveTransferAssets { dest, beneficiary, assets, fee_asset_item } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
 					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
 					.into();
@@ -260,17 +261,100 @@ impl XcmPrecompile {
 				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
 				Ok(Response::new().add_event(Event::new("xcm.reserve_transferred_assets")))
 			},
-			TeleportAssets { dest, beneficiary, assets, fee_asset_item } => todo!(),
-			Execute { message, max_weight } => todo!(),
+			Execute { message, max_weight } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::execute(
+					who,
+					VersionedXcm::<RuntimeCall>::decode(&mut message.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					Weight::from_ref_time(max_weight),
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.executed")))
+			},
+			TeleportAssets { dest, beneficiary, assets, fee_asset_item } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::teleport_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.teleported_assets")))
+			},
 			LimitedReserveTransferAssets {
 				dest,
 				beneficiary,
 				assets,
 				fee_asset_item,
 				weight_limit,
-			} => todo!(),
-			LimitedTeleportAssets { dest, beneficiary, assets, fee_asset_item, weight_limit } =>
-				todo!(),
+			} => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::limited_reserve_transfer_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+					if weight_limit == 0 {
+						WeightLimit::Unlimited
+					} else {
+						WeightLimit::Limited(Weight::from_ref_time(weight_limit))
+					},
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.limited_reserve_transferred_assets")))
+			},
+			LimitedTeleportAssets { dest, beneficiary, assets, fee_asset_item, weight_limit } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::limited_teleport_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+					if weight_limit == 0 {
+						WeightLimit::Unlimited
+					} else {
+						WeightLimit::Limited(Weight::from_ref_time(weight_limit))
+					},
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.limited_teleported_assets")))
+			},
 		}
 	}
 }
