@@ -1,12 +1,13 @@
 use crate::prelude::*;
-use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use ::cosmwasm::pallet_hook::PalletHook;
+use common::cosmwasm::CosmwasmToSubstrateAccount;
+use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use cosmwasm::{
 	instrument::CostRules,
 	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
 	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
-use cosmwasm_std::{ContractResult, Response};
+use cosmwasm_std::{ContractResult, Event, Response};
 use cosmwasm_vm::{
 	executor::QueryResponse,
 	vm::{VMBase, VmErrorOf},
@@ -15,6 +16,7 @@ use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use sp_core::ConstU32;
 
 use sp_runtime::traits::AccountIdConversion;
+use xcm::{VersionedMultiLocation, VersionedXcm, VersionedMultiAssets};
 
 use super::*;
 
@@ -216,6 +218,59 @@ impl XcmPrecompile {
 		sender: &str,
 		msg: xc_core::transport::xcm::ExecuteMsg,
 	) -> Result<Response, CosmwasmSubstrateError> {
-		todo!()
+		use codec::Decode;
+		use sp_runtime::traits::Convert;
+		use xc_core::transport::xcm::ExecuteMsg::*;
+		match msg {
+			Send { dest, message } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::send(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedXcm::<()>::decode(&mut message.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.sent")))
+			},
+			ReserveTransferAssets { dest, beneficiary, message, assets, fee_asset_item } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
+					.into();
+				let who = RuntimeOrigin::signed(who);
+				PolkadotXcm::reserve_transfer_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.reserve_transferred_assets")))
+			},
+			TeleportAssets { dest, beneficiary, assets, fee_asset_item } => todo!(),
+			Execute { message, max_weight } => todo!(),
+			LimitedReserveTransferAssets {
+				dest,
+				beneficiary,
+				assets,
+				fee_asset_item,
+				weight_limit,
+			} => todo!(),
+			LimitedTeleportAssets { dest, beneficiary, assets, fee_asset_item, weight_limit } =>
+				todo!(),
+		}
 	}
 }

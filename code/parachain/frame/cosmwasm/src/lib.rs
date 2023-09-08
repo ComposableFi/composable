@@ -203,6 +203,7 @@ pub mod pallet {
 		Precompile,
 		QueryDeserialize,
 		ExecuteSerialize,
+		Xcm,
 	}
 
 	#[pallet::config]
@@ -767,6 +768,7 @@ impl<T: Config> Pallet<T> {
 					CosmwasmVMError::QueryDeserialize => Error::<T>::QueryDeserialize,
 					CosmwasmVMError::ExecuteSerialize => Error::<T>::ExecuteSerialize,
 					CosmwasmVMError::NotImplemented => Error::<T>::NotAuthorized,
+					CosmwasmVMError::Xcm(_) => Error::<T>::Xcm,
 				};
 				Err(DispatchErrorWithPostInfo { error: error.into(), post_info })
 			},

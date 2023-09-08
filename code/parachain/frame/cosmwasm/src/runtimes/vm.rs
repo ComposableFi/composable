@@ -79,6 +79,7 @@ pub enum CosmwasmVMError<T: Config> {
 	ExecuteSerialize,
 	Rpc(String),
 	Ibc(String),
+	Xcm(String),
 	AssetConversion,
 	Precompile,
 }
@@ -92,6 +93,7 @@ impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
 			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
 			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
 			CosmwasmSubstrateError::Ibc => Self::Ibc("CosmwasmSubstrate".to_string()),
+    		CosmwasmSubstrateError::Xcm => Self::Ibc("CosmwasmSubstrate".to_string()),
 		}
 	}
 }
