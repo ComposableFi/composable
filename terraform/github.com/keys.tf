@@ -1,6 +1,5 @@
 resource "tls_private_key" "CI_SSH_KEY" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+  algorithm = "ed25519"
 }
 
 resource "github_actions_environment_secret" "CI_SSH_KEY" {
