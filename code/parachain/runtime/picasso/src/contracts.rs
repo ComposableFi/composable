@@ -103,17 +103,12 @@ impl PalletHook<Runtime> for Precompiles {
 		>,
 	> {
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
-		let xcm = PolkadotXcm::check_account();
+
 		match contract_address {
 			address if address == &dex => Some(PalletContractCodeInfo::new(
 				dex,
 				false,
 				PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
-			)),
-			address: if address == &xcm => Some(PalletContractCodeInfo::new(
-				xcm,
-				false,
-				PolkadotXcm::pallet_id().0.to_vec().try_into().unwrap_or_default(),
 			)),
 			_ => None,
 		}
