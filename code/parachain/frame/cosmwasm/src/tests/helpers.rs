@@ -31,7 +31,7 @@ pub fn create_coins(accounts: Vec<&AccountId32>) -> Vec<Coin> {
 		let currency_id = asset.id;
 		// We need to fund all accounts first
 		for account in &accounts {
-			<pallet_assets_transactor_router::Pallet<Test> as Mutate<AccountId32>>::mint_into(
+			<pallet_assets::Pallet<Test> as Mutate<AccountId32>>::mint_into(
 				currency_id.0.into(),
 				account,
 				u64::MAX as u128,
@@ -76,7 +76,7 @@ pub fn create_funds(accounts: Vec<&AccountId32>) -> FundsOf<Test> {
 		let balance = u64::MAX as u128;
 		// We need to fund all accounts first
 		for account in &accounts {
-			<pallet_assets_transactor_router::Pallet<Test> as Mutate<AccountId32>>::mint_into(
+			<pallet_assets::Pallet<Test> as Mutate<AccountId32>>::mint_into(
 				currency_id.0.into(),
 				account,
 				balance,

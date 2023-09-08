@@ -30,7 +30,7 @@ pub fn move_runtime_pallet<
 >() -> Weight {
 	let new_pallet_name = <NewPallet as PalletInfoAccess>::name();
 	let migrated_storage_version = StorageVersion::new(MIGRATED_STORAGE_VERSION);
-	Weight::from_ref_time(
+	Weight::from_parts(
 		if new_pallet_name != OLD_NAME &&
 			NewPallet::on_chain_storage_version() < migrated_storage_version
 		{
@@ -46,6 +46,7 @@ pub fn move_runtime_pallet<
 		} else {
 			0_u64
 		},
+		0,
 	)
 }
 
@@ -83,10 +84,10 @@ pub mod migrate_oracle {
 		}
 
 		for asset in preprices_assets {
-			oracle::pallet::PrePrices::<Runtime>::remove(asset.clone());
+			oracle::pallet::PrePrices::<Runtime>::remove(asset);
 		}
 
-		Weight::from_ref_time(100_000)
+		Weight::from_parts(100_000, 0)
 	}
 
 	impl OnRuntimeUpgrade for MigrateOracle {
@@ -151,7 +152,7 @@ pub mod migrate_oracle {
 					);
 
 					oracle::pallet::PrePrices::<Runtime>::try_mutate(
-						&usdt,
+						usdt,
 						|current_prices| -> Result<(), DispatchError> {
 							current_prices
 								.try_push(PrePrice { price: 1, who: bob.clone(), block: 0 })
@@ -166,7 +167,7 @@ pub mod migrate_oracle {
 					.unwrap();
 
 					oracle::pallet::PrePrices::<Runtime>::try_mutate(
-						&usdc,
+						usdc,
 						|current_prices| -> Result<(), DispatchError> {
 							current_prices
 								.try_push(PrePrice { price: 20, who: bob.clone(), block: 1 })
@@ -181,7 +182,7 @@ pub mod migrate_oracle {
 					.unwrap();
 
 					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(&usdt)
+						oracle::pallet::PrePrices::<Runtime>::get(usdt)
 							.into_iter()
 							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
 						vec![
@@ -190,7 +191,7 @@ pub mod migrate_oracle {
 						]
 					);
 					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(&usdc)
+						oracle::pallet::PrePrices::<Runtime>::get(usdc)
 							.into_iter()
 							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
 						vec![
@@ -202,13 +203,13 @@ pub mod migrate_oracle {
 					assert_eq!(oracle::pallet::AnswerInTransit::<Runtime>::get(&alice), None);
 					assert_eq!(oracle::pallet::AnswerInTransit::<Runtime>::get(&bob), None);
 					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(&usdt)
+						oracle::pallet::PrePrices::<Runtime>::get(usdt)
 							.into_iter()
 							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
 						vec![]
 					);
 					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(&usdc)
+						oracle::pallet::PrePrices::<Runtime>::get(usdc)
 							.into_iter()
 							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
 						vec![]
@@ -247,13 +248,13 @@ mod tests {
 			let hash_root = storage_root(StateVersion::V1);
 			assert_ne!(
 				TechCollectiveRenameMigration::on_runtime_upgrade(),
-				Weight::from_ref_time(0)
+				Weight::from_parts(0, 0)
 			);
 			assert_ne!(hash_root, storage_root(StateVersion::V1));
 			let updated = || {
 				assert_eq!(
 					TechCollectiveRenameMigration::on_runtime_upgrade(),
-					Weight::from_ref_time(0)
+					Weight::from_parts(0, 0)
 				)
 			};
 			assert_storage_noop!(updated());

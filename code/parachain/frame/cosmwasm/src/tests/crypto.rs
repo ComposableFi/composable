@@ -29,6 +29,8 @@ const ED25519_PUBLIC_KEY2: &[u8] =
 #[test]
 fn secp256k1_verify_verifies() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let message = SECP256K1_MESSAGE;
 		let signature = SECP256K1_SIGNATURE;
 		let public_key = SECP256K1_PUBLIC_KEY;
@@ -41,6 +43,8 @@ fn secp256k1_verify_verifies() {
 #[test]
 fn secp256k1_verify_fails() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let message = SECP256K1_MESSAGE;
 		let mut signature = SECP256K1_SIGNATURE.to_vec();
 		let public_key = SECP256K1_PUBLIC_KEY;
@@ -55,6 +59,8 @@ fn secp256k1_verify_fails() {
 #[test]
 fn secp256k1_recover_pubkey_works() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut hasher = Keccak256::new();
 		hasher.update(format!("\x19Ethereum Signed Message:\n{}", ETHEREUM_MESSAGE.len()));
 		hasher.update(ETHEREUM_MESSAGE);
@@ -76,6 +82,8 @@ fn secp256k1_recover_pubkey_works() {
 #[test]
 fn ed25519_verify_verifies() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let message = ED25519_MESSAGE;
 		let signature = ED25519_SIGNATURE;
 		let public_key = ED25519_PUBLIC_KEY;
@@ -87,6 +95,8 @@ fn ed25519_verify_verifies() {
 #[test]
 fn ed25519_verify_fails() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let message = ED25519_MESSAGE;
 		let mut signature = ED25519_SIGNATURE.to_vec();
 		let public_key = ED25519_PUBLIC_KEY;
@@ -100,6 +110,8 @@ fn ed25519_verify_fails() {
 #[test]
 fn ed25519_batch_verify_verifies() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		assert!(Cosmwasm::do_ed25519_batch_verify(
 			&[ED25519_MESSAGE, ED25519_MESSAGE2],
 			&[ED25519_SIGNATURE, ED25519_SIGNATURE2],
@@ -111,6 +123,8 @@ fn ed25519_batch_verify_verifies() {
 #[test]
 fn ed25519_batch_verify_verifies_multisig() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		assert!(Cosmwasm::do_ed25519_batch_verify(
 			&[ED25519_MESSAGE],
 			&[ED25519_SIGNATURE, ED25519_SIGNATURE],
@@ -122,6 +136,8 @@ fn ed25519_batch_verify_verifies_multisig() {
 #[test]
 fn ed25519_batch_verify_verifies_with_single_pubkey_multi_msg() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		assert!(Cosmwasm::do_ed25519_batch_verify(
 			&[ED25519_MESSAGE, ED25519_MESSAGE],
 			&[ED25519_SIGNATURE, ED25519_SIGNATURE],
@@ -133,6 +149,8 @@ fn ed25519_batch_verify_verifies_with_single_pubkey_multi_msg() {
 #[test]
 fn ed25519_batch_verify_fails_if_one_fail() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut bad_signature = ED25519_SIGNATURE2.to_vec();
 		*bad_signature.last_mut().unwrap() += 1;
 
@@ -147,6 +165,8 @@ fn ed25519_batch_verify_fails_if_one_fail() {
 #[test]
 fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		assert!(!Cosmwasm::do_ed25519_batch_verify(
 			&[ED25519_MESSAGE, ED25519_MESSAGE2],
 			&[ED25519_SIGNATURE],
@@ -158,6 +178,8 @@ fn ed25519_batch_verify_fails_if_input_lengths_are_incorrect() {
 #[test]
 fn ss58_address_format_is_supported_correctly() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let valid_ss58_addresses = [
 			(
 				"5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL",

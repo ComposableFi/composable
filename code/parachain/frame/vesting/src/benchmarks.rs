@@ -1,7 +1,6 @@
-#![cfg(feature = "runtime-benchmarks")]
-
 #[cfg(test)]
 use crate::Pallet as Vesting;
+
 use crate::{
 	types::{
 		VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo, VestingWindow::BlockNumberBased,
@@ -29,7 +28,11 @@ where
 	AssetIdOf::<T>::decode(&mut &a[..]).unwrap()
 }
 
-fn fund_account<T>(caller: &T::AccountId, asset_id: AssetIdOf<T>, amount: BalanceOf<T>)
+fn fund_account<T>(
+	caller: &T::AccountId,
+	asset_id: AssetIdOf<T>,
+	amount: BalanceOf<T>,
+) -> BalanceOf<T>
 where
 	T: Config,
 	BalanceOf<T>: From<u64>,
@@ -92,6 +95,7 @@ benchmarks! {
 			BalanceOf<T>: From<u64>,
 			BlockNumberOf<T>: From<u32>,
 			<T as Config>::Currency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = AssetIdOf<T>>,
+
 	}
 
 	claim {

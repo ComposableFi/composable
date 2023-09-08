@@ -18,21 +18,21 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn create() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 	fn add_liquidity() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 	fn remove_liquidity() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 	fn buy() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 	fn swap() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 	fn do_create_pool() -> Weight {
-    Weight::from_ref_time(10_000 )
+    Weight::from_parts(10_000 , 0)
   }
 }

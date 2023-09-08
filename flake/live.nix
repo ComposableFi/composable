@@ -18,7 +18,7 @@
             ${rust_log}
 
             # with polkadot 0.9.39 can enable warp, so it will start instantly, btw fast modes do not work because cannot restart on disconnection (and yet slow)
-            composable --chain=composable --listen-addr=/ip4/0.0.0.0/tcp/30334 --prometheus-port 9615 --base-path ../data/composable-follow --execution=wasm --ws-external --state-pruning=archive --blocks-pruning=archive --rpc-external --rpc-cors=all --unsafe-rpc-external --rpc-methods=unsafe --ws-port 9988 --unsafe-ws-external --rpc-port 39988 --in-peers 1000 --out-peers 1000 --ws-max-connections 10000  --sync=full -- --execution=wasm --listen-addr=/ip4/0.0.0.0/tcp/30333 --sync=full  --state-pruning=archive --blocks-pruning=archive
+            composable --chain=composable --listen-addr=/ip4/0.0.0.0/tcp/30334 --prometheus-port 9615 --base-path ../data/composable-follow --execution=wasm --ws-external --state-pruning=archive --blocks-pruning=archive --rpc-external --rpc-cors=all --unsafe-rpc-external --rpc-methods=unsafe --ws-port 9988 --rpc-port 39988 --in-peers 1000 --out-peers 1000 --ws-max-connections 10000  --sync=full -- --execution=wasm --listen-addr=/ip4/0.0.0.0/tcp/30333 --sync=full  --state-pruning=archive --blocks-pruning=archive
           '';
         };
       };

@@ -13,17 +13,17 @@ sp-api = { default-features = false, workspace = true }
 frame-support = { default-features = false, workspace = true }
 serde = { version = '1.0.136', optional = true }
 composable-support = { path = "../../../composable-support", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
 
-# [dependencies.oracle-rpc-runtime-api]
-# default-features = false
-# path = '../../../oracle/rpc/runtime-api'
 
 [features]
 default = ["std"]
 std = [
   "codec/std",
+  "composable-support/std",
   "frame-support/std",
-  "sp-api/std",
   "serde",
-  # "oracle-rpc-runtime-api/std",
+  "sp-api/std",
 ]

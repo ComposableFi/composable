@@ -8,6 +8,7 @@
 
       writeZombienetShellApplication = name: config:
         writeZombienet { inherit name config; };
+
       writeZombienet = { name, config, dir ? null }:
         pkgs.writeShellApplication rec {
           inherit name;

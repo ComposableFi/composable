@@ -9,7 +9,6 @@ use crate::{
 	*,
 };
 use common::cosmwasm::CosmwasmToSubstrateAccount;
-use composable_traits::currency::{CurrencyFactory, RangeId};
 use core::marker::PhantomData;
 
 use cosmwasm_std::{
@@ -33,8 +32,10 @@ use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
-	AccountId32, DispatchError,
+	AccountId32,
 };
+
+use crate as pallet_cosmwasm;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -57,12 +58,12 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		Cosmwasm: crate,
-		Balances: pallet_balances,
-		AssetsRegistry: pallet_assets_registry,
-		Assets: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp,
+		Balances: pallet_balances,
 		Tokens: orml_tokens,
+		Assets: pallet_assets,
+		AssetsRegistry: pallet_assets_registry,
+		Cosmwasm: pallet_cosmwasm,
 	}
 );
 
@@ -151,28 +152,14 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ConstU32<2>;
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
-}
 
-pub struct CurrencyIdGenerator;
+	type HoldIdentifier = [u8; 8];
 
-impl CurrencyFactory for CurrencyIdGenerator {
-	type AssetId = CurrencyId;
-	type Balance = Balance;
+	type FreezeIdentifier = [u8; 8];
 
-	fn create(_: RangeId) -> Result<Self::AssetId, sp_runtime::DispatchError> {
-		Ok(CurrencyId(1))
-	}
+	type MaxHolds = ConstU32<50>;
 
-	fn protocol_asset_id_to_unique_asset_id(
-		_protocol_asset_id: u32,
-		_range_id: RangeId,
-	) -> Result<Self::AssetId, DispatchError> {
-		Ok(CurrencyId(1))
-	}
-
-	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
-		1
-	}
+	type MaxFreezes = ConstU32<50>;
 }
 
 parameter_types! {
@@ -191,17 +178,25 @@ impl pallet_assets_registry::Config for Test {
 	type NetworkId = PicassoNetworkId;
 }
 
-impl pallet_assets_transactor_router::Config for Test {
+impl pallet_assets::Config for Test {
+	type RuntimeHoldReason = ();
+	type NativeAssetId = NativeAssetId;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type NativeAssetId = NativeAssetId;
-	type NativeTransactor = Balances;
-	type LocalTransactor = Tokens;
-	type ForeignTransactor = Tokens;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = Balances;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = ForeignAssetId;
-	type AssetsRegistry = AssetsRegistry;
+	type CurrencyValidator = Valid;
+}
+
+pub struct Valid;
+impl composable_support::validation::Validate<CurrencyId, primitives::currency::ValidateCurrencyId>
+	for Valid
+{
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		Ok(input)
+	}
 }
 
 impl pallet_timestamp::Config for Test {
@@ -487,7 +482,7 @@ impl PalletHook<Test> for MockHook {
 	}
 }
 
-impl Config for Test {
+impl pallet_cosmwasm::Config for Test {
 	const MAX_FRAMES: u8 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;

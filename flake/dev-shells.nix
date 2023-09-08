@@ -44,7 +44,7 @@
         inputs = self.inputs;
         modules = [{
           packages = tools;
-          devcontainer.enable = true;
+          devcontainer.enable = false;
           inherit env;
         }];
       };
@@ -69,7 +69,7 @@
               xorriso
               zlib.out
             ]);
-          devcontainer.enable = true;
+          devcontainer.enable = false;
           inherit env;
         }];
       };

@@ -108,7 +108,7 @@
     in {
       packages = rec {
         centauri-src = self.inputs.centauri-src;
-        ics10-grandpa-cw-src = self.inputs.centauri-src;
+        ics10-grandpa-cw-src = self.inputs.centauri-old-src;
 
         ics10-grandpa-cw =
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src

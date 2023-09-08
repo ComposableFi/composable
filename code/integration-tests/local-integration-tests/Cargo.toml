@@ -9,14 +9,7 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = [
-  "currency-factory",
-  "oracle",
-  "pallet-bonded-finance",
-  "pallet-vault",
-  "session-benchmarking",
-  "vault",
-]
+normal = ["currency-factory", "oracle", "session-benchmarking"]
 
 [dependencies]
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.36" }
@@ -67,10 +60,8 @@ common = { path = "../../parachain/runtime/common", default-features = false }
 composable-tests-helpers = { path = "../../parachain/frame/composable-tests-helpers", default-features = false }
 composable-traits = { path = "../../parachain/frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../parachain/frame/currency-factory", default-features = false }
-liquidations = { package = "pallet-liquidations", path = "../../parachain/frame/liquidations", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../parachain/frame/oracle", default-features = false }
 primitives = { path = "../../parachain/runtime/primitives", default-features = false }
-vault = { package = "pallet-vault", path = "../../parachain/frame/vault", default-features = false }
 transaction-payment = { package = "pallet-transaction-payment", path = "../../parachain/frame/transaction-payment", default-features = false }
 
 # Used for the node template's RPCs
@@ -159,7 +150,6 @@ std = [
   "sudo/std",
   "indices/std",
   "oracle/std",
-  "vault/std",
   "currency-factory/std",
   "orml-tokens/std",
   "orml-xtokens/std",
@@ -183,7 +173,6 @@ std = [
   "cumulus-primitives-utility/std",
   "collator-selection/std",
   "xcm/std",
-  "liquidations/std",
   "xcm-builder/std",
   "xcm-executor/std",
   "aura/std",
@@ -214,7 +203,6 @@ runtime-benchmarks = [
   "session-benchmarking/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
-  "liquidations/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
   "indices/runtime-benchmarks",
   "membership/runtime-benchmarks",

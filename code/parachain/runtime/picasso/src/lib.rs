@@ -25,6 +25,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+pub mod assets;
 mod contracts;
 mod fees;
 pub mod governance;
@@ -46,9 +47,10 @@ use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash,
-	Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
+	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -209,8 +211,7 @@ impl system::Config for Runtime {
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = weights::frame_system::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -250,8 +251,8 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Assets = AssetsTransactorRouter;
-	type LPTokenFactory = AssetsTransactorRouter;
+	type Assets = Assets;
+	type LPTokenFactory = AssetsRegistry;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
 	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
@@ -260,31 +261,6 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
-}
-
-impl assets_transactor_router::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeTransactor = Balances;
-	type LocalTransactor = Tokens;
-	type ForeignTransactor = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
-	type AssetLocation = primitives::currency::ForeignAssetId;
-	type AssetsRegistry = AssetsRegistry;
-}
-
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type CurrencyValidator = ValidateCurrencyId;
 }
 
 type FarmingRewardsInstance = reward::Instance1;
@@ -311,7 +287,7 @@ impl farming::Config for Runtime {
 	type TreasuryAccountId = FarmingAccount;
 	type RewardPeriod = RewardPeriod;
 	type RewardPools = FarmingRewards;
-	type MultiCurrency = AssetsTransactorRouter;
+	type MultiCurrency = Assets;
 	type WeightInfo = ();
 }
 
@@ -319,7 +295,6 @@ parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
 	pub const StalePrice: BlockNumber = 5;
 
-	// TODO
 	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
 	pub const MinAnswerBound: u32 = 3;
 	pub const MaxAnswerBound: u32 = 25;
@@ -354,7 +329,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-	type LocalAssets = CurrencyFactory;
+	type LocalAssets = ();
 	type Moment = Moment;
 	type Time = Timestamp;
 	type PalletId = OraclePalletId;
@@ -435,22 +410,6 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
-}
-
-type MaxLocks = ConstU32<50>;
-
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = NativeExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -605,38 +564,11 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-pub struct CurrencyHooks;
-impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type OnSlash = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-}
-
-type ReserveIdentifier = [u8; 8];
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = MultiExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = ConstU32<2>;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type CurrencyHooks = CurrencyHooks;
-}
-
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
-  pub const NoPreimagePostponement: Option<u32> = Some(10);
+	  pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl scheduler::Config for Runtime {
@@ -668,14 +600,6 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-impl currency_factory::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
-	type Balance = Balance;
-}
-
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
@@ -696,7 +620,7 @@ pub type ProxyPrice = NativeExistentialDeposit;
 impl proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = AssetsTransactorRouter;
+	type Currency = Assets;
 	type ProxyType = composable_traits::account_proxy::ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
@@ -711,7 +635,7 @@ impl proxy::Config for Runtime {
 impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type RewardAsset = AssetsTransactorRouter;
+	type RewardAsset = Assets;
 	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
@@ -733,7 +657,7 @@ parameter_types! {
 }
 
 impl vesting::Config for Runtime {
-	type Currency = AssetsTransactorRouter;
+	type Currency = Assets;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -759,7 +683,7 @@ parameter_types! {
 pub struct MultihopXcmIbcPalletId;
 impl Get<u8> for MultihopXcmIbcPalletId {
 	fn get() -> u8 {
-		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().expect("const")
 	}
 }
 
@@ -768,20 +692,6 @@ impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type PalletInstanceId = MultihopXcmIbcPalletId;
 	type MaxMultihopCount = MaxMultihopCount;
 	type ChainNameVecLimit = ChainNameVecLimit;
-}
-
-impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type BondOfferId = BondOfferId;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = AssetsTransactorRouter;
-	type RuntimeEvent = RuntimeEvent;
-	type MinReward = MinReward;
-	type NativeCurrency = Balances;
-	type PalletId = BondedFinanceId;
-	type Stake = Stake;
-	type Vesting = Vesting;
-	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -837,14 +747,12 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens = 45,
 
 		Tokens: orml_tokens = 52,
-		CurrencyFactory: currency_factory = 53,
 		CrowdloanRewards: crowdloan_rewards = 55,
 		Vesting: vesting = 56,
-		BondedFinance: bonded_finance = 57,
+		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 58,
 		Pablo: pablo = 59,
 		Oracle: oracle = 60,
-		AssetsTransactorRouter: assets_transactor_router = 61,
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
 
@@ -859,10 +767,11 @@ construct_runtime!(
 	}
 );
 
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = ComposableBlock<RuntimeCall, SignedExtra>;
+
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic = ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
@@ -876,9 +785,6 @@ pub type SignedExtra = (
 	AssetsPaymentHeader,
 );
 
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -912,14 +818,9 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[proxy, Proxy]
-		[currency_factory, CurrencyFactory]
-		[bonded_finance, BondedFinance]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
-		[pablo, Pablo]
 		[democracy, Democracy]
-		[oracle, Oracle]
-		[pallet_ibc, Ibc]
 	);
 }
 
@@ -955,7 +856,7 @@ cumulus_pallet_parachain_system::register_validate_block!(
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
@@ -1120,6 +1021,13 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 

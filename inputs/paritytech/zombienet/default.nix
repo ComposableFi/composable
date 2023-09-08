@@ -31,6 +31,7 @@ in with prelude; rec {
         "--offchain-worker=always"
         "--discover-local"
       ];
+      substrate_cli_args_version = "1";
       env = [{
         name = "RUST_LOG";
         value =
@@ -81,6 +82,7 @@ in with prelude; rec {
     {
       name = name;
       validator = true;
+      substrate_cli_args_version = "1";
       env = [{
         name = "RUST_LOG";
         value =

@@ -38,10 +38,10 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `2687`
 		// Minimum execution time: 12_665 nanoseconds.
-		Weight::from_ref_time(86_842_892)
-			.saturating_add(Weight::from_proof_size(2687))
+		Weight::from_parts(86_842_892, 0)
+			.saturating_add(Weight::from_parts(0, 2687))
 			// Standard Error: 61_978
-			.saturating_add(Weight::from_ref_time(12_714_557).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(12_714_557, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: CallFilter DisabledCalls (r:1 w:0)
@@ -51,8 +51,8 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `2687`
 		// Minimum execution time: 16_369 nanoseconds.
-		Weight::from_ref_time(17_063_000)
-			.saturating_add(Weight::from_proof_size(2687))
+		Weight::from_parts(17_063_000, 0)
+			.saturating_add(Weight::from_parts(0, 2687))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: CallFilter DisabledCalls (r:1 w:0)
@@ -63,10 +63,10 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `2687`
 		// Minimum execution time: 12_765 nanoseconds.
-		Weight::from_ref_time(71_588_116)
-			.saturating_add(Weight::from_proof_size(2687))
+		Weight::from_parts(71_588_116, 0)
+			.saturating_add(Weight::from_parts(0, 2687))
 			// Standard Error: 50_377
-			.saturating_add(Weight::from_ref_time(13_200_150).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(13_200_150, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	fn dispatch_as() -> Weight {
@@ -74,8 +74,8 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 17_148 nanoseconds.
-		Weight::from_ref_time(17_940_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(17_940_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// Storage: CallFilter DisabledCalls (r:1 w:0)
 	/// Proof: CallFilter DisabledCalls (max_values: None, max_size: Some(212), added: 2687, mode: MaxEncodedLen)
@@ -85,10 +85,10 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `2687`
 		// Minimum execution time: 12_716 nanoseconds.
-		Weight::from_ref_time(24_470_911)
-			.saturating_add(Weight::from_proof_size(2687))
+		Weight::from_parts(24_470_911, 0)
+			.saturating_add(Weight::from_parts(0, 2687))
 			// Standard Error: 9_391
-			.saturating_add(Weight::from_ref_time(12_603_173).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(12_603_173, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 }

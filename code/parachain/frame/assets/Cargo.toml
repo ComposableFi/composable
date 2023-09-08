@@ -39,7 +39,6 @@ pallet-balances = { workspace = true }
 proptest = "1.0"
 primitives = { path = "../../runtime/primitives", default-features = false }
 
-
 [features]
 default = ["std"]
 runtime-benchmarks = [
@@ -48,15 +47,24 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
 ]
 std = [
-  "composable-traits/std",
   "codec/std",
-  "frame-support/std",
-  "sp-runtime/std",
-  "sp-api/std",
-  "orml-traits/std",
-  "orml-tokens/std",
-  "num-traits/std",
+  "composable-support/std",
+  "composable-tests-helpers/std",
+  "composable-traits/std",
   "frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
+  "num-traits/std",
+  "orml-tokens/std",
+  "orml-traits/std",
   "pallet-balances/std",
   "primitives/std",
+  "sp-api/std",
+  "sp-runtime/std",
+  "sp-arithmetic/std",
+  "scale-info/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-std/std",
+  "proptest/std",
 ]

@@ -1,5 +1,6 @@
 use crate::{
-	prelude::*, weights, ReleaseCommittee, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	prelude::*, weights, ReleaseCommittee, Runtime, RuntimeBlockWeights, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin,
 };
 use common::{
 	governance::native::{
@@ -8,9 +9,13 @@ use common::{
 	AccountId, MaxStringSize, HOURS,
 };
 use composable_traits::account_proxy::ProxyType;
-use frame_support::traits::{EitherOfDiverse, InstanceFilter};
+use frame_support::{
+	parameter_types,
+	traits::{EitherOfDiverse, InstanceFilter},
+};
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
+use sp_runtime::Perbill;
 
 impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn filter(&self, c: &RuntimeCall) -> bool {
@@ -28,10 +33,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				matches!(c, RuntimeCall::Proxy(proxy::Call::reject_announcement { .. }))
 			},
 			ProxyType::Assets => {
-				matches!(
-					c,
-					RuntimeCall::AssetsRegistry(..) | RuntimeCall::AssetsTransactorRouter(..)
-				)
+				matches!(c, RuntimeCall::AssetsRegistry(..) | RuntimeCall::Assets(..))
 			},
 			ProxyType::Defi => {
 				matches!(
@@ -90,6 +92,10 @@ impl call_filter::Config for Runtime {
 	type MaxStringSize = MaxStringSize;
 }
 
+parameter_types! {
+	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+}
+
 impl collective::Config<ReleaseCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
@@ -101,6 +107,7 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin =
 		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 pub type EnsureRootOrTwoThirds<T> =

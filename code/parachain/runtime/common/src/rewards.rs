@@ -11,9 +11,12 @@ impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for StakingPot<R, I>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ treasury::Config<I, Currency = balances::Pallet<R>>,
-	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
+		+ treasury::Config<I, Currency = balances::Pallet<R>>
+		+ frame_system::Config,
+	<R as frame_system::Config>::AccountId: From<<R as frame_system::pallet::Config>::AccountId>
+		+ Into<<R as frame_system::pallet::Config>::AccountId>,
+	<R as frame_system::pallet::Config>::AccountId:
+		Into<<R as frame_system::Config>::AccountId> + From<<R as frame_system::Config>::AccountId>,
 	<R as frame_system::Config>::RuntimeEvent: From<balances::Event<R>>,
 	<R as balances::Config>::Balance: From<u128>,
 {
@@ -45,7 +48,7 @@ mod tests {
 	use frame_system::{limits, EnsureRoot};
 	use num_traits::Zero;
 	use orml_traits::parameter_type_with_key;
-	use polkadot_primitives::v2::AccountId;
+	use polkadot_primitives::AccountId;
 	use primitives::currency::CurrencyId;
 	use sp_core::H256;
 	use sp_runtime::{
@@ -121,6 +124,14 @@ mod tests {
 		type ReserveIdentifier = [u8; 8];
 		type MaxReserves = ();
 		type WeightInfo = ();
+
+		type HoldIdentifier = ();
+
+		type FreezeIdentifier = ();
+
+		type MaxHolds = ();
+
+		type MaxFreezes = ();
 	}
 
 	pub struct OneAuthor;
@@ -208,6 +219,7 @@ mod tests {
 	impl sudo::Config for Test {
 		type RuntimeEvent = RuntimeEvent;
 		type RuntimeCall = RuntimeCall;
+		type WeightInfo = ();
 	}
 
 	parameter_types! {

@@ -14,7 +14,7 @@ pub use cumulus_primitives_core::ParaId;
 pub use frame_support::{
 	assert_err, assert_err_ignore_postinfo, assert_ok, log,
 	traits::{
-		fungible::Inspect, fungibles::Inspect as FungiblesInspect, tokens::BalanceConversion,
+		fungible::Inspect, fungibles::Inspect as FungiblesInspect, tokens::ConversionToAssetBalance,
 	},
 	RuntimeDebug,
 };

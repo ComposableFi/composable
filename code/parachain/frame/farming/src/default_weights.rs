@@ -48,9 +48,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Farming RewardSchedules (r:1 w:0)
 	// Storage: FarmingRewards TotalStake (r:1 w:0)
 	fn on_initialize(c: u32, ) -> Weight {
-		Weight::from_ref_time(18_073_005u64)
+		Weight::from_parts(18_073_005u64, 0)
 			// Standard Error: 183_362
-			.saturating_add(Weight::from_ref_time(18_555_611u64).saturating_mul(c as u64))
+			.saturating_add(Weight::from_parts(18_555_611u64, 0).saturating_mul(c as u64))
 			.saturating_add(T::DbWeight::get().reads(1u64))
 			.saturating_add(T::DbWeight::get().reads((2u64).saturating_mul(c as u64)))
 	}
@@ -58,7 +58,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Farming RewardSchedules (r:1 w:1)
 	fn update_reward_schedule() -> Weight {
-		Weight::from_ref_time(105_531_000u64)
+		Weight::from_parts(105_531_000u64, 0)
 			.saturating_add(T::DbWeight::get().reads(5u64))
 			.saturating_add(T::DbWeight::get().writes(4u64))
 	}
@@ -66,7 +66,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Farming RewardSchedules (r:0 w:1)
 	fn remove_reward_schedule() -> Weight {
-		Weight::from_ref_time(83_988_000u64)
+		Weight::from_parts(83_988_000u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3u64))
 			.saturating_add(T::DbWeight::get().writes(3u64))
 	}
@@ -77,7 +77,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: FarmingRewards RewardTally (r:2 w:2)
 	// Storage: FarmingRewards RewardPerToken (r:2 w:0)
 	fn deposit() -> Weight {
-		Weight::from_ref_time(108_507_000u64)
+		Weight::from_parts(108_507_000u64, 0)
 			.saturating_add(T::DbWeight::get().reads(9u64))
 			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
@@ -87,7 +87,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: FarmingRewards RewardTally (r:2 w:2)
 	// Storage: FarmingRewards RewardPerToken (r:2 w:0)
 	fn withdraw() -> Weight {
-		Weight::from_ref_time(96_703_000u64)
+		Weight::from_parts(96_703_000u64, 0)
 			.saturating_add(T::DbWeight::get().reads(7u64))
 			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
@@ -98,7 +98,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:2 w:1)
 	fn claim() -> Weight {
-		Weight::from_ref_time(136_142_000u64)
+		Weight::from_parts(136_142_000u64, 0)
 			.saturating_add(T::DbWeight::get().reads(8u64))
 			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
@@ -109,9 +109,9 @@ impl WeightInfo for () {
 	// Storage: Farming RewardSchedules (r:1 w:0)
 	// Storage: FarmingRewards TotalStake (r:1 w:0)
 	fn on_initialize(c: u32, ) -> Weight {
-		Weight::from_ref_time(18_073_005u64)
+		Weight::from_parts(18_073_005u64, 0)
 			// Standard Error: 183_362
-			.saturating_add(Weight::from_ref_time(18_555_611u64).saturating_mul(c as u64))
+			.saturating_add(Weight::from_parts(18_555_611u64, 0).saturating_mul(c as u64))
 			.saturating_add(RocksDbWeight::get().reads(1u64))
 			.saturating_add(RocksDbWeight::get().reads((2u64).saturating_mul(c as u64)))
 	}
@@ -119,7 +119,7 @@ impl WeightInfo for () {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Farming RewardSchedules (r:1 w:1)
 	fn update_reward_schedule() -> Weight {
-		Weight::from_ref_time(105_531_000u64)
+		Weight::from_parts(105_531_000u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(5u64))
 			.saturating_add(RocksDbWeight::get().writes(4u64))
 	}
@@ -127,7 +127,7 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Farming RewardSchedules (r:0 w:1)
 	fn remove_reward_schedule() -> Weight {
-		Weight::from_ref_time(83_988_000u64)
+		Weight::from_parts(83_988_000u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3u64))
 			.saturating_add(RocksDbWeight::get().writes(3u64))
 	}
@@ -138,7 +138,7 @@ impl WeightInfo for () {
 	// Storage: FarmingRewards RewardTally (r:2 w:2)
 	// Storage: FarmingRewards RewardPerToken (r:2 w:0)
 	fn deposit() -> Weight {
-		Weight::from_ref_time(108_507_000u64)
+		Weight::from_parts(108_507_000u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(9u64))
 			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
@@ -148,7 +148,7 @@ impl WeightInfo for () {
 	// Storage: FarmingRewards RewardTally (r:2 w:2)
 	// Storage: FarmingRewards RewardPerToken (r:2 w:0)
 	fn withdraw() -> Weight {
-		Weight::from_ref_time(96_703_000u64)
+		Weight::from_parts(96_703_000u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(7u64))
 			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
@@ -159,7 +159,7 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:2 w:1)
 	fn claim() -> Weight {
-		Weight::from_ref_time(136_142_000u64)
+		Weight::from_parts(136_142_000u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(8u64))
 			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}

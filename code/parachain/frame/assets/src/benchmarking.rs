@@ -5,8 +5,8 @@ use super::*;
 use crate::Pallet as Assets;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{
-	fungible::{Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer},
-	fungibles::{Inspect, Mutate, Transfer},
+	fungible::{Inspect as NativeInspect, Mutate as NativeMutate},
+	fungibles::{Inspect, Mutate},
 };
 use frame_system::{Config as SystemConfig, RawOrigin};
 use sp_runtime::traits::StaticLookup;
@@ -18,11 +18,10 @@ const TRANSFER_AMOUNT: u32 = 500;
 
 benchmarks! {
 	where_clause {
-		 where <T as Config>::NativeCurrency: NativeTransfer<T::AccountId, Balance = T::Balance>
-				   + NativeInspect<T::AccountId, Balance = T::Balance>
+		 where <T as Config>::NativeCurrency:  NativeInspect<T::AccountId, Balance = T::Balance>
 				   + NativeMutate<T::AccountId, Balance = T::Balance>,
 			   <T as Config>::MultiCurrency: Inspect<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
-				   + Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
+
 				   + Mutate<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
 				<T as Config>::AssetId: From<u64>,
 				<T as SystemConfig>::AccountId: From<u64>,

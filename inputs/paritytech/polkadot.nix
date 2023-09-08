@@ -62,12 +62,12 @@
           repo = "polkadot";
           owner = "paritytech";
           rev = rococo-runtime-commit;
-          hash = "sha256-uoz3x0I0608aak/g/UZRjnmH3r08ffURzgxQfvZpmMs=";
+          hash = "sha256-KYmMMcQMkkXfWj5ZTr549a/8ftELKo0PUvCrmRMiDaE=";
           outputHashes = {
-            "beefy-gadget-4.0.0-dev" =
-              "sha256-3zOEG4ER0UQK3GRctZw6TgkX/8Ydk1ynU8N6vlepnHw=";
             "sub-tokens-0.1.0" =
               "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-/8bGqnM/yqtCgVWkIaVEySZSV3XGYuiA3JuyHYTp2lw=";
           };
         };
 

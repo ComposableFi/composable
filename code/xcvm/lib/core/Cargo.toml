@@ -45,14 +45,14 @@ substrate = [
 ]
 std = [
   "cosmwasm-std/std",
-  "xcm/std",
   "cw-storage-plus/std",
   "dep:cosmwasm-schema",
   "dep:schemars",
   "ibc-proto/std",
   "ibc-rs-scale/schema",
   "ibc-rs-scale/std",
-  "serde-json-wasm/std",
-  "serde-cw-value/std",
   "serde-cw-value/schema",
+  "serde-cw-value/std",
+  "serde-json-wasm/std",
+  "xcm/std",
 ]

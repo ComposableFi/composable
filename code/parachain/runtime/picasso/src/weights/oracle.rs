@@ -41,8 +41,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `3611`
 		// Minimum execution time: 28_862 nanoseconds.
-		Weight::from_ref_time(30_480_000)
-			.saturating_add(Weight::from_proof_size(3611))
+		Weight::from_parts(30_480_000, 0)
+			.saturating_add(Weight::from_parts(0, 3611))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -55,8 +55,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `152`
 		//  Estimated: `1062`
 		// Minimum execution time: 24_683 nanoseconds.
-		Weight::from_ref_time(25_343_000)
-			.saturating_add(Weight::from_proof_size(1062))
+		Weight::from_parts(25_343_000, 0)
+			.saturating_add(Weight::from_parts(0, 1062))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -71,8 +71,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `76`
 		//  Estimated: `7649`
 		// Minimum execution time: 97_193 nanoseconds.
-		Weight::from_ref_time(99_917_000)
-			.saturating_add(Weight::from_proof_size(7649))
+		Weight::from_parts(99_917_000, 0)
+			.saturating_add(Weight::from_parts(0, 7649))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -87,8 +87,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `182`
 		//  Estimated: `7697`
 		// Minimum execution time: 84_978 nanoseconds.
-		Weight::from_ref_time(86_411_000)
-			.saturating_add(Weight::from_proof_size(7697))
+		Weight::from_parts(86_411_000, 0)
+			.saturating_add(Weight::from_parts(0, 7697))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -103,8 +103,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `268`
 		//  Estimated: `5094`
 		// Minimum execution time: 33_484 nanoseconds.
-		Weight::from_ref_time(34_304_000)
-			.saturating_add(Weight::from_proof_size(5094))
+		Weight::from_parts(34_304_000, 0)
+			.saturating_add(Weight::from_parts(0, 5094))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -121,8 +121,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `308`
 		//  Estimated: `7701`
 		// Minimum execution time: 37_962 nanoseconds.
-		Weight::from_ref_time(39_020_000)
-			.saturating_add(Weight::from_proof_size(7701))
+		Weight::from_parts(39_020_000, 0)
+			.saturating_add(Weight::from_parts(0, 7701))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -131,8 +131,8 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 	// Storage: Oracle DeclaredWithdraws (r:0 w:1)
 	// Storage: Oracle SignerToController (r:0 w:1)
 	fn remove_signer() -> Weight {
-		Weight::from_ref_time(99_917_000)
-			.saturating_add(Weight::from_proof_size(7649))
+		Weight::from_parts(99_917_000, 0)
+			.saturating_add(Weight::from_parts(0, 7649))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}
@@ -152,10 +152,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `336 + p * (52 ±0)`
 		//  Estimated: `14746`
 		// Minimum execution time: 45_440 nanoseconds.
-		Weight::from_ref_time(47_963_125)
-			.saturating_add(Weight::from_proof_size(14746))
+		Weight::from_parts(47_963_125, 0)
+			.saturating_add(Weight::from_parts(0, 14746))
 			// Standard Error: 10_663
-			.saturating_add(Weight::from_ref_time(209_454).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(209_454, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -169,10 +169,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `169 + p * (52 ±0)`
 		//  Estimated: `7127`
 		// Minimum execution time: 15_092 nanoseconds.
-		Weight::from_ref_time(15_916_626)
-			.saturating_add(Weight::from_proof_size(7127))
+		Weight::from_parts(15_916_626, 0)
+			.saturating_add(Weight::from_parts(0, 7127))
 			// Standard Error: 3_078
-			.saturating_add(Weight::from_ref_time(186_757).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(186_757, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -194,10 +194,10 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 		//  Measured:  `569`
 		//  Estimated: `8561`
 		// Minimum execution time: 33_120 nanoseconds.
-		Weight::from_ref_time(33_924_937)
-			.saturating_add(Weight::from_proof_size(8561))
+		Weight::from_parts(33_924_937, 0)
+			.saturating_add(Weight::from_parts(0, 8561))
 			// Standard Error: 71_816
-			.saturating_add(Weight::from_ref_time(4_509_678).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(4_509_678, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}

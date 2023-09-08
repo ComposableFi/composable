@@ -187,7 +187,8 @@
           name = "osmosisd-gen-fresh";
           runtimeInputs = [ osmosisd-gen ];
           text = ''
-            rm --force --recursive ${devnet-root-directory} 
+            CHAIN_DATA="${devnet-root-directory}/.osmosisd"
+            rm --force --recursive "$CHAIN_DATA"
             osmosisd-gen
           '';
         };

@@ -50,10 +50,5 @@ sp-io = { workspace = true }
 
 [features]
 default = ["std"]
-std = [
-  "codec/std",
-  "frame-support/std",
-  "sp-std/std",
-  "scale-info/std",
-  "schemars",
-]
+schema = ["schemars", "std"]
+std = ["codec/std", "frame-support/std", "scale-info/std", "sp-std/std"]

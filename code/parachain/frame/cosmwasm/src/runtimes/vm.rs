@@ -17,6 +17,7 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
+use frame_support::traits::tokens::Preservation;
 use sp_runtime::DispatchError;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
@@ -425,7 +426,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "transfer: {:#?}", funds);
 		let from = self.contract_address.as_ref();
-		Pallet::<T>::do_transfer(from, to.as_ref(), funds, false)?;
+		Pallet::<T>::do_transfer(from, to.as_ref(), funds, Preservation::Expendable)?;
 		Ok(())
 	}
 
@@ -666,7 +667,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		to: &Self::Address,
 		funds: &[Coin],
 	) -> Result<(), Self::Error> {
-		Pallet::<T>::do_transfer(from.as_ref(), to.as_ref(), funds, false)?;
+		Pallet::<T>::do_transfer(from.as_ref(), to.as_ref(), funds, Preservation::Expendable)?;
 		Ok(())
 	}
 }

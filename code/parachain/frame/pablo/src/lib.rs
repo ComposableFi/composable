@@ -8,6 +8,7 @@
 		clippy::panic
 	)
 )]
+#![allow(clippy::let_unit_value)]
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
@@ -34,8 +35,6 @@ pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
-#[cfg(test)]
-mod mock_fnft;
 #[cfg(test)]
 mod test;
 
@@ -73,7 +72,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::with_transaction,
 		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
+			fungibles::{Inspect, Mutate},
+			tokens::Preservation,
 			Time,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
@@ -263,8 +263,7 @@ pub mod pallet {
 		type LPTokenFactory: CreateAsset<LocalAssetId = Self::AssetId, Balance = Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
-		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+		type Assets: Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
 			+ Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		/// Type representing the unique ID of a pool.
@@ -303,7 +302,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::type_value]
@@ -494,7 +492,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
-			let mut weight: Weight = Weight::from_ref_time(0);
+			let mut weight: Weight = Weight::from_parts(0, 0);
 			let twap_enabled_pools: Vec<T::PoolId> =
 				PriceCumulativeState::<T>::iter_keys().collect();
 			for pool_id in twap_enabled_pools {
@@ -518,7 +516,7 @@ pub mod pallet {
 					},
 				);
 				if result.is_ok() {
-					weight = weight.saturating_add(Weight::from_ref_time(1));
+					weight = weight.saturating_add(Weight::from_parts(1, 0));
 					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
 						#[allow(deprecated)]
 						if let Ok(assets) = Self::pool_ordered_pair(pool_id) {
@@ -659,18 +657,14 @@ pub mod pallet {
 			fees: &Fee<T::AssetId, T::Balance>,
 		) -> Result<(), DispatchError> {
 			if !fees.owner_fee.is_zero() {
-				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
+				T::Assets::transfer(
+					fees.asset_id,
+					who,
+					owner,
+					fees.owner_fee,
+					Preservation::Expendable,
+				)?;
 			}
-			// TODO: Enable fee disbursal for release 3
-			// if !fees.protocol_fee.is_zero() {
-			// 	T::ProtocolStaking::transfer_reward(
-			// 		who,
-			// 		&T::PbloAssetId::get(),
-			// 		fees.asset_id,
-			// 		fees.protocol_fee,
-			// 		false,
-			// 	)?;
-			// }
 			Ok(())
 		}
 
@@ -945,6 +939,8 @@ pub mod pallet {
 			min_receive: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
 			ensure!(in_asset.asset_id != min_receive.asset_id, Error::<T>::CannotSwapSameAsset);
 
 			let pool = Self::get_pool(pool_id)?;
@@ -983,7 +979,7 @@ pub mod pallet {
 						&pool_account,
 						who,
 						amount_out.amount,
-						false,
+						keep_alive,
 					)?;
 
 					(amount_out, amount_in, fee, info.owner)
@@ -1015,6 +1011,8 @@ pub mod pallet {
 			out_asset: AssetAmount<Self::AssetId, Self::Balance>,
 			keep_alive: bool,
 		) -> Result<SwapResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
 			ensure!(in_asset_id != out_asset.asset_id, Error::<T>::CannotBuyAssetWithItself);
 
 			let pool = Self::get_pool(pool_id)?;
@@ -1042,7 +1040,7 @@ pub mod pallet {
 						&pool_account,
 						who,
 						amount_out.amount,
-						false,
+						keep_alive,
 					)?;
 					(amount_sent, info.owner, fees)
 				},

@@ -36,7 +36,8 @@ pub mod pallet {
 	use composable_traits::{
 		assets::{
 			Asset, AssetInfo, AssetInfoUpdate, AssetType, AssetTypeInspect, BiBoundedAssetName,
-			BiBoundedAssetSymbol, GenerateAssetId, InspectRegistryMetadata, MutateRegistryMetadata,
+			BiBoundedAssetSymbol, CreateAsset, GenerateAssetId, InspectRegistryMetadata,
+			MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		storage::UpdateValue,
@@ -45,8 +46,9 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
-		traits::{tokens::BalanceConversion, EnsureOrigin},
+		traits::{tokens::ConversionToAssetBalance, EnsureOrigin},
 	};
+
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::Convert;
@@ -100,7 +102,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Mapping local asset to foreign asset.
@@ -544,7 +545,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> BalanceConversion<T::Balance, T::LocalAssetId, T::Balance> for Pallet<T> {
+	impl<T: Config> ConversionToAssetBalance<T::Balance, T::LocalAssetId, T::Balance> for Pallet<T> {
 		type Error = DispatchError;
 
 		fn to_asset_balance(
@@ -579,6 +580,41 @@ pub mod pallet {
 			let high = (u64::from(network_id) << 32) | u64::from(protocol_id);
 			let asset_id = (u128::from(high) << 64) | u128::from(nonce);
 			Self::AssetId::from(asset_id)
+		}
+	}
+
+	impl<T: Config> CreateAsset for Pallet<T> {
+		type LocalAssetId = T::LocalAssetId;
+		type ForeignAssetId = T::ForeignAssetId;
+		type Balance = T::Balance;
+
+		fn create_local_asset(
+			protocol_id: [u8; 4],
+			nonce: u64,
+			asset_info: AssetInfo<T::Balance>,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let asset_id = Self::generate_asset_id(protocol_id, nonce);
+
+			<Self as RemoteAssetRegistryMutate>::register_asset(asset_id, None, asset_info)?;
+
+			Ok(asset_id)
+		}
+
+		fn create_foreign_asset(
+			protocol_id: [u8; 4],
+			nonce: u64,
+			asset_info: AssetInfo<T::Balance>,
+			foreign_asset_id: Self::ForeignAssetId,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let asset_id = Self::generate_asset_id(protocol_id, nonce);
+
+			<Self as RemoteAssetRegistryMutate>::register_asset(
+				asset_id,
+				Some(foreign_asset_id),
+				asset_info,
+			)?;
+
+			Ok(asset_id)
 		}
 	}
 }

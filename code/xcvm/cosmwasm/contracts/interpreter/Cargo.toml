@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 library = []
+std = ["xc-core/std"]
 
 [dependencies]
 cosmwasm-std = { workspace = true }

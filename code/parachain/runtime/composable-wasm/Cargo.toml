@@ -17,3 +17,4 @@ name = "composable_runtime"
 runtime-benchmarks = ["composable-runtime/runtime-benchmarks"]
 fastnet = ["composable-runtime/fastnet"]
 testnet = ["composable-runtime/testnet"]
+std = ["composable-runtime/std"]

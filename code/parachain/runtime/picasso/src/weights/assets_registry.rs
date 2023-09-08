@@ -49,8 +49,8 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		//  Measured:  `580`
 		//  Estimated: `11635`
 		// Minimum execution time: 59_757 nanoseconds.
-		Weight::from_ref_time(64_075_000)
-			.saturating_add(Weight::from_proof_size(11635))
+		Weight::from_parts(64_075_000, 0)
+			.saturating_add(Weight::from_parts(0, 11635))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
@@ -69,8 +69,8 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		//  Measured:  `457`
 		//  Estimated: `2523`
 		// Minimum execution time: 36_830 nanoseconds.
-		Weight::from_ref_time(38_168_000)
-			.saturating_add(Weight::from_proof_size(2523))
+		Weight::from_parts(38_168_000, 0)
+			.saturating_add(Weight::from_parts(0, 2523))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -81,8 +81,8 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		//  Measured:  `279`
 		//  Estimated: `4576`
 		// Minimum execution time: 23_413 nanoseconds.
-		Weight::from_ref_time(23_978_000)
-			.saturating_add(Weight::from_proof_size(4576))
+		Weight::from_parts(23_978_000, 0)
+			.saturating_add(Weight::from_parts(0, 4576))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -97,8 +97,8 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		//  Measured:  `707`
 		//  Estimated: `11635`
 		// Minimum execution time: 42_867 nanoseconds.
-		Weight::from_ref_time(44_047_000)
-			.saturating_add(Weight::from_proof_size(11635))
+		Weight::from_parts(44_047_000, 0)
+			.saturating_add(Weight::from_parts(0, 11635))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}

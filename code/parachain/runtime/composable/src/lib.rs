@@ -6,8 +6,7 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
-		// clippy::panic
+		clippy::panic
 	)
 )]
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
@@ -23,6 +22,7 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+mod assets;
 mod fees;
 mod gates;
 mod governance;
@@ -34,9 +34,9 @@ mod weights;
 mod xcmp;
 use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, Hash, Moment,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
+	ComposableUncheckedExtrinsic, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
@@ -56,6 +56,8 @@ use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
+
+pub use crate::assets::*;
 pub use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
@@ -192,7 +194,7 @@ impl system::Config for Runtime {
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = weights::frame_system::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -212,15 +214,10 @@ impl assets_registry::Config for Runtime {
 	type NetworkId = ComposableNetworkId;
 }
 
-parameter_types! {
-	// Maximum authorities/collators for aura
-	pub const MaxAuthorities: u32 = 100;
-}
-
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = ConstU32<100>;
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -254,29 +251,6 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
-	/// Max locks that can be placed on an account. Capped for storage
-	/// concerns.
-	pub const MaxLocks: u32 = 50;
-}
-
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 pub struct WeightToFee;
@@ -447,7 +421,7 @@ parameter_types! {
 pub struct MultihopXcmIbcPalletId;
 impl Get<u8> for MultihopXcmIbcPalletId {
 	fn get() -> u8 {
-		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().unwrap()
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().expect("const")
 	}
 }
 
@@ -474,18 +448,6 @@ impl collator_selection::Config for Runtime {
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
 }
 
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type CurrencyValidator = ValidateCurrencyId;
-}
-
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -504,33 +466,6 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
-pub struct CurrencyHooks;
-impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type OnSlash = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-}
-
-type ReserveIdentifier = [u8; 8];
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = MultiExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {
@@ -571,14 +506,6 @@ impl utility::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
-}
-
-impl currency_factory::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
-	type Balance = Balance;
 }
 
 parameter_types! {
@@ -675,9 +602,8 @@ construct_runtime!(
 
 		Tokens: orml_tokens = 52,
 
-		CurrencyFactory: currency_factory = 53,
 		CrowdloanRewards: crowdloan_rewards = 56,
-		Assets: assets = 57,
+		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 59,
 
 		CallFilter: call_filter = 100,
@@ -689,11 +615,6 @@ construct_runtime!(
 
 	}
 );
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
@@ -707,9 +628,11 @@ pub type SignedExtra = (
 	AssetsPaymentHeader,
 );
 
+/// Block type as expected by this runtime.
+pub type Block = ComposableBlock<RuntimeCall, SignedExtra>;
+
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
@@ -744,7 +667,6 @@ mod benches {
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
 		[multisig, Multisig]
-		[pallet_ibc, Ibc]
 	);
 }
 
@@ -800,6 +722,13 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 

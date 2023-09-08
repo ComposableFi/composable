@@ -5,6 +5,7 @@
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       relay = "on_failure"; # `no` not to restart
+      chain-restart = "on_failure"; # `no` not to restart
     in {
 
       packages = rec {
@@ -113,12 +114,12 @@
                   failure_threshold = 8;
                   timeout_seconds = 2;
                   exec.command = ''
-                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32200
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:9988
                   '';
                 };
               };
               composable = {
-                command = self'.packages.zombienet-composable-centauri-b;
+                command = self'.packages.zombienet-composable-westend-b;
                 availability = { restart = "on_failure"; };
                 log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
@@ -127,7 +128,7 @@
                   failure_threshold = 8;
                   timeout_seconds = 2;
                   exec.command = ''
-                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
                   '';
                 };
               };
@@ -149,6 +150,7 @@
                 depends_on = {
                   "picasso-centauri-ibc-init".condition =
                     "process_completed_successfully";
+                  "picasso".condition = "process_healthy";
                 };
                 availability = { restart = "on_failure"; };
               };
@@ -200,6 +202,7 @@
                 depends_on = {
                   "composable-picasso-ibc-init".condition =
                     "process_completed_successfully";
+                  "composable".condition = "process_healthy";
                 };
                 availability = { restart = "on_failure"; };
               };
@@ -251,7 +254,7 @@
                   port = 26657;
                 };
                 log_location = "${devnet-root-directory}/centauri.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
@@ -267,6 +270,7 @@
                   port = 36657;
                 };
                 log_location = "${devnet-root-directory}/osmosis.log";
+                availability = { restart = chain-restart; };
               };
               osmosisd-xcvm-init = {
                 command = self'.packages.osmosisd-xcvm-init;
@@ -278,7 +282,7 @@
 
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
@@ -286,13 +290,13 @@
                   failure_threshold = 8;
                   timeout_seconds = 2;
                   exec.command = ''
-                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32200
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:9988
                   '';
                 };
               };
               composable = {
-                command = self'.packages.zombienet-composable-centauri-b;
-                availability = { restart = "on_failure"; };
+                command = self'.packages.zombienet-composable-westend-b;
+                availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
@@ -300,7 +304,7 @@
                   failure_threshold = 8;
                   timeout_seconds = 2;
                   exec.command = ''
-                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:32201
+                    curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
                   '';
                 };
               };

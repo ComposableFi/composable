@@ -22,17 +22,17 @@ use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
+use futures::{channel::oneshot, FutureExt, StreamExt};
+use polkadot_primitives::OccupiedCoreAssumption;
 use polkadot_service::CollatorPair;
 use sc_client_api::StateBackendFor;
 use sc_consensus::ImportQueue;
 use sc_executor::NativeExecutionDispatch;
-use sc_network_common::service::NetworkBlock;
-use sc_service::{Configuration, PartialComponents, TaskManager};
+use sc_network::NetworkBlock;
+use sc_service::{Configuration, PartialComponents, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::{ConstructRuntimeApi, StateBackend};
-#[cfg(feature = "ocw")]
-use sp_core::crypto::KeyTypeId;
-use sp_runtime::traits::BlakeTwo256;
+use sp_api::{ConstructRuntimeApi, Decode, StateBackend};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_trie::PrefixedMemoryDB;
 use std::{sync::Arc, time::Duration};
 
@@ -256,7 +256,7 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
-	id: ParaId,
+	para_id: ParaId,
 	// The block number until ed25519-dalek should be used for signature verification.
 	dalek_end_block: Option<u32>,
 ) -> sc_service::error::Result<TaskManager>
@@ -279,26 +279,8 @@ where
 
 	let params = new_partial::<RuntimeApi, Executor>(&parachain_config, dalek_end_block)?;
 
-	#[cfg(feature = "ocw")]
-	{
-		let keystore = params.keystore_container.sync_keystore();
-		if parachain_config.offchain_worker.enabled {
-			// Initialize seed for signing transaction using off-chain workers. This is a
-			// convenience so learners can see the transactions submitted simply running the node.
-			// Typically these keys should be inserted with RPC calls to `author_insertKey`.
-			// TODO(Jesse): remove in prod
-			{
-				sp_keystore::SyncCryptoStore::sr25519_generate_new(
-					&*keystore,
-					KeyTypeId(*b"orac"),
-					Some("//Alice"),
-				)
-				.expect("Creating key with account Alice should succeed.");
-			}
-		}
-	}
-
 	let (mut telemetry, telemetry_worker_handle, parachain_block_import) = params.other;
+	let net_config = sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -314,22 +296,39 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
-	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
+	let block_announce_validator =
+		BlockAnnounceValidator::new(relay_chain_interface.clone(), para_id);
+
+	let spawn_handle = task_manager.spawn_handle();
 
 	let force_authoring = parachain_config.force_authoring;
+
+	let warp_sync_params = match parachain_config.network.sync_mode {
+		sc_network::config::SyncMode::Warp => {
+			let target_block = warp_sync_get::<OpaqueBlock, _>(
+				para_id,
+				relay_chain_interface.clone(),
+				spawn_handle.clone(),
+			);
+			Some(WarpSyncParams::WaitForTarget(target_block))
+		},
+		_ => None,
+	};
+
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
-	let (network, system_rpc_tx, tx_handler_controller, start_network) =
+
+	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
+			net_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
-			spawn_handle: task_manager.spawn_handle(),
+			spawn_handle,
 			import_queue: params.import_queue,
-			// do the warp for remote debug https://github.com/paritytech/cumulus/blob/polkadot-v0.9.39/client/service/src/lib.rs
-			warp_sync_params: None,
+			warp_sync_params,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -366,17 +365,18 @@ where
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		config: parachain_config,
-		keystore: params.keystore_container.sync_keystore(),
+		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
 		tx_handler_controller,
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
+		sync_service: sync_service.clone(),
 	})?;
 
 	let announce_block = {
-		let network = network.clone();
-		Arc::new(move |hash, data| network.announce_block(hash, data))
+		let sync_service = sync_service.clone();
+		Arc::new(move |hash, data| sync_service.announce_block(hash, data))
 	};
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
@@ -386,7 +386,7 @@ where
 		.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 	if validator {
-		let keystore = params.keystore_container.sync_keystore();
+		let keystore = params.keystore_container.keystore();
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 		let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
@@ -412,7 +412,7 @@ where
 							relay_parent,
 							&relay_chain_interface_inherent,
 							&validation_data,
-							id,
+							para_id,
 						)
 						.await;
 							let time = sp_timestamp::InherentDataProvider::from_system_time();
@@ -434,7 +434,7 @@ where
 					block_import: parachain_block_import,
 					para_client: client.clone(),
 					backoff_authoring_blocks,
-					sync_oracle: network,
+					sync_oracle: sync_service.clone(),
 					keystore,
 					force_authoring,
 					slot_duration,
@@ -449,7 +449,7 @@ where
 		let spawner = task_manager.spawn_handle();
 
 		let params = StartCollatorParams {
-			para_id: id,
+			para_id,
 			relay_chain_interface: relay_chain_interface.clone(),
 			block_status: client.clone(),
 			announce_block,
@@ -461,6 +461,7 @@ where
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
 			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_collator(params).await?;
@@ -469,11 +470,12 @@ where
 			client: client.clone(),
 			announce_block,
 			task_manager: &mut task_manager,
-			para_id: id,
+			para_id,
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue: import_queue_service,
 			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_full_node(params)?;
@@ -482,6 +484,90 @@ where
 	start_network.start_network();
 
 	Ok(task_manager)
+}
+
+/// Creates a new background task to wait for the relay chain to sync up and retrieve the parachain
+/// header
+fn warp_sync_get<B, RCInterface>(
+	para_id: ParaId,
+	relay_chain_interface: RCInterface,
+	spawner: sc_service::SpawnTaskHandle,
+) -> oneshot::Receiver<<B as BlockT>::Header>
+where
+	B: BlockT + 'static,
+	RCInterface: RelayChainInterface + 'static,
+{
+	let (sender, receiver) = oneshot::channel::<B::Header>();
+	spawner.spawn(
+		"cumulus-parachain-wait-for-target-block",
+		None,
+		async move {
+			log::debug!(
+				target: "cumulus-network",
+				"waiting for announce block in a background task...",
+			);
+
+			let _ = wait_for_target_block::<B, _>(sender, para_id, relay_chain_interface)
+				.await
+				.map_err(|e| {
+					log::error!(
+						target: "sync::warp",
+						"Unable to determine parachain target block {:?}",
+						e
+					)
+				});
+		}
+		.boxed(),
+	);
+
+	receiver
+}
+
+/// Waits for the relay chain to have finished syncing and then gets the parachain header that
+/// corresponds to the last finalized relay chain block.
+async fn wait_for_target_block<B, RCInterface>(
+	sender: oneshot::Sender<<B as BlockT>::Header>,
+	para_id: ParaId,
+	relay_chain_interface: RCInterface,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+where
+	B: BlockT + 'static,
+	RCInterface: RelayChainInterface + Send + 'static,
+{
+	let mut imported_blocks = relay_chain_interface.import_notification_stream().await?.fuse();
+	while imported_blocks.next().await.is_some() {
+		let is_syncing = relay_chain_interface.is_major_syncing().await.map_err(|e| {
+			Box::<dyn std::error::Error + Send + Sync>::from(format!(
+				"Unable to determine sync status. {e}"
+			))
+		})?;
+
+		if !is_syncing {
+			let relay_chain_best_hash = relay_chain_interface
+				.finalized_block_hash()
+				.await
+				.map_err(|e| Box::new(e) as Box<_>)?;
+
+			let validation_data = relay_chain_interface
+				.persisted_validation_data(
+					relay_chain_best_hash,
+					para_id,
+					OccupiedCoreAssumption::TimedOut,
+				)
+				.await
+				.map_err(|e| format!("{e:?}"))?
+				.ok_or("Could not find parachain head in relay chain")?;
+
+			let target_block = B::Header::decode(&mut &validation_data.parent_head.0[..])
+				.map_err(|e| format!("Failed to decode parachain head: {e}"))?;
+
+			log::debug!(target: "sync::warp", "Target block reached {:?}", target_block);
+			let _ = sender.send(target_block);
+			return Ok(())
+		}
+	}
+
+	Err("Stopping following imported blocks. Could not determine parachain target block".into())
 }
 
 /// Build the import queue for the the parachain runtime.

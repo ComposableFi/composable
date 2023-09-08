@@ -50,7 +50,7 @@ pub fn multi_existential_deposits<AssetsRegistry, ForeignToNative>(
 pub fn multi_existential_deposits<
 	AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>
 		+ AssetExistentialDepositInspect<AssetId = CurrencyId, Balance = Balance>
-		+ BalanceConversion<NativeBalance, CurrencyId, Balance>,
+		+ ConversionToAssetBalance<NativeBalance, CurrencyId, Balance>,
 	ForeignToNative: ForeignToNativePriceConverter,
 >(
 	currency_id: &CurrencyId,
@@ -89,7 +89,7 @@ pub type NativeBalance = Balance;
 impl<
 		AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>,
 		ForeignToNative: ForeignToNativePriceConverter,
-	> frame_support::traits::tokens::BalanceConversion<NativeBalance, CurrencyId, Balance>
+	> frame_support::traits::tokens::ConversionToAssetBalance<NativeBalance, CurrencyId, Balance>
 	for PriceConverter<AssetsRegistry, ForeignToNative>
 {
 	type Error = sp_runtime::DispatchError;
@@ -132,9 +132,10 @@ mod commons_sense {
 	#[test]
 	fn reasonable_fee() {
 		let converted =
-			WeightToFeeConverter::weight_to_fee(&Weight::from_ref_time(WEIGHT_REF_TIME_PER_SECOND));
-		assert!(converted > 1_000_000_000_000);
-		assert!(converted < 1_100_000_000_000);
+			WeightToFeeConverter::weight_to_fee(&Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND, 0));
+		let approx_pica_for_1_dollar = 10 * 10u128.pow(12);
+		assert!(converted > approx_pica_for_1_dollar / 20);
+		assert!(converted < approx_pica_for_1_dollar * 5);
 	}
 
 	impl AssetRatioInspect for Dummy {
@@ -152,7 +153,7 @@ mod commons_sense {
 		}
 	}
 
-	impl BalanceConversion<Balance, CurrencyId, Balance> for Dummy {
+	impl ConversionToAssetBalance<Balance, CurrencyId, Balance> for Dummy {
 		type Error = DispatchError;
 
 		fn to_asset_balance(

@@ -587,8 +587,8 @@ mod tests {
 			msg.bindings,
 			vec![
 				(32, BindingValue::Asset(1.into())),
-				(62, BindingValue::Register(Register::This)),
-				(89, BindingValue::Register(Register::Tip)),
+				(64, BindingValue::Register(Register::This)),
+				(91, BindingValue::Register(Register::Tip)),
 			]
 		);
 
@@ -613,8 +613,8 @@ mod tests {
 		assert_eq!(
 			msg.bindings,
 			vec![
-				(82, BindingValue::Register(Register::This)),
-				(109, BindingValue::Register(Register::Tip))
+				(84, BindingValue::Register(Register::This)),
+				(111, BindingValue::Register(Register::Tip))
 			]
 		);
 

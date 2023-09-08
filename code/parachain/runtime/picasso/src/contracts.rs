@@ -46,7 +46,7 @@ impl cosmwasm::Config for Runtime {
 	type AssetToDenom = common::cosmwasm::CosmwasmToSubstrateAssetId;
 	type Balance = Balance;
 	type AssetId = CurrencyId;
-	type Assets = AssetsTransactorRouter;
+	type Assets = Assets;
 	type NativeAsset = Balances;
 	type ChainId = ChainId;
 	type MaxContractLabelSize = MaxContractLabelSize;

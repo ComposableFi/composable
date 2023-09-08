@@ -44,13 +44,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `276 + m * (64 ±0)`
 		//  Estimated: `5017 + m * (192 ±0)`
 		// Minimum execution time: 29_524 nanoseconds.
-		Weight::from_ref_time(30_958_881)
-			.saturating_add(Weight::from_proof_size(5017))
+		Weight::from_parts(30_958_881, 0)
+			.saturating_add(Weight::from_parts(0, 5017))
 			// Standard Error: 2_328
-			.saturating_add(Weight::from_ref_time(117_281).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(117_281, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -68,13 +68,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `380 + m * (64 ±0)`
 		//  Estimated: `5856 + m * (192 ±0)`
 		// Minimum execution time: 33_938 nanoseconds.
-		Weight::from_ref_time(34_999_221)
-			.saturating_add(Weight::from_proof_size(5856))
+		Weight::from_parts(34_999_221, 0)
+			.saturating_add(Weight::from_parts(0, 5856))
 			// Standard Error: 1_645
-			.saturating_add(Weight::from_ref_time(113_612).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(113_612, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -92,13 +92,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `380 + m * (64 ±0)`
 		//  Estimated: `5856 + m * (192 ±0)`
 		// Minimum execution time: 34_300 nanoseconds.
-		Weight::from_ref_time(35_168_849)
-			.saturating_add(Weight::from_proof_size(5856))
+		Weight::from_parts(35_168_849, 0)
+			.saturating_add(Weight::from_parts(0, 5856))
 			// Standard Error: 2_199
-			.saturating_add(Weight::from_ref_time(134_565).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(134_565, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -116,13 +116,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `380 + m * (64 ±0)`
 		//  Estimated: `5856 + m * (192 ±0)`
 		// Minimum execution time: 32_602 nanoseconds.
-		Weight::from_ref_time(36_415_424)
-			.saturating_add(Weight::from_proof_size(5856))
+		Weight::from_parts(36_415_424, 0)
+			.saturating_add(Weight::from_parts(0, 5856))
 			// Standard Error: 4_469
-			.saturating_add(Weight::from_ref_time(286_372).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(286_372, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -140,13 +140,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `380 + m * (64 ±0)`
 		//  Estimated: `5856 + m * (192 ±0)`
 		// Minimum execution time: 34_019 nanoseconds.
-		Weight::from_ref_time(35_572_115)
-			.saturating_add(Weight::from_proof_size(5856))
+		Weight::from_parts(35_572_115, 0)
+			.saturating_add(Weight::from_parts(0, 5856))
 			// Standard Error: 2_271
-			.saturating_add(Weight::from_ref_time(133_852).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(133_852, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(4))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:0)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -160,13 +160,13 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `174 + m * (32 ±0)`
 		//  Estimated: `3871 + m * (32 ±0)`
 		// Minimum execution time: 14_964 nanoseconds.
-		Weight::from_ref_time(15_423_811)
-			.saturating_add(Weight::from_proof_size(3871))
+		Weight::from_parts(15_423_811, 0)
+			.saturating_add(Weight::from_parts(0, 3871))
 			// Standard Error: 1_220
-			.saturating_add(Weight::from_ref_time(32_838).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(32_838, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
-			.saturating_add(Weight::from_proof_size(32).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 32).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Prime (r:0 w:1)
 	/// Proof: CouncilMembership Prime (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
@@ -178,10 +178,10 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 6_370 nanoseconds.
-		Weight::from_ref_time(6_707_116)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(6_707_116, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 378
-			.saturating_add(Weight::from_ref_time(1_573).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(1_573, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 }

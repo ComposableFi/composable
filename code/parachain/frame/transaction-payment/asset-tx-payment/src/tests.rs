@@ -124,6 +124,13 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+
+	type FreezeIdentifier = [u8; 8];
+
+	type MaxHolds = ();
+
+	type MaxFreezes = ();
 }
 
 impl WeightToFeeT for WeightToFee {
@@ -210,7 +217,7 @@ impl pallet_authorship::Config for Runtime {
 
 pub struct CreditToBlockAuthor;
 impl HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
-	fn handle_credit(credit: CreditOf<AccountId, Assets>) {
+	fn handle_credit(credit: Credit<AccountId, Assets>) {
 		if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
 			// What to do in case paying the author fails (e.g. because `fee < min_balance`)
 			// default: drop the result which will trigger the `OnDrop` of the imbalance.
@@ -221,7 +228,7 @@ impl HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
 /// Converts a balance value into an asset balance based on the ratio between the fungible's
 /// minimum balance and the minimum asset balance.
 pub struct BalanceToAssetBalance;
-impl BalanceConversion<Balance, AssetId, Balance> for BalanceToAssetBalance {
+impl ConversionToAssetBalance<Balance, AssetId, Balance> for BalanceToAssetBalance {
 	type Error = ();
 	fn to_asset_balance(balance: Balance, _asset_id: AssetId) -> Result<Balance, ()> {
 		Ok(balance)
@@ -236,8 +243,12 @@ impl pallet_asset_tx_payment::Config for Runtime {
 	type ConfigurationOrigin = EnsureRoot<AccountId>;
 	type PayableCall = RuntimeCall;
 	type ConfigurationExistentialDeposit = ExistentialDeposit;
-	type BalanceConverter = OneToOneBalanceConversion;
+	type BalanceConverter = OneToOneConversionToAssetBalance;
 	type Lock = Assets;
+
+	type HoldIdentifierValue = ();
+
+	type HoldIdentifier = ();
 }
 
 pub struct ExtBuilder {

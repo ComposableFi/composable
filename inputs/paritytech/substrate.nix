@@ -32,12 +32,13 @@
           ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
-      # and this one https://github.com/frewsxcv/cargo-all-features/issues/45
+
       check-pallet = pkgs.writeShellApplication {
         name = "check-pallet";
         runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
+          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
         '';
       };

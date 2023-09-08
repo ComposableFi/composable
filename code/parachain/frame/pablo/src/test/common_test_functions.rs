@@ -269,7 +269,7 @@ pub fn common_remove_lp_failure(
 			lp + 1,
 			BTreeMap::from([(pair[0], 0), (pair[1], 0)])
 		),
-		TokenError::NoFunds
+		TokenError::FundsUnavailable
 	);
 	let min_expected_base_amount = base_amount + 1;
 	let min_expected_quote_amount = quote_amount + 1;
@@ -327,7 +327,7 @@ pub fn common_exchange_failure(
 			AssetAmount::new(init_second_amount.asset_id, 0),
 			false
 		),
-		orml_tokens::Error::<Test>::BalanceTooLow
+		TokenError::FundsUnavailable
 	);
 
 	// error as the expected value is more that input

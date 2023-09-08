@@ -125,7 +125,7 @@ fn test_transfer_all_native() {
 fn test_mint_initialize() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
-		Pallet::<Test>::mint_initialize(RuntimeOrigin::root(), TRANSFER_AMOUNT, TO_ACCOUNT)
+		Pallet::<Test>::mint_into(RuntimeOrigin::root(), ASSET_ID, TO_ACCOUNT, TRANSFER_AMOUNT)
 			.expect("mint_initialize should work");
 		assert_eq!(
 			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
@@ -140,13 +140,8 @@ fn test_mint_into() {
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 
-		Pallet::<Test>::mint_into(
-			RuntimeOrigin::signed(FROM_ACCOUNT),
-			ASSET_ID,
-			TO_ACCOUNT,
-			TRANSFER_AMOUNT,
-		)
-		.expect("mint_into should work");
+		Pallet::<Test>::mint_into(RuntimeOrigin::root(), ASSET_ID, TO_ACCOUNT, TRANSFER_AMOUNT)
+			.expect("mint_into should work");
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(
 			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),
@@ -161,13 +156,8 @@ fn test_burn_from() {
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT);
 
-		Pallet::<Test>::burn_from(
-			RuntimeOrigin::signed(FROM_ACCOUNT),
-			ASSET_ID,
-			TO_ACCOUNT,
-			TRANSFER_AMOUNT,
-		)
-		.expect("burn_from should work");
+		Pallet::<Test>::burn_from(RuntimeOrigin::root(), ASSET_ID, TO_ACCOUNT, TRANSFER_AMOUNT)
+			.expect("burn_from should work");
 		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), INIT_AMOUNT);
 		assert_eq!(
 			Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT),

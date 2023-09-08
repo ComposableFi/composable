@@ -47,9 +47,9 @@ pallet-ibc = { workspace = true, default-features = false }
 libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
-pallet-assets = { default-features = false, path = "../assets" }
-pallet-assets-transactor-router = { default-features = false, path = "../assets-transactor-router" }
+
 pallet-assets-registry = { default-features = false, path = "../assets-registry" }
+pallet-assets = { default-features = false, path = "../assets" }
 pallet-balances = { default-features = false, workspace = true }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
@@ -93,48 +93,61 @@ rand = { version = "0.8.5", default-features = false, features = [
 default = ["std"]
 
 runtime-benchmarks = [
-  "rand",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-ibc/runtime-benchmarks",
-  "pallet-assets-transactor-router/runtime-benchmarks",
-  "pallet-assets-registry/runtime-benchmarks",
   "orml-tokens/runtime-benchmarks",
-  "pallet-timestamp/runtime-benchmarks",
+  "pallet-assets-registry/runtime-benchmarks",
   "pallet-assets/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "rand",
+  "common/runtime-benchmarks",
+  "composable-tests-helpers/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "ibc-primitives/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
 ]
 std = [
   "codec/std",
   "common/std",
   "composable-support/std",
+  "composable-tests-helpers/std",
+  "composable-traits/std",
   "cosmwasm-std/std",
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
-  "composable-traits/std",
   "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
   "hex/std",
   "ibc-primitives/std",
   "ibc/std",
+  "libsecp256k1/std",
+  "log/std",
+  "num-traits/std",
   "orml-tokens/std",
+  "orml-traits/std",
   "pallet-assets-registry/std",
-  "pallet-assets-transactor-router/std",
   "pallet-assets/std",
   "pallet-balances/std",
   "pallet-ibc/std",
   "pallet-timestamp/std",
   "parity-wasm/std",
   "primitives/std",
+  "rand/std",
   "scale-info/std",
+  "serde_json/std",
+  "serde/std",
+  "sha2/std",
   "sha3/std",
   "sp-arithmetic/std",
   "sp-core/std",
   "sp-io/std",
   "sp-runtime/std",
   "sp-std/std",
+  "vec1/std",
   "wasm-instrument/std",
   "wasmi-validation/std",
   "wasmi/std",

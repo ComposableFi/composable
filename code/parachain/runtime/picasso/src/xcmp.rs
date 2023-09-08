@@ -56,7 +56,7 @@ pub type Barrier = (
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
 	WithComputedOrigin<
-		AllowTopLevelPaidExecutionFrom<invarch_xcm_builder::TinkernetMultisigMultiLocation>,
+		AllowTopLevelPaidExecutionFrom<orml_xcm_builder_kusama::TinkernetMultisigMultiLocation>,
 		UniversalLocation,
 		ConstU32<8>,
 	>,
@@ -84,7 +84,7 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 	// Mapping Tinkernet multisig to the correctly derived AccountId32.
-	invarch_xcm_builder::TinkernetMultisigAsAccountId<AccountId>,
+	orml_xcm_builder_kusama::TinkernetMultisigAsAccountId<AccountId>,
 	AccountId32MultihopTx<AccountId>,
 );
 
@@ -182,14 +182,13 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
-	// Derives signed AccountId32 origins for Tinkernet multisigs.
-	invarch_xcm_builder::DeriveOriginFromTinkernetMultisig<RuntimeOrigin>,
+	orml_xcm_builder_kusama::TinkernetMultisigAsNativeOrigin<RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
 
 pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
-	crate::AssetsTransactorRouter,
+	crate::Assets,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
@@ -357,7 +356,7 @@ type AssetsIdConverter = CurrencyIdConvert<
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	FinalPriceConverter,
-	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
 
@@ -397,7 +396,7 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	FinalPriceConverter,
 	AssetsIdConverter,
 >;
@@ -504,6 +503,12 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+
+	type MaxRemoteLockConsumers = ConstU32<32>;
+
+	type RemoteLockConsumerIdentifier = super::assets::BalanceIdentifier;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
