@@ -6632,9 +6632,6 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-dependencies = [
- "spin 0.5.2",
-]
 
 [[package]]
 name = "lazycell"
@@ -8983,6 +8980,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-custom-origins"
+version = "1.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?rev=c74d73bfe1e4f725b3f7d81c997ba9c940bf6005#c74d73bfe1e4f725b3f7d81c997ba9c940bf6005"
@@ -10549,6 +10561,7 @@ dependencies = [
  "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
+ "pallet-custom-origins",
  "pallet-democracy",
  "pallet-ibc",
  "pallet-identity",
@@ -12052,7 +12065,6 @@ dependencies = [
  "cosmwasm-std",
  "frame-support",
  "ibc 0.43.1",
- "lazy_static",
  "parity-scale-codec",
  "scale-info",
  "serde",

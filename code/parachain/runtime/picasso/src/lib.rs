@@ -27,6 +27,9 @@ extern crate alloc;
 
 mod contracts;
 mod fees;
+mod tracks;
+pub use tracks::TracksInfo;
+pub use pallet_custom_origins;
 pub mod governance;
 pub mod ibc;
 mod migrations;
@@ -453,6 +456,21 @@ impl balances::Config for Runtime {
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
+pub type GovInstance = balances::Instance2;
+impl balances::Config::<GovInstance> for Runtime {
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = System;
+	type WeightInfo = weights::balances::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	/// Deposit required to get an index.
 	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
@@ -847,7 +865,12 @@ construct_runtime!(
 		AssetsTransactorRouter: assets_transactor_router = 61,
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
-
+		
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		
 		CallFilter: call_filter = 100,
 
 		Cosmwasm: cosmwasm = 180,

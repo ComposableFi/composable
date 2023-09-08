@@ -60,6 +60,7 @@ pub fn genesis_config(
 			]
 			.concat(),
 		},
+		open_gov_balances: Default::default(),
 		aura: Default::default(),
 		sudo: picasso_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: picasso_runtime::IndicesConfig { indices: vec![] },

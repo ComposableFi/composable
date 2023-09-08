@@ -62,6 +62,7 @@ pallet-referenda = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
 assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
+pallet-custom-origins = { package = "pallet-custom-origins", path = "../../frame/origins", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
 assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }

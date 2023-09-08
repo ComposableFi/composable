@@ -2,7 +2,8 @@
 
 use super::*;
 use common::{governance::native::*, MINUTES};
-use frame_support::{instances::Instance1, traits::LockIdentifier};
+use frame_support::{traits::LockIdentifier};
+
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -72,9 +73,9 @@ parameter_types! {
 	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
 }
 
-type NativeTokenReferenda = Instance1;
-
-impl pallet_referenda::Config<Instance1> for Runtime {
+use system::EnsureSigned;
+pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
+impl pallet_referenda::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 
 	type RuntimeEvent = RuntimeEvent;
@@ -83,21 +84,21 @@ impl pallet_referenda::Config<Instance1> for Runtime {
 
 	type Scheduler = Scheduler;
 
-	type Currency = Balances;
+	type Currency = OpenGovBalances;
 
-	type SubmitOrigin = frame_support::traits::EnsureSigned<AccountId>;
+	type SubmitOrigin = EnsureSigned<AccountId>;
 
 	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
 
 	type KillOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
 
-	type Slash = Treasury;
+	type Slash = ();
 
-	type Votes = Balance;
+	type Votes = pallet_conviction_voting::VotesOf<Runtime>;
 
-	type Tally = ConvictionVoting;
+	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
 
-	type SubmissionDeposit = ConstU128<50_000_000_000_000_000>;
+	type SubmissionDeposit = ConstU128<1>;
 
 	type MaxQueued = ConstU32<16>;
 
@@ -105,7 +106,7 @@ impl pallet_referenda::Config<Instance1> for Runtime {
 
 	type AlarmInterval = ConstU32<{ 30 * MINUTES }>;
 
-	type Tracks;
+	type Tracks = TracksInfo;
 
 	type Preimages = Preimage;
 }
@@ -113,16 +114,19 @@ impl pallet_referenda::Config<Instance1> for Runtime {
 impl pallet_conviction_voting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	type Currency = Balances;
+	type Currency = OpenGovBalances;
 
-	type Polls = Balances;
+	type Polls = Referenda;
 
-	type MaxTurnout = Balances;
+	type MaxTurnout = frame_support::traits::TotalIssuanceOf<OpenGovBalances, Self::AccountId>;
 
-	type MaxVotes = ConstU32<16>;
+	type MaxVotes = ConstU32<1>;
 
 	type VoteLockingPeriod = ConstU32<{ 1 * DAYS }>;
 }
+
+impl pallet_custom_origins::Config for Runtime {}
+
 
 impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

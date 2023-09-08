@@ -177,6 +177,7 @@ pallet-babe = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73
 pallet-bags-list = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-balances = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-referenda = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
+pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-beefy = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-beefy-mmr = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
@@ -184,7 +185,6 @@ pallet-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "c7
 pallet-child-bounties = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-collective = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 collective = { package = "pallet-collective", git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
-pallet-conviction-voting = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-fast-unstake = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-nis = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
 pallet-ranked-collective = { git = "https://github.com/ComposableFi/substrate", rev = "c74d73bfe1e4f725b3f7d81c997ba9c940bf6005", default-features = false }
