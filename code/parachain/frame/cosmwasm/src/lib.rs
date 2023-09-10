@@ -58,8 +58,8 @@ mod mapping;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-#[cfg(test)]
-mod mock;
+#[cfg(any(test, fuzzing))]
+pub mod mock;
 #[cfg(test)]
 mod tests;
 
