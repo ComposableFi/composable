@@ -28,5 +28,5 @@ serde-cw-value = { workspace = true }
 thiserror = { workspace = true }
 prost = { workspace = true, features = ["prost-derive"] }
 xc-core = { path = "../../../lib/core", features = [
-  "cosmwasm", "xcm",
+  "cosmwasm",
 ], default-features = false }

@@ -31,5 +31,5 @@ thiserror = { workspace = true }
 
 cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
 xc-core = { path = "../../../lib/core", features = [
-  "cosmwasm", "xcm",
+  "cosmwasm",
 ], default-features = false }
