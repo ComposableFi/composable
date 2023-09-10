@@ -107,7 +107,7 @@ impl PalletHook<Runtime> for Precompiles {
 		>,
 	> {
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
-
+		let xcm = PolkadotXcm::check_account();
 		match contract_address {
 			address if address == &dex => Some(PalletContractCodeInfo::new(
 				dex,
@@ -274,7 +274,7 @@ impl XcmPrecompile {
 					VersionedXcm::<RuntimeCall>::decode(&mut message.0.as_ref())
 						.map_err(|_| CosmwasmSubstrateError::Xcm)?
 						.into(),
-					Weight::from_ref_time(max_weight),
+					Weight::from_parts(max_weight, 0),
 				)
 				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
 				Ok(Response::new().add_event(Event::new("xcm.executed")))
@@ -326,7 +326,7 @@ impl XcmPrecompile {
 					if weight_limit == 0 {
 						WeightLimit::Unlimited
 					} else {
-						WeightLimit::Limited(Weight::from_ref_time(weight_limit))
+						WeightLimit::Limited(Weight::from_parts(weight_limit, 0))
 					},
 				)
 				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
@@ -352,7 +352,7 @@ impl XcmPrecompile {
 					if weight_limit == 0 {
 						WeightLimit::Unlimited
 					} else {
-						WeightLimit::Limited(Weight::from_ref_time(weight_limit))
+						WeightLimit::Limited(Weight::from_parts(weight_limit, 0))
 					},
 				)
 				.map_err(|_| CosmwasmSubstrateError::Xcm)?;

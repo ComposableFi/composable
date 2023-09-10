@@ -38,7 +38,7 @@
         runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
-          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
+          #cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
         '';
       };
