@@ -228,8 +228,8 @@ impl XcmPrecompile {
 		match msg {
 			Send { dest, message } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::send(
 					who,
 					VersionedMultiLocation::decode(&mut dest.0.as_ref())
@@ -244,8 +244,8 @@ impl XcmPrecompile {
 			},
 			ReserveTransferAssets { dest, beneficiary, assets, fee_asset_item } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::reserve_transfer_assets(
 					who,
 					VersionedMultiLocation::decode(&mut dest.0.as_ref())
@@ -264,8 +264,8 @@ impl XcmPrecompile {
 			},
 			Execute { message, max_weight } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::execute(
 					who,
 					VersionedXcm::<RuntimeCall>::decode(&mut message.0.as_ref())
@@ -278,8 +278,8 @@ impl XcmPrecompile {
 			},
 			TeleportAssets { dest, beneficiary, assets, fee_asset_item } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::teleport_assets(
 					who,
 					VersionedMultiLocation::decode(&mut dest.0.as_ref())
@@ -304,8 +304,8 @@ impl XcmPrecompile {
 				weight_limit,
 			} => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::limited_reserve_transfer_assets(
 					who,
 					VersionedMultiLocation::decode(&mut dest.0.as_ref())
@@ -329,8 +329,8 @@ impl XcmPrecompile {
 			},
 			LimitedTeleportAssets { dest, beneficiary, assets, fee_asset_item, weight_limit } => {
 				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
-					.map_err(|_| CosmwasmSubstrateError::AccountConvert)?
-					.map(RuntimeOrigin::signed);
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
 				PolkadotXcm::limited_teleport_assets(
 					who,
 					VersionedMultiLocation::decode(&mut dest.0.as_ref())
