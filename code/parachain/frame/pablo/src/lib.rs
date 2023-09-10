@@ -452,7 +452,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(100_000)]
 		#[transactional]
 		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {
 			T::EnableTwapOrigin::ensure_origin(origin)?;

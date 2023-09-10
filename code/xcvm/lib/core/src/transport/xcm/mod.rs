@@ -1,6 +1,5 @@
 //! CW contract interface to send Parity XCM messages
 use crate::prelude::*;
-use core::result::Result;
 use xcm::{latest::*, VersionedMultiLocation, VersionedXcm};
 
 /// manually typed interface to contracts until
@@ -14,14 +13,12 @@ impl ExecuteMsg {
 	pub fn reserve_transfer_assets(
 		dest: VersionedMultiLocation,
 		beneficiary: VersionedMultiLocation,
-		message: VersionedXcm<()>,
 		assets: Vec<MultiAsset>,
 		fee_asset_item: u32,
 	) -> Self {
 		Self::ReserveTransferAssets {
 			dest: dest.encode().into(),
 			beneficiary: beneficiary.encode().into(),
-			message: message.encode().into(),
 			assets: assets.encode().into(),
 			fee_asset_item,
 		}
@@ -54,7 +51,7 @@ impl ExecuteMsg {
 			dest: dest.encode().into(),
 			beneficiary: beneficiary.encode().into(),
 			assets: assets.encode().into(),
-			fee_asset_item: fee_asset_item.encode().into(),
+			fee_asset_item,
 			weight_limit,
 		}
 	}
@@ -70,7 +67,7 @@ impl ExecuteMsg {
 			dest: dest.encode().into(),
 			beneficiary: beneficiary.encode().into(),
 			assets: assets.encode().into(),
-			fee_asset_item: fee_asset_item.encode().into(),
+			fee_asset_item,
 			weight_limit,
 		}
 	}
@@ -81,34 +78,28 @@ impl ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema, cosmwasm_schema::QueryResponses))]
 pub enum ExecuteMsg {
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
 	Send { dest: Binary, message: Binary },
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
-	ReserveTransferAssets {
-		dest: Binary,
-		beneficiary: Binary,
-		message: Binary,
-		assets: Binary,
-		fee_asset_item: u32,
-	},
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
+	ReserveTransferAssets { dest: Binary, beneficiary: Binary, assets: Binary, fee_asset_item: u32 },
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
 	TeleportAssets { dest: Binary, beneficiary: Binary, assets: Binary, fee_asset_item: u32 },
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
 	Execute { message: Binary, max_weight: u64 },
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
 	LimitedReserveTransferAssets {
 		dest: Binary,
 		beneficiary: Binary,
 		assets: Binary,
-		fee_asset_item: Binary,
+		fee_asset_item: u32,
 		weight_limit: u64,
 	},
-	#[cfg_attr(feature = "std", returns(Result<(),String>))]
+	#[cfg_attr(feature = "std", returns(core::result::Result<(),String>))]
 	LimitedTeleportAssets {
 		dest: Binary,
 		beneficiary: Binary,
 		assets: Binary,
-		fee_asset_item: Binary,
+		fee_asset_item: u32,
 		weight_limit: u64,
 	},
 }
