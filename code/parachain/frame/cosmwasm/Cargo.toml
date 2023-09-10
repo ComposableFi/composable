@@ -78,10 +78,10 @@ wasm-instrument = { workspace = true, default-features = false }
 wasmi = { workspace = true, default-features = false }
 wasmi-validation = { workspace = true, default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
-libfuzzer-sys = "0.4"
 
 # any(fuzzing,test) does not seems work
 [target.'cfg(fuzzing)'.dependencies]
+libfuzzer-sys = "0.4"
 common = { path = "../../runtime/common", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }

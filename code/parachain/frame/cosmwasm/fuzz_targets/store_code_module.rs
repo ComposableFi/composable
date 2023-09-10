@@ -32,7 +32,7 @@ fuzz_target!(|code: wasm_smith::Module| {
 				.try_into()
 				.expect("please reduce fuzzer input size to config of runtime"),
 		) {
-			panic!("really?");
+			// really need this https://github.com/CosmWasm/wasmd/issues/1615
 		}
 	})
 });
