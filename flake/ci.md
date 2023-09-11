@@ -20,6 +20,7 @@ installimage -i images/Ubuntu-2204-jammy-amd64-base.tar.gz -G yes -a -n hetzner-
 set -o errexit
 adduser actions-runner --disabled-password && passwd --delete actions-runner
 sh <(curl -L https://nixos.org/nix/install) --daemon --yes && source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+
 cat > /etc/nix/nix.conf << EOF
     accept-flake-config = false
     allow-import-from-derivation = true
