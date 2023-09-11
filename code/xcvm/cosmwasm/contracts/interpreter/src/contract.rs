@@ -1,6 +1,7 @@
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::{ContractError, Result},
+	events::CvmInterpreterInstantiated,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
@@ -29,22 +30,15 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 const EXCHANGE_ID: u64 = 3;
-pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
 	let gateway_address = xc_core::gateway::Gateway::addr_validate(deps.api, &msg.gateway_address)?;
 	let config = Config { gateway_address, interpreter_origin: msg.interpreter_origin };
 	CONFIG.save(deps.storage, &config)?;
-	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
-
-	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
-		XCVM_INTERPRETER_EVENT_DATA_ORIGIN,
-		shared::encode_base64(&config.interpreter_origin)?,
-	)))
+	Ok(Response::new().add_event(CvmInterpreterInstantiated::new(&config.interpreter_origin)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
