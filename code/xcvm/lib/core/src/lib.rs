@@ -83,7 +83,7 @@ where
 		builder.instructions.push_back(Instruction::Spawn {
 			salt: salt.into(),
 			assets: assets.into(),
-			network: SpawningNetwork::ID,
+			network_id: SpawningNetwork::ID,
 			program: f(ProgramBuilder::<SpawningNetwork, Account, Assets>::new(tag.into()))?
 				.build(),
 		});
@@ -190,7 +190,7 @@ mod tests {
 					Instruction::Call { bindings: vec![], encoded: vec![202, 254, 190, 239] },
 					// Move to ethereum
 					Instruction::Spawn {
-						network: Ethereum::ID,
+						network_id: Ethereum::ID,
 						salt: Vec::new(),
 						assets: Funds::default(),
 						program: Program {

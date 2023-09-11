@@ -140,10 +140,10 @@ pub fn handle_execute_step(
 				interpret_transfer(&mut deps, &env, &tip, to, assets),
 			Instruction::Call { bindings, encoded } =>
 				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
-			Instruction::Spawn { network, salt, assets, program } =>
-				interpret_spawn(&mut deps, &env, network, salt, assets, program),
-			Instruction::Exchange { give, id, want } =>
-				interpret_exchange(&mut deps, give, want, id, env.contract.address.clone()),
+			Instruction::Spawn { network_id, salt, assets, program } =>
+				interpret_spawn(&mut deps, &env, network_id, salt, assets, program),
+			Instruction::Exchange { exchange_id, give, want } =>
+				interpret_exchange(&mut deps, give, want, exchange_id, env.contract.address.clone()),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.

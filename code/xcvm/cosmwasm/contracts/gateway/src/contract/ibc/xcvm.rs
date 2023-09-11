@@ -91,7 +91,7 @@ pub fn ibc_packet_receive(
 ) -> Result<IbcReceiveResponse> {
 	let response = IbcReceiveResponse::default().add_event(make_event("receive"));
 	let msg = (|| -> Result<_> {
-		let packet = XcPacket::try_decode(&msg.packet.data)?;
+		let packet = XcPacket::decode(&msg.packet.data)?;
 		let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
 		let execute_program = msg::ExecuteProgramMsg {
 			salt: packet.salt,
@@ -119,7 +119,7 @@ pub fn ibc_packet_receive(
 pub fn ibc_packet_ack(_deps: DepsMut, _env: Env, msg: IbcPacketAckMsg) -> Result<IbcBasicResponse> {
 	let ack = XCVMAck::try_from(msg.acknowledgement.data.as_slice())
 		.map_err(|_| ContractError::InvalidAck)?;
-	XcPacket::try_decode(&msg.original_packet.data)?;
+	XcPacket::decode(&msg.original_packet.data)?;
 	Ok(IbcBasicResponse::default().add_event(make_event("ack").add_attribute("ack", ack)))
 }
 
@@ -129,7 +129,7 @@ pub fn ibc_packet_timeout(
 	_env: Env,
 	msg: IbcPacketTimeoutMsg,
 ) -> Result<IbcBasicResponse> {
-	XcPacket::try_decode(&msg.packet.data)?;
+	XcPacket::decode(&msg.packet.data)?;
 	// https://github.com/cosmos/ibc/pull/998
 	Ok(IbcBasicResponse::default())
 }

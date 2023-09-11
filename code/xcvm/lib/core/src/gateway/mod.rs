@@ -299,7 +299,7 @@ mod tests {
 				program: XcProgram {
 					tag: b"spawn_with_asset".to_vec(),
 					instructions: [Instruction::Spawn {
-						network: 3.into(),
+						network_id: 3.into(),
 						salt: b"spawn_with_asset".to_vec(),
 						assets: vec![(pica_on_osmosis, 1_000_000_000u128)].into(),
 						program: XcProgram {
@@ -327,7 +327,7 @@ mod tests {
 						  "instructions": [
 							{
 							  "spawn": {
-								"network": 3,
+								"network_id": 3,
 								"salt": "737061776e5f776974685f6173736574",
 								"assets": [
 								  [
@@ -378,7 +378,7 @@ mod tests {
 				program: XcProgram {
 					tag: b"spawn_with_asset".to_vec(),
 					instructions: [Instruction::Spawn {
-						network: 3.into(),
+						network_id: 3.into(),
 						salt: b"spawn_with_asset".to_vec(),
 						assets: vec![(pica_on_osmosis, 1_000_000_000u128)].into(),
 						program: XcProgram {
@@ -414,7 +414,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 3,
+											"network_id": 3,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[
@@ -488,19 +488,19 @@ mod tests {
 				program: XcProgram {
 					tag: b"spawn_with_asset".to_vec(),
 					instructions: [Instruction::Spawn {
-						network: 3.into(),
+						network_id: 3.into(),
 						salt: b"spawn_with_asset".to_vec(),
 						assets: vec![(pica_on_osmosis, 1_000_000_000u128)].into(),
 						program: XcProgram {
 							tag: b"spawn_with_asset".to_vec(),
 							instructions: [
 								XcInstruction::Exchange {
-									id: pica_osmo_on_osmosis.into(),
+									exchange_id: pica_osmo_on_osmosis.into(),
 									give: XcFundsFilter::one(pica_on_osmosis, 1_000_000_000u128),
 									want: XcFundsFilter::one(osmo_on_osmosis, 1_000u128),
 								},
 								XcInstruction::Spawn {
-									network: 2.into(),
+									network_id: 2.into(),
 									salt: b"spawn_with_asset".to_vec(),
 									assets: XcFundsFilter::one(osmo_on_centauri, (100, 100)),
 									program: XcProgram {
@@ -545,7 +545,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 3,
+											"network_id": 3,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[
@@ -564,7 +564,7 @@ mod tests {
 												"instructions": [
 													{
 														"exchange": {
-															"id": "237684489387467420151587012609",
+															"exchange_id": "237684489387467420151587012609",
 															"give": [
 																[
 																	"237684487542793012780631851009",
@@ -593,7 +593,7 @@ mod tests {
 													},
 													{
 														"spawn": {
-															"network": 2,
+															"network_id": 2,
 															"salt": "737061776e5f776974685f6173736574",
 															"assets": [
 																[
@@ -667,7 +667,7 @@ mod tests {
 				program: XcProgram {
 					tag: b"spawn_with_asset".to_vec(),
 					instructions: [Instruction::Spawn {
-						network: 2.into(),
+						network_id: 2.into(),
 						salt: b"spawn_with_asset".to_vec(),
 						assets: vec![(osmo_on_centauri, 1_000_000_000u128)].into(),
 						program: XcProgram {
@@ -696,7 +696,7 @@ mod tests {
 								"instructions": [
 									{
 										"spawn": {
-											"network": 2,
+											"network_id": 2,
 											"salt": "737061776e5f776974685f6173736574",
 											"assets": [
 												[

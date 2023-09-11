@@ -2,6 +2,7 @@ use prost::Message as _;
 
 pub mod common;
 pub mod pb;
+pub mod result;
 pub mod xcvm;
 
 /// Defines an isomorphism between a Rust type `Self` and a protocol message.
@@ -10,33 +11,27 @@ pub mod xcvm;
 /// type from binary representation of the protobuf.
 pub trait Isomorphism: Sized {
 	/// Protobuf self is isomorphic with.
-	type Message: prost::Message;
+	type Message: Default + From<Self> + TryInto<Self> + prost::Message;
 
 	/// Converts object to protobuf and encodes it as byte vector.
-	fn encode(self) -> alloc::vec::Vec<u8>
-	where
-		Self::Message: From<Self>,
-	{
+	fn encode(self) -> alloc::vec::Vec<u8> {
 		Self::Message::encode_to_vec(&self.into())
 	}
 
-	/// Decodes a protobuf and then converts it to `T`.
-	fn decode(buffer: &[u8]) -> Result<Self, prost::DecodeError>
-	where
-		Self::Message: Default + Into<Self>,
-	{
-		Self::Message::decode(buffer).map(|msg| msg.into())
-	}
-
 	/// Decodes a protobuf and then tries to convert it to `T`.
-	fn try_decode(buffer: &[u8]) -> Result<Self, DecodeError>
-	where
-		Self::Message: Default + TryInto<Self>,
-	{
+	fn decode(buffer: &[u8]) -> Result<Self, DecodeError> {
 		Self::Message::decode(buffer)?
 			.try_into()
 			.map_err(|_| DecodeError::BadIsomorphism)
 	}
+}
+
+impl Isomorphism for alloc::string::String {
+	type Message = Self;
+}
+
+impl Isomorphism for () {
+	type Message = ();
 }
 
 /// Error when trying to decode protobuf into a Rust type.
@@ -83,3 +78,61 @@ macro_rules! define_conversion {
 }
 
 use define_conversion;
+
+/// Maps elements of one sequence and produces the other.
+///
+/// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
+/// works for any containers) where infallible `T → U` conversion exists.
+fn from_sequence<R: core::iter::FromIterator<U>, T, U: From<T>>(
+	sequence: impl core::iter::IntoIterator<Item = T>,
+) -> R {
+	sequence.into_iter().map(U::from).collect()
+}
+
+/// Tries to map elements of one sequence and produces the other.
+///
+/// This is a convenience function for `Vec<T> → Vec<U>` operation (though it
+/// works for any containers) where fallible `T → U` conversion exists.  Returns
+/// error on the first conversion that fails.
+fn try_from_sequence<R: core::iter::FromIterator<U>, T, U: TryFrom<T>>(
+	sequence: impl core::iter::IntoIterator<Item = T>,
+) -> Result<R, ()> {
+	sequence.into_iter().map(U::try_from).collect::<Result<R, _>>().map_err(|_| ())
+}
+
+/// Trait providing method which converts ‘empty’ values to ‘Err(())’.
+///
+/// Useful for checking whether fields in protocol buffer messages are set.
+trait NonEmptyExt: Sized {
+	type Output: Sized;
+	fn non_empty(self) -> Result<Self::Output, ()>;
+}
+
+impl NonEmptyExt for alloc::string::String {
+	type Output = Self;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		if self.is_empty() {
+			Err(())
+		} else {
+			Ok(self)
+		}
+	}
+}
+
+impl<T> NonEmptyExt for alloc::vec::Vec<T> {
+	type Output = Self;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		if self.is_empty() {
+			Err(())
+		} else {
+			Ok(self)
+		}
+	}
+}
+
+impl<T> NonEmptyExt for Option<T> {
+	type Output = T;
+	fn non_empty(self) -> Result<Self::Output, ()> {
+		self.ok_or(())
+	}
+}
