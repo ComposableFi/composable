@@ -14,4 +14,6 @@ pub enum CosmwasmSubstrateError {
 	ExecuteSerialize,
 	#[error("")]
 	Ibc,
+	#[error("")]
+	Xcm,
 }

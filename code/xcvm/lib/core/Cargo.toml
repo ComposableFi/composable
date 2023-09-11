@@ -38,7 +38,7 @@ prost-build = { workspace = true }
 
 [features]
 default = ["std"]
-xcm = []
+xcm = ["dep:xcm"]
 cosmwasm = ["cw-storage-plus", "cw20"]
 substrate = [
   "xcm"
@@ -54,5 +54,6 @@ std = [
   "serde-cw-value/schema",
   "serde-cw-value/std",
   "serde-json-wasm/std",
-  "xcm/std",
+  "cw20/std",
+  "num/std",
 ]

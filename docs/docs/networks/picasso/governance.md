@@ -21,12 +21,12 @@ The Council members also control Picasso’s multi-sig wallet.
 When the Picasso parachain is live, each council member will be represented as an on-chain account on Polkadot.js. 
 Members of the First Council will consist of:
 - 0xBrainJar, Composable Founder/CEO
-- Jeff Smith, Composable General Counsel (GC)
-- Eoin Whelan, Composable CFO
 - Blas Rodriguez Irizar, Composable Co-Founder & CTO
 - Don DeTommasso, Composable Head of Governance & Strategy
 - Miguel Santefé, Composable Co-Founder & Head of Design
 - Jafar Azam, Composable Devrel
+- Henry Love, Fundamental Labs Managing Partner
+- Jacob Gadikian, Notional Ventures Founder & CEO
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer
 - Will Pankiewicz, Parity Master of Validators
 - Tamara Frankel, D1 Ventures Founding Partner

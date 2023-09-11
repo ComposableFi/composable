@@ -1,19 +1,23 @@
 use crate::prelude::*;
 use ::cosmwasm::pallet_hook::PalletHook;
+use common::cosmwasm::CosmwasmToSubstrateAccount;
+use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use cosmwasm::{
 	instrument::CostRules,
 	runtimes::vm::{CosmwasmVM, CosmwasmVMError},
 	types::{AccountIdOf, ContractLabelOf, ContractTrieIdOf, EntryPoint, PalletContractCodeInfo},
 };
-use cosmwasm_std::{ContractResult, Response};
+use cosmwasm_std::{ContractResult, Event, Response};
 use cosmwasm_vm::{
 	executor::QueryResponse,
 	vm::{VMBase, VmErrorOf},
 };
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
+use cumulus_primitives_core::WeightLimit;
 use sp_core::ConstU32;
 
 use sp_runtime::traits::AccountIdConversion;
+use xcm::{VersionedMultiAssets, VersionedMultiLocation, VersionedXcm};
 
 use super::*;
 
@@ -110,10 +114,11 @@ impl PalletHook<Runtime> for Precompiles {
 				false,
 				PabloPalletId::get().0.to_vec().try_into().unwrap_or_default(),
 			)),
-			address: if address == &xcm => Some(PalletContractCodeInfo::new(
+			address if address == &xcm => Some(PalletContractCodeInfo::new(
 				xcm,
 				false,
-				PolkadotXcm::pallet_id().0.to_vec().try_into().unwrap_or_default(),
+				// they did not made pallet to be public
+				PalletId(*b"py/xcmch").0.to_vec().try_into().unwrap_or_default(),
 			)),
 			_ => None,
 		}
@@ -135,6 +140,7 @@ impl PalletHook<Runtime> for Precompiles {
 			String::from_utf8_lossy(message)
 		);
 		let dex: AccountIdOf<Runtime> = PabloPalletId::get().into_account_truncating();
+		let xcm = PolkadotXcm::check_account();
 		match contract_address {
 			address if address == dex => {
 				let message: composable_traits::dex::ExecuteMsg =
@@ -142,6 +148,22 @@ impl PalletHook<Runtime> for Precompiles {
 						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
 
 				let result = common::dex::DexPrecompile::<Pablo>::execute(
+					vm.0.data().cosmwasm_message_info.sender.as_str(),
+					message,
+				)
+				.map_err(|_| CosmwasmVMError::<Runtime>::Precompile);
+
+				match result {
+					Ok(result) => Ok(ContractResult::Ok(result)),
+					Err(err) => Ok(ContractResult::Err(alloc::format!("{:?}", err))),
+				}
+			},
+			address if address == xcm => {
+				let message: xc_core::transport::xcm::ExecuteMsg =
+					serde_json_wasm::from_slice(message)
+						.map_err(|_| CosmwasmVMError::ExecuteDeserialize)?;
+
+				let result = XcmPrecompile::execute(
 					vm.0.data().cosmwasm_message_info.sender.as_str(),
 					message,
 				)
@@ -187,6 +209,149 @@ impl PalletHook<Runtime> for Precompiles {
 				}
 			},
 			_ => Err(CosmwasmVMError::ContractNotFound),
+		}
+	}
+}
+
+/// refactoring will be when request would be to do Composable,
+/// in this case need to generalize on Runtime and make account converter generic too
+/// and also when we would need proxy usage (as account delegation in cosmos)
+struct XcmPrecompile {}
+impl XcmPrecompile {
+	pub fn execute(
+		sender: &str,
+		msg: xc_core::transport::xcm::ExecuteMsg,
+	) -> Result<Response, CosmwasmSubstrateError> {
+		use codec::Decode;
+		use sp_runtime::traits::Convert;
+		use xc_core::transport::xcm::ExecuteMsg::*;
+		match msg {
+			Send { dest, message } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::send(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedXcm::<()>::decode(&mut message.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.sent")))
+			},
+			ReserveTransferAssets { dest, beneficiary, assets, fee_asset_item } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::reserve_transfer_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.reserve_transferred_assets")))
+			},
+			Execute { message, max_weight } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::execute(
+					who,
+					VersionedXcm::<RuntimeCall>::decode(&mut message.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					Weight::from_parts(max_weight, 0),
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.executed")))
+			},
+			TeleportAssets { dest, beneficiary, assets, fee_asset_item } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::teleport_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.teleported_assets")))
+			},
+			LimitedReserveTransferAssets {
+				dest,
+				beneficiary,
+				assets,
+				fee_asset_item,
+				weight_limit,
+			} => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::limited_reserve_transfer_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+					if weight_limit == 0 {
+						WeightLimit::Unlimited
+					} else {
+						WeightLimit::Limited(Weight::from_parts(weight_limit, 0))
+					},
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.limited_reserve_transferred_assets")))
+			},
+			LimitedTeleportAssets { dest, beneficiary, assets, fee_asset_item, weight_limit } => {
+				let who = CosmwasmToSubstrateAccount::convert(sender.to_string())
+					.map_err(|_| CosmwasmSubstrateError::AccountConvert)
+					.map(RuntimeOrigin::signed)?;
+				PolkadotXcm::limited_teleport_assets(
+					who,
+					VersionedMultiLocation::decode(&mut dest.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiLocation::decode(&mut beneficiary.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					VersionedMultiAssets::decode(&mut assets.0.as_ref())
+						.map_err(|_| CosmwasmSubstrateError::Xcm)?
+						.into(),
+					fee_asset_item,
+					if weight_limit == 0 {
+						WeightLimit::Unlimited
+					} else {
+						WeightLimit::Limited(Weight::from_parts(weight_limit, 0))
+					},
+				)
+				.map_err(|_| CosmwasmSubstrateError::Xcm)?;
+				Ok(Response::new().add_event(Event::new("xcm.limited_teleported_assets")))
+			},
 		}
 	}
 }
