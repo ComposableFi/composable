@@ -29,6 +29,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 const EXCHANGE_ID: u64 = 3;
+pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
 pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
