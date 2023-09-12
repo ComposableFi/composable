@@ -8,6 +8,7 @@ pub const SENDER_PREFIX: &str = "ibc-wasm-hook-intermediary";
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum IBCLifecycleComplete {
+	// as
 	#[serde(rename = "ibc_ack")]
 	IBCAck {
 		/// The source channel (osmosis side) of the IBC packet

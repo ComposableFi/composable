@@ -1,7 +1,7 @@
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::{ContractError, Result},
-	events::CvmInterpreterInstantiated,
+	events::{CvmInterpreterInstantiated, CvmInterpreterExecutionStarted, CvmInterpreterTransferred},
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
@@ -86,7 +86,7 @@ fn initiate_execution(
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default()
 		.add_event(
-			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.start"),
+			CvmInterpreterExecutionStarted::new()
 		)
 		.add_submessage(SubMsg::reply_on_error(
 			wasm_execute(
@@ -436,7 +436,7 @@ pub fn interpret_transfer(
 	}
 
 	Ok(response.add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer"),
+		CvmInterpreterTransferred::new(),
 	))
 }
 
