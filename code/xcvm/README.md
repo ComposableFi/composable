@@ -98,6 +98,7 @@ Prefix allows to find network to look at for asset info.
 For security reasons when assets sent from chain to chain, asset id changes.
 
 
+
 ## How to run local Cosmos nodes(devnet) with XCVM 
 
 There are 2 options to run XCVM enabled devnet.
@@ -132,9 +133,3 @@ And finally run sample XCVM program:
 # ppica on Centauri -> ppica on Osmosis -> swap to uosmo -> uosmo on Centauri
 nix run .#xc-swap-pica-to-osmo
 ```
-
-## Deployment 
-
-Interpreter can be instantiated only from code identifiers accepted by gateway.
-
-Gateway queries interpreter code id and owner, ensuring it is gateway only.
