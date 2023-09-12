@@ -70,7 +70,7 @@
            },
            collapsible: false,
            items: [
-             "trustless-faq",
+             "user-guides/trustless-faq",
            ],
          },
          "user-guides/polkassembly-picasso-governance",
