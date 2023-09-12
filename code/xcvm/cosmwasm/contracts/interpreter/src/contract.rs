@@ -1,7 +1,7 @@
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::{ContractError, Result},
-	events::{CvmInterpreterInstantiated, CvmInterpreterExecutionStarted, CvmInterpreterTransferred},
+	events::{CvmInterpreterInstantiated, CvmInterpreterExecutionStarted, CvmInterpreterTransferred, CvmInterpreterExchangeFailed},
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
@@ -470,9 +470,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
 			let ip = IP_REGISTER.load(deps.storage)?.to_string();
-			let event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-				.add_attribute("action", "execution.failure")
-				.add_attribute("reason", e);
+			let event = CvmInterpreterExchangeFailed::new(e);
 			Ok(Response::default().add_event(event).add_attribute("ip", ip))
 		}
 	}

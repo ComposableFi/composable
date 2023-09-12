@@ -2,6 +2,8 @@ use cosmwasm_std::{Event, Addr};
 use serde::{Serialize, Deserialize};
 use xc_core::{service::dex::ExchangeId, InterpreterOrigin, shared};
 
+
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename = "cvm.interpreter.exchanged")]
@@ -11,7 +13,14 @@ pub struct CvmInterpreterExchanged {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[serde(rename = "cvm.interpreter.execution_started")]
+#[serde(rename = "cvm.interpreter.exchanged")]
+pub struct CvmInterpreterExchanged {
+	pub exchange_id: ExchangeId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.execution.started")]
 pub struct CvmInterpreterExecutionStarted {
 }
 
@@ -37,19 +46,38 @@ pub struct CvmInterpreterOwnerAdded {
 }
 
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.execution.failed")]
+pub struct CvmInterpreterExchangeFailed {
+	pub reason: String,
+}
+
+
 
 // beneath is something to be generate by macro
 
+
+impl CvmInterpreterExchangeFailed {
+    pub fn new(reason: String) -> Event {
+        Event::new("cvm.interpreter.exchange.failed")
+            .add_attribute("reason", reason)
+    }
+}
+
 impl CvmInterpreterOwnerAdded {
-        pub fn new(owner: &[Addr]) -> Event {
-        Event::new("cvm.interpreter.owner.added")
-            .add_attribute("owner", owner.to_string())
+        pub fn new(owners: Vec<Addr>) -> Event {
+        let mut e = Event::new("cvm.interpreter.owner.added");
+        for owner in owners {
+            e = e.add_attribute("owner", owner.to_string())
+        }
+        e     
     }
 }
 
 impl CvmInterpreterExecutionStarted {
     pub fn new() -> Event {
-        Event::new("cvm.interpreter.execution_started")
+        Event::new("cvm.interpreter.execution.started")
     }
 }
 
