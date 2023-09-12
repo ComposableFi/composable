@@ -1,7 +1,10 @@
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::{ContractError, Result},
-	events::{CvmInterpreterInstantiated, CvmInterpreterExecutionStarted, CvmInterpreterTransferred, CvmInterpreterExchangeFailed},
+	events::{
+		CvmInterpreterExchangeFailed, CvmInterpreterExecutionStarted, CvmInterpreterInstantiated,
+		CvmInterpreterInstructionSpawned, CvmInterpreterTransferred,
+	},
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
 	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
@@ -85,9 +88,7 @@ fn initiate_execution(
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default()
-		.add_event(
-			CvmInterpreterExecutionStarted::new()
-		)
+		.add_event(CvmInterpreterExecutionStarted::new())
 		.add_submessage(SubMsg::reply_on_error(
 			wasm_execute(
 				env.contract.address,
@@ -313,7 +314,7 @@ pub fn interpret_call(
 pub fn interpret_spawn(
 	deps: &mut DepsMut,
 	env: &Env,
-	network: NetworkId,
+	network_id: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: shared::XcProgram,
@@ -367,23 +368,13 @@ pub fn interpret_spawn(
 		.add_message(gateway.execute(BridgeForwardMsg {
 			interpreter_origin: interpreter_origin.clone(),
 			msg: execute_program,
-			to: network,
+			to: network_id,
 		})?)
-		.add_event(
-			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-				.add_attribute("instruction", "spawn")
-				.add_attribute(
-					"origin_network_id",
-					serde_json_wasm::to_string(&interpreter_origin.user_origin.network_id)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				)
-				.add_attribute(
-					"origin_user_id",
-					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				)
-				.add_attribute("network_id", network.to_string()),
-		))
+		.add_event(CvmInterpreterInstructionSpawned::new(
+			interpreter_origin.user_origin.network_id,
+			interpreter_origin.user_origin.user_id,
+			network_id,
+		)))
 }
 
 pub fn interpret_transfer(
@@ -435,9 +426,7 @@ pub fn interpret_transfer(
 		};
 	}
 
-	Ok(response.add_event(
-		CvmInterpreterTransferred::new(),
-	))
+	Ok(response.add_event(CvmInterpreterTransferred::new()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
