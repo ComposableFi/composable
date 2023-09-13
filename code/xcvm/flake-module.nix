@@ -14,7 +14,7 @@
           ];
           pname = name;
           cargoBuildCommand =
-            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
+            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name} --no-default-features";
           RUSTFLAGS = "-C link-arg=-s";
           installPhaseCommand = ''
             mkdir --parents $out/lib
