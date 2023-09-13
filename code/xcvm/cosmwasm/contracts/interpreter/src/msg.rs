@@ -3,6 +3,8 @@ use cosmwasm_std::Addr;
 use serde::{Deserialize, Serialize};
 use xc_core::{shared::*, InterpreterOrigin, Register};
 
+use crate::state::State;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -55,9 +57,19 @@ pub struct MigrateMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema, QueryResponses))]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
 	/// Get a specific register
 	Register(Register),
+	/// dumps the whole state of interpreter
+	#[cfg_attr(feature = "std", returns(QueryStateResponse))]
+	State(),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct QueryExchangeResponse {
+	pub state: State,
 }

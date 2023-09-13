@@ -133,6 +133,14 @@ impl scale_info::TypeInfo for XcAddr {
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
 
+impl<T: FromStr> FromStr for Displayed<T> {
+	type Err = <T as FromStr>::Err;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		T::from_str(s).map(Displayed)
+	}
+}
+
 impl<T> parity_scale_codec::WrapperTypeEncode for Displayed<T> {}
 impl<T> parity_scale_codec::WrapperTypeDecode for Displayed<T> {
 	type Wrapped = T;

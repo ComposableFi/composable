@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Event};
+use cosmwasm_std::{Addr, Event, StdResult, SubMsgResponse, StdError};
 use serde::{Deserialize, Serialize};
 use xc_core::{service::dex::ExchangeId, shared, InterpreterOrigin, NetworkId, UserId};
 
@@ -6,6 +6,13 @@ use xc_core::{service::dex::ExchangeId, shared, InterpreterOrigin, NetworkId, Us
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename = "cvm.interpreter.exchanged")]
 pub struct CvmInterpreterExchanged {
+	pub exchange_id: ExchangeId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.exchanged.started")]
+pub struct CvmInterpreterExchangeStarted {
 	pub exchange_id: ExchangeId,
 }
 
@@ -30,7 +37,14 @@ pub struct CvmInterpreterTransferred {}
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename = "cvm.interpreter.owner.added")]
 pub struct CvmInterpreterOwnerAdded {
-	pub owner: Addr,
+	pub owner: Vec<Addr>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.owner.removed")]
+pub struct CvmInterpreterOwnerRemoved {
+	pub owner: Vec<Addr>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -48,7 +62,53 @@ pub struct CvmInterpreterInstructionSpawned {
 	pub origin_user_id: UserId,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.self.failed")]
+pub struct CvmInterpreterSelfFailed {
+	pub reason: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.instruction.call.initiated")]
+pub struct CvmInterpreterInstructionCallInitiated {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.step.executed")]
+pub struct CvmInterpreterStepExecuted {
+	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
+	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]	
+	pub tag : Vec<u8>,
+}
+
 // beneath is something to be generate by macro
+
+impl CvmInterpreterStepExecuted {
+	pub fn new(tag: &[u8]) -> Event {
+		Event::new("cvm.interpreter.step.executed").add_attribute("tag", hex::encode(tag))
+	}
+}
+
+impl CvmInterpreterSelfFailed {
+	pub fn new(reason: String) -> Event {
+		Event::new("cvm.interpreter.self.failed").add_attribute("reason", reason)
+	}
+}
+
+impl CvmInterpreterExchangeStarted {
+	pub fn new(exchange_id: ExchangeId) -> Event {
+		Event::new("cvm.interpreter.exchange.started")
+			.add_attribute("exchange_id", exchange_id.to_string())
+	}
+}
+
+impl CvmInterpreterInstructionCallInitiated {
+	pub fn new() -> Event {
+		Event::new("cvm.interpreter.instruction.call.initiated")
+	}
+}
 
 impl CvmInterpreterInstructionSpawned {
 	pub fn new(
@@ -59,12 +119,12 @@ impl CvmInterpreterInstructionSpawned {
 		Event::new("cvm.interpreter.instruction.spawned")
 			.add_attribute(
 				"origin_network_id",
-				serde_json_wasm::to_string(&interpreter_origin.user_origin.network_id)
+				serde_json_wasm::to_string(&origin_network_id)
 					.expect("network id is controlled by us and it is always serde"),
 			)
 			.add_attribute(
 				"origin_user_id",
-				serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
+				serde_json_wasm::to_string(&origin_user_id)
 					.expect("user id is controlled by us and it is always serde"),
 			)
 			.add_attribute(
@@ -77,7 +137,18 @@ impl CvmInterpreterInstructionSpawned {
 
 impl CvmInterpreterExchangeFailed {
 	pub fn new(reason: String) -> Event {
-		Event::new("cvm.interpreter.exchange.failed").add_attribute("reason", reason)
+		Event::new("cvm.interpreter.exchange.failed")
+			.add_attribute("reason", reason)
+	}
+}
+
+impl CvmInterpreterOwnerRemoved {
+	pub fn new(owners: Vec<Addr>) -> Event {
+		let mut e = Event::new("cvm.interpreter.owner.removed");
+		for owner in owners {
+			e = e.add_attribute("owner", owner.to_string())
+		}
+		e
 	}
 }
 

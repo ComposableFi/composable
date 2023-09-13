@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, SubMsgResponse};
+use cosmwasm_std::{Addr, SubMsgResponse, StdResult, Order, Storage, to_binary, Binary, StdError};
 use cw_storage_plus::{Item, Map};
 use serde::{Deserialize, Serialize};
 use xc_core::InterpreterOrigin;
@@ -26,3 +26,35 @@ pub const IP_REGISTER: Item<u16> = Item::new("ip_register");
 pub const RESULT_REGISTER: Item<Result<SubMsgResponse, String>> = Item::new("result_register");
 
 pub const TIP_REGISTER: Item<Addr> = Item::new("tip_register");
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct  State {
+	pub result_register : Result<SubMsgResponse, String>,
+	pub ip_register : u16,
+	pub owners: Vec<Addr>,
+	pub config : Config,
+}
+
+impl TryInto<Binary> for State {
+	type Error = StdError;
+
+	fn try_into(self) -> StdResult<Binary> {
+		to_binary(&self)
+	}
+}
+
+pub(crate) fn read(storage: &dyn Storage) -> StdResult<State> {
+	Ok(State {
+		result_register: RESULT_REGISTER.load(storage)?,
+		ip_register: IP_REGISTER.load(storage).unwrap_or(0),
+		owners: OWNERS
+			.range(storage, None, None, Order::Ascending)
+			
+			.map(|e| e.map(|(k, _)| k))
+
+			.collect::<StdResult<Vec<_>>>()?,
+		config: CONFIG.load(storage)?,
+	})
+}
