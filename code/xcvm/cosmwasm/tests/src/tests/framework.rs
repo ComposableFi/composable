@@ -274,7 +274,7 @@ impl<T> TestVM<XCVMState<T>> {
 			tx.gas,
 			xc_core::gateway::ExecuteMsg::Config(ConfigSubMsg::ForceAsset(AssetItem {
 				asset_id,
-				network_id: todo!("restore"),
+				network_id: NetworkId(42),
 				local: xc_core::gateway::AssetReference::Cw20 {
 					contract: asset_address.clone().into(),
 				},
