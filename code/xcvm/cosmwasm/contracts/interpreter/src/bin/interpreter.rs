@@ -1,12 +1,9 @@
 #[cfg(feature = "std")]
-use cosmwasm_schema::write_api;
-
-#[cfg(feature = "std")]
-use cw_xc_interpreter::msg::*;
-
-#[cfg(feature = "std")]
 #[allow(clippy::disallowed_methods)]
 fn main() {
+	use cosmwasm_schema::write_api;
+	use cw_xc_interpreter::msg::*;
+
 	write_api! {
 		instantiate: InstantiateMsg,
 		query: QueryMsg,

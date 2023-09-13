@@ -4,14 +4,14 @@ use xc_core::{service::dex::ExchangeId, shared, InterpreterOrigin, NetworkId, Us
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[serde(rename = "cvm.interpreter.exchanged")]
-pub struct CvmInterpreterExchanged {
+#[serde(rename = "cvm.interpreter.exchange.succeeded")]
+pub struct CvmInterpreterExchangeSucceeded {
 	pub exchange_id: ExchangeId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[serde(rename = "cvm.interpreter.exchanged.started")]
+#[serde(rename = "cvm.interpreter.exchange.started")]
 pub struct CvmInterpreterExchangeStarted {
 	pub exchange_id: ExchangeId,
 }
@@ -98,7 +98,7 @@ pub enum CvmInterpreter {
 	ExecutionStarted(CvmInterpreterExecutionStarted),
 	Transferred(CvmInterpreterTransferred),
 	Instantiated(CvmInterpreterInstantiated),
-	Exchanged(CvmInterpreterExchanged),
+	Exchanged(CvmInterpreterExchangeSucceeded),
 }
 
 // beneath is something to be generate by macro
@@ -202,7 +202,7 @@ impl CvmInterpreterInstantiated {
 	}
 }
 
-impl CvmInterpreterExchanged {
+impl CvmInterpreterExchangeSucceeded {
 	pub fn new(exchange_id: ExchangeId) -> Event {
 		Event::new("cvm.interpreter.exchanged")
 			.add_attribute("exchange_id", exchange_id.to_string())

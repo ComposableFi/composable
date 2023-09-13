@@ -465,7 +465,7 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 				.and_then(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
 				.map(|x| x.value.parse().unwrap())
 				.unwrap_or(ExchangeId::default());
-			Response::new().add_event(CvmInterpreterExchanged::new(exchange_id))
+			Response::new().add_event(CvmInterpreterExchangeSucceeded::new(exchange_id))
 		},
 		SubMsgResult::Err(err) =>
 			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone())),
