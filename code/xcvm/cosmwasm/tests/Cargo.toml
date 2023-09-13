@@ -14,6 +14,9 @@ std = [
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
   "cw20/std",
+  "cw-xc-interpreter/std",
+  "xc-core/std",
+  "cw-xc-pingpong/std",  
 ]
 
 [dev-dependencies]
