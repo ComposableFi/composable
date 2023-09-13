@@ -2,7 +2,7 @@
 
 use super::*;
 use common::governance::native::*;
-use frame_support::traits::LockIdentifier;
+use frame_support::traits::{EitherOf, LockIdentifier};
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -11,6 +11,7 @@ parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
+	pub const AlarmInterval: BlockNumber = 1;
 }
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
@@ -61,6 +62,77 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
+}
+
+pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
+impl pallet_referenda::Config for Runtime {
+	type RuntimeCall = RuntimeCall;
+
+	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = weights::referenda::WeightInfo<Self>;
+
+	type Scheduler = Scheduler;
+
+	type Currency = Balances;
+
+	type SubmitOrigin = frame_support::traits::EitherOf<
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
+	>;
+	
+	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
+
+	type KillOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
+
+	type Slash = ();
+
+	type Votes = pallet_conviction_voting::VotesOf<Runtime>;
+
+	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
+
+	type SubmissionDeposit = ConstU128<0>;
+
+	type MaxQueued = ConstU32<16>;
+
+	type UndecidingTimeout = ConstU32<{ 3 * DAYS }>;
+
+	type AlarmInterval = AlarmInterval;
+
+	type Tracks = TracksInfo;
+
+	type Preimages = Preimage;
+}
+
+parameter_types! {
+	pub const VoteLockingPeriod: BlockNumber = 0;
+}
+
+impl pallet_conviction_voting::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::conviction_voting::WeightInfo<Self>;
+	type Currency = OpenGovBalances;
+
+	type Polls = Referenda;
+
+	type MaxTurnout = frame_support::traits::TotalIssuanceOf<OpenGovBalances, Self::AccountId>;
+
+	type MaxVotes = ConstU32<20>;
+
+	type VoteLockingPeriod = VoteLockingPeriod;
+}
+
+impl pallet_custom_origins::Config for Runtime {}
+
+pub use pallet_custom_origins::WhitelistedCaller;
+
+impl pallet_whitelist::Config for Runtime {
+	type WeightInfo = weights::whitelist::WeightInfo<Self>;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type WhitelistOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type DispatchWhitelistedOrigin = EitherOf<EnsureRoot<Self::AccountId>, WhitelistedCaller>;
+	type Preimages = Preimage;
 }
 
 parameter_types! {

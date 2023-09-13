@@ -56,6 +56,10 @@ smallvec = "1.6.1"
 sudo = { default-features = false, workspace = true }
 timestamp = { default-features = false, workspace = true }
 treasury = { default-features = false, workspace = true }
+pallet-referenda = { default-features = false, workspace = true }
+pallet-custom-origins = { package = "pallet-custom-origins", path = "../../frame/origins", default-features = false }
+pallet-conviction-voting = { workspace = true, default-features = false }
+pallet-whitelist = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
@@ -152,6 +156,9 @@ runtime-benchmarks = [
   "pallet-ibc/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
+  "pallet-referenda/runtime-benchmarks",
+  "pallet-conviction-voting/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks",
 ]
 std = [
   "asset-tx-payment/std",
@@ -226,4 +233,7 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
+  "pallet-referenda/std",
+  "pallet-conviction-voting/std",
+  "pallet-whitelist/std",
 ]

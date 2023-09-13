@@ -27,6 +27,9 @@ extern crate alloc;
 
 mod contracts;
 mod fees;
+mod tracks;
+pub use pallet_custom_origins;
+pub use tracks::TracksInfo;
 pub mod governance;
 pub mod ibc;
 mod migrations;
@@ -36,7 +39,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
-use frame_support::dispatch::DispatchError;
+use frame_support::{dispatch::DispatchError, traits::StorageMapShim};
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -48,7 +51,8 @@ use common::{
 	rewards::StakingPot,
 	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash,
 	Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, MINUTES, NORMAL_DISPATCH_RATIO,
+	SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -453,6 +457,26 @@ impl balances::Config for Runtime {
 	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
+pub type GovInstance = balances::Instance2;
+impl balances::Config<GovInstance> for Runtime {
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = StorageMapShim<
+		balances::Account<Runtime, GovInstance>,
+		frame_system::Provider<Runtime>,
+		AccountId,
+		balances::AccountData<Balance>,
+	>;
+	type WeightInfo = weights::balances::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	/// Deposit required to get an index.
 	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
@@ -848,6 +872,12 @@ construct_runtime!(
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
 
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
+
 		CallFilter: call_filter = 100,
 
 		Cosmwasm: cosmwasm = 180,
@@ -920,6 +950,9 @@ mod benches {
 		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
+		[whitelist, Whitelist]
+		[conviction_voting, ConvictionVoting]
+		[referenda, Referenda]
 	);
 }
 
