@@ -1,6 +1,11 @@
 
 ## CVM Docs for implementation level
 
+## Overview
+
+https://www.youtube.com/watch?v=_nMD407E3F4
+
+
 ### DoD
 Given that the user has PICA, DOT on Centauri 
 - the user should be able to swap on Osmosis from PICA / DOT -> OSMO with a single tx using CVM
