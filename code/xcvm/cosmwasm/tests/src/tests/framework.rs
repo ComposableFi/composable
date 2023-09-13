@@ -4,13 +4,13 @@ use cosmwasm_orchestrate::{
 	Direct, Dispatch, StateBuilder, SubstrateApi,
 };
 use cosmwasm_std::{
-	Binary, BlockInfo, ContractInfo, Env, Event, IbcOrder, MessageInfo, TransactionInfo,
+	Addr, Binary, BlockInfo, ContractInfo, Env, Event, IbcOrder, MessageInfo, TransactionInfo,
 };
 use cosmwasm_vm::system::CosmwasmCodeId;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 use std::{collections::HashMap, hash::Hash};
 use xc_core::{
-	gateway::{AssetItem, ConfigSubMsg, HereItem, NetworkItem},
+	gateway::{AssetItem, ConfigSubMsg, ExecuteMsg, HereItem},
 	shared::{Salt, XcProgram},
 	AssetId, Funds, Network, NetworkId,
 };
@@ -127,7 +127,10 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin.info.clone(),
 			gas,
-			todo!(),
+			ExecuteMsg::Config(ConfigSubMsg::ForceInstantiate {
+				user_origin: Addr::unchecked("todo"),
+				salt: "salt".to_string(),
+			}),
 		)?;
 		TestApi::execute(
 			&mut vm_counterparty.vm_state,
@@ -140,7 +143,10 @@ impl InMemoryIbcNetworkChannel {
 			},
 			tx_admin_counterparty.info.clone(),
 			gas,
-			todo!(),
+			ExecuteMsg::Config(ConfigSubMsg::ForceInstantiate {
+				user_origin: Addr::unchecked("todo"),
+				salt: "salt".to_string(),
+			}),
 		)?;
 		Ok(Self { channel_id: channel_id.into(), handshake })
 	}
@@ -224,7 +230,7 @@ impl TestVM<()> {
 				tx.gas,
 				xc_core::gateway::InstantiateMsg(HereItem {
 					network_id: self.network_id,
-					admin: todo!(),
+					admin: cosmwasm_std::Addr::unchecked("todo"),
 				}),
 			)?;
 		Ok((
