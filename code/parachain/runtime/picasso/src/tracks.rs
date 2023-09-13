@@ -35,29 +35,41 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			// For Root origin this should generally be just one.
 			max_deciding: 1,
 			// Amount that must be placed on deposit before a decision can be made.
+			#[cfg(feature = "fastnet")]
+			decision_deposit: 50 * ONE_PICA,
+			#[cfg(not(feature = "fastnet"))]
 			decision_deposit: 500_000 * ONE_PICA,
 			// Amount of time this must be submitted for before a decision can be made.
-			#[cfg(feature = "testnet")]
-			prepare_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			prepare_period: 2 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			prepare_period: 2 * HOURS,
 			// Amount of time that a decision may take to be approved prior to cancellation.
+			#[cfg(feature = "fastnet")]
+			decision_period: 1 * HOURS,
+			#[cfg(not(feature = "fastnet"))]
 			decision_period: 7 * DAYS,
 			// Amount of time that the approval criteria must hold before it can be approved.
-			#[cfg(feature = "testnet")]
-			confirm_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			confirm_period: 15 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			confirm_period: 1 * DAYS,
 			// Minimum amount of time that an approved proposal must be in the dispatch queue.
-			#[cfg(feature = "testnet")]
-			min_enactment_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			min_enactment_period: 5 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			min_enactment_period: 1 * DAYS,
 			// Minimum aye votes as percentage of overall conviction-weighted votes needed for
 			// approval as a function of time into decision period.
+			#[cfg(feature = "fastnet")]
+			min_approval: Curve::make_reciprocal(4, 30, percent(80), percent(50), percent(100)),
+			#[cfg(not(feature = "fastnet"))]
 			min_approval: Curve::make_reciprocal(4, 28, percent(80), percent(50), percent(100)),
 			// Minimum pre-conviction aye-votes ("support") as percentage of overall population that
 			// is needed for approval as a function of time into decision period.
+			#[cfg(feature = "fastnet")]
+			min_support: Curve::make_linear(30, 30, percent(0), percent(50)),
+			#[cfg(not(feature = "fastnet"))]
 			min_support: Curve::make_linear(28, 28, percent(0), percent(50)),
 		},
 	),
@@ -66,20 +78,35 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 		pallet_referenda::TrackInfo {
 			name: "whitelisted_caller",
 			max_deciding: 2,
+			#[cfg(feature = "fastnet")]
+			decision_deposit: 5 * ONE_PICA,
+			#[cfg(not(feature = "fastnet"))]
 			decision_deposit: 50_000 * ONE_PICA,
-			#[cfg(feature = "testnet")]
-			prepare_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			prepare_period: 2 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			prepare_period: 30 * MINUTES,
+			#[cfg(feature = "fastnet")]
+			decision_period: 30 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			decision_period: 4 * DAYS,
-			#[cfg(feature = "testnet")]
-			confirm_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			confirm_period: 5 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			confirm_period: 10 * MINUTES,
-			#[cfg(feature = "testnet")]
-			min_enactment_period: 1 * MINUTES,
-			#[cfg(not(feature = "testnet"))]
+			#[cfg(feature = "fastnet")]
+			min_enactment_period: 2 * MINUTES,
+			#[cfg(not(feature = "fastnet"))]
 			min_enactment_period: 10 * MINUTES,
+			#[cfg(feature = "fastnet")]
+			min_approval: Curve::make_reciprocal(
+				1,
+				30,
+				percent(96),
+				percent(50),
+				percent(100),
+			),
+			#[cfg(not(feature = "fastnet"))]
 			min_approval: Curve::make_reciprocal(
 				16,
 				28 * 24,
@@ -87,6 +114,9 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 				percent(50),
 				percent(100),
 			),
+			#[cfg(feature = "fastnet")]
+			min_support: Curve::make_reciprocal(1, 30, percent(20), percent(5), percent(50)),
+			#[cfg(not(feature = "fastnet"))]
 			min_support: Curve::make_reciprocal(1, 28, percent(20), percent(5), percent(50)),
 		},
 	),

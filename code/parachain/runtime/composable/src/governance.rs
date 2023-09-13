@@ -80,10 +80,16 @@ impl pallet_referenda::Config for Runtime {
 		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
 		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
 	>;
-	
-	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
 
+	#[cfg(not(feature = "fastnet"))]
+	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
+	#[cfg(feature = "fastnet")]
+	type CancelOrigin = EnsureRootOrOneSixthNativeTechnical;
+
+	#[cfg(not(feature = "fastnet"))]
 	type KillOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
+	#[cfg(feature = "fastnet")]
+	type KillOrigin = EnsureRootOrOneSixthNativeCouncil;
 
 	type Slash = ();
 
@@ -130,7 +136,10 @@ impl pallet_whitelist::Config for Runtime {
 	type WeightInfo = weights::whitelist::WeightInfo<Self>;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
-	type WhitelistOrigin = EnsureRootOrOneThirdNativeTechnical;
+	#[cfg(not(feature = "fastnet"))]
+	type WhitelistOrigin = EnsureRootOrOneThirdNativeCouncilOrTechnical;
+	#[cfg(feature = "fastnet")]
+	type WhitelistOrigin = EnsureRootOrOneSixthNativeCouncilOrTechnical;
 	type DispatchWhitelistedOrigin = EitherOf<EnsureRoot<Self::AccountId>, WhitelistedCaller>;
 	type Preimages = Preimage;
 }
