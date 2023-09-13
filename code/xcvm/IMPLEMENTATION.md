@@ -5,6 +5,13 @@
 
 https://www.youtube.com/watch?v=_nMD407E3F4
 
+In general CVM is very similar to 
+
+https://github.com/osmosis-labs/osmosis/tree/main/cosmwasm/contracts/crosschain-swaps
+
+https://github.com/osmosis-labs/osmosis/tree/main/cosmwasm/contracts/crosschain-registry
+
+but generalized.
 
 ### DoD
 Given that the user has PICA, DOT on Centauri 
