@@ -5,6 +5,8 @@
 Given that the user has PICA, DOT on Centauri 
 - the user should be able to swap on Osmosis from PICA / DOT -> OSMO with a single tx using CVM
 
+@Dz: DOT config on PROD in progress. Ass soon as ready will send TX to explorer and json config data.
+
 ### Asnwers
 
 
@@ -17,32 +19,62 @@ Joon(ART)
 - how i send on devnet via cli https://github.com/ComposableFi/composable/blob/866f40ba5558ef9c1a1adc6209e726c69f3c492a/inputs/notional-labs/composable-centauri/flake-module.nix#L377
 
 2.1 which events to look for 
-will share link to Rust docs
 2.2. how to query the state
 
-will share link to schmea with improved docs and generator
+```
+## How to generate schema
+
+For gateway 
+
+```sh
+cargo run --package xc-core --bin gateway
+```
+
+For interpreter
+
+```
+cargo run --package cw-xc-interpreter --bin interpreter
+```
+
+So after you generated schema, you will see all queries. 
+
+Interpreter has `State` query which will dump whole state of interpreter.
+
+Also for interpreter, the is `events.json` which describes names and shapes of all events from interpreter, including exchange, fail, success.
 
 3. ditto
 @fl-y ????????????????
    
 5. how to tell whether funds are stuck
-in progress
+in progress. This will be PR soon.
 
 ### Required for DoD
 
 - How to execute the CW contract on Centauri, as in an example payload to an RPC endpoint
+
+See above.
 
 -> @dzmitry-lahoda
 
 <p>How to query the CW contract on, </p>
 - Centauri, to verify the IBC tx has been initiated to go over to Osmosis. Which events to look for or how to query the state
 
+See above, `events.json`. For execute, instantaite, wasm events - look into official docs. CVM cannot do any special in that area.
+
+In general, run contract and see output. If some events are missed from CVM contract, will add. Tried to add and unify what is super useful.
+
 -> @dzmitry-lahoda
 
 - Osmosis, to verify the swap has happened. Which events to look for or how to query the state.
 
+`cvm.interpreter.exchange.succeeded`. If will contain exchange id. Id is mapped via config. Can cw query `config` from gateway to see what pool is used.
+
+For state, run CW query named `state` agains interpreter. Will dump all state.
+
 -> @dzmitry-lahoda
 
 - How to check whether there was an error during the process to tell the user their funds are stuck.
+
+You will see failed events, prefixed with cvm or see schema. Failues of CW/IBC/Cosmos on its own - CVM contracts nothing to do with that.
 
 -> @dzmitry-lahoda
