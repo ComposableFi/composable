@@ -102,6 +102,7 @@ pub enum CvmInterpreter {
 }
 
 // beneath is something to be generate by macro
+// https://github.com/CosmWasm/cosmwasm/discussions/1871
 
 impl CvmInterpreterStepExecuted {
 	pub fn new(tag: &[u8]) -> Event {
