@@ -41,8 +41,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 		},
 		msg::ExecuteMsg::LocalPacket(packet) => {
 			let auth = auth::EscrowContract::authorise_local(deps.storage, &env, info)?;
-			let response = ibc::handle_packet(auth, deps, env, packet)?;
-			Ok(response.into())
+			ibc::handle_packet(auth, deps, env, packet).map(Into::into)
 		},
 		msg::ExecuteMsg::BreakGlass => {
 			let auth = auth::Admin::authorise(deps.storage, info)?;

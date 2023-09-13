@@ -1,4 +1,3 @@
-use parity_scale_codec::Decode;
 use xc_core::NetworkId;
 
 use crate::{
@@ -7,11 +6,13 @@ use crate::{
 	msg, state,
 };
 use cosmwasm_std::{
-	Binary, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannel,
-	IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder,
-	IbcPacketReceiveMsg, IbcReceiveResponse, Response, Storage,
+	DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
+	IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketReceiveMsg,
+	IbcReceiveResponse, Response, Storage,
 };
 use cw_storage_plus::Map;
+
+use xc_core::proto::Isomorphism;
 
 /// Information about given IBC channel.
 const IBC_CHANNEL_INFO: Map<String, NetworkId> = Map::new(state::IBC_CHANNEL_INFO_NS);
@@ -102,11 +103,9 @@ pub fn ibc_packet_receive(
 	let response = (|| {
 		let packet = msg.packet;
 		let auth = auth::EscrowContract::authorise_ibc(deps.storage, &env, packet.src)?;
-		let packet = decode::<msg::Packet>(packet.data)?;
+		let packet = msg::Packet::decode(packet.data.as_slice())?;
 		handle_packet(auth, deps, env, packet)
 	})();
-	// TODO(mina86): Do something better on error.  Probably define a format for
-	// Ack, maybe even something as simple as 0x00 <success> | 0x01 <ack-data>.
 	Ok(response.map_or_else(|_| Default::default(), IbcReceiveResponse::from))
 }
 
@@ -127,7 +126,7 @@ pub(crate) fn handle_packet(
 	mut deps: DepsMut,
 	env: Env,
 	packet: msg::Packet,
-) -> Result<PacketResponse> {
+) -> Result<EmptyResponse> {
 	match packet {
 		msg::Packet::DepositNotification(packet) =>
 			accounts::handle_deposit_notification(auth, deps, packet),
@@ -149,35 +148,19 @@ pub(crate) fn handle_packet(
 	}
 }
 
-/// Helper type for handling responses to received packets.
-///
-/// This abstracts differences in successful responses when packet is received
-/// over IBC or through local call from contract on the same chain.
-pub(crate) struct PacketResponse {
-	data: Binary,
-}
+/// An empty successful response to requests which may be sent via IBC packet or
+/// as regular requests.
+pub(crate) struct EmptyResponse;
 
-impl PacketResponse {
-	pub fn new(data: Vec<u8>) -> Self {
-		Self { data: Binary::from(data) }
+impl From<EmptyResponse> for Response {
+	fn from(_: EmptyResponse) -> Self {
+		Self::default()
 	}
 }
 
-impl core::convert::From<PacketResponse> for Response {
-	fn from(response: PacketResponse) -> Self {
-		Self::new().set_data(response.data)
+impl From<EmptyResponse> for IbcReceiveResponse {
+	fn from(_: EmptyResponse) -> Self {
+		let data = Result::<(), String>::Ok(()).encode();
+		Self::default().set_ack(data)
 	}
-}
-
-impl core::convert::From<PacketResponse> for IbcReceiveResponse {
-	fn from(response: PacketResponse) -> Self {
-		Self::new().set_ack(response.data)
-	}
-}
-
-/// Decodes an incoming IBC packet or acknowledgement.
-///
-/// TODO(mina86): Currently this uses SCALE.  Should we switch to proto instead?
-pub(crate) fn decode<T: Decode>(data: Binary) -> Result<T> {
-	T::decode(&mut data.as_slice()).map_err(|_| ContractError::InvalidPacket)
 }

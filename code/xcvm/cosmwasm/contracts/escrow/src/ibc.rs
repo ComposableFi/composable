@@ -2,8 +2,9 @@ use crate::{
 	error::{ContractError, Result},
 	msg, state,
 };
-use cosmwasm_std::{Binary, CosmosMsg, IbcMsg, IbcTimeout, IbcTimeoutBlock, Storage};
-use parity_scale_codec::{Decode, Encode};
+use cosmwasm_std::{CosmosMsg, IbcMsg, IbcTimeout, IbcTimeoutBlock, Storage};
+
+use xc_core::proto::Isomorphism;
 
 /// Makes a CosmosMsg sending given packet to accounts contract.
 ///
@@ -34,6 +35,6 @@ pub(crate) fn make_accounts_message(
 	}
 }
 
-pub(crate) fn decode<T: Decode>(data: Binary) -> Result<T> {
-	T::decode(&mut data.as_slice()).map_err(|_| ContractError::InvalidPacket)
+pub(crate) fn decode<T: Isomorphism>(data: &[u8]) -> Result<T> {
+	T::decode(data).map_err(|_| ContractError::InvalidPacket)
 }

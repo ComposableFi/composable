@@ -3,6 +3,7 @@ use prost::Message as _;
 pub mod common;
 pub mod pb;
 pub mod result;
+pub mod wallet;
 pub mod xcvm;
 
 /// Defines an isomorphism between a Rust type `Self` and a protocol message.

@@ -1,6 +1,5 @@
 use alloc::{string::String, vec::Vec};
 
-use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 use crate::NetworkId;
@@ -142,7 +141,7 @@ pub struct DepositAssetsResponse {
 /// Because this is a cross-chain request, its failure or success is delayed
 /// (by having to propagate the message) and user has to monitor the wallet
 /// contract to see the result.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Encode, Decode)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct RelayRequest {

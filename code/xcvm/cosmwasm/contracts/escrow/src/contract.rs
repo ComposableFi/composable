@@ -175,7 +175,7 @@ fn ibc_packet_done(
 	packet: cosmwasm_std::IbcPacket,
 	ack: Option<Binary>,
 ) -> Result<IbcBasicResponse> {
-	match ibc::decode::<msg::accounts::Packet>(packet.data)? {
+	match ibc::decode::<msg::accounts::Packet>(&packet.data)? {
 		msg::accounts::Packet::DepositNotification(packet) =>
 			deposits::handle_deposit_done(deps, packet, ack),
 		msg::accounts::Packet::RelayedRequest(_) => {

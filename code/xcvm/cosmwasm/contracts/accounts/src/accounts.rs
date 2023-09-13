@@ -6,7 +6,7 @@ use xc_core::NetworkId;
 use crate::{
 	auth,
 	error::{ContractError, Result},
-	msg, state,
+	ibc, msg, state,
 };
 
 /// A user account.
@@ -130,13 +130,13 @@ pub(crate) fn handle_drop_account(
 	auth: auth::Account,
 	mut deps: DepsMut,
 	req: msg::DropAccountRequest,
-) -> Result<crate::ibc::PacketResponse> {
+) -> Result<ibc::EmptyResponse> {
 	let account = auth.account();
 	if !account.balances.is_empty() {
 		transfer_balances(&mut deps, &account, req.beneficiary_account)?;
 	}
 	account.delete(deps.storage);
-	Ok(crate::ibc::PacketResponse::new(b"\x01".to_vec()))
+	Ok(ibc::EmptyResponse)
 }
 
 /// Transfers all balance from given account to given beneficiary account.
@@ -165,14 +165,14 @@ fn transfer_balances(deps: &mut DepsMut, src_account: &Account, beneficiary: Str
 			locked_amount: locked_amount.into(),
 		},
 	));
-	beneficiary.save(deps.storage)
+	beneficiary.save(deps.storage).map_err(Into::into)
 }
 
 pub(crate) fn handle_deposit_notification(
 	_: auth::EscrowContract,
 	deps: DepsMut,
 	packet: msg::DepositNotificationPacket,
-) -> Result<crate::ibc::PacketResponse> {
+) -> Result<ibc::EmptyResponse> {
 	use std::collections::hash_map::Entry;
 
 	let path = ACCOUNTS.key(deps.api.addr_validate(&packet.account)?);
@@ -206,14 +206,13 @@ pub(crate) fn handle_deposit_notification(
 	}
 
 	path.save(deps.storage, &account)?;
-
-	Ok(crate::ibc::PacketResponse::new(vec![1]))
+	Ok(ibc::EmptyResponse)
 }
 
 pub(crate) fn handle_submit_problem(
 	_auth: auth::Account,
 	_deps: DepsMut,
 	_req: msg::ExecuteSolutionRequest,
-) -> Result<crate::ibc::PacketResponse> {
+) -> Result<ibc::EmptyResponse> {
 	todo!()
 }
