@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Event, StdResult, SubMsgResponse, StdError};
+use cosmwasm_std::{Addr, Event};
 use serde::{Deserialize, Serialize};
 use xc_core::{service::dex::ExchangeId, shared, InterpreterOrigin, NetworkId, UserId};
 
@@ -175,9 +175,11 @@ impl CvmInterpreterTransferred {
 }
 
 impl CvmInterpreterInstantiated {
+	pub const NAME: &str = "cvm.interpreter.instantiated";
+	pub const INTERPRETER_ORIGIN : &str = "interpreter_origin";
 	pub fn new(interpreter_origin: &InterpreterOrigin) -> Event {
-		Event::new("cvm.interpreter.instantiated").add_attribute(
-			"interpreter_origin",
+		Event::new(Self::NAME).add_attribute(
+			Self::INTERPRETER_ORIGIN,
 			shared::encode_base64(interpreter_origin).expect("origin is managed by"),
 		)
 	}

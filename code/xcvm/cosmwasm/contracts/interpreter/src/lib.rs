@@ -4,6 +4,7 @@ extern crate alloc;
 pub mod authenticate;
 pub mod contract;
 pub mod error;
-mod events;
+pub mod events;
 pub mod msg;
 pub mod state;
+mod prelude;

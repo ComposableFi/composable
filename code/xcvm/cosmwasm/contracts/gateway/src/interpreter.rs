@@ -9,9 +9,8 @@ use crate::{
 use cosmwasm_std::{
 	to_binary, Deps, DepsMut, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
-use cw_xc_interpreter::contract::{
-	XCVM_INTERPRETER_EVENT_DATA_ORIGIN, XCVM_INTERPRETER_EVENT_PREFIX,
-};
+
+use cw_xc_interpreter::events::CvmInterpreterInstantiated;
 use xc_core::{CallOrigin, InterpreterOrigin};
 
 use crate::{auth, prelude::*};
@@ -89,7 +88,8 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 
 	// Interpreter provides `network_id, user_id` pair as an event for the router to know which
 	// pair is instantiated
-	let event_name = format!("wasm-{}", XCVM_INTERPRETER_EVENT_PREFIX);
+	
+	let event_name = format!("wasm-{}", CvmInterpreterInstantiated::NAME);
 	let interpreter_origin = &response
 		.events
 		.iter()
@@ -97,7 +97,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.ok_or_else(|| StdError::not_found("interpreter event not found"))?
 		.attributes
 		.iter()
-		.find(|attr| attr.key == XCVM_INTERPRETER_EVENT_DATA_ORIGIN)
+		.find(|attr| attr.key == CvmInterpreterInstantiated::INTERPRETER_ORIGIN)
 		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
 		.value;
 	let interpreter_origin =

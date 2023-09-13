@@ -462,8 +462,7 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 				.events
 				.iter()
 				.find(|x| x.ty == "cvm.interpreter.exchange.started")
-				.map(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
-				.flatten()
+				.and_then(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
 				.map(|x| x.value.parse().unwrap())
 				.unwrap_or(ExchangeId::default());
 			Response::new().add_event(CvmInterpreterExchanged::new(exchange_id))

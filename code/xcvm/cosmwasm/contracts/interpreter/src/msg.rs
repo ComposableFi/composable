@@ -1,3 +1,4 @@
+use crate::{prelude::*, state};
 use alloc::{string::String, vec::Vec};
 use cosmwasm_std::Addr;
 use serde::{Deserialize, Serialize};
@@ -61,10 +62,18 @@ pub struct MigrateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
 	/// Get a specific register
+	#[cfg_attr(feature = "std", returns(QueryStateResponse))]
 	Register(Register),
 	/// dumps the whole state of interpreter
 	#[cfg_attr(feature = "std", returns(QueryStateResponse))]
 	State(),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub struct QueryStateResponse {
+	pub state: state::State,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
