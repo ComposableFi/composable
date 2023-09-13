@@ -1,6 +1,8 @@
 # pallet-cosmwasm
-In this section we provide actual implementation details of the specification as a Substrate pallet.
+In this section we provide actual implementation details of the CosmWasm specification as a Substrate pallet.
 We cover some of the theoretical topics that were presented before, and provide real code that exemplifies how they can be developed in a pallet.
+
+We are deeply grateful to Ethan Frey and the talented team at Confio for their visionary work in creating CosmWasm. Their dedication, innovation, and commitment to advancing the field of blockchain technology have been a driving force in our journey.
 
 
 ## 0. Module Extensions
