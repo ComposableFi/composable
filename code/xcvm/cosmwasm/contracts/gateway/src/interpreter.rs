@@ -88,7 +88,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 
 	// Interpreter provides `network_id, user_id` pair as an event for the router to know which
 	// pair is instantiated
-	
+
 	let event_name = format!("wasm-{}", CvmInterpreterInstantiated::NAME);
 	let interpreter_origin = &response
 		.events

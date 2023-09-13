@@ -3343,6 +3343,7 @@ dependencies = [
 name = "cw-xc-interpreter"
 version = "0.1.0"
 dependencies = [
+ "cosmwasm-schema 1.2.5",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
@@ -3355,6 +3356,7 @@ dependencies = [
  "serde",
  "serde-cw-value",
  "serde-json-wasm",
+ "serde_json",
  "thiserror-core",
  "xc-core",
 ]

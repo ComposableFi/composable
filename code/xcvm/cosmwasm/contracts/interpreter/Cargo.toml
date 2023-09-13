@@ -11,10 +11,11 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 library = []
-std = ["xc-core/std", "dep:cosmwasm-schema"]
+std = ["xc-core/std", "dep:cosmwasm-schema", "dep:serde_json"]
 default = ["std"]
 
 [dependencies]
+serde_json ={ workspace = true, optional = true}
 cosmwasm-std = { workspace = true }
 cw-storage-plus = { workspace = true }
 cosmwasm-schema = { workspace = true, optional = true }

@@ -79,8 +79,26 @@ pub struct CvmInterpreterInstructionCallInitiated {}
 #[serde(rename = "cvm.interpreter.step.executed")]
 pub struct CvmInterpreterStepExecuted {
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
-	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]	
-	pub tag : Vec<u8>,
+	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+	pub tag: Vec<u8>,
+}
+
+/// used to generate schema, so that each events schema is available in one place
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub enum CvmInterpreter {
+	StepExecuted(CvmInterpreterStepExecuted),
+	SelfFailed(CvmInterpreterSelfFailed),
+	ExchangeStarted(CvmInterpreterExchangeStarted),
+	InstructionCallInitiated(CvmInterpreterInstructionCallInitiated),
+	InstructionSpawned(CvmInterpreterInstructionSpawned),
+	ExchangeFailed(CvmInterpreterExchangeFailed),
+	OwnerRemoved(CvmInterpreterOwnerRemoved),
+	OwnerAdded(CvmInterpreterOwnerAdded),
+	ExecutionStarted(CvmInterpreterExecutionStarted),
+	Transferred(CvmInterpreterTransferred),
+	Instantiated(CvmInterpreterInstantiated),
+	Exchanged(CvmInterpreterExchanged),
 }
 
 // beneath is something to be generate by macro
@@ -137,8 +155,7 @@ impl CvmInterpreterInstructionSpawned {
 
 impl CvmInterpreterExchangeFailed {
 	pub fn new(reason: String) -> Event {
-		Event::new("cvm.interpreter.exchange.failed")
-			.add_attribute("reason", reason)
+		Event::new("cvm.interpreter.exchange.failed").add_attribute("reason", reason)
 	}
 }
 
@@ -176,7 +193,7 @@ impl CvmInterpreterTransferred {
 
 impl CvmInterpreterInstantiated {
 	pub const NAME: &str = "cvm.interpreter.instantiated";
-	pub const INTERPRETER_ORIGIN : &str = "interpreter_origin";
+	pub const INTERPRETER_ORIGIN: &str = "interpreter_origin";
 	pub fn new(interpreter_origin: &InterpreterOrigin) -> Event {
 		Event::new(Self::NAME).add_attribute(
 			Self::INTERPRETER_ORIGIN,
