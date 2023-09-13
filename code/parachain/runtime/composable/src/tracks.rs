@@ -42,7 +42,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			prepare_period: 2 * HOURS,
 			// Amount of time that a decision may take to be approved prior to cancellation.
 			#[cfg(feature = "fastnet")]
-			decision_period: 1 * HOURS,
+			decision_period: 200 * MINUTES,
 			#[cfg(not(feature = "fastnet"))]
 			decision_period: 7 * DAYS,
 			// Amount of time that the approval criteria must hold before it can be approved.
@@ -81,7 +81,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(not(feature = "fastnet"))]
 			prepare_period: 30 * MINUTES,
 			#[cfg(feature = "fastnet")]
-			decision_period: 30 * MINUTES,
+			decision_period: 100 * MINUTES,
 			#[cfg(not(feature = "fastnet"))]
 			decision_period: 4 * DAYS,
 			#[cfg(feature = "fastnet")]
