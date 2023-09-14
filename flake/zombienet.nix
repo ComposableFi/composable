@@ -36,6 +36,46 @@
           ] ++ parachains;
         };
 
+      asset-hub-kusama-local = {
+        command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
+        chain = "asset-hub-kusama-local";
+        id = 1000;
+        collators = 1;
+        ws_port = 10008;
+        rpc_port = 32220;
+        genesis = {
+          runtime = {
+            parachainInfo = { parachainId = 1000; };
+            balances = {
+              balances = {
+                "0" = {
+                  "0" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                  "1" = 17476266491902;
+                };
+              };
+            };
+            assets = {
+              assets = {
+                "0" = {
+                  "0" = "1984";
+                  "1" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                  "2" = true;
+                  "3" = 123456789;
+                };
+              };
+              metadata = {
+                "0" = {
+                  "0" = "1984";
+                  "1" = [ 85 83 68 84 ];
+                  "2" = [ 85 83 68 84 ];
+                  "3" = 6;
+                };
+              };
+            };
+          };
+        };
+      };
+
       mk-zombienet-all = name: chain:
         with prelude;
         let
@@ -64,46 +104,7 @@
       picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;
-        parachains = [{
-          command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-          chain = "statemine-local";
-          id = 1000;
-          collators = 1;
-          ws_port = 10008;
-          rpc_port = 32220;
-          genesis = {
-            runtime = {
-              parachainInfo = { parachainId = 1000; };
-
-              balances = {
-                balances = {
-                  "0" = {
-                    "0" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-                    "1" = 17476266491902;
-                  };
-                };
-              };
-              assets = {
-                assets = {
-                  "0" = {
-                    "0" = "1984";
-                    "1" = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-                    "2" = true;
-                    "3" = 123456789;
-                  };
-                };
-                metadata = {
-                  "0" = {
-                    "0" = "1984";
-                    "1" = [ 85 83 68 84 ];
-                    "2" = [ 85 83 68 84 ];
-                    "3" = 6;
-                  };
-                };
-              };
-            };
-          };
-        }];
+        parachains = [ asset-hub-kusama-local ];
       };
 
       zombienet-rococo-local-picasso-dev = zombieTools.writeZombienet {
@@ -129,9 +130,6 @@
             };
           });
 
-        zombienet-picasso-complete =
-          mk-zombienet-all "devnet-picasso-complete" "picasso-dev";
-
         inherit zombienet-rococo-local-picasso-dev;
 
         zombienet-westend-local-composable-dev = zombieTools.writeZombienet {
@@ -147,7 +145,7 @@
             };
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-              chain = "statemint-local";
+              chain = "asset-hub-polkadot-local";
               id = 1000;
               collators = 2;
               ws_port = 10018;
@@ -163,48 +161,7 @@
               "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
-            parachains = [{
-              command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-              chain = "statemine-local";
-              id = 1000;
-              collators = 2;
-              ws_port = 10008;
-              rpc_port = 32220;
-              genesis = {
-                runtime = {
-                  parachainInfo = { parachainId = 1000; };
-
-                  balances = {
-                    balances = {
-                      "0" = {
-                        "0" =
-                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-                        "1" = 17476266491902;
-                      };
-                    };
-                  };
-                  assets = {
-                    assets = {
-                      "0" = {
-                        "0" = 1984;
-                        "1" =
-                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-                        "2" = true;
-                        "3" = 123456789;
-                      };
-                    };
-                    metadata = {
-                      "0" = {
-                        "0" = 1984;
-                        "1" = [ 85 83 68 84 ];
-                        "2" = [ 85 83 68 84 ];
-                        "3" = 6;
-                      };
-                    };
-                  };
-                };
-              };
-            }];
+            parachains = [ asset-hub-kusama-local ];
           });
 
         zombienet-picasso-centauri-b =
@@ -234,7 +191,7 @@
             chain = "composable-dev";
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-              chain = "statemint-local";
+              chain = "asset-hub-polkadot-local";
               id = 1000;
               collators = 2;
               ws_port = 30008;

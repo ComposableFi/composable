@@ -78,7 +78,6 @@
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
           picasso-testfast-runtime
-          zombienet-picasso-complete
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"
