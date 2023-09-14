@@ -8,7 +8,7 @@ pub mod auth;
 pub mod batch;
 pub mod contract;
 pub mod error;
-mod events;
+pub mod events;
 pub mod exchange;
 pub mod interpreter;
 mod network;

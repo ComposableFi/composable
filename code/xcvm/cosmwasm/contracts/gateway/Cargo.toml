@@ -15,6 +15,7 @@ workspace = true
 [features]
 library = []
 std = ["cw-xc-interpreter/std", "xc-core/std"]
+default = ["std"]
 
 [dependencies]
 bech32-no_std = { workspace = true, features = ["strict"] }
@@ -29,7 +30,7 @@ serde = { workspace = true }
 serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 
-cw-xc-interpreter = { path = "../interpreter", features = ["library"] }
+cw-xc-interpreter = { path = "../interpreter", features = ["library"], default-features = false}
 xc-core = { path = "../../../lib/core", features = [
   "cosmwasm",
 ], default-features = false }

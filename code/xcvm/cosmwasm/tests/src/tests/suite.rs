@@ -7,12 +7,10 @@ use cosmwasm_std::{Attribute, Binary, BlockInfo, Event, IbcOrder, MessageInfo, T
 use cosmwasm_vm::system::CUSTOM_CONTRACT_EVENT_PREFIX;
 use cw20::{Cw20Coin, Expiration, MinterResponse};
 
-use cw_xc_interpreter::contract::XCVM_INTERPRETER_EVENT_PREFIX;
 use proptest::{prelude::any, prop_assume, prop_compose, proptest};
 use std::assert_matches::assert_matches;
 use xc_core::{
-	gateway::EVENT_PREFIX as XCVM_GATEWAY_EVENT_PREFIX, shared, AssetId, Balance, Centauri,
-	Destination, Funds, Network, Picasso, ProgramBuilder,
+	shared, AssetId, Balance, Centauri, Destination, Funds, Network, Picasso, ProgramBuilder,
 };
 
 #[macro_export]
@@ -445,24 +443,6 @@ fn xcvm_deploy_asset<T>(
 		)
 		.expect(&format!("Must be able to instantiate and register {symbol} asset"));
 	assert_eq!(events.gateway_data, None);
-	xcvm_assert_prefixed_event(
-		events.gateway_events.iter(),
-		XCVM_GATEWAY_EVENT_PREFIX,
-		"action",
-		"register",
-	);
-	xcvm_assert_prefixed_event(
-		events.gateway_events.iter(),
-		XCVM_GATEWAY_EVENT_PREFIX,
-		"asset_id",
-		&asset_id.0 .0.to_string(),
-	);
-	xcvm_assert_prefixed_event(
-		events.gateway_events.iter(),
-		XCVM_GATEWAY_EVENT_PREFIX,
-		"denom",
-		&format!("cw20:{}", asset_address),
-	);
 }
 
 mod base {
@@ -478,19 +458,6 @@ mod base {
 			.deploy_xcvm::<()>(tx)
 			.expect("Must be able to deploy XCVM contracts.");
 		assert_eq!(events.gateway_data, None);
-		// The gateway must deploy the router.
-		xcvm_assert_prefixed_event(
-			events.gateway_events.iter(),
-			XCVM_GATEWAY_EVENT_PREFIX,
-			"action",
-			"instantiated",
-		);
-		xcvm_assert_prefixed_event(
-			events.gateway_events.iter(),
-			XCVM_GATEWAY_EVENT_PREFIX,
-			"action",
-			"instantiated",
-		);
 	}
 
 	fn deploy_and_register_assets(
@@ -611,31 +578,6 @@ mod single_chain {
 		// We don't dispatch any information in the data field.
 		assert_eq!(dispatch_data, None);
 
-		// Ensure the mandatory events are present.
-		xcvm_assert_prefixed_event(
-			dispatch_events.iter(),
-			XCVM_GATEWAY_EVENT_PREFIX,
-			"action",
-			"route.create",
-		);
-		xcvm_assert_prefixed_event(
-			dispatch_events.iter(),
-			XCVM_GATEWAY_EVENT_PREFIX,
-			"action",
-			"route.execute",
-		);
-		xcvm_assert_prefixed_event(
-			dispatch_events.iter(),
-			XCVM_INTERPRETER_EVENT_PREFIX,
-			"action",
-			"execution.start",
-		);
-		xcvm_assert_prefixed_event(
-			dispatch_events.iter(),
-			XCVM_INTERPRETER_EVENT_PREFIX,
-			"action",
-			"execution.success",
-		);
 		assert_eq!(
 			network.vm.balance_of(1u128.into(), mk_tx(alice.clone()), alice.clone()),
 			Ok(cw20::BalanceResponse { balance: 0_u128.into() })

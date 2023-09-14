@@ -1,16 +1,17 @@
 use crate::{
 	authenticate::{ensure_owner, Authenticated},
 	error::{ContractError, Result},
+	events::*,
 	msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, Step},
-	state::{Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
+	state::{self, Config, CONFIG, IP_REGISTER, OWNERS, RESULT_REGISTER, TIP_REGISTER},
 };
 use alloc::borrow::Cow;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
 	ensure, ensure_eq, to_binary, wasm_execute, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps,
-	DepsMut, Env, Event, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
-	WasmQuery,
+	DepsMut, Env, MessageInfo, QueryRequest, Reply, Response, StdError, StdResult, SubMsg,
+	SubMsgResult, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
@@ -29,23 +30,15 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CALL_ID: u64 = 1;
 const SELF_CALL_ID: u64 = 2;
 const EXCHANGE_ID: u64 = 3;
-pub const XCVM_INTERPRETER_EVENT_PREFIX: &str = "xcvm.interpreter";
-pub const XCVM_INTERPRETER_EVENT_DATA_ORIGIN: &str = "data";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg) -> Result {
 	set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
 	let gateway_address = xc_core::gateway::Gateway::addr_validate(deps.api, &msg.gateway_address)?;
 	let config = Config { gateway_address, interpreter_origin: msg.interpreter_origin };
 	CONFIG.save(deps.storage, &config)?;
-	// Save the caller as owner, in most cases, it is the `XCVM router`
 	OWNERS.save(deps.storage, info.sender, &())?;
-
-	Ok(Response::new().add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute(
-		XCVM_INTERPRETER_EVENT_DATA_ORIGIN,
-		shared::encode_base64(&config.interpreter_origin)?,
-	)))
+	Ok(Response::new().add_event(CvmInterpreterInstantiated::new(&config.interpreter_origin)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -92,9 +85,7 @@ fn initiate_execution(
 	// Reset instruction pointer to zero.
 	IP_REGISTER.save(deps.storage, &0)?;
 	Ok(Response::default()
-		.add_event(
-			Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "execution.start"),
-		)
+		.add_event(CvmInterpreterExecutionStarted::new())
 		.add_submessage(SubMsg::reply_on_error(
 			wasm_execute(
 				env.contract.address,
@@ -107,24 +98,19 @@ fn initiate_execution(
 
 /// Add owners who can execute entrypoints other than `ExecuteStep`
 fn add_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Result {
-	let mut event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.add");
-	for owner in owners {
-		event = event.add_attribute("owner", owner.to_string());
-		OWNERS.save(deps.storage, owner, &())?;
+	for owner in owners.iter() {
+		OWNERS.save(deps.storage, owner.clone(), &())?;
 	}
-	Ok(Response::default().add_event(event))
+	Ok(Response::default().add_event(CvmInterpreterOwnerAdded::new(owners)))
 }
 
 /// Remove a set of owners from the current owners list.
 /// Beware that emptying the set of owners result in a tombstoned interpreter.
 fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response {
-	let mut event =
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("action", "owners.remove");
-	for owner in owners {
-		event = event.add_attribute("owner", owner.to_string());
-		OWNERS.remove(deps.storage, owner);
+	for owner in owners.iter() {
+		OWNERS.remove(deps.storage, owner.clone());
 	}
-	Response::default().add_event(event)
+	Response::default().add_event(CvmInterpreterOwnerRemoved::new(owners))
 }
 
 /// Execute an XCVM program.
@@ -166,15 +152,7 @@ pub fn handle_execute_step(
 		// We subtract because of the extra loop to reach the empty instructions case.
 		IP_REGISTER.save(deps.storage, &instruction_pointer.saturating_sub(1))?;
 		TIP_REGISTER.save(deps.storage, &tip)?;
-		let mut event = Event::new("xc.interpreter.step.executed")
-			.add_attribute("tag", hex::encode(&program.tag));
-		if program.tag.len() >= 3 {
-			event = event.add_attribute(
-				"tag",
-				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-			);
-		}
-		Response::default().add_event(event)
+		Response::default().add_event(CvmInterpreterStepExecuted::new(&program.tag))
 	})
 }
 
@@ -223,15 +201,13 @@ fn interpret_exchange(
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
 				value: Binary::from(msg.encode_to_vec()),
 			};
-			let msg = SubMsg::reply_on_error(msg, EXCHANGE_ID);
-			Response::default().add_submessage(msg)
+			let msg = SubMsg::reply_always(msg, EXCHANGE_ID);
+			Response::default()
+				.add_submessage(msg)
+				.add_attribute("exchange_id", exchange_id.to_string())
 		},
 	};
-	Ok(response.add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-			.add_attribute("instruction", "exchange")
-			.add_attribute("exchange_id", exchange.exchange_id.to_string()),
-	))
+	Ok(response.add_event(CvmInterpreterExchangeStarted::new(exchange_id)))
 }
 
 /// Interpret the `Call` instruction
@@ -313,14 +289,14 @@ pub fn interpret_call(
 	let cosmos_msg: CosmosMsg =
 		flat_cosmos_msg.try_into().map_err(|_| ContractError::DataSerializationError)?;
 	Ok(Response::default()
-		.add_event(Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "call"))
+		.add_event(CvmInterpreterInstructionCallInitiated::new())
 		.add_submessage(SubMsg::reply_on_success(cosmos_msg, CALL_ID)))
 }
 
 pub fn interpret_spawn(
 	deps: &mut DepsMut,
 	env: &Env,
-	network: NetworkId,
+	network_id: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds<Balance>,
 	program: shared::XcProgram,
@@ -374,23 +350,13 @@ pub fn interpret_spawn(
 		.add_message(gateway.execute(BridgeForwardMsg {
 			interpreter_origin: interpreter_origin.clone(),
 			msg: execute_program,
-			to: network,
+			to: network_id,
 		})?)
-		.add_event(
-			Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-				.add_attribute("instruction", "spawn")
-				.add_attribute(
-					"origin_network_id",
-					serde_json_wasm::to_string(&interpreter_origin.user_origin.network_id)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				)
-				.add_attribute(
-					"origin_user_id",
-					serde_json_wasm::to_string(&interpreter_origin.user_origin.user_id)
-						.map_err(|_| ContractError::DataSerializationError)?,
-				)
-				.add_attribute("network_id", network.to_string()),
-		))
+		.add_event(CvmInterpreterInstructionSpawned::new(
+			interpreter_origin.user_origin.network_id,
+			interpreter_origin.user_origin.user_id,
+			network_id,
+		)))
 }
 
 pub fn interpret_transfer(
@@ -442,9 +408,7 @@ pub fn interpret_transfer(
 		};
 	}
 
-	Ok(response.add_event(
-		Event::new(XCVM_INTERPRETER_EVENT_PREFIX).add_attribute("instruction", "transfer"),
-	))
+	Ok(response.add_event(CvmInterpreterTransferred::new()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -455,6 +419,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
 		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
+		QueryMsg::State() => Ok(state::read(deps.storage)?.try_into()?),
 	}
 }
 
@@ -477,9 +442,7 @@ fn handle_self_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			// other state changes are reverted.
 			RESULT_REGISTER.save(deps.storage, &Err(e.clone()))?;
 			let ip = IP_REGISTER.load(deps.storage)?.to_string();
-			let event = Event::new(XCVM_INTERPRETER_EVENT_PREFIX)
-				.add_attribute("action", "execution.failure")
-				.add_attribute("reason", e);
+			let event = CvmInterpreterSelfFailed::new(e);
 			Ok(Response::default().add_event(event).add_attribute("ip", ip))
 		}
 	}
@@ -492,10 +455,23 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	deps.api.debug(&format!("xcvm::interpreter::exchange {:?}", &msg));
-	let response = msg.result.into_result().map_err(StdError::generic_err)?;
-	RESULT_REGISTER.save(deps.storage, &Ok(response))?;
-	Ok(Response::default())
+	deps.api.debug(&format!("xcvm::interpreter::exchanged {:?}", &msg));
+	let response = match &msg.result {
+		SubMsgResult::Ok(ok) => {
+			let exchange_id: ExchangeId = ok
+				.events
+				.iter()
+				.find(|x| x.ty == "cvm.interpreter.exchange.started")
+				.and_then(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
+				.map(|x| x.value.parse().unwrap())
+				.unwrap_or(ExchangeId::default());
+			Response::new().add_event(CvmInterpreterExchangeSucceeded::new(exchange_id))
+		},
+		SubMsgResult::Err(err) =>
+			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone())),
+	};
+	RESULT_REGISTER.save(deps.storage, &msg.result.into_result())?;
+	Ok(response)
 }
 
 /// Calculates and returns the actual balance to process

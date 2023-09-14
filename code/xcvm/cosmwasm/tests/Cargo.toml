@@ -14,6 +14,9 @@ std = [
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
   "cw20/std",
+  "cw-xc-interpreter/std",
+  "xc-core/std",
+  "cw-xc-pingpong/std",  
 ]
 
 [dev-dependencies]
@@ -23,7 +26,7 @@ cosmwasm-vm = { workspace = true }
 cosmwasm-vm-wasmi = { workspace = true }
 cosmwasm-orchestrate = { workspace = true }
 
-cw-xc-interpreter = { path = "../contracts/interpreter" }
+cw-xc-interpreter = { path = "../contracts/interpreter", default-features = false}
 cw-xc-pingpong = { path = "../contracts/pingpong" }
 xc-core = { path = "../../lib/core" }
 

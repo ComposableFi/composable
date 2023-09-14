@@ -14,7 +14,7 @@
           ];
           pname = name;
           cargoBuildCommand =
-            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name}";
+            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name} --no-default-features";
           RUSTFLAGS = "-C link-arg=-s";
           installPhaseCommand = ''
             mkdir --parents $out/lib
@@ -65,7 +65,7 @@
               cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
               export NIX_CARGO_OUT_DIR
               # just build, will be moved to testing with host at hand
-              cargo build --release --package xc-tests --tests
+              cargo build --release --package xc-tests --tests --features="std"
             '';
             installPhase = ''
               mkdir --parents $out

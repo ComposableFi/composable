@@ -9,9 +9,6 @@ use crate::{
 	NetworkId,
 };
 
-/// Prefix used for all events attached to gateway responses.
-pub const EVENT_PREFIX: &str = "xcvm.gateway";
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -110,6 +107,7 @@ pub struct BridgeForwardMsg {
 /// to be validated.
 #[cfg(feature = "cosmwasm")]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(transparent)]
 pub struct Gateway {
 	address: cosmwasm_std::Addr,
