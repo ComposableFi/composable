@@ -61,7 +61,18 @@
              "user-guides/centauri-transfers",
            ],
          },
- 
+         {
+           type: "category",
+           label: "FAQs",
+           link: {
+             type: "generated-index",
+             slug: "faqs",
+           },
+           collapsible: false,
+           items: [
+             "user-guides/trustless-faq",
+           ],
+         },
          "user-guides/polkassembly-picasso-governance",
        ],
      },
