@@ -59,6 +59,23 @@
           '';
         });
 
+        composable-runtime-dev = pkgs.stdenv.mkDerivation ({
+          name = "composable-runtime-dev";
+          dontUnpack = true;
+          buildInputs = with self'.packages; [ subwasm subxt ];
+          patchPhase = "";
+          dontStrip = true;
+          installPhase = ''
+            mkdir --parents $out/lib
+            mkdir --parents $out/docs
+            mkdir --parents $out/include
+            subwasm metadata ${composable-runtime}/lib/runtime.optimized.wasm --format json > $out/lib/composable-runtime.json
+            subwasm metadata ${composable-runtime}/lib/runtime.optimized.wasm --format scale > $out/lib/composable-runtime.scale
+            subwasm metadata ${composable-runtime}/lib/runtime.optimized.wasm --format human > $out/docs/composable-runtime.txt
+            subxt codegen --file $out/lib/composable-runtime.scale > $out/include/picasso_runtime.rs
+          '';
+        });
+
         picasso-testfast-runtime = mkOptimizedRuntime {
           name = "picasso";
           features = "testnet,fastnet";

@@ -7,8 +7,8 @@
           src = pkgs.fetchFromGitHub {
             owner = "paritytech";
             repo = name;
-            rev = "e40a8629e279e80a7fbb56ff553a430a36612956";
-            hash = "sha256-fMCy1QAb8rdgQesRqbNCEh6lqEgf7ZsVhYdGvctjbQU";
+            rev = "059723e4313d91e8ca0bcd84b0dd7dd66686ca50";
+            hash = "sha256-eEsb88f16Ug9h7JNkzwSTxJZEV5r4XmmzsTxTQGk+j8=";
           };
         in crane.nightly.buildPackage (rec {
           inherit name;
