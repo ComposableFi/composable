@@ -64,7 +64,6 @@
 
       all-run-packages = pkgs.linkFarmFromDrvs "all-run-packages"
         (with self'.packages; [
-          ccw
           cmc-api
           cmc-api-image
           composable-node
@@ -78,7 +77,6 @@
           hyperspace-composable-rococo-picasso-rococo
           hyperspace-composable-rococo-picasso-rococo-image
           picasso-testfast-runtime
-          zombienet-picasso-complete
         ]);
 
       all-ci-packages = pkgs.linkFarmFromDrvs "all-ci-packages"

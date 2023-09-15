@@ -63,10 +63,11 @@
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
+    # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/centauri/f41efb289a4815dc0ebc9727769c382b0a9c550d";
+        "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
   };
 
