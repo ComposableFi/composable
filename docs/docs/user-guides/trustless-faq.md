@@ -1,4 +1,4 @@
-# FAQ
+# Trustless FAQ
 
 ## All about Composable Chains
 
