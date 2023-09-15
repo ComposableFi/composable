@@ -1,28 +1,46 @@
-# Governance
+# Picasso OpenGov
 
-As we plan to completely decentralize the governance on the Picasso network, 
-we have designed the decisions affecting the parachain to go through a fair 
-democratic process supported by the Substrate governance affiliated pallets. 
-The Democracy pallets we are utilizing are provided within the Substrate libraries 
-and a core piece of the logic that constitutes the runtime of the Kusama and Polkadot networks. 
-Referendums will be carried out to ensure agreement from the wider community 
-and to establish transparency when significant changes are made to Picasso.
+As we plan to completely decentralize the governance on the Picasso network, the decisions affecting the parachain will go through a democratic process as Picasso transitions from Governance V1 to OpenGov, a two-phase process that will empower the community holders. Previously, Picasso operated via Governance V1 whilst Sudo operations took place with the approval of the Picasso council. Referendums can be proposed by anyone to ensure agreement from the wider community and to establish transparency when significant changes are made to Picasso.
 
-## Governance Divisions
+The new OpenGov structure for Picasso will be implemented in two phases.
+
+Phase 1: Implement OpenGov with governance handled by two collectives: The Picasso Council and the Technical Committee.
+
+This phase lays the foundation for a more transparent and community-driven governance model while maintaining the speed and efficiency demonstrated by the recent launches and connections on Picasso, especially in preparation for our upcoming IBC connection to Ethereum.
+
+Phase 2: Release OpenGov to public PICA holders.
+
+The second phase will be implemented after the launch of the Ethereum ⬌ IBC connection which will be released in Q4 2023. Through OpenGov, the Picasso parachain will undergo a new era of decentralization, allowing PICA holders to actively participate in governance and a new structure of collectives.
+
+## Governance Tracks
+
+During Phase 1, Council members and the Technical Committee will be able to vote via a GOV NFT. The GOV voting has no monetary value and will function similarly to an NFT. This token is held by the Picasso Council and Technical Committee members. 
+Initially, there are two tracks, and four origins:
+
+- Root
+- Whitelisted Caller (Fast Track)
+
+Additional tracks are also planned to be added during Phase 1 such as General Admin, Treasury and more.
+
+The governance model during Phase 1 will introduce four separate roles, each serving a unique purpose:
+
+- Proposal Creation: Enabling the ability to create proposals, fostering innovation and community-driven development.
+- Voting: Allowing GOV holders to vote on proposals, ensuring that decisions reflect the collective will of the community.
+- Canceling Proposals/Slashing: Implementing mechanisms to cancel proposals and penalize those who voted maliciously..
+- Expedition: Introducing measures to speed up the voting process when needed, ensuring timely decision-making without compromising on democratic principles.
+
+These tracks and origins are designed to ensure a balanced and fair approach, aligning with our commitment to transparency, decentralization, and community engagement.
+
+## Governance Collectives
 
 ### Picasso Council
 
-Upon launch, governance on Picasso parachain will be done by a Sudo account held by the Composable. 
-Following the onboarding of core pallets on Picasso, 
-the Sudo council will be burned and the First Council will then be in charge of governance. 
-The First Council is an on-chain entity made up of 11 senior team members from and our supporters. 
-The Council members also control Picasso’s multi-sig wallet.
+The Council is an on-chain entity made up of 11 senior team members and supporters.
 
-When the Picasso parachain is live, each council member will be represented as an on-chain account on Polkadot.js. 
-Members of the First Council will consist of:
+Each council member is represented as an on-chain account on Polkadot.js. Members of the Council consist of:
 - 0xBrainJar, Composable Founder/CEO
 - Blas Rodriguez Irizar, Composable Co-Founder & CTO
-- Don DeTommasso, Composable Head of Governance & Strategy
+- Joe DeTommasso, Composable Head of Governance & Strategy
 - Miguel Santefé, Composable Co-Founder & Head of Design
 - Jafar Azam, Composable Devrel
 - Henry Love, Fundamental Labs Managing Partner
@@ -32,36 +50,11 @@ Members of the First Council will consist of:
 - Tamara Frankel, D1 Ventures Founding Partner
 - James Wo, Digital Finance Group (DFG) Founder & Chairman
 
-As the Picasso community strengthens, community members will play a bigger role in governance and Picasso will transition into a full democracy. 
-In the meantime, the First Council will safeguard the functioning of the parachain. 
-First Council motions require a strict majority or at least 6 out of the 11 members to be passed.
+The Council members also control Picasso’s multi-sig wallets holding the allocation of the Treasury, Liquidity Programs and Ecosystem incentives. Please note that the funds from these wallets will only be transferred upon the approval of on-chain governance. For more details, look at the [PICA token transparency commitment statement](../picasso/token-transparency.md).
 
-When the First Council has reasonably determined that Picasso is operating in a stable and self-sufficient manner, 
-governance will be handed over to the community. 
-The community will then be responsible for governance of the network including:
-
-- The periodic election of new Council members
-- Proposing referenda
-- Vetoing risky or malicious referenda
-- Creating sub-councils or other committees to focus on specific subject matters. 
-  The Council will maintain veto power over any such sub-council or committee.
-- Electing the new Technical Committee members, which will be discussed in more detail shortly
-
-The subsequent Councils can initiate the proposal creation process and create their own proposals, 
-on matters including, but not limited to: 
-
-- (a) the implementation of a Crowdloan Rewards pallet enabling those who contributed to the Picasso Crowdloan to claim their rewards; 
-- (b) creation of liquidity pools in Pablo, a new-generation decentralized exchange (DEX) that will be the first protocol to launch on Picasso; 
-- (c) setting and adjusting the rate of staking rewards and other emissions for Picasso and Pablo; and 
-- (d) management and allocation of the Pablo and Picasso treasury.
-
-A council member has a veto power but which can only be exercised once for any single proposal. 
-If the proposal has been vetoed by a Council member, 
-any Council member cannot veto the same proposal upon resubmission after the 15-day cooldown period.
-
-Both the First Council and subsequent Councils will elect a “Prime Member” amongst themselves whose vote will act as 
-the default for Council members who fail to vote before the timeout. 
-The main purpose of the foregoing measure is to ensure a quorum even if multiple Council members choose to abstain from a vote.
+:::note
+There are certain features of Governance V1 still active on Picasso such as Democracy Referenda, Emergency Measures and Emergency Proposals, this will be removed in the coming weeks as OpenGov is given time to be deemed as effective as stable and more tracks are added. 
+:::
 
 #### Emergency Measures
 
@@ -72,10 +65,7 @@ In such a case, the emergency measure will be immediately executable and impleme
 
 ### Technical Committee
 
-Picasso’s Technical Committee consists of core developers who are chosen by the Council. 
-The members of the Technical Committee will initially be composed of Composable Finance developers. 
-The role of the Technical Committee includes, among others, 
-ensuring the technical stability and critical safety measures of the parachain. 
+Picasso’s Technical Committee consists of 5 core developers who are chosen by the Council. The role of the Technical Committee includes, among others, ensuring the technical stability and critical safety measures of the parachain. 
 
 #### Emergency Proposals
 
@@ -173,4 +163,3 @@ While a token is locked, it can still be used for voting and staking but it cann
 
 Votes are tallied at the end of the voting period.
 All of the voters who win the proposal will have their PICA locked into the chain for the duration of the enactment of the proposal and losing voters have no lock up period. 
-
