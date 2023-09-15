@@ -64,7 +64,6 @@
 
       all-run-packages = pkgs.linkFarmFromDrvs "all-run-packages"
         (with self'.packages; [
-          ccw
           cmc-api
           cmc-api-image
           composable-node
