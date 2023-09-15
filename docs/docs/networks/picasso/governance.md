@@ -12,7 +12,7 @@ Phase 2: Release OpenGov to public PICA holders.
 
 The second phase will be implemented after the launch of the Ethereum ⬌ IBC connection which will be released in Q4 2023. Through OpenGov, the Picasso parachain will undergo a new era of decentralization, allowing PICA holders to actively participate in governance and a new structure of collectives.
 
-## Governance Tracks
+## OpenGov Tracks
 
 During Phase 1, Council members and the Technical Committee will be able to vote via a GOV NFT. The GOV voting has no monetary value and will function similarly to an NFT. This token is held by the Picasso Council and Technical Committee members. 
 Initially, there are two tracks, and four origins:
@@ -31,7 +31,35 @@ The governance model during Phase 1 will introduce four separate roles, each ser
 
 These tracks and origins are designed to ensure a balanced and fair approach, aligning with our commitment to transparency, decentralization, and community engagement.
 
-## Governance Collectives
+## OpenGov Parameters
+
+The following two tables provide information about the voting and decision-making processes for the two different collectives and tracks (Whitelist Track and Root Track). They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track.
+
+
+
+| Collective           | Support Threshold | Whitelist Time (Passing) | Root Time (Passing) |
+|-----------------------|-------------------|--------------------------|----------------------|
+| Technical Committee     | 10%               | 12 hours        | 5 days 14 hours      |
+| Technical Committee     | 20%               | 3 hours 20 minutes       | 4 days 4 hours       |
+| Technical Committee     | 30%               | 1 hour 15 minutes        | 2 days 18 hours      |
+| Council        | 10%               | 12 hours 0 minutes       | 5 days 14 hours      |
+| Council        | 20%               | 3 hours 20 minutes       | 4 days 4 hours       |
+| Council        | 30%               | 1 hour 15 minutes        | 2 days 18 hours      |
+
+| Track Type            | Confirm Period    | Decision Period (Voting) |
+|-----------------------|-------------------|--------------------------|
+| Whitelist        | 30 minutes        | 4 days                   |
+| Root             | 1 day             | 7 days                   |
+
+The following table summarizes the rules and requirements related to certain actions within the OpenGov system. It provides a concise reference for understanding the conditions and costs associated with various actions in the OpenGov process.
+
+
+| Action        | Origin & Threshold         | Submission Deposit | Decision Deposit (Pica)  |
+|---------------|----------------------------|--------------------|--------------------------|
+| Submit        | Anyone from any collective | 1 PICA             | Root Track: 500,000 Pica  |
+| Cancel        | 1/3 Tech Committee        | 1 PICA             | Whitelist Track: 50,000 Pica |
+| Kill          | 1/2 Council                | 1 PICA             |                          |
+## OpenGov Collectives
 
 ### Picasso Council
 
