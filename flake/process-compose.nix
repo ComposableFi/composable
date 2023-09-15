@@ -29,6 +29,16 @@
           '';
         };
 
+        devnet-xc-dotsama-fresh = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          name = "devnet-xc-dotsama-fresh";
+          text = ''
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-dotsama}
+          '';
+        };
+
         prune-run-unsafe = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ pkgs.process-compose ];
@@ -82,31 +92,9 @@
           debug = true;
           settings = {
             processes = {
-              centauri = {
-                command = pkgs.writeShellApplication {
-                  runtimeInputs = devnetTools.withBaseContainerTools;
-                  name = "centauri";
-                  text = ''
-                    ${pkgs.lib.meta.getExe self'.packages.centaurid-gen} reuse 0
-                  '';
-                };
-                readiness_probe.http_get = {
-                  host = "127.0.0.1";
-                  port = 26657;
-                };
-                log_location = "${devnet-root-directory}/centauri.log";
-                availability = { restart = "on_failure"; };
-              };
-              centauri-init = {
-                command = self'.packages.centaurid-init;
-                depends_on."centauri".condition = "process_healthy";
-                log_location = "${devnet-root-directory}/centauri-init.log";
-                availability = { restart = "on_failure"; };
-              };
-
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
@@ -120,7 +108,7 @@
               };
               composable = {
                 command = self'.packages.zombienet-composable-westend-b;
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
                   initial_delay_seconds = 32;
@@ -132,62 +120,16 @@
                   '';
                 };
               };
-              picasso-centauri-ibc-init = {
-                command = self'.packages.picasso-centauri-ibc-init;
-                log_location =
-                  "${devnet-root-directory}/picasso-centauri-ibc-init.log";
-                depends_on = {
-                  "centauri-init".condition = "process_completed_successfully";
-                  "centauri".condition = "process_healthy";
-                  "picasso".condition = "process_healthy";
-                };
-                availability = { restart = "on_failure"; };
-              };
-              picasso-centauri-ibc-connection-init = {
-                command = self'.packages.picasso-centauri-ibc-connection-init;
-                log_location =
-                  "${devnet-root-directory}/picasso-centauri-ibc-connection-init.log";
-                depends_on = {
-                  "picasso-centauri-ibc-init".condition =
-                    "process_completed_successfully";
-                  "picasso".condition = "process_healthy";
-                };
-                availability = { restart = "on_failure"; };
-              };
-
-              picasso-centauri-ibc-channels-init = {
-                command = self'.packages.picasso-centauri-ibc-channels-init;
-                log_location =
-                  "${devnet-root-directory}/picasso-centauri-ibc-channels-init.log";
-                depends_on = {
-                  "picasso-centauri-ibc-connection-init".condition =
-                    "process_completed_successfully";
-                };
-                availability = { restart = "on_failure"; };
-              };
-
-              picasso-centauri-ibc-relay = {
-                command = self'.packages.picasso-centauri-ibc-relay;
-                log_location =
-                  "${devnet-root-directory}/picasso-centauri-ibc-relay.log";
-                depends_on = {
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
-                };
-                availability = { restart = relay; };
-              };
 
               composable-picasso-ibc-init = {
                 command = self'.packages.composable-picasso-ibc-init;
                 log_location =
                   "${devnet-root-directory}/composable-picasso-ibc-init.log";
                 depends_on = {
-                  "picasso-centauri-ibc-channels-init".condition =
-                    "process_completed_successfully";
                   "composable".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
               composable-picasso-ibc-connection-init = {
                 command = ''
@@ -204,7 +146,7 @@
                     "process_completed_successfully";
                   "composable".condition = "process_healthy";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               composable-picasso-ibc-channels-init = {
@@ -221,7 +163,7 @@
                   "composable-picasso-ibc-connection-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
               composable-picasso-ibc-relay = {
                 command = self'.packages.composable-picasso-ibc-relay;
