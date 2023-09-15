@@ -14,8 +14,7 @@ The second phase will be implemented after the launch of the Ethereum ⬌ IBC co
 
 ## OpenGov Tracks
 
-During Phase 1, Council members and the Technical Committee will be able to vote via a GOV NFT. The GOV voting has no monetary value and will function similarly to an NFT. This token is held by the Picasso Council and Technical Committee members. 
-Initially, there are two tracks, and four origins:
+During Phase 1, Council members and the Technical Committee will be able to vote via a GOV token. The GOV token has no monetary value and held by the Picasso Council and Technical Committee members. Initially, there are two tracks, and four origins:
 
 - Root
 - Whitelisted Caller (Fast Track)
