@@ -38,7 +38,7 @@
 
       asset-hub-kusama-local = {
         command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-        chain = "asset-hub-kusama-local";
+        chain = "statemine-local";
         id = 1000;
         collators = 1;
         ws_port = 10008;
@@ -145,7 +145,7 @@
             };
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-              chain = "asset-hub-polkadot-local";
+              chain = "statemint-local";
               id = 1000;
               collators = 2;
               ws_port = 10018;
@@ -191,7 +191,7 @@
             chain = "composable-dev";
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
-              chain = "asset-hub-polkadot-local";
+              chain = "statemint-local";
               id = 1000;
               collators = 2;
               ws_port = 30008;

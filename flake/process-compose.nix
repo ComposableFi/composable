@@ -4,8 +4,8 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-      relay = "on_failure"; # `no` not to restart
-      chain-restart = "on_failure"; # `no` not to restart
+      relay = "no"; # `no` not to restart
+      chain-restart = "no"; # `no` not to restart
     in {
 
       packages = rec {
