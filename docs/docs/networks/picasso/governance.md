@@ -32,7 +32,7 @@ These tracks and origins are designed to ensure a balanced and fair approach, al
 
 ## OpenGov Parameters
 
-The following two tables provide information about the voting and decision-making processes for the two collectives. They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
+The following two tables provide information about the voting and decision-making processes for the two collectives. They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track. With X % of support, referenda can pass after Y duration (times in the table) since the beginning of referenda if the approval rate is above the approval curve. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
 
 
 | Support Threshold | Whitelist Time (Passing) | Root Time (Passing) |
