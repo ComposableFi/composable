@@ -1,6 +1,6 @@
 # Picasso OpenGov
 
-As we plan to completely decentralize the governance on the Picasso network, the decisions affecting the parachain will go through a democratic process as Picasso transitions from Governance V1 to OpenGov, a two-phase process that will empower the community holders. Previously, Picasso operated via Governance V1 whilst Sudo operations took place with the approval of the Picasso council. Referendums can be proposed by anyone to ensure agreement from the wider community and to establish transparency when significant changes are made to Picasso.
+As we plan to completely decentralize the governance on the Picasso network, the decisions affecting the parachain will go through a democratic process as Picasso transitions from Governance V1 to OpenGov, a two-phase process that will empower the community holders. Previously, Picasso operated via Governance V1 with Sudo operations being executed with the approval of the Picasso council. Referenda can be proposed by anyone to ensure agreement from the wider community and to establish transparency when significant changes are made to Picasso.
 
 The new OpenGov structure for Picasso will be implemented in two phases.
 
@@ -25,24 +25,29 @@ The governance model during Phase 1 will introduce four separate roles, each ser
 
 - Proposal Creation: Enabling the ability to create proposals, fostering innovation and community-driven development.
 - Voting: Allowing GOV holders to vote on proposals, ensuring that decisions reflect the collective will of the community.
-- Canceling Proposals/Slashing: Implementing mechanisms to cancel proposals and penalize those who voted maliciously.
+- Canceling Proposals: Implementing mechanisms to cancel proposals.
 - Expedition: Introducing measures to speed up the voting process when needed, ensuring timely decision-making without compromising on democratic principles.
 
 These tracks and origins are designed to ensure a balanced and fair approach, aligning with our commitment to transparency, decentralization, and community engagement.
 
 ## OpenGov Parameters
 
-The following two tables provide information about the voting and decision-making processes for the two collectives. They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track. With X % of support, referenda can pass after Y duration (times in the table) since the beginning of referenda if the approval rate is above the approval curve. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
+The following two tables provide information about the voting and decision-making processes for the two collectives. They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track. 
 
 
-| Support Threshold | Whitelist Time (Passing) | Root Time (Passing) |
+| Support Threshold | Whitelist Track Time (Passing) | Root Track Time (Passing) |
 |-------------------|--------------------------|----------------------|
 | 10%               | 12 hours        | 5 days 14 hours      |
 | 20%               | 3 hours 20 minutes       | 4 days 4 hours       |
 | 30%               | 1 hour 15 minutes        | 2 days 18 hours      |
-| 10%               | 12 hours 0 minutes       | 5 days 14 hours      |
-| 20%               | 3 hours 20 minutes       | 4 days 4 hours       |
-| 30%               | 1 hour 15 minutes        | 2 days 18 hours      |
+
+With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
+
+![whitelist-curve](../whitelist-track.png)
+*Approval curve for the Whitelist Track*
+
+![root-curve](../root-track.png)
+*Approval curve for the Root Track*
 
 
 | Track Type            | Confirm Period    | Decision Period (Voting) |
@@ -50,14 +55,7 @@ The following two tables provide information about the voting and decision-makin
 | Whitelist        | 30 minutes        | 4 days                   |
 | Root             | 1 day             | 7 days                   |
 
-The following table summarizes the rules and requirements related to certain actions within the OpenGov system. It provides a concise reference for understanding the conditions and costs associated with various actions in the OpenGov process.
-
-
-| Action        | Origin & Threshold         | Submission Deposit | 
-|---------------|----------------------------|--------------------|
-| Submit        | Anyone from any collective | 1 PICA             | 
-| Cancel        | 1/3 Tech Committee        | 1 PICA             | 
-| Kill          | 1/2 Council                | 1 PICA             | 
+Any member from the two collectives is allowed to submit a referenda. The Cancel referenda requires 1/3 approval from the Technical Committee and the Kill referenda requires 1/2 of the Council approval to execute. These actions represent varying levels of decision-making authority, from open submission to stringent consensus requirements. The Whitelist Track requires either a 1/3 approval from the Tech Committee or 1/3 council. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
 
 ## OpenGov Collectives
 
@@ -81,7 +79,7 @@ Each council member is represented as an on-chain account on Polkadot.js. Member
 The Council members also control Picasso’s multi-sig wallets holding the allocation of the Treasury, Liquidity Programs and Ecosystem incentives. Please note that the funds from these wallets will only be transferred upon the approval of on-chain governance. For more details, look at the [PICA token transparency commitment statement](../picasso/token-transparency.md).
 
 :::note
-There are certain features of Governance V1 still active on Picasso such as Democracy Referenda, Emergency Measures and Emergency Proposals, this will be removed in the coming weeks as OpenGov is given time to be deemed as effective as stable and more tracks are added. 
+The following sections include certain features of Governance V1 still active on Picasso such as Democracy Referenda, Emergency Measures and Emergency Proposals, this will be removed in the coming weeks as OpenGov is given time to be deemed effective and stable as more tracks are added. 
 :::
 
 #### Emergency Measures
