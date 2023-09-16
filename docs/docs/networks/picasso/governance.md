@@ -55,7 +55,9 @@ With X % of support, Referenda can pass after Y duration (time periods in the ta
 | Whitelist        | 30 minutes        | 4 days                   |
 | Root             | 1 day             | 7 days                   |
 
-Any member from the two collectives is allowed to submit a referenda. The Cancel referenda requires 1/3 approval from the Technical Committee and the Kill referenda requires 1/2 of the Council approval to execute. These actions represent varying levels of decision-making authority, from open submission to stringent consensus requirements. The Whitelist Track requires either a 1/3 approval from the Tech Committee or 1/3 council. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
+Any member from the two collectives is allowed to submit a referenda.To cancel a specific referendum, you need a 1/3 approval from the Technical Committee. To Kill a referendum, 1/2 approval from the Council is necessary, particularly when the referendum is deemed malicious.
+
+Regarding the whitelisted track, if you want to include the hash of a proposal, you must obtain either 1/3 approval from the Technical Committee or 1/3 approval from the Council. This is the operational procedure for the whitelisted track. If a proposal passes but its hash isn't added to the whitelist, the proposal will fail to execute. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
 
 ## OpenGov Collectives
 
