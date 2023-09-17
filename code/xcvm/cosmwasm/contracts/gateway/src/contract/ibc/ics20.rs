@@ -53,7 +53,7 @@ pub(crate) fn handle_bridge_forward(
 
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin,
+		user_origin: msg.interpreter_origin.user_origin.clone(),
 		salt: msg.msg.salt,
 		program: msg.msg.program,
 		assets: vec![asset].into(),
@@ -82,8 +82,15 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let msg = to_cw_message(deps.api, coin, route, packet, block)?;
-	Ok(Response::default().add_event(event).add_message(msg))
+	let (ret_msg, tracker) =
+		to_cw_message(deps.as_ref(), deps.api, coin.clone(), route, packet, block)?;
+	state::tracking::track(
+		deps.storage,
+		msg.interpreter_origin,
+		tracker,
+		state::tracking::TrackedState { assets: vec![coin] },
+	)?;
+	Ok(Response::default().add_event(event).add_message(ret_msg))
 }
 
 /// given target network and this network assets identifier,

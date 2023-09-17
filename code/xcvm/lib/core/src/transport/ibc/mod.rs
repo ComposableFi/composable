@@ -11,7 +11,7 @@ use cosmwasm_std::{
 	to_binary, Api, BlockInfo, CosmosMsg, Deps, IbcEndpoint, QueryRequest, StdResult, WasmMsg,
 };
 
-use ibc_proto::ibc::core::channel::v1::{PacketId, QueryNextSequenceReceiveResponse};
+use ibc_proto::ibc::core::channel::v1::QueryNextSequenceReceiveResponse;
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 use self::ics20::{
@@ -45,8 +45,6 @@ pub enum SudoMsg {
 pub enum TransportTrackerId {
 	/// Allows to identify results of IBC packets
 	Ibc { channel_id: ChannelId, sequence: u64 },
-	/// Allows to identity results of XCM messages
-	Xcm { query_id: u64 },
 }
 
 /// route is used to describe how to send a packet to another network
@@ -120,7 +118,7 @@ pub fn to_cw_message<T>(
 				cosmos::base::v1beta1::Coin,
 				ibc::{
 					applications::transfer::v1::MsgTransfer,
-					core::channel::v1::{QueryChannelRequest, QueryNextSequenceReceiveRequest},
+					core::channel::v1::QueryNextSequenceReceiveRequest,
 				},
 			};
 
