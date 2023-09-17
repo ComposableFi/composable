@@ -7,8 +7,11 @@ use crate::{
 	shared::XcPacket,
 	AssetId, NetworkId,
 };
-use cosmwasm_std::{to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, StdResult, WasmMsg};
+use cosmwasm_std::{
+	to_binary, Api, BlockInfo, CosmosMsg, Deps, IbcEndpoint, QueryRequest, StdResult, WasmMsg,
+};
 
+use ibc_proto::ibc::core::channel::v1::QueryNextSequenceReceiveResponse;
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 use self::ics20::{
@@ -36,6 +39,8 @@ pub enum SudoMsg {
 	IBCLifecycleComplete(IBCLifecycleComplete),
 }
 
+response
+
 /// route is used to describe how to send a packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -53,6 +58,7 @@ pub struct IbcIcs20Route {
 }
 
 pub fn to_cw_message<T>(
+	deps: Deps,
 	api: &dyn Api,
 	coin: Coin,
 	route: IbcIcs20Route,
@@ -95,8 +101,13 @@ pub fn to_cw_message<T>(
 			// really
 			// https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std-derive/src/lib.rs
 			// https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/proto.rs
+
 			use ibc_proto::{
-				cosmos::base::v1beta1::Coin, ibc::applications::transfer::v1::MsgTransfer,
+				cosmos::base::v1beta1::Coin,
+				ibc::{
+					applications::transfer::v1::MsgTransfer,
+					core::channel::v1::{QueryChannelRequest, QueryNextSequenceReceiveRequest},
+				},
 			};
 
 			use prost::Message;
@@ -124,6 +135,21 @@ pub fn to_cw_message<T>(
 
 			let value = value.encode_to_vec();
 			let value = Binary::from(value);
+
+			let response = deps.querier.query::<QueryNextSequenceReceiveResponse>(
+				&QueryRequest::Stargate {
+					path: "/ibc.core.channel.v1.QueryNextSequenceReceive".to_string(),
+					data: to_binary(
+						&QueryNextSequenceReceiveRequest {
+							port_id: PortId::transfer().to_string(),
+							channel_id: route.channel_to_send_over.to_string(),
+						}
+						.encode_to_vec()
+						.expect("always can serde route request"),
+					),
+				},
+			)?.next_sequence_receive;
+			
 			Ok(CosmosMsg::Stargate {
 				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
 				value,
