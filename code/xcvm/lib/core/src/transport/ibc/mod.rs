@@ -11,7 +11,7 @@ use cosmwasm_std::{
 	to_binary, Api, BlockInfo, CosmosMsg, Deps, IbcEndpoint, QueryRequest, StdResult, WasmMsg,
 };
 
-use ibc_proto::ibc::core::channel::v1::QueryNextSequenceReceiveResponse;
+use ibc_proto::ibc::core::channel::v1::{PacketId, QueryNextSequenceReceiveResponse};
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 use self::ics20::{
@@ -39,7 +39,15 @@ pub enum SudoMsg {
 	IBCLifecycleComplete(IBCLifecycleComplete),
 }
 
-response
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum TransportTrackerId {
+	/// Allows to identify results of IBC packets
+	Ibc { channel_id: ChannelId, sequence: u64 },
+	/// Allows to identity results of XCM messages
+	Xcm { query_id: u64 },
+}
 
 /// route is used to describe how to send a packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -64,7 +72,7 @@ pub fn to_cw_message<T>(
 	route: IbcIcs20Route,
 	packet: XcPacket,
 	block: BlockInfo,
-) -> StdResult<CosmosMsg<T>> {
+) -> StdResult<(CosmosMsg<T>, TransportTrackerId)> {
 	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData {
 		from_network_id: route.from_network,
 		packet,
@@ -90,12 +98,18 @@ pub fn to_cw_message<T>(
 				timeout: route.counterparty_timeout.absolute(block),
 				memo: Some(memo),
 			};
-			Ok(WasmMsg::Execute {
-				contract_addr: addr.into(),
-				msg: to_binary(&transfer)?,
-				funds: <_>::default(),
-			}
-			.into())
+			Ok((
+				WasmMsg::Execute {
+					contract_addr: addr.into(),
+					msg: to_binary(&transfer)?,
+					funds: <_>::default(),
+				}
+				.into(),
+				TransportTrackerId::Ibc {
+					channel_id: route.channel_to_send_over.clone(),
+					sequence: 42,
+				},
+			))
 		},
 		IbcIcs20Sender::CosmosStargateIbcApplicationsTransferV1MsgTransfer => {
 			// really
@@ -136,24 +150,31 @@ pub fn to_cw_message<T>(
 			let value = value.encode_to_vec();
 			let value = Binary::from(value);
 
-			let response = deps.querier.query::<QueryNextSequenceReceiveResponse>(
-				&QueryRequest::Stargate {
+			let tracking_id = deps
+				.querier
+				.query::<QueryNextSequenceReceiveResponse>(&QueryRequest::Stargate {
 					path: "/ibc.core.channel.v1.QueryNextSequenceReceive".to_string(),
 					data: to_binary(
 						&QueryNextSequenceReceiveRequest {
 							port_id: PortId::transfer().to_string(),
 							channel_id: route.channel_to_send_over.to_string(),
 						}
-						.encode_to_vec()
-						.expect("always can serde route request"),
-					),
+						.encode_to_vec(),
+					)?,
+				})?
+				.next_sequence_receive;
+			let tracking_id = TransportTrackerId::Ibc {
+				channel_id: route.channel_to_send_over,
+				sequence: tracking_id,
+			};
+
+			Ok((
+				CosmosMsg::Stargate {
+					type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
+					value,
 				},
-			)?.next_sequence_receive;
-			
-			Ok(CosmosMsg::Stargate {
-				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-				value,
-			})
+				tracking_id,
+			))
 		},
 
 		IbcIcs20Sender::CosmWasmStd1_3 =>
