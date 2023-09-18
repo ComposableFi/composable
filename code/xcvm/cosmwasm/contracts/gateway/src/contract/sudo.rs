@@ -33,14 +33,14 @@ fn handle_transport_failure(
 	reason: String,
 ) -> Result<cosmwasm_std::Response, ContractError> {
 	let msg = cw_xc_interpreter::msg::ExecuteMsg::SetErr { reason };
-	let (interpreter_origin, tracked_state) =
-		crate::state::tracking::get_interpreter_track(deps.storage, &channel.to_string(), sequence)?;
+	let (interpreter_origin, tracked_state) = crate::state::tracking::get_interpreter_track(
+		deps.storage,
+		&channel.to_string(),
+		sequence,
+	)?;
 	let interpreter = crate::state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin)?;
 	let mut response = Response::new();
-	response = response.add_message(wasm_execute(
-		&interpreter.address,
-		&msg,
-		tracked_state.assets,
-	)?);
+	response =
+		response.add_message(wasm_execute(&interpreter.address, &msg, tracked_state.assets)?);
 	Ok(response.add_event(Event::new("cvm::gateway::handle::transport_failure")))
 }

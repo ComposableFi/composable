@@ -56,13 +56,15 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> R
 		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
 
 		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(token, deps, owners)),
-    	
+
 		ExecuteMsg::SetErr { reason } => handle_set_error(token, deps, reason, env),
 	}
 }
 
-fn handle_set_error(_: Authenticated, deps: DepsMut<'_>, reason: String, env: Env) -> std::result::Result<Response, ContractError> {
-    todo!("ASD")
+fn handle_set_error(_: Authenticated, deps: DepsMut, reason: String, _env: Env) -> Result {
+	RESULT_REGISTER.save(deps.storage, &Err(reason.clone()))?;
+	let event = CvmInterpreterCrosschainFailed::new(reason);
+	Ok(Response::default().add_event(event))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

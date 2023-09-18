@@ -30,10 +30,8 @@ pub fn track(
 	INTERPRETER_CHANNEL_SEQUENCE_TO_TRACKED.save(storage, key, &state)
 }
 
-pub(crate) const CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN: Map<
-	(String, u64),
-	InterpreterOrigin,
-> = Map::new("channel_sequence_to_interpreter_origin");
+pub(crate) const CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN: Map<(String, u64), InterpreterOrigin> =
+	Map::new("channel_sequence_to_interpreter_origin");
 
 pub(crate) const INTERPRETER_CHANNEL_SEQUENCE_TO_TRACKED: Map<
 	(InterpreterOrigin, String, u64),
