@@ -56,7 +56,13 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> R
 		ExecuteMsg::AddOwners { owners } => add_owners(token, deps, owners),
 
 		ExecuteMsg::RemoveOwners { owners } => Ok(remove_owners(token, deps, owners)),
+    	
+		ExecuteMsg::SetErr { reason } => handle_set_error(token, deps, reason, env),
 	}
+}
+
+fn handle_set_error(token: Authenticated, deps: DepsMut<'_>, reason: String, env: Env) -> std::result::Result<Response, ContractError> {
+    todo!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
