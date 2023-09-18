@@ -1,4 +1,5 @@
 //! is used to track cross chain programs execution statuses (non atomic execution)
+//! useful for timeouts, message acknowledgements failures, spawn concurrency handling  
 
 use crate::prelude::*;
 use cosmwasm_std::{Coin, StdResult, Storage};
@@ -9,7 +10,7 @@ use xc_core::{transport::ibc::TransportTrackerId, InterpreterOrigin};
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct TrackedState {
 	/// funds sent to the other network, tracked on side of gateway,
-	/// so it is easy to refund them if needed to interpreter
+	/// so it is easy to refund them if needed to interpreter.
 	pub assets: Vec<Coin>,
 }
 
@@ -23,7 +24,7 @@ pub fn track(
 		TransportTrackerId::Ibc { channel_id, sequence } => (channel_id, sequence),
 	};
 	let key = (channel_id.to_string(), sequence);
-	CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN.save(storage, key, &interpreter_origin);
+	CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN.save(storage, key, &interpreter_origin)?;
 
 	let key = (interpreter_origin, channel_id.to_string(), sequence);
 	INTERPRETER_CHANNEL_SEQUENCE_TO_TRACKED.save(storage, key, &state)
@@ -46,8 +47,8 @@ pub fn get_interpreter_track(
 	sequence: u64,
 ) -> StdResult<(InterpreterOrigin, TrackedState)> {
 	let key = (channel_id.to_string(), sequence);
-	let interpreter_origin = CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN.load(storage, key);
-	let key = (interpreter_origin, channel_id.to_string(), sequence);
-	let tracked_state = INTERPRETER_CHANNEL_SEQUENCE_TO_TRACKED.load(storage, key);
+	let interpreter_origin = CHANNEL_SEQUENCE_TO_INTERPRETER_ORIGIN.load(storage, key)?;
+	let key = (interpreter_origin.clone(), channel_id.to_string(), sequence);
+	let tracked_state = INTERPRETER_CHANNEL_SEQUENCE_TO_TRACKED.load(storage, key)?;
 	Ok((interpreter_origin, tracked_state))
 }

@@ -61,8 +61,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> R
 	}
 }
 
-fn handle_set_error(token: Authenticated, deps: DepsMut<'_>, reason: String, env: Env) -> std::result::Result<Response, ContractError> {
-    todo!()
+fn handle_set_error(_: Authenticated, deps: DepsMut<'_>, reason: String, env: Env) -> std::result::Result<Response, ContractError> {
+    todo!("ASD")
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
