@@ -100,12 +100,14 @@ pub fn to_cw_message<T>(
 				WasmMsg::Execute {
 					contract_addr: addr.into(),
 					msg: to_binary(&transfer)?,
-					funds: <_>::default(),
+					funds: <_>::default(), /* above message already approved to transfer coins
+					                        * via polkadot pallets, no need to repeat it here */
 				}
 				.into(),
 				TransportTrackerId::Ibc {
 					channel_id: route.channel_to_send_over.clone(),
-					sequence: 42,
+					sequence: 42, /* substrate has no interface to get sequence number for now,
+					               * so it does not work on picasso */
 				},
 			))
 		},
