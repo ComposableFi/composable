@@ -15,6 +15,9 @@ data "github_team" "product" {
   slug = "product-mgmt"
 }
 
+data "github_user" "ops" {
+  username = "dzmitry-lahoda"
+}
 
 resource "github_repository_collaborators" "roles" {
   repository = "composable"

@@ -133,11 +133,6 @@ And finally run sample XCVM program:
 nix run .#xc-swap-pica-to-osmo
 ```
 
-## Deployment 
-
-Interpreter MUST be instantiated only from code identifiers accepted by gateway.
-
-Gateway queries interpreter code id and owner, ensuring it is gateway only.
 
 ## How to generate schema
 
@@ -149,8 +144,9 @@ cargo run --package xc-core --bin gateway
 
 For interpreter
 
-```
+```sh
 cargo run --package cw-xc-interpreter --bin interpreter
+```
 
 ## How to configure
 
