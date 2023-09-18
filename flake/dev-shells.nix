@@ -38,6 +38,7 @@
           yarn
           zombienet
           self'.packages.bech32cli
+          nixos-rebuild
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
