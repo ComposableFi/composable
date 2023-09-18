@@ -11,7 +11,6 @@ use cosmwasm_std::{
 	to_binary, Api, BlockInfo, CosmosMsg, Deps, IbcEndpoint, QueryRequest, StdResult, WasmMsg,
 };
 
-use ibc_proto::ibc::core::channel::v1::QueryNextSequenceReceiveResponse;
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 use self::ics20::{
@@ -120,7 +119,7 @@ pub fn to_cw_message<T>(
 				cosmos::base::v1beta1::Coin,
 				ibc::{
 					applications::transfer::v1::MsgTransfer,
-					core::channel::v1::QueryNextSequenceReceiveRequest,
+					core::client::v1::Height as ProofHeight,
 				},
 			};
 
@@ -150,19 +149,52 @@ pub fn to_cw_message<T>(
 			let value = value.encode_to_vec();
 			let value = Binary::from(value);
 
+			// already in latest ibc-rs, BUT it will take 2 days to merge updates(all no_std deps),
+			// so copy paste for now.
+			/// QueryNextSequenceSendRequest is the request type for the
+			/// Query/QueryNextSequenceSend RPC method
+			#[derive(::serde::Serialize, ::serde::Deserialize)]
+			#[allow(clippy::derive_partial_eq_without_eq)]
+			#[derive(Clone, PartialEq, ::prost::Message)]
+			pub struct QueryNextSequenceSendRequest {
+				/// port unique identifier
+				#[prost(string, tag = "1")]
+				pub port_id: ::prost::alloc::string::String,
+				/// channel unique identifier
+				#[prost(string, tag = "2")]
+				pub channel_id: ::prost::alloc::string::String,
+			}
+			/// QueryNextSequenceSendResponse is the request type for the
+			/// Query/QueryNextSequenceSend RPC method
+			#[derive(::serde::Serialize, ::serde::Deserialize)]
+			#[allow(clippy::derive_partial_eq_without_eq)]
+			#[derive(Clone, PartialEq, ::prost::Message)]
+			pub struct QueryNextSequenceSendResponse {
+				/// next sequence send number
+				#[prost(uint64, tag = "1")]
+				pub next_sequence_send: u64,
+				/// merkle proof of existence
+				#[prost(bytes = "vec", tag = "2")]
+				pub proof: ::prost::alloc::vec::Vec<u8>,
+				/// height at which the proof was retrieved
+				#[prost(message, optional, tag = "3")]
+				pub proof_height: ::core::option::Option<ProofHeight>,
+			}
+
+			// https://github.com/cosmos/ibc-go/issues/4698
 			let tracking_id = deps
 				.querier
-				.query::<QueryNextSequenceReceiveResponse>(&QueryRequest::Stargate {
-					path: "/ibc.core.channel.v1.QueryNextSequenceReceive".to_string(),
+				.query::<QueryNextSequenceSendResponse>(&QueryRequest::Stargate {
+					path: "/ibc.core.channel.v1.Query/NextSequenceSend".to_string(),
 					data: to_binary(
-						&QueryNextSequenceReceiveRequest {
+						&QueryNextSequenceSendRequest {
 							port_id: PortId::transfer().to_string(),
 							channel_id: route.channel_to_send_over.to_string(),
 						}
 						.encode_to_vec(),
 					)?,
 				})?
-				.next_sequence_receive;
+				.next_sequence_send;
 			let tracking_id = TransportTrackerId::Ibc {
 				channel_id: route.channel_to_send_over,
 				sequence: tracking_id,
