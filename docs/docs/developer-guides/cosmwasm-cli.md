@@ -17,7 +17,7 @@ Nix is a requirement to set up and start a local development environment with Co
 To install the `ccw-vm`, run the following command using Nix:
 
 ```
-nix run github:ComposableFi/composable/<insert latest release tag>#ccw --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
+nix run github:ComposableFi/composable/release-v9.10038.2#ccw --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
 ```
 
 :::note
@@ -29,7 +29,7 @@ Make sure to include the most recent release tag, which can be located on the Co
 To run a local network with Alice sudo key and start the development environment, run the following command:
 
 ```
-nix run github:ComposableFi/composable/<insert latest release tag>#devnet-picasso --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
+nix run github:ComposableFi/composable/release-v9.10038.2#devnet-picasso --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
 ```
 
 This will take time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you can always use a specific commit hash like this example:
