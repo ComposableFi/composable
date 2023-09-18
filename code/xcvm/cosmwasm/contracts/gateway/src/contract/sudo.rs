@@ -32,6 +32,10 @@ fn handle_transport_failure(
 	sequence: u64,
 	reason: String,
 ) -> Result<cosmwasm_std::Response, ContractError> {
+	deps.api.debug(
+		format!("cvm::gateway::handle::transport_failure {} {} {}", &channel, sequence, &reason)
+			.as_str(),
+	);
 	let msg = cw_xc_interpreter::msg::ExecuteMsg::SetErr { reason };
 	let (interpreter_origin, tracked_state) =
 		crate::state::tracking::get_interpreter_track(deps.storage, channel.as_str(), sequence)?;
