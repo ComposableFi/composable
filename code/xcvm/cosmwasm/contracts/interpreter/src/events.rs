@@ -71,6 +71,13 @@ pub struct CvmInterpreterSelfFailed {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename = "cvm.interpreter.crosschain.failed")]
+pub struct CvmInterpreterCrosschainFailed {
+	pub reason: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename = "cvm.interpreter.instruction.call.initiated")]
 pub struct CvmInterpreterInstructionCallInitiated {}
 
@@ -99,10 +106,17 @@ pub enum CvmInterpreter {
 	Transferred(CvmInterpreterTransferred),
 	Instantiated(CvmInterpreterInstantiated),
 	Exchanged(CvmInterpreterExchangeSucceeded),
+	CrosschainFailed(CvmInterpreterCrosschainFailed),
 }
 
 // beneath is something to be generate by macro
 // https://github.com/CosmWasm/cosmwasm/discussions/1871
+
+impl CvmInterpreterCrosschainFailed {
+	pub fn new(reason: String) -> Event {
+		Event::new("cvm.interpreter.crosschain.failed").add_attribute("reason", reason)
+	}
+}
 
 impl CvmInterpreterStepExecuted {
 	pub fn new(tag: &[u8]) -> Event {

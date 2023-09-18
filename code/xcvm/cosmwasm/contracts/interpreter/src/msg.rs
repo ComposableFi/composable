@@ -1,4 +1,4 @@
-use crate::{prelude::*, state, state::State, *};
+use crate::{prelude::*, state, state::State};
 use xc_core::{shared::*, InterpreterOrigin, Register};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -41,6 +41,9 @@ pub enum ExecuteMsg {
 	AddOwners { owners: Vec<Addr> },
 	/// Remove owners from the contract
 	RemoveOwners { owners: Vec<Addr> },
+	/// spawn is cross chain, so sometimes errors are came from other blocks
+	/// so gateway can set that error on interpreter
+	SetErr { reason: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

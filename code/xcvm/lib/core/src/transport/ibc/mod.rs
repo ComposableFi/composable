@@ -7,7 +7,9 @@ use crate::{
 	shared::XcPacket,
 	AssetId, NetworkId,
 };
-use cosmwasm_std::{to_binary, Api, BlockInfo, CosmosMsg, IbcEndpoint, StdResult, WasmMsg};
+use cosmwasm_std::{
+	to_binary, Api, BlockInfo, CosmosMsg, Deps, IbcEndpoint, QueryRequest, StdResult, WasmMsg,
+};
 
 use ibc_rs_scale::core::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
@@ -36,6 +38,14 @@ pub enum SudoMsg {
 	IBCLifecycleComplete(IBCLifecycleComplete),
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum TransportTrackerId {
+	/// Allows to identify results of IBC packets
+	Ibc { channel_id: ChannelId, sequence: u64 },
+}
+
 /// route is used to describe how to send a packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -53,12 +63,13 @@ pub struct IbcIcs20Route {
 }
 
 pub fn to_cw_message<T>(
+	deps: Deps,
 	api: &dyn Api,
 	coin: Coin,
 	route: IbcIcs20Route,
 	packet: XcPacket,
 	block: BlockInfo,
-) -> StdResult<CosmosMsg<T>> {
+) -> StdResult<(CosmosMsg<T>, TransportTrackerId)> {
 	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData {
 		from_network_id: route.from_network,
 		packet,
@@ -84,19 +95,32 @@ pub fn to_cw_message<T>(
 				timeout: route.counterparty_timeout.absolute(block),
 				memo: Some(memo),
 			};
-			Ok(WasmMsg::Execute {
-				contract_addr: addr.into(),
-				msg: to_binary(&transfer)?,
-				funds: <_>::default(),
-			}
-			.into())
+			Ok((
+				WasmMsg::Execute {
+					contract_addr: addr.into(),
+					msg: to_binary(&transfer)?,
+					funds: <_>::default(), /* above message already approved to transfer coins
+					                        * via polkadot pallets, no need to repeat it here */
+				}
+				.into(),
+				TransportTrackerId::Ibc {
+					channel_id: route.channel_to_send_over.clone(),
+					sequence: 42, /* substrate has no interface to get sequence number for now,
+					               * so it does not work on picasso */
+				},
+			))
 		},
 		IbcIcs20Sender::CosmosStargateIbcApplicationsTransferV1MsgTransfer => {
 			// really
 			// https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std-derive/src/lib.rs
 			// https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/packages/registry/src/proto.rs
+
 			use ibc_proto::{
-				cosmos::base::v1beta1::Coin, ibc::applications::transfer::v1::MsgTransfer,
+				cosmos::base::v1beta1::Coin,
+				ibc::{
+					applications::transfer::v1::MsgTransfer,
+					core::client::v1::Height as ProofHeight,
+				},
 			};
 
 			use prost::Message;
@@ -124,10 +148,65 @@ pub fn to_cw_message<T>(
 
 			let value = value.encode_to_vec();
 			let value = Binary::from(value);
-			Ok(CosmosMsg::Stargate {
-				type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
-				value,
-			})
+
+			// already in latest ibc-rs, BUT it will take 2 days to merge updates(all no_std deps),
+			// so copy paste for now.
+			/// QueryNextSequenceSendRequest is the request type for the
+			/// Query/QueryNextSequenceSend RPC method
+			#[derive(::serde::Serialize, ::serde::Deserialize)]
+			#[allow(clippy::derive_partial_eq_without_eq)]
+			#[derive(Clone, PartialEq, ::prost::Message)]
+			pub struct QueryNextSequenceSendRequest {
+				/// port unique identifier
+				#[prost(string, tag = "1")]
+				pub port_id: ::prost::alloc::string::String,
+				/// channel unique identifier
+				#[prost(string, tag = "2")]
+				pub channel_id: ::prost::alloc::string::String,
+			}
+			/// QueryNextSequenceSendResponse is the request type for the
+			/// Query/QueryNextSequenceSend RPC method
+			#[derive(::serde::Serialize, ::serde::Deserialize)]
+			#[allow(clippy::derive_partial_eq_without_eq)]
+			#[derive(Clone, PartialEq, ::prost::Message)]
+			pub struct QueryNextSequenceSendResponse {
+				/// next sequence send number
+				#[prost(uint64, tag = "1")]
+				pub next_sequence_send: u64,
+				/// merkle proof of existence
+				#[prost(bytes = "vec", tag = "2")]
+				pub proof: ::prost::alloc::vec::Vec<u8>,
+				/// height at which the proof was retrieved
+				#[prost(message, optional, tag = "3")]
+				pub proof_height: ::core::option::Option<ProofHeight>,
+			}
+
+			// https://github.com/cosmos/ibc-go/issues/4698
+			let tracking_id = deps
+				.querier
+				.query::<QueryNextSequenceSendResponse>(&QueryRequest::Stargate {
+					path: "/ibc.core.channel.v1.Query/NextSequenceSend".to_string(),
+					data: to_binary(
+						&QueryNextSequenceSendRequest {
+							port_id: PortId::transfer().to_string(),
+							channel_id: route.channel_to_send_over.to_string(),
+						}
+						.encode_to_vec(),
+					)?,
+				})?
+				.next_sequence_send;
+			let tracking_id = TransportTrackerId::Ibc {
+				channel_id: route.channel_to_send_over,
+				sequence: tracking_id,
+			};
+
+			Ok((
+				CosmosMsg::Stargate {
+					type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),
+					value,
+				},
+				tracking_id,
+			))
 		},
 
 		IbcIcs20Sender::CosmWasmStd1_3 =>

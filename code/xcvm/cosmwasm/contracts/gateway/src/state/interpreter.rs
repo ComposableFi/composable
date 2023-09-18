@@ -9,6 +9,7 @@ pub type InterpreterId = xc_core::shared::Displayed<u128>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub(crate) struct Interpreter {
+	/// contract address
 	pub address: Addr,
 	pub interpreter_id: InterpreterId,
 }
