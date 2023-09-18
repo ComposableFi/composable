@@ -4,6 +4,9 @@
 const lightCodeTheme = require('prism-react-renderer/themes/duotoneLight');
 const darkCodeTheme = require('prism-react-renderer/themes/duotoneDark');
 
+const math = require('remark-math');
+const katex = require('rehype-katex');
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
 	title: 'Composable Finance',
@@ -36,6 +39,8 @@ const config = {
 					breadcrumbs: true,
 					sidebarPath: require.resolve('./sidebars.js'),
 					routeBasePath: '/',
+					remarkPlugins: [math],
+					rehypePlugins: [katex],
 					// Please change this to your repo.
 					// Remove this to remove the "edit this page" links.
 					editUrl: 'https://github.com/ComposableFi/composable/tree/main/docs/',
@@ -47,7 +52,15 @@ const config = {
 			}),
 		],
 	],
-
+	stylesheets: [
+		{
+		  href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
+		  type: 'text/css',
+		  integrity:
+			'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM',
+		  crossorigin: 'anonymous',
+		},
+	  ],
 	themeConfig:
 		/** @type {import('@docusaurus/preset-classic').ThemeConfig} */
 		({

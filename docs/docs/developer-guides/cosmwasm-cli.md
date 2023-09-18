@@ -14,33 +14,22 @@ Nix is a requirement to set up and start a local development environment with Co
 
 ### Installing `ccw`
 
-There are two methods to installing the `ccw-vm`:
-
-1. Install the `ccw` crate from the Composable monorepo:
+To install the `ccw-vm`, run the following command using Nix:
 
 ```
-cargo install --git https://github.com/ComposableFi/composable ./composable/code/parachain/frame/cosmwasm/cli
+nix run github:ComposableFi/composable/<insert latest release tag>#ccw --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
 ```
 
-2. An alternative method to run the `ccw-vm` is by running the following command using Nix.:
+:::note
 
-```
-nix run profile install composable#ccw
-```
+Make sure to include the most recent release tag, which can be located on the Composable [releases page](https://github.com/ComposableFi/composable/releases).
+:::
 ### Setting up the DevNet
 
-To run a local network with Alice sudo key and start the development environment, run the following commands:
+To run a local network with Alice sudo key and start the development environment, run the following command:
 
 ```
-nix develop composable
-```
-
-:::info Nix flags
-If this is your first time using Nix and running on a non-NixOS, ensure you include the correct flags after your Nix commands.
-:::
-
-```
-nix run composable#devnet-picasso
+nix run github:ComposableFi/composable/<insert latest release tag>#devnet-picasso --allow-import-from-derivation --extra-experimental-features "flakes nix-command" --no-sandbox --accept-flake-config --option sandbox relaxed
 ```
 
 This will take time at first but since it is cached, it will be almost instant afterward. But note that your node will be rebuilt if the commit hash changes. If you would like to avoid this, you can always use a specific commit hash like this example:
