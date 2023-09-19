@@ -53,6 +53,10 @@ smallvec = "1.6.1"
 sudo = { default-features = false, workspace = true }
 timestamp = { default-features = false, workspace = true }
 treasury = { default-features = false, workspace = true }
+pallet-referenda = { default-features = false, workspace = true }
+pallet-custom-origins = { package = "pallet-custom-origins", path = "../../frame/origins", default-features = false }
+pallet-conviction-voting = { workspace = true, default-features = false }
+pallet-whitelist = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
 pallet-assets = { path = "../../frame/assets", default-features = false }
@@ -169,6 +173,9 @@ runtime-benchmarks = [
   "oracle/runtime-benchmarks",
   "pablo/runtime-benchmarks",
   "pallet-assets/runtime-benchmarks",
+  "pallet-referenda/runtime-benchmarks",
+  "pallet-conviction-voting/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "proxy/runtime-benchmarks",
   "scheduler/runtime-benchmarks",
@@ -223,6 +230,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "ibc-primitives/std",
+  "pallet-conviction-voting/std",
   "ibc-runtime-api/std",
   "ibc/std",
   "xc-core/std",
@@ -241,6 +249,8 @@ std = [
   "pallet-assets/std",
   "pallet-ibc/std",
   "pallet-multihop-xcm-ibc/std",
+  "pallet-referenda/std",
+  "pallet-whitelist/std",
   "parachain-info/std",
   "preimage/std",
   "primitives/std",

@@ -29,6 +29,7 @@ mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+mod tracks;
 pub mod version;
 mod weights;
 mod xcmp;
@@ -54,6 +55,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
+pub use tracks::TracksInfo;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 
@@ -64,7 +66,7 @@ pub use frame_support::{
 	parameter_types,
 	traits::{
 		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		Randomness, StorageInfo,
+		Randomness, StorageInfo, StorageMapShim,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -251,6 +253,38 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	/// Max locks that can be placed on an account. Capped for storage
+	/// concerns.
+	pub const MaxLocks: u32 = 50;
+}
+
+pub type GovInstance = balances::Instance2;
+impl balances::Config<GovInstance> for Runtime {
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = StorageMapShim<
+		balances::Account<Runtime, GovInstance>,
+		AccountId,
+		balances::AccountData<Balance>,
+	>;
+	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
+	type HoldIdentifier = TemporalHoldIdentifier;
+
+	type FreezeIdentifier = BalanceIdentifier;
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
 }
 
 pub struct WeightToFee;
@@ -606,6 +640,12 @@ construct_runtime!(
 		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 59,
 
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
+
 		CallFilter: call_filter = 100,
 
 		Ibc: pallet_ibc = 190,
@@ -667,6 +707,9 @@ mod benches {
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
 		[multisig, Multisig]
+		[whitelist, Whitelist]
+		[conviction_voting, ConvictionVoting]
+		[referenda, Referenda]
 	);
 }
 

@@ -40,6 +40,7 @@ pub fn genesis_config(
 			]
 			.concat(),
 		},
+		open_gov_balances: Default::default(),
 		aura: Default::default(),
 		sudo: composable_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: composable_runtime::IndicesConfig { indices: vec![] },

@@ -71,4 +71,29 @@ pub mod native {
 			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 2, 3>,
 		>,
 	>;
+
+	pub type EnsureRootOrOneSixthNativeTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 6>,
+	>;
+	pub type EnsureRootOrOneSixthNativeCouncil = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 6>,
+	>;
+
+	pub type EnsureRootOrOneThirdNativeCouncilOrTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		EitherOfDiverse<
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 3>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 3>,
+		>,
+	>;
+
+	pub type EnsureRootOrOneSixthNativeCouncilOrTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		EitherOfDiverse<
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 6>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 6>,
+		>,
+	>;
 }

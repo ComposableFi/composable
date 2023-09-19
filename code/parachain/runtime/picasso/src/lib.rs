@@ -28,6 +28,9 @@ extern crate alloc;
 pub mod assets;
 mod contracts;
 mod fees;
+mod tracks;
+pub use pallet_custom_origins;
+pub use tracks::TracksInfo;
 pub mod governance;
 pub mod ibc;
 mod migrations;
@@ -37,7 +40,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
-use frame_support::dispatch::DispatchError;
+use frame_support::{dispatch::DispatchError, traits::StorageMapShim};
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -49,7 +52,7 @@ use common::{
 	rewards::StakingPot,
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MINUTES, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
@@ -412,6 +415,31 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
+type MaxLocks = ConstU32<50>;
+
+pub type GovInstance = balances::Instance2;
+impl balances::Config<GovInstance> for Runtime {
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = StorageMapShim<
+		balances::Account<Runtime, GovInstance>,
+		AccountId,
+		balances::AccountData<Balance>,
+	>;
+	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
+	type FreezeIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+	type MaxHolds = ConstU32<32>;
+	type MaxFreezes = ConstU32<32>;
+}
+
 parameter_types! {
 	/// Deposit required to get an index.
 	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
@@ -756,6 +784,12 @@ construct_runtime!(
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
 
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
+
 		CallFilter: call_filter = 100,
 
 		Cosmwasm: cosmwasm = 180,
@@ -821,6 +855,11 @@ mod benches {
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
 		[democracy, Democracy]
+		[oracle, Oracle]
+		[pallet_ibc, Ibc]
+		[whitelist, Whitelist]
+		[conviction_voting, ConvictionVoting]
+		[referenda, Referenda]
 	);
 }
 
