@@ -1,5 +1,4 @@
 { pkgs, ... }: {
-  environment.systemPackages = with pkgs; [ helix ];
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;

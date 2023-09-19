@@ -24,7 +24,7 @@
     in (withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, subnix, system, ... }: {
         default = "${user}";
-        "${user}" = let codespace = with pkgs; [ cachix acl direnv ];
+        "${user}" = let ports = [ 22 80 443 9988 9944 10008 ];
         in self.inputs.nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
@@ -33,12 +33,12 @@
                 [ ./hardware-configuration.nix ./networking.nix ./host.nix ];
               system.stateVersion = "23.11";
               environment.systemPackages =
-                [ self'.packages.devnet-xc-fresh-background ];
+                [ self'.packages.devnet-xc-fresh-background ]
+                ++ devnetTools.withDevNetContainerTools;
               boot.tmp.cleanOnBoot = true;
               zramSwap.enable = true;
               networking.hostName = "composable-devnet";
-              networking.firewall.allowedTCPPorts =
-                [ 22 80 443 9988 9944 10008 ];
+              networking.firewall.allowedTCPPorts = ports;
               networking.domain = "";
               services.openssh.enable = true;
               services.caddy = {

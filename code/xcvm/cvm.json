@@ -163,12 +163,26 @@
           "exchange": {
             "osmosis_cross_chain_swap": [
               {
-                "pool_id": 1057,
+                "pool_id": 1,
                 "token_out_denom": "ibc/56D7C03B8F6A07AD322EEE1BEF3AE996E09D1C1E34C27CF37E0D4A0AC5972516"
               }
             ]
           },
           "exchange_id": "237684489387467420151587012609",
+          "network_id": 3
+        }
+      },
+      {
+        "force_exchange": {
+          "exchange": {
+            "osmosis_cross_chain_swap": [
+              {
+                "pool_id": 1065,
+                "token_out_denom": "ibc/12E5C03B116A07AD324EEE1BEF3AE996E09D1C1E34C27CF37E0D4A0AC5972512"
+              }
+            ]
+          },
+          "exchange_id": "237684489387467420151587012610",
           "network_id": 3
         }
       },
