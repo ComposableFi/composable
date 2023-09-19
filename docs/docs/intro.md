@@ -20,14 +20,14 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/products/centauri-overview">
+      <a href="/products/composable-ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-2_zoatit.png" alt="Networks" alt="Centauri" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-2_zoatit.png" alt="Networks" alt="Composable IBC" />
           </div>
           <div class="card__body">
-            <h3>Centauri</h3>
-              Composable's IBC-based transfer protocol.
+            <h3>Composable IBC</h3>
+              Composable's extension of the Inter-blockchain communication (IBC) protocol.
           </div>
         </div>
       </a>

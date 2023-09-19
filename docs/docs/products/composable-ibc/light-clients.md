@@ -2,7 +2,7 @@
 
 Light clients are designed to operate effectively in environments where computational and memory resources are limited, such as mobile, on-chain contracts. They can verify the latest blockchain state without the need to execute and store full block data and state, instead tracking block headers and executing transactions to reach the latest state. It's important to note that blocks are composed of headers and transactions.
 
-Efficient light client protocols play a critical role in decentralizing and mainstreaming blockchain protocols. Most notably, they enable bridging via IBC. The IBC protocol uses light clients on either side of the connection to link to other chains, allowing for the transfer of IBC opaque packets of information (i.e., transactions and associated data). Centauri utilizes these light clients to create connections and leverage upon the bridging opportunities of the IBC:
+Efficient light client protocols play a critical role in decentralizing and mainstreaming blockchain protocols. Most notably, they enable bridging via IBC. The IBC protocol uses light clients on either side of the connection to link to other chains, allowing for the transfer of IBC opaque packets of information (i.e., transactions and associated data). Composable IBC utilizes these light clients to create connections and leverage upon the bridging opportunities of the IBC:
 
 
 ![header_transactions](../images-centauri/header-transactions.png)

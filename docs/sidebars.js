@@ -163,13 +163,14 @@
    ],
  
    centauri: [
-     "products/centauri-overview",
-     "products/centauri/Dotsama-ibc",
-     "products/centauri/near-ibc-bridge",
-     "products/centauri/hyperspace-relayer",
-     "products/centauri/light-clients",
-     "products/centauri/merkle-mountain-ranges",
-     "products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client",
+     "products/composable-ibc",
+     "products/composable-ibc/cosmos-ibc",
+     "products/composable-ibc/polkadot-kusama-ibc",
+     "products/composable-ibc/near-ibc-bridge",
+     "products/composable-ibc/hyperspace-relayer",
+     "products/composable-ibc/light-clients",
+     "products/composable-ibc/merkle-mountain-ranges",
+     "products/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
    ],
    technology: [
      {

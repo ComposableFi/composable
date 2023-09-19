@@ -89,9 +89,9 @@ const config = {
 						label: 'Networks',
 					  },
 					{
-						to: '/products/centauri-overview',
+						to: '/products/composable-ibc',
 						position: 'left',
-						label: 'Centauri',
+						label: 'Composable IBC',
 					  },
 					{
 						to: '/products/xcvm',

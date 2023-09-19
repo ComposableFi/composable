@@ -6,7 +6,7 @@ This section introduces [Hyperspace] - the first event-driven, chain-agnostic IB
 
 [Hyperspace]: https://github.com/ComposableFi/centauri/blob/master/hyperspace/README.md
 
-As we designed Centauri to extend the reach of IBC beyond the Cosmos ecosystem, we realized that we needed a relayer that was both rust-based and IBC-compatible in order to birth interoperability between the various ecosystems on our roadmap. 
+As Composable IBC was designed to extend the reach of IBC beyond the Cosmos ecosystem, we realized that we needed a relayer that was both rust-based and IBC-compatible in order to birth interoperability between the various ecosystems on our roadmap. 
 
 :::info
 
