@@ -4,8 +4,8 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-      relay = "no"; # `no` not to restart
-      chain-restart = "no"; # `no` not to restart
+      relay = "no"; # `no` not to restart, `on_failure` for
+      chain-restart = "no"; # `no` not to restart, `on_failure` for
     in {
 
       packages = rec {
@@ -202,7 +202,7 @@
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
                 log_location = "${devnet-root-directory}/centauri-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               osmosis = {
@@ -219,7 +219,7 @@
                 depends_on."osmosis".condition = "process_healthy";
                 log_location =
                   "${devnet-root-directory}/osmosisd-xcvm-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               picasso = {
@@ -260,7 +260,7 @@
                 };
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               osmosis-centauri-hermes-relay = {
@@ -283,7 +283,7 @@
                   "centauri".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-connection-init = {
@@ -294,7 +294,7 @@
                   "picasso-centauri-ibc-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-channels-init = {
@@ -305,7 +305,7 @@
                   "picasso-centauri-ibc-connection-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               picasso-centauri-ibc-relay = {
@@ -329,7 +329,7 @@
                   "composable".condition = "process_healthy";
                   "picasso".condition = "process_healthy";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
               composable-picasso-ibc-connection-init = {
                 command = ''
@@ -345,7 +345,7 @@
                   "composable-picasso-ibc-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               composable-picasso-ibc-channels-init = {
@@ -362,7 +362,7 @@
                   "composable-picasso-ibc-connection-init".condition =
                     "process_completed_successfully";
                 };
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
               composable-picasso-ibc-relay = {
                 command = self'.packages.composable-picasso-ibc-relay;
@@ -389,13 +389,13 @@
                   port = 26657;
                 };
                 log_location = "${devnet-root-directory}/centauri.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
               centauri-init = {
                 command = self'.packages.centaurid-init;
                 depends_on."centauri".condition = "process_healthy";
                 log_location = "${devnet-root-directory}/centauri-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               centauri-xcvm-init = {
@@ -403,7 +403,7 @@
                 depends_on."centauri".condition = "process_healthy";
                 log_location =
                   "${devnet-root-directory}/centauri-xcvm-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               centauri-xcvm-config = {
@@ -414,7 +414,7 @@
                   "process_completed_successfully";
                 log_location =
                   "${devnet-root-directory}/centauri-xcvm-config.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               osmosis-xcvm-config = {
@@ -425,7 +425,7 @@
                   "process_completed_successfully";
                 log_location =
                   "${devnet-root-directory}/osmosis-xcvm-config.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               osmosis = {
@@ -441,13 +441,13 @@
                 depends_on."osmosis".condition = "process_healthy";
                 log_location =
                   "${devnet-root-directory}/osmosisd-pools-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
               osmosis-xcvm-init = {
                 command = self'.packages.osmosisd-xcvm-init;
                 depends_on."osmosis".condition = "process_healthy";
                 log_location = "${devnet-root-directory}/osmosis-xcvm-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = chain-restart; };
               };
 
               osmosis-centauri-hermes-init = {
@@ -458,7 +458,7 @@
                 };
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
-                availability = { restart = "on_failure"; };
+                availability = { restart = relay; };
               };
 
               osmosis-centauri-hermes-relay = {
