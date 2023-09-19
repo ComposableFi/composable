@@ -1,12 +1,22 @@
 # Overview
 
+Assuming you know most common blockchain nomenclature and definitions, you are aware how Parity XCM or Cosmos IBC ICS-20 or Axelar GMP operate in general. So we do not need to repeat these here.
+
+## What is CVM?
+
 Non atomic non custodial non turing complete cross chain programs with code propagated along with data with access to de facto native liquidity markets on each chain and abstracting away several underlying transports and messaging protocols. 
 
-## 1.2. Terms and Definitions
 
-`Transaction`: A (reversible) operation on a chain.
+Let look into details.
 
-`Transfer`: Changing the ownership of an asset (token, NFT, etc) from one account to another.
+Non atomic, means that CVM program program executed in several blocks. Not a single automatically rollbackable transaction.
+
+Cross chain means that parts of CVM program are executed on different chains (different consensus or domain as people may call these).
+
+Two above properties make CVM virtual machine to be resembling NEAR.
+
+Non custodial means that funds are stored on user owned contract (user has instance of such on each chain) and funds only delegated to be managed by CVM governance.
+
 
 `Identity`: An entity that has an address. Note that identities may not have a public/private key, as they can be contracts.
 

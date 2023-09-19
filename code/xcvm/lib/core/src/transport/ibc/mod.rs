@@ -85,7 +85,7 @@ pub fn to_cw_message<T>(
 		ibc_callback: None,
 	};
 	let memo = serde_json_wasm::to_string(&memo).expect("any memo can be to string");
-	api.debug(&format!("xcvm::ibc::ics20 callback {}", &memo));
+	api.debug(&format!("cvm::gateway::ibc::ics20::memo {}", &memo));
 	match route.ibc_ics_20_sender {
 		IbcIcs20Sender::SubstratePrecompile(addr) => {
 			let transfer = picasso::IbcMsg::Transfer {
@@ -144,7 +144,7 @@ pub fn to_cw_message<T>(
 					.unwrap_or_default(),
 				memo,
 			};
-			api.debug(&format!("xcvm::gateway::ibc::ics20:: payload {:?}", &value));
+			api.debug(&format!("cvm::gateway::ibc::ics20:: payload {:?}", &value));
 
 			let value = value.encode_to_vec();
 			let value = Binary::from(value);
@@ -193,13 +193,16 @@ pub fn to_cw_message<T>(
 						}
 						.encode_to_vec(),
 					)?,
-				})?
-				.next_sequence_send;
+				})
+				.map(|x| x.next_sequence_send)
+				// until https://composableprotocol.slack.com/archives/C04NTDSCBQR/p1695143647381079
+				.unwrap_or_default();
+
 			let tracking_id = TransportTrackerId::Ibc {
 				channel_id: route.channel_to_send_over,
 				sequence: tracking_id,
 			};
-
+			
 			Ok((
 				CosmosMsg::Stargate {
 					type_url: "/ibc.applications.transfer.v1.MsgTransfer".to_string(),

@@ -63,6 +63,7 @@ pub(crate) fn handle_bridge_forward(
 		"cvm::gateway::ibc::ics20 route {}",
 		&serde_json_wasm::to_string(&route)?
 	));
+	
 	let mut event = make_event("bridge")
 		.add_attribute("to_network_id", msg.to.to_string())
 		.add_attribute(
