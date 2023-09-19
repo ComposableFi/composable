@@ -3,11 +3,6 @@ data "github_user" "docs" {
   username = "JafarAz"
 }
 
-
-data "github_user" "ops" {
-  username = "dzmitry-lahoda"
-}
-
 data "github_team" "sre" {
   slug = "sre"
 }
@@ -20,6 +15,9 @@ data "github_team" "product" {
   slug = "product-mgmt"
 }
 
+data "github_user" "ops" {
+  username = "dzmitry-lahoda"
+}
 
 resource "github_repository_collaborators" "roles" {
   repository = "composable"

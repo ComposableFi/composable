@@ -105,6 +105,7 @@
         ./code/xcvm/flake-module.nix
         ./docs/docs.nix
         ./flake/all.nix
+        ./flake/nixos-configuration.nix
         ./flake/cargo-tools.nix
         ./flake/check.nix
         ./flake/darwin-configurations.nix

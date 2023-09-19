@@ -38,6 +38,7 @@
           yarn
           zombienet
           self'.packages.bech32cli
+          nixos-rebuild
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
@@ -114,7 +115,17 @@
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              FEE = "ppica";
             };
+
+            enterShell = ''
+              rm --force --recursive ~/.centauri
+              mkdir --parents ~/.centauri/config
+              echo 'keyring-backend = "os"' >> ~/.centauri/config/client.toml
+              echo 'output = "json"' >> ~/.centauri/config/client.toml
+              echo 'node = "https://rpc-composable-ia.cosmosia.notional.ventures:443"' >> ~/.centauri/config/client.toml
+              echo 'chain-id = "centauri-1"' >> ~/.centauri/config/client.toml
+            '';
           }];
         };
 
@@ -129,6 +140,7 @@
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
+            enterShell = "osmosisd set-env mainnet";
           }];
         };
 
@@ -142,6 +154,7 @@
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              FEE = "uatom";
             };
           }];
         };

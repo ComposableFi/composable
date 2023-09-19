@@ -10,7 +10,6 @@
 
 [![Latest Release](https://img.shields.io/github/v/tag/composablefi/composable)][latest-url]
 ![Build][build-badge]
-[![Mergify Status][mergify-status]][mergify]
 [![Discord][discord-badge]][discord-url]
 
 [latest-url]: https://github.com/composablefi/composable/tags
