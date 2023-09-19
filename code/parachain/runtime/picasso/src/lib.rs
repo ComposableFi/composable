@@ -52,8 +52,8 @@ use common::{
 	rewards::StakingPot,
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MINUTES, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
