@@ -6,53 +6,54 @@ Assuming you know most common blockchain nomenclature and definitions, you are a
 
 Non atomic non custodial non turing complete cross chain programs with code propagated along with data with access to de facto native liquidity markets on each chain and abstracting away several underlying transports and messaging protocols. 
 
-
 Let look into details.
 
-Non atomic, means that CVM program program executed in several blocks. Not a single automatically rollbackable transaction.
+Non atomic, means that CVM program program executed in several blocks. 
+Not a single automatically rollbackable transaction.
 
 Cross chain means that parts of CVM program are executed on different chains (different consensus or domain as people may call these).
 
 Two above properties make CVM virtual machine to be resembling NEAR.
 
 Non custodial means that funds are stored on user owned contract (user has instance of such on each chain) and funds only delegated to be managed by CVM governance.
+We can consider user owned contract to be his CVM account, all such contract on all chains are user virtual wallet.
+
+Messaging protocols are implementation of securely passing messages, bytes, from one chain into other asynchronously.  
+
+Chain,  a blockchain with its consensus and execution environment, but may also refer to rollups.
+
+The `CVM` is is set of opaque contracts abstracting away using underlying bridges.
+Bridges, relayers, block builders are not part of `CVM`.
+
+Although execution environments change depending on the chain, the `CVM` protocol is generic over the differences and provides an abstract target for smart contracts to interact with. 
+We describe components as separate opaque contracts, but implementors MAY be a pallet, Cosmos SDK module, or a single contract as opposed to many. 
+Here the choice is based made on gas optimizations, engineering standards, and security practices.
+
+`CVM` is bridge agnostic, as long as the underlying bridging protocol is capable of generic message passing.
 
 
-`Identity`: An entity that has an address. Note that identities may not have a public/private key, as they can be contracts.
+### More formally CVM is:
 
-`Cross Chain Transfer`: The bridging of funds between two chains.
+```typescript
 
-`Cross Chain Transaction`: Two or more transactions on two or more chains. Note that a cross-chain transaction is not `transactional`.
+/// CVM may be physically implemented differently on different chains
+type OpaqueContract = SmartContract | Module 
+type OpaqueUser = OpaqueContract | Wallet
 
-`CVM Transaction`: A cross-chain transaction defined as CVM instructions, being handled by interpreters. Technically an CVM transaction can be single chain only, although the use case for that seems non-existent.
 
-`Message Passing`: Sending bytes from one chain to another.
+interface Program {
+    tag : Tag
+    instructions: Instruction[]
+}
+type Tag = Uint8Array
 
-`Event`: A message emitted by a contract/module/pallet during transaction execution.
+type Instruction = Transfer | Call | Spawn | Query | Exchange
 
-`CVM Event`: An event emitted by part of the CVM contracts.
+/// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend 
+interface Exchange {
 
-`Beneficiary`: Recipient of assets.
-
-`Relayer`: Initiator of the destination side transaction, paying for the execution fees.
-
-`Tip`: Tip address for execution. 
-
-`Opaque Contract`: Any smart contract, module, or pallet.
-
-`Chain`: A blockchain with its consensus and execution environment, but may also refer to rollups.
-
-`User`: A third party user of CVM contracts. Can be another contract, module, pallet or actual human.
-
-`Implementor`: An entity implementing technology according to the CVM specification.
-
-# 2. CVM
-
-The `CVM` refers to both a set of on-chain contracts, orchestrating the bridging operations, ownership, and execution, as well as the interchain system of bridges and relayers. This document mainly specifies the logic within a single chain, and how implementors MUST execute messages and maintain state.
-
-Although execution environments change depending on the chain, the `CVM` protocol is generic over the differences and provides an abstract target for smart contracts to interact with. We describe components as separate contracts, but implementors MAY be a pallet, Cosmos SDK module, or a single contract as opposed to many. Here the choice is based made on gas optimizations, engineering standards, and security practices.
-
-`CVM` is bridge agnostic, as long as the underlying bridging protocol is capable of generic message passing. Developers can opt-in to their usages for each interpreter instance. We highly recommend `IBC` if available, and by default only allow communication across trustless bridges.
+}
+```
 
 ```mermaid
 sequenceDiagram
@@ -70,10 +71,6 @@ sequenceDiagram
     Gateway->>IBC: Route through IBC.
 ```
 
-Interpreter may be also be singleton instance of contract per chain. 
-
-Cross chain(XC) account contract is instantiated for each user which hold funds and proxies calls in this case.
-
 ```mermaid
 sequenceDiagram
     Router->>Interpreter: Instantiate VM
@@ -85,24 +82,9 @@ sequenceDiagram
     Gateway->>IBC: Route through IBC.
 ```
 
-
-## 2.1. Versioning
-
-`CVM` protocol versions and implementations use [semantic versioning](https://semver.org/spec/v2.0.0.html) to identify capabilities and backward compatibility.
-
 ## 2.2. Instruction Set
 
 Messages executed by the `CVM` follow the `Program` format.
-
-```typescript
-interface Program {
-    tag : Tag
-    instructions: Instruction[]
-}
-type Tag = Uint8Array
-
-type Instruction = Transfer | Call | Spawn | Query | Exchange
-```
 
 Each instruction is executed by the on-chain interpreter in sequence. The execution semantics are defined in section 2.4.5.
 
