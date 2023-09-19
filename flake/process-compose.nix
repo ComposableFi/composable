@@ -229,7 +229,7 @@
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
-                  failure_threshold = 8;
+                  failure_threshold = 16;
                   timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:9988
@@ -243,7 +243,7 @@
                 readiness_probe = {
                   initial_delay_seconds = 32;
                   period_seconds = 8;
-                  failure_threshold = 8;
+                  failure_threshold = 16;
                   timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
