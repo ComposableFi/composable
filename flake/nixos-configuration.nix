@@ -19,7 +19,6 @@
   };
 
   flake = {
-
     nixosConfigurations = let user = "root";
     in (withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, subnix, system, ... }: {
