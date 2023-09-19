@@ -32,8 +32,9 @@
               imports =
                 [ ./hardware-configuration.nix ./networking.nix ./host.nix ];
               system.stateVersion = "23.11";
-              environment.systemPackages =
-                [ self'.packages.devnet-xc-fresh-background ]
+              environment.systemPackages = with pkgs;
+                with self'.packages;
+                [ devnet-xc-fresh-background helix process-compose ]
                 ++ devnetTools.withDevNetContainerTools;
               boot.tmp.cleanOnBoot = true;
               zramSwap.enable = true;

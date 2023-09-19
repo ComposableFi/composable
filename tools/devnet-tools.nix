@@ -18,7 +18,6 @@
         coreutils
         dasel
         findutils
-
         git
         git-lfs
         gnused
