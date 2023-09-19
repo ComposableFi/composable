@@ -10,7 +10,7 @@ three months after the crowdloan vesting period is concluded
 
 ## Picasso Crowdloan Details
 
-Composable Finance has won the 13th Kusama parachain auction slot, 
+Composable has won the 13th Kusama parachain auction slot, 
 raising 115,017 KSM and successfully securing a parachain to build out and deploy the Picasso network. 
 Crowdloan participation was capped at 200,000 KSM and the crowdloan period will total 48 weeks, 
 broken down into 8 lease periods of 6 weeks each.

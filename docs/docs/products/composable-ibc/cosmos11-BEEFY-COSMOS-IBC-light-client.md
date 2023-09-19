@@ -2,13 +2,13 @@
 
 :::note
 
-**Initially, Centauri will utilize the grandpa light client, as beefy has not yet been deployed on Kusama. Therefore, the content of this section pertains to Centauri v2, in which the beefy light client will be used.**
+**Composable IBC utilizes the grandpa light client, as beefy has not yet been deployed on Kusama. The content of this section pertains to a beefy light client which is not used in production.**
 
 :::
 
-The final pieces of technology contributing to the construction of Centauri leverage [Parity](https://www.parity.io/)’s `Bridge Efficiency Enabling Finality Yielder (BEEFY)` and its novel consensus gadget that enables DotSama to be bridged to additional chains via very efficient finality proofs. Parachains get their finality from the Kusama relay chain, and thus BEEFY’s ability to create finality proofs provides finality for Centauri on Picasso and an essential gateway for the bridge infrastructure.
+The final pieces of technology contributing to the construction of Composable IBC leverage [Parity](https://www.parity.io/)’s `Bridge Efficiency Enabling Finality Yielder (BEEFY)` and its novel consensus gadget that enables DotSama to be bridged to additional chains via very efficient finality proofs. Parachains get their finality from the Kusama relay chain, and thus BEEFY’s ability to create finality proofs provides finality for IBC on Picasso and an essential gateway for the bridge infrastructure.
 
-We are also developing a BEEFY light client implementation for Cosmos-IBC (11-BEEFY, spec pending. This product will enable Cosmos chains to follow the finality of the Kusama relay chain (and thus, the finality of Picasso). A single instance of this light client on any Cosmos chain can prove finality for any Kusama parachain, allowing Cosmos chains to verify IBC commitment packets (IBC consensus proofs). The final piece of Centauri is a pallet on Picasso, facilitating the creation of these IBC commitment packets.
+We are also developing a BEEFY light client implementation for Cosmos-IBC (11-BEEFY, spec pending. This product will enable Cosmos chains to follow the finality of the Kusama relay chain (and thus, the finality of Picasso). A single instance of this light client on any Cosmos chain can prove finality for any Kusama parachain, allowing Cosmos chains to verify IBC commitment packets (IBC consensus proofs). 
 
 ## BEEFY Finality Gadget 
 
@@ -54,7 +54,7 @@ pub struct BEEFYLightClient{
 
 ## 11-BEEFY COSMOS-IBC Light Client
 
-Connecting to IBC requires both chains (in the case of Centauri, Cosmos and Picasso) to embed a light client for proof of validation. In order to connect to IBC using Cosmos and Picasso, Composable is working to develop a Bridge Efficiency Enabling Finality Yielder (BEEFY) light client onto Picasso and Cosmos. 
+Connecting to IBC requires both chains (in the case of Composable IBC, Cosmos and Picasso) to embed a light client for proof of validation. In order to connect to IBC using Cosmos and Picasso, Composable is working to develop a Bridge Efficiency Enabling Finality Yielder (BEEFY) light client onto Picasso and Cosmos. 
 
 To support Substrate-based chains on the Cosmos side, Composable will need a BEEFY-IBC client merged into IBC-Go; therefore, the first step in the process is to create a BEEFY-Go followed by a BEEFY-IBC. Once this is set, Composable will work on updating the relayer before launching the product.
 
