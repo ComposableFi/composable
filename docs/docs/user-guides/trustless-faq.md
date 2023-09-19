@@ -66,7 +66,6 @@ To get a better understanding of our ecosystem, you might take a look at the fol
 
 1. **[Trustless Zone](https://trustless.zone/)**: Trustless Zone is designed to offer secure, automated, and trustless asset transfers between different blockchains.
 2. **[Pablo DEX](https://app.pablo.finance/)**: Pablo serves as a Decentralized Exchange (DEX) and a cross-chain liquidity hub that is part of the Picasso platform. It facilitates secure and efficient trading between various assets.
-3. [CVM Developer Tools](http://tools.xcvm.dev/): These tools aim to simplify the cross-chain developer experience, offering various resources to help build, test, and deploy decentralized applications.
 
 ---
 
@@ -146,7 +145,8 @@ For more information on IBC and light clients, you may refer to this **[Cosmos I
 ### **What Happens Next?**
 
 - **Automatic Reversal**: In cases where the transfer issue is temporary, such as network delays, your funds should automatically revert to your original account, typically within an hour.
-- **Reach Out for Support**: If your transfer remains stuck or if you encounter any issues that are unclear, please don't hesitate to reach out to us on our [Telegram](https://t.me/composable_chat) or [Discord](https://discord.com/invite/composable) channels for additional support. We're actively working to resolve any issues as quickly as possible.
+- **Reach Out for Support**: If your transfer remains stuck or if you encounter any issues that are unclear, please don't hesitate to reach out to us on our **[Telegram](https://t.me/composable_chat)** or 
+**[Discord](https://discord.com/invite/composable)** channels for additional support. We're actively working to resolve any issues as quickly as possible.
 
 This approach ensures that you have multiple avenues for resolving your concerns while we work to make the transfer process as smooth as possible.
 
@@ -166,8 +166,10 @@ This approach ensures that you have multiple avenues for resolving your concerns
 
 As a result, you won't be able to fetch APR percentages in the usual way through the Cosmos inflation endpoint, as it is floating. Instead, you can calculate the APR manually using certain metrics and a formula we've provided:
 
-1. **Annual Provision** ($AP$) is the total number of tokens allocated for staking rewards per year. It can be calculated as `Annual Provision = GET /cosmos/mint/v1beta1/annual_provisions` or check [this link](https://api-composable-ia.cosmosia.notional.ventures/cosmos/mint/v1beta1/annual_provisions) for the API call.
-2. **Bonded Tokens** ($BT$) refer to the total number of tokens currently staked in the network. It can be calculated as `Bonded Tokens = GET /cosmos/staking/v1beta1/pool` or check [this link](https://api-composable-ia.cosmosia.notional.ventures/cosmos/staking/v1beta1/pool) for the API call.
+1. **Annual Provision** ($AP$) is the total number of tokens allocated for staking rewards per year. It can be calculated as `Annual Provision = GET /cosmos/mint/v1beta1/annual_provisions` or check **[this 
+link](https://api-composable-ia.cosmosia.notional.ventures/cosmos/mint/v1beta1/annual_provisions)** for the API call.
+2. **Bonded Tokens** ($BT$) refer to the total number of tokens currently staked in the network. It can be calculated as `Bonded Tokens = GET /cosmos/staking/v1beta1/pool` or check **[this 
+link](https://api-composable-ia.cosmosia.notional.ventures/cosmos/staking/v1beta1/pool**) for the API call.
 
 Using these, you can calculate the **Nominal APR** ($APR_N$) as follows:
 
@@ -175,7 +177,7 @@ $$
 APR_N=\frac{AP\times(1−CT)}{BT},
 $$
 
-Where $CT$ is **Community Tax** and it can be found [here](https://api-composable-ia.cosmosia.notional.ventures//cosmos/distribution/v1beta1/params).
+Where $CT$ is **Community Tax** and it can be found **[here](https://api-composable-ia.cosmosia.notional.ventures//cosmos/distribution/v1beta1/params)**.
 
 To adjust this for real-world conditions, you also have to take into account the actual number of blocks minted during the year **Real Annual Provision** ($AP_R$). To calculate that we need to get **Blocks Per Year** ($BPY$) and **Real Blocks Per Year** ($BPY_R$):
 
@@ -183,7 +185,8 @@ $$
 AP_R=AP\times\frac{BPY_R}{BPY},
 $$
 
-$BPY$ can be found [here](https://api-composable-ia.cosmosia.notional.ventures/cosmos/mint/v1beta1/params) and $BPY_R$ is calculated [here](https://github.com/giansalex/cosmos-staking-apr/blob/master/src/index.js) in a function `getBlocksPerYearReal,` which is an estimate of how many blocks are likely to be generated in one year, based on recent block timings.
+$BPY$ can be found **[here](https://api-composable-ia.cosmosia.notional.ventures/cosmos/mint/v1beta1/params)** and $BPY_R$ is calculated **[here](https://github.com/giansalex/cosmos-staking-apr/blob/master/src/index.js)** in a function 
+`getBlocksPerYearReal,` which is an estimate of how many blocks are likely to be generated in one year, based on recent block timings.
 
 The **Real Staking APR** ($APR_{RS}$) is then calculated as:
 
@@ -191,9 +194,9 @@ $$
 APR_{RS}=APR_N\times\frac{AP_R}{AP}=APR_N\times\frac{BPY_R}{BPY},
 $$
 
-and it is the one you can see on [trustless.zone](https://app.trustless.zone).
+and it is the one you can see on **[trustless.zone](https://app.trustless.zone)**.
 
-Finally, the **Final Staking APR** ($APR_{FS}$) takes into account the **Validator's Commission** ($VC$), which can be found [here](https://explorer.nodestake.top/composable/staking):
+Finally, the **Final Staking APR** ($APR_{FS}$) takes into account the **Validator's Commission** ($VC$), which can be found **[here](https://explorer.nodestake.top/composable/staking)**:
 
 $$
 APR_{FS}=APR_{RS}\times\left(1-VC\right).
@@ -203,9 +206,9 @@ At present, the estimated APR stands around 13%.
 
 ---
 
-❓ **Q13:** How to choose a validator on Centauri to stake with, is there any risk involved in staking?
+❓ **Q13:** How to choose a validator on Composable Cosmos Chain to stake with, is there any risk involved in staking?
 
-📝 **A13:** Choosing a validator on Centauri requires thoughtful consideration of multiple factors:
+📝 **A13:** Choosing a validator on Composable Cosmos Chain requires thoughtful consideration of multiple factors:
 
 1. **Uptime**: Aim to select a validator with near-perfect uptime. A high uptime is a hallmark of reliability, and it's crucial for earning consistent staking rewards. Keep in mind that if a validator is jailed or tombstoned due to downtime or double signing, you won't receive rewards during that period.
 2. **Voting Power**: Opting for a validator with a lower percentage of total voting power can contribute to the decentralization of the network. By doing so, you're distributing the voting power and reducing the risk of centralization.
