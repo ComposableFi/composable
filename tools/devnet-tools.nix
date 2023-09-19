@@ -17,7 +17,7 @@
         cacert
         coreutils
         dasel
-        findutilsls
+        findutils
 
         git
         git-lfs

@@ -26,7 +26,11 @@ Also common queries to get state of CVM in general and specific user are describ
 
 Finally, program to handle stuck funds (in case of cross chain message failure) is give.
 
+### Setup
 
+This run will target mainnet, for devnet you have to replace contract address.
+
+You can query these value
 
 ### Asnwers
 
