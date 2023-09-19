@@ -62,26 +62,29 @@ When CVM program is bridged, send to protocol which supposed to transfer message
 
 
 
-Execute
+Execute next message. This message transfer PICA from sender account to CVM and bridges it to Osmosis.
+
+Please read and remove `//` commands before executing.
 
 ```json
             {
               "execute_program": {
                 "execute_program": {
-                  "salt": "737061776e5f776974685f6173736574",
+                  "salt": "737061776e5f776974685f6173736574", // each user has instances of interpreter contract per user per salt, so each new slat instances new contract, 
+                                                              // while reusing salt reuses existing instances (and funds on these)
                   "program": {
-                    "tag": "737061776e5f776974685f6173736574",
+                    "tag": "737061776e5f776974685f6173736574", // a number give by user which allows to differentiate on program from other (just of offchain indexing)  
                     "instructions": [
                       {
                         "spawn": {
-                          "network_id": 3,
+                          "network_id": 3, // this is Osmosis
                           "salt": "737061776e5f776974685f6173736574",
                           "assets": [
                             [
-                              "158456325028528675187087900673",
+                              "158456325028528675187087900673", // PICA on Centauri
                               {
                                 "amount": {
-                                  "intercept": "1234567890",
+                                  "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to interpreter
                                   "slope": "0"
                                 },
                                 "is_unit": false
@@ -93,10 +96,10 @@ Execute
                             "instructions": [
                               {
                                 "exchange": {
-                                  "exchange_id": "237684489387467420151587012609",
+                                  "exchange_id": "237684489387467420151587012609", // PICA<->OSMO pool id as configured on Osmosis
                                   "give": [
                                     [
-                                      "237684487542793012780631851009",
+                                      "237684487542793012780631851009", // PICA on Osmosis has other identifier
                                       {
                                         "amount": {
                                           "intercept": "123456789",
@@ -108,10 +111,10 @@ Execute
                                   ],
                                   "want": [
                                     [
-                                      "237684487542793012780631851010",
+                                      "237684487542793012780631851010", // OSMO on Osmosis
                                       {
                                         "amount": {
-                                          "intercept": "1000",
+                                          "intercept": "1000", // min want amount, larger value is less slippage
                                           "slope": "0"
                                         },
                                         "is_unit": false
@@ -122,7 +125,7 @@ Execute
                               },
                               {
                                 "spawn": {
-                                  "network_id": 2,
+                                  "network_id": 2, // Centauri
                                   "salt": "737061776e5f776974685f6173736574",
                                   "assets": [
                                     [
@@ -130,7 +133,7 @@ Execute
                                       {
                                         "amount": {
                                           "intercept": "0",
-                                          "slope": "1000000000000000000"
+                                          "slope": "1000000000000000000" // 100% of OSMO after swap to be transferred to Centauri
                                         },
                                         "is_unit": false
                                       }
@@ -142,11 +145,11 @@ Execute
                                       {
                                         "transfer": {
                                           "to": {
-                                            "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+                                            "account": "AB9vNpqXOevUvR5+JDnlljDbHhw=" // base64 encoded 32 byte account to deposit assets on Centauri
                                           },
                                           "assets": [
                                             [
-                                              "158456325028528675187087900674",
+                                              "158456325028528675187087900674", // OSMO identifier on Osmosis
                                               {
                                                 "amount": {
                                                   "intercept": "0",
@@ -170,12 +173,12 @@ Execute
                   },
                   "assets": [
                     [
-                      "158456325028528675187087900673",
-                      "1234567890"
+                      "158456325028528675187087900673", // this PICA identifier on Centauri
+                      "1234567890", // When sending amount, in program amount must be equal to CW transaction amount
                     ]
                   ]
                 },
-                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
+                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n" // any address, use self for now
               }
             }
 ```

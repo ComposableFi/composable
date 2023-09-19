@@ -186,6 +186,36 @@
             };
           }];
         };
+
+        osmosis-devnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [rec {
+            packages = [ self'.packages.osmosisd ];
+            env = osmosis.env.testnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              NODE = "tcp://localhost:36657";
+              FEE = "uatom";
+            };
+            enterShell = ''            
+              osmosisd set-env localnet
+              echo 'chain-id = "osmosis-dev"' > ~/.osmosisd-local/config/client.toml 
+              echo 'keyring-backend = "test"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'output = "json"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'broadcast-mode = "block"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'human-readable-denoms-input = false' >> ~/.osmosisd-local/config/client.toml 
+              echo 'human-readable-denoms-output = false' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas-prices = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas-adjustment = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'fees = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'node = "tcp://localhost:36657"' >> ~/.osmosisd-local/config/client.toml 
+            '';
+          }];
+        };
       };
     };
 }
