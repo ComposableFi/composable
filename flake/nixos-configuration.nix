@@ -23,7 +23,8 @@
     in (withSystem "x86_64-linux"
       ({ config, self', inputs', pkgs, devnetTools, subnix, system, ... }: {
         default = "${user}";
-        "${user}" = let ports = [ 22 80 443 9988 9944 10008 ];
+        "${user}" = let
+          ports = [ 22 80 443 9988 9944 10008 29988 29944 30008 26657 36657 ];
         in self.inputs.nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
