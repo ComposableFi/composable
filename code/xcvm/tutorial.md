@@ -30,74 +30,70 @@ Finally, program to handle stuck funds (in case of cross chain message failure) 
 
 This run will target mainnet, for devnet you have to replace contract address.
 
-You can query these value
+You can query address using wasm cli as per relevant wasmd usage guides from Notional/Osmosis/CosmWasm.
 
-### Asnwers
 
-nix0t
-Joon(ART)
-  < 1 minute ago
-1. example payload
+### Query configuration of relayer
 
-- live TX https://explorer.nodestake.top/composable/tx/F4BDDC1F0D502E55F5B413C139C7DCE5608C1662B5D7919CAD9BA889B38C8861
-- same in raw JSON https://github.com/ComposableFi/composable/pull/4091/files#diff-79ad53577207629481229b103ab8a8abc18cc1535206aa36b664bdff2c7a5215
-- how i send on devnet via cli https://github.com/ComposableFi/composable/blob/866f40ba5558ef9c1a1adc6209e726c69f3c492a/inputs/notional-labs/composable-centauri/flake-module.nix#L377
 
-2.1 which events to look for 
-2.2. how to query the state
+### Prominent identifiers
 
-```
-## How to generate schema
-For gateway 
-```sh
-cargo run --package xc-core --bin gateway
-```
+PICA
+PICA<->OSMO
 
-For interpreter
+### Send transfer and swap program
 
-```
-cargo run --package cw-xc-interpreter --bin interpreter
-```
+### What too look in explorer
+
+On sender side look for wasmd `cvm` prefixed events, specifically.
+And underlying IBC transport events.
+
+Here is list of prominent events. All events can be seen by [generating schema](./cosmwasm/README.md).
+
+`cvm.interpreter.exchange.succeeded` - swap success
+
+On receiver side look at IBC event.
+On other side look for wasmd `cvm` events for mainnet conract address.
+
+
+
+
+In wasmd events you can observer instanciation of interprter contract.
+
+
+### Query state of contract 
+
 
 So after you generated schema, you will see all queries. 
 
 Interpreter has `State` query which will dump whole state of interpreter.
 
-Also for interpreter, the is `events.json` which describes names and shapes of all events from interpreter, including exchange, fail, success.
+You can follow CW20 and Cosmos Bank guide to get amounts of assets on interpeter address.
 
-3. ditto
-@fl-y ????????????????
+All these amounts are fully managed by user. In case of error, funds are retained here.
 
-5. how to tell whether funds are stuck
-in progress. This will be PR soon.
+In case of `ResultRegister` is not empty, program did not executed to the end. 
 
-### Required for DoD
+Failure can happen on IBC and WASMD level, without CVM executed to point where it can issue events. 
+For this case please follow IBC and WASMD guides to track execution (generalized indexers like Numua, Mintscan and Cosmos Indexer are super useful in this case).
 
-- How to execute the CW contract on Centauri, as in an example payload to an RPC endpoint
+and use may send next program to move funds (unstuck):
 
-See above.
 
--> @dzmitry-lahoda
+### DOT
 
-<p>How to query the CW contract on, </p>
-- Centauri, to verify the IBC tx has been initiated to go over to Osmosis. Which events to look for or how to query the state
+In configuraiton you can observer DOT and DOT<->OSMO pools as:
 
-See above, `events.json`. For execute, instantaite, wasm events - look into official docs. CVM cannot do any special in that area.
+For education purposes pleasse modify PICA swap message to swap DOT.
 
-In general, run contract and see output. If some events are missed from CVM contract, will add. Tried to add and unify what is super useful.
 
--> @dzmitry-lahoda
+### Make it fail
 
-- Osmosis, to verify the swap has happened. Which events to look for or how to query the state.
+First modify timeout of sending from Osmosis to Centauri to small value.
 
-`cvm.interpreter.exchange.succeeded`. If will contain exchange id. Id is mapped via config. Can cw query `config` from gateway to see what pool is used.
+In this case after swap, IBC packet will be sent, but timeout. 
 
-For state, run CW query named `state` agains interpreter. Will dump all state.
+Fund will appear on free balance of interpeter.
 
--> @dzmitry-lahoda
 
-- How to check whether there was an error during the process to tell the user their funds are stuck.
-
-You will see failed events, prefixed with cvm or see schema. Failues of CW/IBC/Cosmos on its own - CVM contracts nothing to do with that.
-
--> @dzmitry-lahoda
+Until Osmosis and Centauiry update Cosmos SDK https://github.com/cosmos/ibc-go/pull/4706 to this version, funds will will stuck in IBC. 

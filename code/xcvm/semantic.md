@@ -1,6 +1,6 @@
 # Overview
 
-Non turing complete cross chain programs with code propagated along with data with access to de facto native liquidity markets on each chain and abstracting away several underlying transports and messaging protocols. 
+Non atomic non custodial non turing complete cross chain programs with code propagated along with data with access to de facto native liquidity markets on each chain and abstracting away several underlying transports and messaging protocols. 
 
 ## 1.2. Terms and Definitions
 
