@@ -31,7 +31,7 @@ pub(crate) fn handle_bridge_forward(
 	block: BlockInfo,
 ) -> Result {
 	deps.api.debug(&format!(
-		"xcvm::gateway:: forwarding over IBC ICS20 MEMO {}",
+		"cvm::gateway:: forwarding over IBC ICS20 MEMO {}",
 		&serde_json_wasm::to_string(&msg)?
 	));
 	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
@@ -60,7 +60,7 @@ pub(crate) fn handle_bridge_forward(
 	};
 
 	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20 route {}",
+		"cvm::gateway::ibc::ics20 route {}",
 		&serde_json_wasm::to_string(&route)?
 	));
 	let mut event = make_event("bridge")
@@ -149,7 +149,7 @@ pub(crate) fn ics20_message_hook(
 	let packet: XcPacket = msg.packet;
 	ensure_anonymous(&packet.program)?;
 	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
+		"cvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
 		&info.funds, &packet.assets
 	));
 

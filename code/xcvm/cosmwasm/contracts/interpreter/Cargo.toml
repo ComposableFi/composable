@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM Interpreter contract"
+description = "CVM Interpreter contract"
 edition = "2021"
 name = "cw-xc-interpreter"
 repository = "https://github.com/ComposableFi/composable"

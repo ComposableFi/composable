@@ -135,7 +135,7 @@ pub fn handle_execute_step(
 	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
-		deps.api.debug(&format!("xcvm::interpreter::execute:: {:?}", &instruction));
+		deps.api.debug(&format!("cvm::interpreter::execute:: {:?}", &instruction));
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, &tip, to, assets),
@@ -204,7 +204,7 @@ fn interpret_exchange(
 				token_in: Some(give),
 				token_out_min_amount: want.amount,
 			};
-			deps.api.debug(&format!("xcvm::interpreter::execute::exchange {:?}", &msg));
+			deps.api.debug(&format!("cvm::interpreter::execute::exchange {:?}", &msg));
 			let msg = CosmosMsg::Stargate {
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
 				value: Binary::from(msg.encode_to_vec()),
@@ -375,7 +375,7 @@ pub fn interpret_transfer(
 	assets: Funds<Balance>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-	deps.api.debug(&format!("xcvm::interpreter::transfer:: to {:?}", &to));
+	deps.api.debug(&format!("cvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
 		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
 		Destination::Tip => tip.into(),
@@ -463,7 +463,7 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	deps.api.debug(&format!("xcvm::interpreter::exchanged {:?}", &msg));
+	deps.api.debug(&format!("cvm::interpreter::exchanged {:?}", &msg));
 	let response = match &msg.result {
 		SubMsgResult::Ok(ok) => {
 			let exchange_id: ExchangeId = ok

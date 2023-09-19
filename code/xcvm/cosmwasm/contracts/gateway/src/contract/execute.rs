@@ -22,7 +22,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 	let sender = &info.sender;
 	let canonical_sender = deps.api.addr_canonicalize(sender.as_str())?;
 	deps.api.debug(&format!(
-		"xcvm::gateway::execute sender on chain {}, sender cross chain {}",
+		"cvm::gateway::execute sender on chain {}, sender cross chain {}",
 		sender,
 		&serde_json_wasm::to_string(&canonical_sender)?
 	));
@@ -51,7 +51,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			}
 		},
 		msg::ExecuteMsg::MessageHook(msg) => {
-			deps.api.debug(&format!("xcvm::gateway::execute::message_hook {:?}", msg));
+			deps.api.debug(&format!("cvm::gateway::execute::message_hook {:?}", msg));
 
 			let auth = auth::WasmHook::authorise(deps.as_ref(), &env, &info, msg.from_network_id)?;
 
@@ -185,7 +185,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	let interpreter =
 		state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin.clone()).ok();
 	if let Some(state::interpreter::Interpreter { address, .. }) = interpreter {
-		deps.api.debug("xcvm:: reusing existing interpreter and adding funds");
+		deps.api.debug("cvm:: reusing existing interpreter and adding funds");
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
@@ -241,7 +241,7 @@ fn send_funds_to_interpreter(
 		if amount == 0 {
 			continue
 		}
-		deps.api.debug("xcvm::gateway:: sending funds");
+		deps.api.debug("cvm::gateway:: sending funds");
 
 		let msg = match assets::get_asset_by_id(deps, asset_id)?.local {
 			msg::AssetReference::Native { denom } => BankMsg::Send {

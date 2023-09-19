@@ -57,7 +57,7 @@ pub fn instantiate(
 		})?,
 		funds: vec![],
 		// and label has some unknown limits  (including usage of special characters)
-		label: format!("xcvm_interpreter_{}", &next_interpreter_id),
+		label: format!("cvm_interpreter_{}", &next_interpreter_id),
 		// salt limit is 64 characters
 		salt: to_binary(&salt)?,
 	};
@@ -68,7 +68,7 @@ pub fn instantiate(
 
 pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 	deps.api.debug(&format!(
-		"xcvm:: {}",
+		"cvm:: {}",
 		serde_json_wasm::to_string(&msg).map_err(|e| StdError::generic_err(e.to_string()))?
 	));
 	let response = msg.result.into_result().map_err(StdError::generic_err)?;
@@ -118,10 +118,10 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		&interpreter_id,
 	)?;
 
-	deps.api.debug("xcvm:: saved interpreter");
+	deps.api.debug("cvm:: saved interpreter");
 
 	Ok(Response::new().add_event(
-		make_event("xcvm.interpreter.instantiated")
+		make_event("cvm.interpreter.instantiated")
 			.add_attribute("interpreter_id", interpreter_id.to_string()),
 	))
 }

@@ -76,7 +76,7 @@ impl Auth<policy::WasmHook> {
 				&channel, &sender, &prefix,
 			)?;
 		deps.api.debug(&format!(
-			"xcvm::gateway:auth:: {0} {1}",
+			"cvm::gateway:auth:: {0} {1}",
 			&hash_of_channel_and_sender, &info.sender
 		));
 		Self::new(hash_of_channel_and_sender == info.sender || info.sender == env.contract.address)

@@ -85,6 +85,34 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
+        centauri-devnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [rec {
+            packages = [ self'.packages.centaurid ];
+            env = {
+              FEE = "ppica";
+              NETWORK_ID = 2;
+              CHAIN_ID = "centauri-dev";
+              DIR = "devnet/.centaurid";
+              BINARY = "centaurid";
+              NODE = "tcp://localhost:26657";
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+            enterShell = ''
+              rm --force --recursive ~/.centauri
+              mkdir --parents ~/.centauri/config
+              echo 'keyring-backend = "test"' >> ~/.centauri/config/client.toml
+              echo 'output = "json"' >> ~/.centauri/config/client.toml
+              echo 'node = "${env.NODE}"' >> ~/.centauri/config/client.toml
+              echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml
+            '';            
+          }];
+        };
+
         centauri-testnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
