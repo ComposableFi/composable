@@ -38,7 +38,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(feature = "fastnet")]
 			decision_deposit: 50 * ONE_PICA,
 			#[cfg(not(feature = "fastnet"))]
-			decision_deposit: 500_000 * ONE_PICA,
+			decision_deposit: 50_000 * ONE_PICA,
 			// Amount of time this must be submitted for before a decision can be made.
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
@@ -81,7 +81,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(feature = "fastnet")]
 			decision_deposit: 5 * ONE_PICA,
 			#[cfg(not(feature = "fastnet"))]
-			decision_deposit: 50_000 * ONE_PICA,
+			decision_deposit: 5_000 * ONE_PICA,
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
 			#[cfg(not(feature = "fastnet"))]
