@@ -28,7 +28,8 @@ pub enum Register {
 	Tip,
 	/// Interpreter's address
 	This,
-	/// Result of the last executed instruction
+	/// Result of the last executed instruction.
+	/// If not empty, program did not executed to the end.
 	Result,
 }
 

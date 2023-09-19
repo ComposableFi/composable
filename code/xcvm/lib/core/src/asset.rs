@@ -355,7 +355,15 @@ mod tests {
 		let uosmo_on_osmosis = generate_asset_id(3.into(), 0, 2);
 		assert_eq!(uosmo_on_osmosis, 237684487542793012780631851010.into());
 
+		let dot_on_centauri = generate_asset_id(2.into(), 0, 3);
+		assert_eq!(dot_on_centauri, 158456325028528675187087900675.into());
+		let dot_on_osmosis = generate_asset_id(3.into(), 0, 3);
+		assert_eq!(dot_on_osmosis, 237684487542793012780631851011.into());
+
 		let pica_uosmo_on_osmosis = generate_network_prefixed_id(3.into(), 100, 1);
 		assert_eq!(pica_uosmo_on_osmosis, 237684489387467420151587012609);
+
+		let dot_uosmo_on_osmosis = generate_network_prefixed_id(3.into(), 100, 2);
+		assert_eq!(dot_uosmo_on_osmosis, 237684489387467420151587012610);
 	}
 }

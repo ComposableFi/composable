@@ -143,8 +143,8 @@
           FEE=ppica 
           BINARY=centaurid
 
-          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)        
-          CENTAURI_INTERPRETER_CODE_ID=$(cat $CHAIN_DATA/interpreter_code_id)
+          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
+          CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
           OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")  
           OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")  
 
@@ -214,7 +214,7 @@
                       "to": 3,
                       "other": {
                         "counterparty_timeout": {
-                          "seconds": 300
+                          "seconds": 600
                         },
                         "ics_20": {
                           "source": "channel-0",
@@ -229,7 +229,7 @@
                       "to": 2,
                       "other": {
                         "counterparty_timeout": {
-                          "seconds": 300
+                          "seconds": 600
                         },
                         "ics_20": {
                           "source": "channel-0",
@@ -370,7 +370,6 @@
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           FEE=ppica
-          BLOCK_SECONDS=5
           BINARY=centaurid
           GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
@@ -384,7 +383,7 @@
                     "instructions": [
                       {
                         "spawn": {
-                          "network": 3,
+                          "network_id": 3,
                           "salt": "737061776e5f776974685f6173736574",
                           "assets": [
                             [
@@ -403,7 +402,7 @@
                             "instructions": [
                               {
                                 "exchange": {
-                                  "id": "237684489387467420151587012609",
+                                  "exchange_id": "237684489387467420151587012609",
                                   "give": [
                                     [
                                       "237684487542793012780631851009",
@@ -432,7 +431,7 @@
                               },
                               {
                                 "spawn": {
-                                  "network": 2,
+                                  "network_id": 2,
                                   "salt": "737061776e5f776974685f6173736574",
                                   "assets": [
                                     [
@@ -496,7 +495,7 @@
 
           while true; do
             "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-            sleep "$BLOCK_SECONDS"
+            sleep "10"
           done
         '';
       };
@@ -568,11 +567,14 @@
             echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica" --keyring-backend test --home "$CHAIN_DATA"          
+              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica" --keyring-backend test --home "$CHAIN_DATA"                              
             }
 
-            add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf
+            # relayer
+            add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf 
+
             add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
             add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
             add-genesis-account ${validator-key}

@@ -6,6 +6,12 @@
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       relay = "no"; # `no` not to restart, `on_failure` for
       chain-restart = "no"; # `no` not to restart, `on_failure` for
+      parachain-startup = {
+        initial_delay_seconds = 32;
+        period_seconds = 8;
+        failure_threshold = 16;
+        timeout_seconds = 4;
+      };
     in {
 
       packages = rec {
@@ -97,28 +103,20 @@
                 availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
-                  initial_delay_seconds = 32;
-                  period_seconds = 8;
-                  failure_threshold = 8;
-                  timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://localhost:9988
                   '';
-                };
+                } // parachain-startup;
               };
               composable = {
                 command = self'.packages.zombienet-composable-westend-b;
                 availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
-                  initial_delay_seconds = 32;
-                  period_seconds = 8;
-                  failure_threshold = 8;
-                  timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://localhost:29988
                   '';
-                };
+                } // parachain-startup;
               };
 
               composable-picasso-ibc-init = {
@@ -227,27 +225,19 @@
                 availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/picasso.log";
                 readiness_probe = {
-                  initial_delay_seconds = 32;
-                  period_seconds = 8;
-                  failure_threshold = 16;
-                  timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://localhost:9988
                   '';
-                };
+                } // parachain-startup;
               };
               composable = {
                 command = self'.packages.zombienet-composable-westend-b;
                 availability = { restart = chain-restart; };
                 log_location = "${devnet-root-directory}/composable.log";
                 readiness_probe = {
-                  initial_delay_seconds = 32;
-                  period_seconds = 8;
-                  failure_threshold = 16;
-                  timeout_seconds = 2;
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://localhost:29988
-                  '';
+                  '' // parachain-startup;
                 };
               };
               osmosis-centauri-hermes-init = {

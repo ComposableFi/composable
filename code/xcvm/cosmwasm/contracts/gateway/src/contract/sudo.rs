@@ -1,5 +1,5 @@
-use crate::error::ContractError;
-use cosmwasm_std::{entry_point, wasm_execute, DepsMut, Env, Event, Response};
+use crate::{error::ContractError, state};
+use cosmwasm_std::{entry_point, wasm_execute, Coin, DepsMut, Env, Event, Response};
 use ibc_rs_scale::core::ics24_host::identifier::ChannelId;
 use xc_core::transport::ibc::{ics20::hook::IBCLifecycleComplete, SudoMsg};
 
@@ -37,10 +37,25 @@ fn handle_transport_failure(
 			.as_str(),
 	);
 	let msg = cw_xc_interpreter::msg::ExecuteMsg::SetErr { reason };
-	let (interpreter_origin, tracked_state) =
+	let bridge_msg =
 		crate::state::tracking::get_interpreter_track(deps.storage, channel.as_str(), sequence)?;
-	let interpreter = crate::state::interpreter::get_by_origin(deps.as_ref(), interpreter_origin)?;
+	let interpreter =
+		crate::state::interpreter::get_by_origin(deps.as_ref(), bridge_msg.interpreter_origin)?;
 	let mut response = Response::new();
-	response = response.add_message(wasm_execute(interpreter.address, &msg, tracked_state.assets)?);
+
+	let assets = bridge_msg
+		.msg
+		.assets
+		.into_iter()
+		.filter_map(|(asset, amount)| {
+			if let Ok(asset) = state::assets::ASSETS.load(deps.storage, asset) {
+				Some(Coin { denom: asset.denom(), amount: amount.into() })
+			} else {
+				None
+			}
+		})
+		.collect();
+
+	response = response.add_message(wasm_execute(interpreter.address, &msg, assets)?);
 	Ok(response.add_event(Event::new("cvm::gateway::handle::transport_failure")))
 }

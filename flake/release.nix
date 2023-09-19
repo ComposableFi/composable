@@ -202,8 +202,8 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
-             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
-             INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
+            INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
             DESCRIPTION=$(cat ${./release-gov-osmosis-proposal-cvm-upload.md})
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
@@ -285,10 +285,10 @@
           '';
         };
 
-        release-prod-xcvm = pkgs.writeShellApplication {
+        release-mainnet-xcvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
-          name = "release-prod-xcvm";
+          name = "release-mainnet-xcvm";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -395,7 +395,7 @@
             EOF
             )
 
-            INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "xc-gateway-4" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "cvm_gateway_2" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
             echo "$INSTANTIATE"
             sleep $BLOCK_TIME
             GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$CENTAURI_GATEWAY_CODE_ID" --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
@@ -403,10 +403,10 @@
           '';
         };
 
-        release-prod-xcvm-config = pkgs.writeShellApplication {
+        release-mainnet-xcvm-config = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
-          name = "release-prod-xcvm-config-centauri";
+          name = "release-mainnet-xcvm-config-centauri";
           text = ''
 
               FORCE=$(cat << EOF

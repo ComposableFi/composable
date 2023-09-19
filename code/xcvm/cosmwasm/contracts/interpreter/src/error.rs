@@ -30,7 +30,7 @@ pub enum ContractError {
 	#[error("Data cannot be serialized")]
 	DataSerializationError,
 
-	#[error("XCVM program is invalid")]
+	#[error("Program is invalid")]
 	InvalidProgram,
 
 	#[error("A program tag must be a correct utf8 encoded string")]
