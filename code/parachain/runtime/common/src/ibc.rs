@@ -81,8 +81,8 @@ impl ValidateMemo for RawMemo {
 	fn validate(&self) -> Result<(), String> {
 		// the MiddlewareNamespaceChain type contains all the supported middlewares
 		serde_json_wasm::from_str::<MemoMiddlewareNamespaceChain>(&self.0)
-			.map(|| ())
-			.map_err(ToString::to_string)
+			.map(|_| ())
+			.map_err(|x| x.to_string())
 	}
 }
 
@@ -155,5 +155,8 @@ fn test_memo_validation() {
 		  }
 	   }
 	}"#;
-	assert_eq!(RawMemo(memo.to_string()).validate(), Err(()));
+	assert_eq!(
+		RawMemo(memo.to_string()).validate(),
+		Err("unknown variant `unknown`, expected `forward` or `wasm`".to_string())
+	);
 }
