@@ -415,31 +415,6 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-type MaxLocks = ConstU32<50>;
-
-pub type GovInstance = balances::Instance2;
-impl balances::Config<GovInstance> for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<1>;
-	type AccountStore = StorageMapShim<
-		balances::Account<Runtime, GovInstance>,
-		AccountId,
-		balances::AccountData<Balance>,
-	>;
-	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
-	type FreezeIdentifier = [u8; 8];
-	type HoldIdentifier = ();
-	type MaxHolds = ConstU32<32>;
-	type MaxFreezes = ConstU32<32>;
-}
-
 parameter_types! {
 	/// Deposit required to get an index.
 	pub IndexDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
@@ -857,9 +832,6 @@ mod benches {
 		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
-		[whitelist, Whitelist]
-		[conviction_voting, ConvictionVoting]
-		[referenda, Referenda]
 	);
 }
 

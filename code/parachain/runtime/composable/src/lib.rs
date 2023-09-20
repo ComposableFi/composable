@@ -255,38 +255,6 @@ impl timestamp::Config for Runtime {
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	/// Max locks that can be placed on an account. Capped for storage
-	/// concerns.
-	pub const MaxLocks: u32 = 50;
-}
-
-pub type GovInstance = balances::Instance2;
-impl balances::Config<GovInstance> for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<1>;
-	type AccountStore = StorageMapShim<
-		balances::Account<Runtime, GovInstance>,
-		AccountId,
-		balances::AccountData<Balance>,
-	>;
-	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
-	type HoldIdentifier = TemporalHoldIdentifier;
-
-	type FreezeIdentifier = BalanceIdentifier;
-
-	type MaxHolds = ConstU32<32>;
-
-	type MaxFreezes = ConstU32<32>;
-}
-
 pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
@@ -707,9 +675,6 @@ mod benches {
 		[proxy, Proxy]
 		[assets_registry, AssetsRegistry]
 		[multisig, Multisig]
-		[whitelist, Whitelist]
-		[conviction_voting, ConvictionVoting]
-		[referenda, Referenda]
 	);
 }
 

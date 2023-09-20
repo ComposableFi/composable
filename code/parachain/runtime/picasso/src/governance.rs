@@ -81,13 +81,36 @@ parameter_types! {
 	pub const AlarmInterval: BlockNumber = 1;
 }
 
+pub type GovInstance = balances::Instance2;
+impl balances::Config<GovInstance> for Runtime {
+	type MaxLocks = ConstU32<50>;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = StorageMapShim<
+		balances::Account<Runtime, GovInstance>,
+		AccountId,
+		balances::AccountData<Balance>,
+	>;
+	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
+	type FreezeIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+	type MaxHolds = ConstU32<32>;
+	type MaxFreezes = ConstU32<32>;
+}
+
 pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
 impl pallet_referenda::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 
 	type RuntimeEvent = RuntimeEvent;
 
-	type WeightInfo = weights::referenda::WeightInfo<Self>;
+	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
 
 	type Scheduler = Scheduler;
 
@@ -113,7 +136,7 @@ impl pallet_referenda::Config for Runtime {
 
 	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
 
-	type SubmissionDeposit = ConstU128<1_000_000_000_000>;
+	type SubmissionDeposit = ConstU128<100_000_000_000_000>;
 
 	type MaxQueued = ConstU32<16>;
 
@@ -132,7 +155,7 @@ parameter_types! {
 
 impl pallet_conviction_voting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::conviction_voting::WeightInfo<Self>;
+	type WeightInfo = pallet_conviction_voting::weights::SubstrateWeight<Self>;
 	type Currency = OpenGovBalances;
 
 	type Polls = Referenda;
@@ -149,7 +172,7 @@ impl pallet_custom_origins::Config for Runtime {}
 pub use pallet_custom_origins::WhitelistedCaller;
 
 impl pallet_whitelist::Config for Runtime {
-	type WeightInfo = weights::whitelist::WeightInfo<Self>;
+	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Self>;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	#[cfg(not(feature = "fastnet"))]

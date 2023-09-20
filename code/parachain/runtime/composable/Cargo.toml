@@ -149,9 +149,6 @@ runtime-benchmarks = [
   "treasury/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
-  "pallet-referenda/runtime-benchmarks",
-  "pallet-conviction-voting/runtime-benchmarks",
-  "pallet-whitelist/runtime-benchmarks",
 ]
 std = [
   "cumulus-pallet-dmp-queue/std",
