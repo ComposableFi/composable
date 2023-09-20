@@ -332,7 +332,7 @@
                         "to": 3,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 3000000
+                            "seconds": 65000
                           },
                           "ics_20": {
                             "source": "channel-0",
@@ -347,7 +347,7 @@
                         "to": 2,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 3000000
+                            "seconds": 65000
                           },
                           "ics_20": {
                             "source": "channel-0",
