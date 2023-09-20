@@ -28,7 +28,6 @@ pub mod pallet {
 				fn try_origin(o: O) -> Result<Self::Success, O> {
 					o.into().and_then(|o| match o {
 						Origin::$name => Ok($success),
-						r => Err(O::from(r)),
 					})
 				}
 				#[cfg(feature = "runtime-benchmarks")]
