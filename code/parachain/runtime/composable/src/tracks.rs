@@ -49,7 +49,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(feature = "fastnet")]
 			confirm_period: 15 * MINUTES,
 			#[cfg(not(feature = "fastnet"))]
-			confirm_period:DAYS,
+			confirm_period: DAYS,
 			// Minimum amount of time that an approved proposal must be in the dispatch queue.
 			#[cfg(feature = "fastnet")]
 			min_enactment_period: 5 * MINUTES,
