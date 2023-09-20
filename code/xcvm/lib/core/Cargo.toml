@@ -40,9 +40,7 @@ prost-build = { workspace = true }
 default = ["std"]
 xcm = ["dep:xcm"]
 cosmwasm = ["cw-storage-plus", "cw20"]
-substrate = [
-  "xcm"
-]
+substrate = ["xcm"]
 std = [
   "cosmwasm-std/std",
   "cw-storage-plus/std",

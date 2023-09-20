@@ -29,6 +29,7 @@ mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+mod tracks;
 pub mod version;
 mod weights;
 mod xcmp;
@@ -54,6 +55,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
+pub use tracks::TracksInfo;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 
@@ -64,7 +66,7 @@ pub use frame_support::{
 	parameter_types,
 	traits::{
 		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		Randomness, StorageInfo,
+		Randomness, StorageInfo, StorageMapShim,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -605,6 +607,12 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards = 56,
 		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 59,
+
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
 
 		CallFilter: call_filter = 100,
 

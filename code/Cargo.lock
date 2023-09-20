@@ -1910,7 +1910,9 @@ dependencies = [
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-conviction-voting",
  "pallet-crowdloan-rewards",
+ "pallet-custom-origins",
  "pallet-democracy",
  "pallet-ibc",
  "pallet-indices",
@@ -1920,6 +1922,7 @@ dependencies = [
  "pallet-oracle",
  "pallet-preimage",
  "pallet-proxy",
+ "pallet-referenda",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -1928,6 +1931,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api 4.0.0-dev",
  "pallet-treasury",
  "pallet-utility",
+ "pallet-whitelist",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
@@ -8999,6 +9003,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-custom-origins"
+version = "1.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
@@ -10363,8 +10382,10 @@ dependencies = [
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-conviction-voting",
  "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
+ "pallet-custom-origins",
  "pallet-democracy",
  "pallet-ibc",
  "pallet-identity",
@@ -10376,6 +10397,7 @@ dependencies = [
  "pallet-pablo",
  "pallet-preimage",
  "pallet-proxy",
+ "pallet-referenda",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -10385,6 +10407,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting 1.0.0",
+ "pallet-whitelist",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",

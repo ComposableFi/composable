@@ -21,7 +21,7 @@ sp-runtime = "24.0.0"
 subxt = { version = "0.31.0", default-features = false, features = [
   "native",
   "jsonrpsee",
-  "substrate-compat"
+  "substrate-compat",
 ] }
 thiserror = "1.0.40"
 tokio = { version = "1.29.1", features = ["full"] }

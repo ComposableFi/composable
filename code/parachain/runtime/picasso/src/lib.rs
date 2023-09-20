@@ -28,6 +28,9 @@ extern crate alloc;
 pub mod assets;
 mod contracts;
 mod fees;
+mod tracks;
+pub use pallet_custom_origins;
+pub use tracks::TracksInfo;
 pub mod governance;
 pub mod ibc;
 mod migrations;
@@ -37,7 +40,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
-use frame_support::dispatch::DispatchError;
+use frame_support::{dispatch::DispatchError, traits::StorageMapShim};
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -50,7 +53,7 @@ use common::{
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
 	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -756,6 +759,12 @@ construct_runtime!(
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
 
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
+
 		CallFilter: call_filter = 100,
 
 		Cosmwasm: cosmwasm = 180,
@@ -821,6 +830,8 @@ mod benches {
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
 		[democracy, Democracy]
+		[oracle, Oracle]
+		[pallet_ibc, Ibc]
 	);
 }
 
