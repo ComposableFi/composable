@@ -109,7 +109,7 @@
               echo 'output = "json"' >> ~/.centauri/config/client.toml
               echo 'node = "${env.NODE}"' >> ~/.centauri/config/client.toml
               echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml
-            '';            
+            '';
           }];
         };
 
@@ -200,7 +200,7 @@
               NODE = "tcp://localhost:36657";
               FEE = "uatom";
             };
-            enterShell = ''            
+            enterShell = ''
               osmosisd set-env localnet
               echo 'chain-id = "osmosis-dev"' > ~/.osmosisd-local/config/client.toml 
               echo 'keyring-backend = "test"' >> ~/.osmosisd-local/config/client.toml 

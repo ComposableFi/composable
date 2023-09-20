@@ -261,10 +261,10 @@
             ${bashTools.export env.devnet}
             KEY=${cosmosTools.xcvm.osmosis}
 
-            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")        
-            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.centaurid/gateway_contract_address")        
-            CENTAURI_INTERPRETER_CODE_ID=$(cat "$HOME/.centaurid/interpreter_code_id")        
-            OSMOSIS_INTERPRETER_CODE_ID=$(cat "$CHAIN_DATA/interpreter_code_id")
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
+            CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
+            OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
 
             FORCE_CONFIG=$(cat << EOF
               {
@@ -332,7 +332,7 @@
                         "to": 3,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 300
+                            "seconds": 3000000
                           },
                           "ics_20": {
                             "source": "channel-0",
@@ -347,7 +347,7 @@
                         "to": 2,
                         "other": {
                           "counterparty_timeout": {
-                            "seconds": 300
+                            "seconds": 3000000
                           },
                           "ics_20": {
                             "source": "channel-0",
