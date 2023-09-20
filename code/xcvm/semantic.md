@@ -32,6 +32,32 @@ Here the choice is based made on gas optimizations, engineering standards, and s
 `CVM` is bridge agnostic, as long as the underlying bridging protocol is capable of generic message passing.
 
 
+### Basic functions
+
+Messages executed by the `CVM` follow the `Program` format.
+CVM account goes over program and executes instruction, hence it is `Interpreter`.
+CVM program are trees of instructions.
+
+CVM can do cross chain `Spawn`s.
+
+Spawn in simple case transfers funds to other chain, 
+in evolved case it exchanges assets to other assets,
+does raw opaque contract call,
+or spawn on next chain, 
+or transfer assets locally.
+
+Cross chain transfer is reserve transfer (escrow/mint protocol). Funds always end up on CVM accounts.
+
+Raw call can be filled with execution context.
+
+Exchange requires configuration, so it always can be done via Raw call.
+
+And call which may fail sets ResultRegister in CVM account.
+
+Each instruction is executed by the Interpreter in sequence, except Spawn. Spawns ase async and parallel. 
+Next Spawn does not waits for previous to finish.
+
+
 ### More formally CVM is:
 
 ```typescript
@@ -51,8 +77,21 @@ type Instruction = Transfer | Call | Spawn | Query | Exchange
 
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend 
 interface Exchange {
-
+    in: AssetAmount[]
+    min_out: AssetAmount[]
 }
+
+<Transfer>     ::= <Account> <Assets> | <Tip> <Assets>
+
+<Account>      ::= bytes
+<Assets>       ::= { <AssetId> : <Balance> }
+<AssetId>      ::= <GlobalId> | <LocalId>
+<GlobalId>     ::= u128
+<LocalId>      ::= bytes
+<Balance>      ::= <Ratio> | <Absolute> | <Unit>
+<Absolute>     ::= u128
+<Unit>         ::= u128 Ratio
+<Ratio>        ::= u128 u128
 ```
 
 ```mermaid
@@ -82,14 +121,6 @@ sequenceDiagram
     Gateway->>IBC: Route through IBC.
 ```
 
-## 2.2. Instruction Set
-
-Messages executed by the `CVM` follow the `Program` format.
-
-Each instruction is executed by the on-chain interpreter in sequence. The execution semantics are defined in section 2.4.5.
-
-The following sequence shows possible high-level implementations for each instruction.
-
 ```mermaid
 sequenceDiagram
     Interpreter->>ERC20 or CW20 or Native: Transfer
@@ -99,23 +130,10 @@ sequenceDiagram
     Interpreter->>Gateway: Query
 ```
 
-### 2.2.1. Transfer
 
-Transfers funds within a chain between accounts.
+## Detailed
 
-```
-<Transfer>     ::= <Account> <Assets> | <Tip> <Assets>
-
-<Account>      ::= bytes
-<Assets>       ::= { <AssetId> : <Balance> }
-<AssetId>      ::= <GlobalId> | <LocalId>
-<GlobalId>     ::= u128
-<LocalId>      ::= bytes
-<Balance>      ::= <Ratio> | <Absolute> | <Unit>
-<Absolute>     ::= u128
-<Unit>         ::= u128 Ratio
-<Ratio>        ::= u128 u128
-```
+Here are more details for each insuction, role and security model of things above.
 
 ### 2.2.2. Call
 
@@ -174,17 +192,6 @@ The packet data is defined as follows:
 <SpawnPackage>      ::= <InterpreterOrigin> <UserOrigin> <Salt> <Program> <Assets>
 ```
 
-### 2.2.3.1.1. Spawn send
-
-The bridge MUST escrow the **assets** transferred.
-
-Upon successful acknowledgement (see section 2.2.3.1.2.), the bridge MUST burn
-the previously escrowed **assets**.
-
-Upon failure acknowledgement (see section 2.2.3.1.2.) or timeout, the bridge
-MUST unescrow and return the **assets** to the **interpreter** (using the
-`InterpreterOrigin`).
-
 ### 2.2.3.1.2. Spawn receive
 
 Upon reception of a `SpawnPackage`, the CVM execution MUST happen on a
@@ -210,26 +217,9 @@ Queries register values of an `CVM` instance across chains. It sets the current 
 <QueryResult>  ::= {<RegisterValues>}
 ```
 
-### Exchange
-
-If underlying state machine and configuration of state machine support `Exchange` it can be executed.
-
-```typescript
-interface Exchange {
-    in: AssetAmount[]
-    min_out: AssetAmount[]
-}
-```
-
-`ResultRegister` is set after execution.
-
 ## 2.3. Balances
 
 Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller knows amount of the assets on the destination side: `Absolute`.
-
-## 2.4. Abstract Virtual Machine
-
-Each `CVM` instance is a bytecode interpreter with a limited set of specialized registers.
 
 ### 2.4.1 Registers
 
@@ -297,7 +287,7 @@ The version register contains the semantic version of the contract code, which c
 
 ### 2.4.5 Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. See section 2.6. for ownership semantics. Second, the TipRegister must be set. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
 
 If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
 
@@ -380,7 +370,6 @@ Gas and Bridging fees are handled during the invocation and at the `Router` leve
 <Transfer> <Tip> { USDC: 15000000000000 }
 ```
 
-This model is very much like Bitcoin's UTXOs, where the difference between inputs and outputs defines the tip. Here we are more explicit with the actual fee, which allows for more fine-grained control. Together with branching (to be implemented later), this fee model can be used to incentivize the relayer to precompute the outcome, and only submit the program if it were to succeed at the current state of the destination chain.
 
 # 5. Asset Registries
 
