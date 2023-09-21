@@ -8988,6 +8988,7 @@ dependencies = [
 name = "pallet-custom-origins"
 version = "1.0.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
