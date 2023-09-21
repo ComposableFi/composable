@@ -773,9 +773,6 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[multisig, Multisig]
 		[pallet_ibc, Ibc]
-		[whitelist, Whitelist]
-		[conviction_voting, ConvictionVoting]
-		[referenda, Referenda]
 	);
 }
 
