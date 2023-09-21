@@ -1,11 +1,13 @@
 use codec::{Decode, Encode};
 use composable_traits::{prelude::Deserialize, xcm::assets::RemoteAssetRegistryInspect};
-use core::fmt::{Display, Formatter};
+use core::{
+	convert::Infallible,
+	fmt::{Display, Formatter},
+};
 use pallet_ibc::ics20::{MemoData, ValidateMemo};
 use primitives::currency::{ForeignAssetId, PrefixedDenom};
 use scale_info::TypeInfo;
 use sp_core::ConstU64;
-use std::convert::Infallible;
 
 use crate::prelude::*;
 

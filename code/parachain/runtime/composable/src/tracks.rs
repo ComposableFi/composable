@@ -67,7 +67,6 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			min_support: Curve::make_linear(30, 30, percent(0), percent(50)),
 			#[cfg(not(feature = "fastnet"))]
 			min_support: Curve::make_linear(28, 28, percent(0), percent(50)),
-			
 		},
 	),
 	(
@@ -93,13 +92,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(not(feature = "fastnet"))]
 			min_enactment_period: 10 * MINUTES,
 			#[cfg(feature = "fastnet")]
-			min_approval: Curve::make_reciprocal(
-				1,
-				30,
-				percent(96),
-				percent(50),
-				percent(100),
-			),
+			min_approval: Curve::make_reciprocal(1, 30, percent(96), percent(50), percent(100)),
 			#[cfg(not(feature = "fastnet"))]
 			min_approval: Curve::make_reciprocal(
 				16,
