@@ -184,6 +184,9 @@ runtime-benchmarks = [
   "oracle/runtime-benchmarks",
   "pablo/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
+  "pallet-referenda/runtime-benchmarks",
+  "pallet-conviction-voting/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "proxy/runtime-benchmarks",
   "scheduler/runtime-benchmarks",
@@ -194,6 +197,7 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vesting/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
+  "pallet-custom-origins/runtime-benchmarks",
 ]
 
 std = [

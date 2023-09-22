@@ -156,6 +156,10 @@ runtime-benchmarks = [
   "pallet-ibc/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "asset-tx-payment/runtime-benchmarks",
+  "pallet-referenda/runtime-benchmarks",
+  "pallet-conviction-voting/runtime-benchmarks",
+  "pallet-whitelist/runtime-benchmarks",
+  "pallet-custom-origins/runtime-benchmarks",
 ]
 std = [
   "asset-tx-payment/std",
