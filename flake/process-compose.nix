@@ -237,8 +237,8 @@
                 readiness_probe = {
                   exec.command = ''
                     curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://localhost:29988
-                  '' // parachain-startup;
-                };
+                  '';
+                } // parachain-startup;
               };
               osmosis-centauri-hermes-init = {
                 command = self'.packages.osmosis-centauri-hermes-init;
