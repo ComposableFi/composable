@@ -282,8 +282,6 @@ function execute_program(caller: Account, program: Program) {
 }
 ```
 
-```
-
 ## Detailed
 
 Here are more details for each instructions, roles and security model of things above.
