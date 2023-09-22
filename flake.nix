@@ -58,7 +58,7 @@
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/1b1a2ff37b2dbdd9546da62c8a0b24d0a638ce0a";
+        "github:ComposableFi/composable-ibc/57eaeb6415e116fafb0e1050fd75506997bc49c6";
     };
   };
 
