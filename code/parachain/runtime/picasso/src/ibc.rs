@@ -72,6 +72,7 @@ parameter_types! {
 	pub const IbcPalletId: PalletId = PalletId(*b"cntr_ibc");
 }
 
+use common::ibc::RawMemo;
 use pallet_ibc::{ics20::IbcMemoHandler, ics20_fee::NonFlatFeeConverter};
 
 type CosmwasmRouter = cosmwasm::ibc::Router<Runtime>;
@@ -132,7 +133,7 @@ impl pallet_ibc::Config for Runtime {
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
 	type HandleMemo = IbcMemoHandler<xcvm_memo_processing::XcvmMemoHandler<(), Runtime>, Runtime>;
-	type MemoMessage = alloc::string::String;
+	type MemoMessage = RawMemo;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;

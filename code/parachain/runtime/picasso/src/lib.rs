@@ -950,9 +950,6 @@ mod benches {
 		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
-		[whitelist, Whitelist]
-		[conviction_voting, ConvictionVoting]
-		[referenda, Referenda]
 	);
 }
 

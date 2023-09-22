@@ -197,6 +197,7 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vesting/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
+  "pallet-custom-origins/runtime-benchmarks",
 ]
 
 std = [
