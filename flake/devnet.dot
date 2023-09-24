@@ -1,10 +1,10 @@
-digraph arion_xcvm {
+digraph devnet {
     graph [fontname = "Handlee"];
     node [fontname = "Handlee"];
     edge [fontname = "Handlee"];    
     Picasso [shape = box3d; label = "Picasso B";];
     Rococo [shape = box3d;];
-    Juno [shape = box3d;];
+    Osmosis [shape = box3d;];
     sibling [shape = box3d;label = "Picasso A";];
     Postgres [shape = cylinder;];
     Redis [shape = cylinder;];

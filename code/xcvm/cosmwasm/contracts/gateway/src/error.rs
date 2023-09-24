@@ -21,6 +21,8 @@ pub enum ContractError {
 	UnsupportedNetwork,
 	#[error("Ics20 not found")]
 	ICS20NotFound,
+	#[error("Failed ibc transfer {0}")]
+	FailedIBCTransfer(String),
 	#[error("Could not serialize to JSON")]
 	FailedToSerialize,
 	#[error("Asset not been found in the registry.")]

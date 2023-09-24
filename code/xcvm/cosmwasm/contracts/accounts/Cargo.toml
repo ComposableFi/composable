@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM Virtual Wallet Accounts contract"
+description = "CVM Virtual Wallet Accounts contract"
 edition = "2021"
 name = "cw-xc-accounts"
 repository = "https://github.com/ComposableFi/composable"

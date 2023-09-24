@@ -63,6 +63,18 @@ mod tests {
 		let osmo: String =
 			hash_denom_trace(&PrefixedDenom::from_str("transfer/channel-3/uosmo").expect("const"));
 		assert_eq!(osmo, "ibc/47BD209179859CDE4A2806763D7189B6E6FE13A17880FE2B42DE1E6C1E329E23");
+
+		let dot: String = hash_denom_trace(
+			&PrefixedDenom::from_str("transfer/channel-2/transfer/channel-15/6").expect("const"),
+		);
+		assert_eq!(dot, "ibc/6E41D54C24A4ACDDC1F2A8BF110867421C15E03CFD4A1B6B698570AC09A9EBF0");
+		let dot: String = hash_denom_trace(
+			&PrefixedDenom::from_str(
+				"transfer/channel-1279/transfer/channel-2/transfer/channel-15/6",
+			)
+			.expect("const"),
+		);
+		assert_eq!(dot, "ibc/2A67C940FE5F9EDC57B8496E02654C06D451DE372EC3B7E7E412F121EA92E33A");
 	}
 }
 

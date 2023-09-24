@@ -1,4 +1,7 @@
-### CW specifics 
+# Overview 
+
+
+In general CVM on CW-IBC is very similar, but more abstract version of https://github.com/osmosis-labs/osmosis/tree/main/cosmwasm/contracts/crosschain-swaps
 
 
 ## How to run local Cosmos nodes(devnet) with CVM 
@@ -53,29 +56,39 @@ cargo run --package cw-xc-interpreter --bin interpreter
 
 For query/execute message look into official CosmWasm docs, for events, look at node names in `events.json`. 
 
-## How to configure
+## How to deploy and configure mainnet
 
-Shell into relevant net, and run (with relevant modifications):
+```
+nix develop .#centauri-mainnet --impure
+``````
 
-```sh
-osmosisd tx wasm execute "osmo18tq76p8zmj49jr5zmsytulrzluljvd6m7he2uavvy6f8lsp77jwqwr0z6a" "$(cat code/CVM/cvm.json)" --gas=427753 --fees=2000$FEE --from=dz
+```
+$BINARY tx wasm store "$GATEWAY_WASM_FILE" --from dz --gas=5305232
+$BINARY tx wasm instantiate 13 '{"admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k", "network_id" : 2}' --label "cvm_gateway_2" --admin centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k --gas=400000 --from=dz
+
+$BINARY tx wasm store "$INTERPRETER_WASM_FILE" --from dz --gas=5305232
+
+$BINARY tx wasm instantiate 13 '{"admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k", "network_id" : 2}' --label "cvm_gateway_2" --admin centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k --from=dz
+
+
+$BINARY tx wasm execute centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g "$(cat cvm.json)" --from=dz -y --gas=500000
+```
+
+```
+nix develop .#osmosis-mainnet --impure
+```
+
+```
+$BINARY tx wasm store "$GATEWAY_WASM_FILE" --from dz --gas=5305232 --fees=20000uosmo -y
+
+$BINARY tx wasm instantiate 163 '{"admin": "osmo1u2sr0p2j75fuezu92nfxg5wm46gu22yw9ezngh", "network_id" : 3}' --label "cvm_gateway_2" --admin osmo1u2sr0p2j75fuezu92nfxg5wm46gu22yw9ezngh --gas=400000 --from=dz --fees=1000uosmo
+
+$BINARY tx wasm store "$INTERPRETER_WASM_FILE" --from dz --gas=5305232 --fees=20000uosmo
+
+$BINARY tx wasm execute osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql "$(cat cvm.json)" --from=dz -y --gas=500000 --fees=1500uosmo
 ```
 
 
-
-#### Stake on Stride
-
-Program to `Stake` on Stride and transfer staked token to Osmosis
-is detected as pattern expressed in CVM.
-
-That part of program is translated to IBC calls to Stride without contracts deployed.
-
-So this program is possible
-```
-Osmosis ATOM -> 
-Spawn(Stride, ATOM) -> Stake(ATOM) + Spawn(Osmosis, stATOM) 
--> Spawn(Centauri, stATOM)  
-```
 
 ### ICS-20 Memo as `Spawn` carrier
 

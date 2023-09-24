@@ -16,7 +16,7 @@ use xc_core::{
 
 const CONTRACT_NAME: &str = "composable:xcvm-pingpong";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const XCVM_PINGPONG_EVENT_PREFIX: &str = "xcvm.pingpong";
+pub const XCVM_PINGPONG_EVENT_PREFIX: &str = "cvm.pingpong";
 
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg) -> Result {

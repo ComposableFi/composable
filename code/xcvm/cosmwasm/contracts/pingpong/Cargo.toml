@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-description = "XCVM Ping Pong contract"
+description = "CVM Ping Pong contract"
 edition = "2021"
 name = "cw-xc-pingpong"
 repository = "https://github.com/ComposableFi/composable"

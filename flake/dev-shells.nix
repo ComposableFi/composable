@@ -85,6 +85,34 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
+        centauri-devnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [rec {
+            packages = [ self'.packages.centaurid ];
+            env = {
+              FEE = "ppica";
+              NETWORK_ID = 2;
+              CHAIN_ID = "centauri-dev";
+              DIR = "devnet/.centaurid";
+              BINARY = "centaurid";
+              NODE = "tcp://localhost:26657";
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+            };
+            enterShell = ''
+              rm --force --recursive ~/.centauri
+              mkdir --parents ~/.centauri/config
+              echo 'keyring-backend = "test"' >> ~/.centauri/config/client.toml
+              echo 'output = "json"' >> ~/.centauri/config/client.toml
+              echo 'node = "${env.NODE}"' >> ~/.centauri/config/client.toml
+              echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml
+            '';
+          }];
+        };
+
         centauri-testnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
@@ -140,7 +168,10 @@
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
-            enterShell = "osmosisd set-env mainnet";
+            enterShell = ''
+              rm ~/.osmosisd/config/client.toml 
+              osmosisd set-env mainnet
+            '';
           }];
         };
 
@@ -156,6 +187,36 @@
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               FEE = "uatom";
             };
+          }];
+        };
+
+        osmosis-devnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [rec {
+            packages = [ self'.packages.osmosisd ];
+            env = osmosis.env.testnet // {
+              INTERPRETER_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+              GATEWAY_WASM_FILE =
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              NODE = "tcp://localhost:36657";
+              FEE = "uatom";
+            };
+            enterShell = ''
+              osmosisd set-env localnet
+              echo 'chain-id = "osmosis-dev"' > ~/.osmosisd-local/config/client.toml 
+              echo 'keyring-backend = "test"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'output = "json"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'broadcast-mode = "block"' >> ~/.osmosisd-local/config/client.toml 
+              echo 'human-readable-denoms-input = false' >> ~/.osmosisd-local/config/client.toml 
+              echo 'human-readable-denoms-output = false' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas-prices = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'gas-adjustment = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'fees = ""' >> ~/.osmosisd-local/config/client.toml 
+              echo 'node = "tcp://localhost:36657"' >> ~/.osmosisd-local/config/client.toml 
+            '';
           }];
         };
       };

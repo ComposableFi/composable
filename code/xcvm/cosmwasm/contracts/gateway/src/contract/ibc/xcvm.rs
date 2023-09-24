@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::{
 	auth,
-	contract::EXEC_PROGRAM_REPLY_ID,
+	contract::ReplyId,
 	error::{ContractError, Result},
 	events::make_event,
 	msg,
@@ -105,7 +105,7 @@ pub fn ibc_packet_receive(
 			tip: msg.relayer,
 		};
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
-		Ok(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID))
+		Ok(SubMsg::reply_always(msg, ReplyId::ExecProgram.into()))
 	})();
 	Ok(match msg {
 		Ok(msg) => response.set_ack(XCVMAck::Ok).add_submessage(msg),

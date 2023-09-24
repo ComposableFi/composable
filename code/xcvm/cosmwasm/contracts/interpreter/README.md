@@ -1,8 +1,10 @@
-# XCVM Interpreter
+# CVM Interpreter
 
-Receives user funds.
+Receives and stores user funds.
+Fully owned by user.
+Delegates cross chain execution to gateway.
 
-Instantiated as many instances of the XCVM interpreter contract. On some chains, we can use probabilistically generated sub_accounts, but for most, we instantiate a contract instance.
+Instantiated as many instances of the CVM interpreter contract. On some chains, we can use probabilistically generated sub_accounts, but for most, we instantiate a contract instance.
 
 ## Events
 

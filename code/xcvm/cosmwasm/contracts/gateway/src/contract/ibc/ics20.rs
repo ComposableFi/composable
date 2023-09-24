@@ -2,7 +2,7 @@
 //! Allows to map asset identifiers, contracts, networks, channels, denominations from, to and on
 //! each chain via contract storage, precompiles, host extensions.
 //! handles PFM and IBC wasm hooks
-use crate::{network, prelude::*};
+use crate::{contract::ReplyId, network, prelude::*};
 use cosmwasm_std::{
 	ensure_eq, wasm_execute, Binary, BlockInfo, Coin, Deps, DepsMut, Env, MessageInfo, Response,
 	Storage, SubMsg,
@@ -16,7 +16,6 @@ use xc_core::{
 
 use crate::{
 	auth,
-	contract::EXEC_PROGRAM_REPLY_ID,
 	error::{ContractError, Result},
 	events::make_event,
 	network::load_this,
@@ -31,9 +30,10 @@ pub(crate) fn handle_bridge_forward(
 	block: BlockInfo,
 ) -> Result {
 	deps.api.debug(&format!(
-		"xcvm::gateway:: forwarding over IBC ICS20 MEMO {}",
+		"cvm::gateway::bridge::forward::ibc::ics20::memo {}",
 		&serde_json_wasm::to_string(&msg)?
 	));
+
 	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
 	// algorithm to handle for multihop
 	// 1. recurse on program until can with memo
@@ -42,6 +42,7 @@ pub(crate) fn handle_bridge_forward(
 	let (local_asset, amount) = msg.msg.assets.0.get(0).expect("proved above");
 
 	let route: IbcIcs20Route = get_route(deps.storage, msg.to, *local_asset)?;
+	state::tracking::bridge_lock(deps.storage, (msg.clone(), route.clone()))?;
 
 	let asset = msg
 		.msg
@@ -59,10 +60,9 @@ pub(crate) fn handle_bridge_forward(
 		assets: vec![asset].into(),
 	};
 
-	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20 route {}",
-		&serde_json_wasm::to_string(&route)?
-	));
+	deps.api
+		.debug(&format!("cvm::gateway::ibc::ics20 route {}", &serde_json_wasm::to_string(&route)?));
+
 	let mut event = make_event("bridge")
 		.add_attribute("to_network_id", msg.to.to_string())
 		.add_attribute(
@@ -82,15 +82,11 @@ pub(crate) fn handle_bridge_forward(
 
 	let coin = Coin::new(amount.0, route.local_native_denom.clone());
 
-	let (ret_msg, tracker) =
-		to_cw_message(deps.as_ref(), deps.api, coin.clone(), route, packet, block)?;
-	state::tracking::track(
-		deps.storage,
-		msg.interpreter_origin,
-		tracker,
-		state::tracking::TrackedState { assets: vec![coin] },
-	)?;
-	Ok(Response::default().add_event(event).add_message(ret_msg))
+	let msg = to_cw_message(deps.as_ref(), deps.api, coin, route, packet, block)?;
+
+	Ok(Response::default()
+		.add_event(event)
+		.add_submessage(SubMsg::reply_on_success(msg, ReplyId::TransportSent.into())))
 }
 
 /// given target network and this network assets identifier,
@@ -149,7 +145,7 @@ pub(crate) fn ics20_message_hook(
 	let packet: XcPacket = msg.packet;
 	ensure_anonymous(&packet.program)?;
 	deps.api.debug(&format!(
-		"xcvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
+		"cvm::gateway::ibc::ics20:: received assets {:?}, packet assets {:?}",
 		&info.funds, &packet.assets
 	));
 
@@ -170,7 +166,7 @@ pub(crate) fn ics20_message_hook(
 	let msg =
 		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
-	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, EXEC_PROGRAM_REPLY_ID)))
+	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, ReplyId::ExecProgram.into())))
 }
 
 fn ensure_anonymous(program: &XcProgram) -> Result<()> {
