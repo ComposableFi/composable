@@ -166,19 +166,30 @@ type Tag = Uint8Array
 /// allows one user to have several interpreters to isolate funds and allowances
 type Salt = Uint8Array
 
-type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond
-
-// time locks tokens, potentially getting some tokens out
-interface Bond {
-    exchange : Exchange 
-    time: Time
-}
+type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order 
 
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend 
 interface Exchange {
     in: AssetAmount[]
     min_out: AssetAmount[]
 }
+
+// time locks tokens, potentially getting some tokens out
+interface Bond {
+    exchange : Exchange 
+    /// maximum time for bonding, so as close as possible to it 
+    time: Duration
+}
+
+/// exchange which may happen in future
+/// puts into ResultRegister either cross chain error error or PositionId
+interface Order {
+    exchange : Exchange
+    timeout : Duration
+    partial: Ratio[]
+}
+
+type PositionId = Uint128 
 
 /// cross chain transaction/tracing identifier
 interface ProgramInvocation {
@@ -198,10 +209,16 @@ interface Spawn {
 /// is target chain dependant
 type Payload = Uint8Array
 
-/// moves Result into program Data which propagate to all Spawns
-interface Query {
-    key: String
-}
+/// copies RegisterValue into program stack which drained into first Spawn 
+type Query = RegisterValue | Id
+
+type RegisterValue = RegisterValue[]
+
+type RegisterValue = ResultRegister | IPRegister | TipRegister | SelfRegister | VersionRegister
+
+type IPRegister = Uint8
+
+type TipRegister = Account
 
 interface Call {
     payload : Payload
@@ -223,9 +240,11 @@ interface AssetAmount {
 
 type Account = Uint8Array
 
-/// Self is account of interpeter
+/// Self is account of interpreter
 type Self = Account
-type BindingValue = Self | Tip | Result | AssetAmount | GlobalId
+
+/// Pop - pops value from program stack into binding placeholder
+type BindingValue = Self | Tip | Result | AssetAmount | GlobalId | Pop
 
 /// transfer from interpreter account to
 interface Transfer {
@@ -261,7 +280,20 @@ interface SpawnPackage = {
     salt: Salt
     program : Program
     assets: Assets
+    stack: ResultRegister[]
 }
+
+
+type ResultRegister = Error | ExecutionResult
+
+type Error = CallError | TransferError | SpawnError | QueryError
+type ExecutionResult = Ok | bytes
+type Ok = '0'
+
+
+type Owners = Identity[]
+type Identity = [Network, Account]
+```
 
 /// this happens in interpreter
 function execute_program(caller: Account, program: Program) {
@@ -428,12 +460,6 @@ There no in between scenario when fail spread onto to chains.
 Queries register values of an `CVM` instance across chains. It sets the current `Result Register` to `QueryResult`. on the semantics of registers and `RegisterValues`.
 
 
-```
-<Query>        ::= <Network> <Account>
-<QueryResult>  ::= {<RegisterValues>}
-```
-
-
 ###  Balances
 
 Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`.  or if the caller knows amount of the assets on the destination side: `Absolute`.
@@ -442,35 +468,10 @@ Amounts of assets can be specified using the `Balance` type. This allows foreign
 
 Each interpreter keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
 
-```
-<RegisterValues> ::= {<RegisterValue>}
-<RegisterValue>  ::= <ResultRegister> | <IPRegister> | <TipRegister> | <SelfRegister> | <VersionRegister>
-```
-
 #### Result Register
 
 The result register contains the result of the last executed instruction.
 
-```
-<ResultRegister> ::=
-    <Error>
-    | <ExecutionResult>
-
-<Error ::=
-    <CallError>
-    | <TransferError>
-    | <SpawnError>
-    | <QueryError>
-
-<ExecutionResult> ::=
-    <Ok> | bytes
-<Ok> ::= '0'
-
-<CallError> ::= bytes
-<TransferError> ::= bytes
-<SpawnError> ::= bytes
-<QueryError> ::= bytes
-```
 
 If `ResultRegister` was set to `Error` and there is `Restoration` register contains CVM program it will be executed.
 
@@ -478,25 +479,14 @@ If `ResultRegister` was set to `Error` and there is `Restoration` register conta
 
 The instruction pointer register contains the instruction pointer of the last executed program and is updated during program execution. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
 
-```
-<IPRegister> ::= u32
-```
 
 #### Tip Register
 
 The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for interpreter execution.
 
-```
-<TipRegister> ::= <Account>
-```
-
 #### Self Register
 
 The self register contains the `Account` of the interpreter. Most implementations will not need to use storage but have access to special keywords, such as `this` in Solidity.
-
-```
-<SelfRegister> ::= <Account>
-```
 
 ####  Version Register
 
@@ -531,17 +521,17 @@ If no interpreter instance has been created for a given caller, the call to the 
 **Example**
 
 For a given CVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against. Note that the `Salt` is not additive and only the composite `Network Account` is forwarded to remote chains as the user origin:
-```
-Spawn A 0x01 [          // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x1)
-    Call 0x1337,                                     // Call instruction executed on A
-    Spawn B 0x02 [] {}, // Sub-program spawned on B, with 0x02 as salt, the origin for the instructions is (A, AccountOnA, 0x2)
-] {}
+```kdl
+spawn network=A salt=0x01 { // the origin for the instructions is (A, AccountOnA, 0x1)
+    call 0x1337 // Call instruction executed on A
+    spawn network="B" salt=0x02 {} // Sub-program spawned on B, with 0x02 as salt, the origin for the instructions is (A, AccountOnA, 0x2) 
+}
 ```
 Possible usage is to allow one program execution to act on state of other program execution to restore funds. 
 
 
 In the above CVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's interpreter origin using a fine grained mode. The following program is an example on how we can spread a salt:
-```
+```kdl
 Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
     Call 0x1337,                                        // Call instruction executed on A
     Spawn B 0x0102 [] {}, // Sub-program spawned on B, with 0x0102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
@@ -549,7 +539,7 @@ Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, th
 ```
 
 In next program, all spawned instances on all chains share state (including assets):
-```
+```kdl
 Spawn A 0x01 [
     Call 0x1337,
     Spawn B 0x01 [] {}, // Sub-program spawned on B, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01) allows to share 
@@ -559,11 +549,6 @@ Spawn A 0x01 [
 ### Ownership
 
 interpreter instances maintain a set of owners.
-
-```
-<Owners> ::= {<Identity>}
-<Identity> ::= <Network> <Account>
-```
 
 Programs are only executed by the interpreter if the caller is in the set of owners.
 
@@ -597,7 +582,7 @@ Each chain contains data which maps assets to their local representations, such 
 
 Propagating updates across registries is handled by the `CVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
-# 7. Security Considerations
+## Security Considerations
 
 Ensuring that the caller is an owner is an incredibly important check, as the owner can delegate calls through the interpreter, directly owning all state, funds, and possible (financial) positions associated with the interpreter account. Since each interpreter has their own `Identity`, they might own other accounts as well. Thus the owners control more accounts than just the contract storing the owners.
 
@@ -608,8 +593,6 @@ Adding an owner to the set of owners grants them the ability to evict other owne
 Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the interpreter account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
 
 Using bridges is equivalent to adding them as owners on your interpreter instance.
-
-## Security layers
 
 In general different security can be applied to different programs.
 

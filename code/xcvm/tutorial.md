@@ -12,7 +12,10 @@ You are aware of Bech32 encoding of accounts and IBC prefixed assets in Cosmos.
 
 ### On mainnet chain
 
-Mainnets has `osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql` and `centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g` gateway deployed.
+| chain     | stage   | id                                                                  |
+| --------- | ------- | ------------------------------------------------------------------- |
+| osmosis-1 | mainnet | osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql     |
+| centauri  | mainnet | centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g |
 
 On devnets, there just CVM conracts, so can get their address via logs in `/tmp/composable-devnet/` or via RPC.
 
