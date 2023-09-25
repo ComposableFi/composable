@@ -1,5 +1,5 @@
-[submodule "evm/cvm/lib/forge-std"]
-	path = evm/cvm/lib/forge-std
+[submodule "code/xcvm/evm/lib/forge-std"]
+	path = code/xcvm/evm/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
 [submodule "code/xcvm/evm/lib/openzeppelin-contracts"]
 	path = code/xcvm/evm/lib/openzeppelin-contracts
