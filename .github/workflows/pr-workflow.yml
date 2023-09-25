@@ -98,7 +98,7 @@ jobs:
       group: ${{ inputs.github_workflow }}-lfs-check-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3.2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
