@@ -4,3 +4,6 @@
 [submodule "code/xcvm/evm/lib/openzeppelin-contracts"]
 	path = code/xcvm/evm/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "code/xcvm/evm/lib/protobuf3-solidity-lib"]
+	path = code/xcvm/evm/lib/protobuf3-solidity-lib
+	url = https://github.com/lazyledger/protobuf3-solidity-lib
