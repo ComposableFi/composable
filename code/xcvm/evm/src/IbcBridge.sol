@@ -11,7 +11,7 @@ import "./ibc/lib/Bytes.sol";
 import "openzeppelin-contracts/contracts/utils/Context.sol";
 import "./interfaces/IRouter.sol";
 
-import "@lazyledger/protobuf3-solidity-lib/contracts/ProtobufLib.sol";
+import "protobuf3-solidity-lib/ProtobufLib.sol";
 import "./interfaces/IIbcBridge.sol";
 import "./libraries/SDK.sol";
 

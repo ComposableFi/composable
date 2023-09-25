@@ -1,0 +1,34 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "linkReferences": {}
+  },
+  "ast": {
+    "absolutePath": "script/Counter.s.sol",
+    "id": 25727,
+    "exportedSymbols": {},
+    "nodeType": "SourceUnit",
+    "src": "39:201:24",
+    "nodes": [
+      {
+        "id": 25726,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:24",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".14"
+        ]
+      }
+    ],
+    "license": "UNLICENSED"
+  },
+  "id": 24
+}
