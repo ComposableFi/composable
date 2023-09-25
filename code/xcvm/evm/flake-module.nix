@@ -8,8 +8,6 @@
       packages = rec {
         evm-cvm-gateway = pkgs.stdenv.mkDerivation rec {
           name = "evm-cvm-gateway";
-          runtimeDependencies = [ pkgs.solc ];
-          buildInputs = [ pkgs.solc ];
           FOUNDRY_SOLC="${pkgs.solc}/bin/solc";
           nativeBuildInputs = [ self'.packages.forge pkgs.solc ];
           pname = "evm-cvm-gateway";
@@ -18,11 +16,16 @@
           buildPhase = "true";
           installPhase = ''
             ls /build
+            echo "12321321321321321"
             ls /build/evm/
+            echo "asdsadsads"
             ls /build/evm/lib/
-            exit 42
+            echo "zxczxcxzczxczxczxcxc"
+            ls $src/lib
+
             mkdir --parents $out/lib
-            forge build --offline --out $out/lib 
+            exit
+            forge build --offline --out $out/lib --lib-paths $src/lib 
           '';
           dontFixup = true;
           dontStrip = true;

@@ -1,6 +1,3 @@
-[submodule "code/xcvm/evm/lib/forge-std"]
-	path = code/xcvm/evm/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
 [submodule "code/xcvm/evm/lib/openzeppelin-contracts"]
 	path = code/xcvm/evm/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
