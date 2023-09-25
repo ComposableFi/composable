@@ -15,7 +15,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp --recursive --force $src $out
+            cp --recursive --force $src/ $out
           '';
         };
         forge-std = pkgs.stdenv.mkDerivation {
@@ -28,7 +28,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp --recursive --force $src $out
+            cp --recursive --force $src/ $out
           '';
         };
 
@@ -42,7 +42,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp --recursive --force $src $out
+            cp --recursive --force $src/ $out
           '';
         };
 
