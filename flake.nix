@@ -69,6 +69,8 @@
       url =
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
+
+    ethereum = { url = "github:nix-community/ethereum.nix"; };
   };
 
   nixConfig = {
@@ -103,6 +105,7 @@
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
         ./code/xcvm/flake-module.nix
+        ./code/xcvm/evm/flake-module.nix
         ./docs/docs.nix
         ./flake/all.nix
         ./flake/nixos-configuration.nix
@@ -115,6 +118,7 @@
         ./flake/docker.nix
         ./flake/fmt.nix
         ./flake/hermes.nix
+        ./flake/ethereum.nix
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix

@@ -39,6 +39,7 @@
           zombienet
           self'.packages.bech32cli
           nixos-rebuild
+          forge
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;

@@ -8,10 +8,10 @@ import "./ibc/core/IBCHost.sol";
 import "./ibc/core/types/App.sol";
 import "./ibc/lib/strings.sol";
 import "./ibc/lib/Bytes.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "openzeppelin-contracts/contracts/utils/Context.sol";
 import "./interfaces/IRouter.sol";
 
-import "@lazyledger/protobuf3-solidity-lib/contracts/ProtobufLib.sol";
+import "protobuf3-solidity-lib/ProtobufLib.sol";
 import "./interfaces/IIbcBridge.sol";
 import "./libraries/SDK.sol";
 
