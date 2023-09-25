@@ -1,6 +1,6 @@
 # Centauri
 
-_This page provides an overview of the Centauri chain, which is a Tendermint-based blockchain serving as a core module of [Centauri](../products/centauri-overview.md) - Composable's IBC-based transfer protocol._
+_This page provides an overview of the Centauri chain, which is a Tendermint-based blockchain serving as a core module of [Centauri](../products/composable-ibc.md) - Composable's IBC-based transfer protocol._
 
 ## Background
 The motivation behind establishing this blockchain is the realization that building bridges to each individual Cosmos chain is a time-consuming process. Currently, we need to wait for Cosmos chains to upgrade to SDK v0.47 and the IBC v7 update which includes the ICS-8 Wasm module (currently unreleased) and integrating the Grandpa light client written in CosmWasm. **Furthermore, this chain serves a critical role in our future IBC connections as we expand the reach of Centauri.**

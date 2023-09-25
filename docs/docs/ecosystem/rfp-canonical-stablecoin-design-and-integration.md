@@ -4,11 +4,11 @@
 
 Composable Finance is seeking proposals from qualified blockchain developers 
 to design and integrate a **Proof-of-Concept** for a custom stablecoin for multi-chain usage 
-using our proprietary [Cross-Chain Virtual Machine(XCVM)]. 
+using our proprietary [Composable Virtual Machine(CVM)]. 
 The goal of this project is to allow projects to create and maintain mint and burn privileges 
 for issuing truly canonical stablecoins across different chains.
 
-[Cross-Chain Virtual Machine(XCVM)]: https://docs.composable.finance/products/xcvm
+[Composable Virtual Machine(CVM)]: https://docs.composable.finance/products/cvm
 
 ## Requirements & Scope of Work:
 

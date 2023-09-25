@@ -265,7 +265,6 @@
            collapsible: false,
            items: [
              "ecosystem/rfp-canonical-stablecoin-design-and-integration",
-             "ecosystem/rfp-explorer",
            ],
          },
          "ecosystem/composable-grants",

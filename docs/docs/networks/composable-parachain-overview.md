@@ -55,14 +55,12 @@ and the most efficient deployment of functions across suitable ecosystems.
 Composable’s Virtual Machine [(CVM)] will be able to leverage the pallets from Picasso and Composable to 
 facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances.
 
-[(CVM)]: ../products/xcvm.md
+[(CVM)]: ../products/cvm.md
 
 ### Centauri - Composable’s trustless bridging solution
 
-Composable is integrated with [Centauri], a trustless bridge that implements and expands the inter-blockchain communication (IBC) protocol outside of Cosmos. This will support cross-ecosystem communication between IBC-enabled blockchains, 
+[Composable IBC](../products/composable-ibc.md) a trustless bridge that implements and expands the inter-blockchain communication (IBC) protocol outside of Cosmos. This will support cross-ecosystem communication between IBC-enabled blockchains, 
 Polkadot, and other ecosystems such as Ethereum and NEAR Protocol.
-
-[Centauri]: ../products/centauri-overview.md
 
 ## How the Composable Parachain synergizes with Picasso?
 
@@ -93,5 +91,5 @@ optimal volume flow and liquidity distribution furthermore bolstered and facilit
 
 [Picasso]: ./picasso-parachain-overview.md
 [oracle services]: ../products/apollo-overview.md
-[trustless bridging infrastructure]: ../products/centauri-overview.md
+[trustless bridging infrastructure]: ../products/composable-ibc.md
 [Pablo]: ../products/pablo-overview.md

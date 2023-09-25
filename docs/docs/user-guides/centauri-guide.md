@@ -1,6 +1,6 @@
-# How to LP & stake DOT on Pablo via Centauri
+# How to LP & stake DOT on Pablo via Trustless Zone
 
-[Centauri](../products/centauri-overview.md), as the first transfer protocol between Kusama (KSM) and Polkadot (DOT), unlocks the potential for a seamless flow of liquidity between parachains on both networks. Token transfers are a prime example of this, enabling increased liquidity across protocols on both chains. This guide outlines the steps involved in transferring DOT from Polkadot to Picasso using XCM and IBC to provide liquidity on [Pablo](../products/pablo-overview.md).
+[Composable IBC](../products/composable-ibc.md), as the first transfer protocol between Kusama (KSM) and Polkadot (DOT), unlocks the potential for a seamless flow of liquidity between parachains on both networks. Token transfers are a prime example of this, enabling increased liquidity across protocols on both chains. This guide outlines the steps involved in transferring DOT from Polkadot to Picasso using XCM and IBC to provide liquidity on [Pablo](../products/pablo-overview.md).
 
 :::tip DOT Pools on Pablo are live!
 
@@ -37,7 +37,7 @@ Enter the amount of DOT you wish to transfer to Composable. Keep in mind to leav
 
 ![enter_dot_amount](./images-centauri-guide/centauri-guide-4.png)
 
-Confirm the transaction. The fees for transferring through Centauri are paid by utilizing the tokens being transferred, which have a value of 0.4% of the notional amount. In the future, this will be switched to a $10 fee in the case where there is a pool on Pablo. 
+Confirm the transaction. The fees for transferring through Trustless Zone are paid by utilizing the tokens being transferred, which have a value of 0.4% of the notional amount. In the future, this will be switched to a $10 fee in the case where there is a pool on Pablo. 
 
 ![confirm_xcm](./images-centauri-guide/centauri-guide-5.png)
 
