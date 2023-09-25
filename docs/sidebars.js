@@ -162,7 +162,7 @@
      "networks/centauri-chain",
    ],
  
-   composable_ibc: [
+   centauri: [
      "products/composable-ibc",
      "products/composable-ibc/cosmos-ibc",
      "products/composable-ibc/polkadot-kusama-ibc",
@@ -173,7 +173,7 @@
      "products/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
    ],
 
-   composable_vm: [
+   technology: [
      "products/cvm",
    ],
    develop: [
