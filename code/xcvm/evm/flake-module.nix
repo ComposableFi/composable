@@ -1,8 +1,7 @@
 { self, ... }: {
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
-    let
-      nix = " --offline --out $out/lib ";
+    let nix = " --offline --out $out/lib ";
     in {
 
       packages = rec {
@@ -52,8 +51,9 @@
           src = ./.;
           phases = [ "installPhase" ];
           installPhase = ''
-            mkdir -p $out/lib
+            mkdir --parents $out/lib
             cp --no-preserve=mode,ownership --dereference  -rf $src/* $out
+            ls "${openzeppelin-contracts}"
             cp --no-preserve=mode,ownership --dereference  -rf "${openzeppelin-contracts}" $out/lib/openzeppelin-contracts
             cp --no-preserve=mode,ownership --dereference  -rf "${forge-std}" $out/lib/forge-std
             cp --no-preserve=mode,ownership --dereference  -rf "${protobuf3-solidity-lib}" $out/lib/protobuf3-solidity-lib
