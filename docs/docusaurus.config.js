@@ -80,7 +80,7 @@ const config = {
 						label: 'Composable IBC',
 					  },
 					{
-						to: '/products/xcvm',
+						to: '/products/cvm',
 						position: 'left',
 						label: 'Composable VM',
 					  },

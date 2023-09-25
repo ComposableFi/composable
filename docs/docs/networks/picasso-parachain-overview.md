@@ -14,11 +14,11 @@ and its proprietary technology stack.
 **Picasso houses a suite of modular and interoperable Substrate pallets:**
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
-- [Centauri] - trustless bridging between major DeFi ecosystems
+- [Composable-IBC] - trustless bridging between major DeFi ecosystems
 - [Apollo] - Picasso’s native oracle pallet
 
 [Pablo]: ../products/pablo-overview.md
-[Centauri]: ../products/centauri-overview.md
+[Composable-IBC]: ../products/composable-ibc.md
 [Apollo]: ../products/apollo-overview.md
 
 ## How is Picasso enabling interoperable DeFi
@@ -44,11 +44,11 @@ As the first instance of CosmWasm outside of Cosmos, existing projects can deplo
 
 The Substrate blockchain development framework enables parachain teams to rapidly establish autonomous layer 1 blockchains using core building blocks referred to as pallets. These pallets, akin to Cosmos SDK modules, can be combined in various ways to create a customized runtime environment. Substrate offers developers the option to either reuse existing pallets or develop new ones to introduce additional functionalities as needed.
 
-Picasso offers an extensive range of Substrate pallets that synergize to form a highly robust interoperable DeFi platform. By reducing transaction costs, creating modular applications for adaptable liquidity movement, and implementing pioneering solutions, Picasso effectively addresses key challenges within the realm of interoperable DeFi. These challenges encompass liquidity fragmentation, asset transfer security, and the absence of standardized cross-chain communication protocols. Within the realm of Picasso, DeFi essentials such as [Centauri] and [Pablo] thrive.
+Picasso offers an extensive range of Substrate pallets that synergize to form a highly robust interoperable DeFi platform. By reducing transaction costs, creating modular applications for adaptable liquidity movement, and implementing pioneering solutions, Picasso effectively addresses key challenges within the realm of interoperable DeFi. These challenges encompass liquidity fragmentation, asset transfer security, and the absence of standardized cross-chain communication protocols. Within the realm of Picasso, DeFi essentials such as [Composable-IBC] and [Pablo] thrive.
 
 ### Composable’s VM on Picasso
 
-Composable’s Virtual Machine [CVM](../products/xcvm.md) powered by CosmWasm will be able to leverage the pallets above to facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. Applications on any IBC-enabled chain can leverage the CVM to interact via cross-chain contracts in order to simplify cross-chain user experiences.
+Composable’s Virtual Machine [CVM](../products/cvm.md) powered by CosmWasm will be able to leverage the pallets above to facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. Applications on any IBC-enabled chain can leverage the CVM to interact via cross-chain contracts in order to simplify cross-chain user experiences.
 
 ### Insights into Picasso’s Security
 
@@ -75,9 +75,9 @@ Developers interested in Picasso’s interoperability framework will find the co
 as they stimulate the development process for building on Picasso. 
 Picasso’s modular base-level infrastructure allows developers to easily integrate, stack, 
 or leverage core pallets such as the Oracle [(Apollo)], 
-DEX [(Pablo)] and Trustless Bridging [(Centauri)] pallets. 
+DEX [(Pablo)] and Trustless Bridging [(Composable-IBC)] pallets. 
 These pallets and their functionalities are the foundation for Picasso that will lead us to enable interoperable DeFi.
 
 [(Apollo)]: ../products/apollo-overview.md
 [(Pablo)]: ../products/pablo-overview.md
-[(Centauri)]: ../products/centauri-overview.md
+[(Composable-IBC)]: ../products/composable-ibc.md

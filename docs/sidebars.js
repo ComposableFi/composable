@@ -105,7 +105,7 @@
            collapsed: true,
            items: [
              "products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm",
-             "products/cosmwasm/syngery-with-centauri-and-xcvm",
+             "products/cosmwasm/synergy-with-ibc-for-cvm",
              "products/cosmwasm/writing-smart-contracts-with-cosmwasm",
            ],
          },
@@ -172,31 +172,9 @@
      "products/composable-ibc/merkle-mountain-ranges",
      "products/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
    ],
+
    technology: [
-     {
-       type: "category",
-       label: "XCVM",
-       link: {
-         type: "doc",
-         id: "products/xcvm",
-       },
-       collapsible: false,
-       collapsed: false,
-       items: [
-         "products/xcvm/how-it-works",
-         {
-           type: "category",
-           label: "Use Cases",
-           link: {
-             type: "generated-index",
-             slug: "use-cases",
-           },
-           collapsible: false,
-           collapsed: false,
-           items: ["products/xcvm/use-cases/swap"],
-         },
-       ],
-     },
+     "products/cvm",
    ],
    develop: [
     {
@@ -287,7 +265,6 @@
            collapsible: false,
            items: [
              "ecosystem/rfp-canonical-stablecoin-design-and-integration",
-             "ecosystem/rfp-explorer",
            ],
          },
          "ecosystem/composable-grants",
