@@ -33,7 +33,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/products/xcvm">
+      <a href="/products/cvm">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-3_cb5rl0.png" alt="Networks" alt="Composable VM" />
@@ -125,7 +125,7 @@ Current approaches to solving these problems are limited by at least one of the 
 
 Composable's technical stack establishes seamless and secure cross-ecosystem interoperability while upholding web3's core principles. Users' intentions trigger automated cross-chain transactions, streamlining processes. The solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. Instead, it is the unification of all ecosystems powered by a generalized framework for cross-chain infrastructure - the [Inter-blockchain Communication Protocol](https://ibcprotocol.org/). 
 
-Composable's interoperable infrastructure forms the foundation for DeFi's mass adoption, offering user-centric services like optimal lending rates and efficient swaps. The [Composable VM](./products/xcvm.md) unifies monolothic chains, optimizing smart contract execution for developers and users.
+Composable's interoperable infrastructure forms the foundation for DeFi's mass adoption, offering user-centric services like optimal lending rates and efficient swaps. The [Composable VM](./products/cvm.md) unifies monolothic chains, optimizing smart contract execution for developers and users.
 
 ## Get Involved
 

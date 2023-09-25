@@ -105,7 +105,7 @@
            collapsed: true,
            items: [
              "products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm",
-             "products/cosmwasm/syngery-with-centauri-and-xcvm",
+             "products/cosmwasm/synergy-with-ibc-for-cvm",
              "products/cosmwasm/writing-smart-contracts-with-cosmwasm",
            ],
          },
@@ -175,27 +175,11 @@
    technology: [
      {
        type: "category",
-       label: "XCVM",
+       label: "CVM",
        link: {
          type: "doc",
-         id: "products/xcvm",
+         id: "products/cvm",
        },
-       collapsible: false,
-       collapsed: false,
-       items: [
-         "products/xcvm/how-it-works",
-         {
-           type: "category",
-           label: "Use Cases",
-           link: {
-             type: "generated-index",
-             slug: "use-cases",
-           },
-           collapsible: false,
-           collapsed: false,
-           items: ["products/xcvm/use-cases/swap"],
-         },
-       ],
      },
    ],
    develop: [

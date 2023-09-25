@@ -1,4 +1,4 @@
-# Request for Proposal: Centauri Explorer
+# Request for Proposal: Centauri Explorer (COMPLETED)
 
 ## Introduction:
 

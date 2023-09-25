@@ -1,6 +1,6 @@
-# Synergy with Centauri & CVM
+# Synergy with IBC for the CVM
 
-__Connecting Satellite protocols & orchestrating smart contracts across satellites__
+__Connecting Satellite protocols & orchestrating smart contracts__
 
 
 At Composable, our mission is to promote a trustless and cohesive experience for web3. 
