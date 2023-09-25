@@ -70,10 +70,7 @@
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
-    ethereum = {
-      url =
-        "github:nix-community/ethereum.nix";
-    };
+    ethereum = { url = "github:nix-community/ethereum.nix"; };
   };
 
   nixConfig = {

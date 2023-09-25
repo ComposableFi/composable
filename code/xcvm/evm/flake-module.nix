@@ -3,29 +3,83 @@
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
       x = "";
-    in
-    {
+      #             [submodule "code/xcvm/evm/lib/openzeppelin-contracts"]
+      # 	path = code/xcvm/evm/lib/openzeppelin-contracts
+      # 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+      # [submodule "code/xcvm/evm/lib/protobuf3-solidity-lib"]
+      # 	path = code/xcvm/evm/lib/protobuf3-solidity-lib
+      # 	url = https://github.com/lazyledger/protobuf3-solidity-lib
+      # [submodule "code/xcvm/evm/lib/forge-std"]
+      # 	path = code/xcvm/evm/lib/forge-std
+      # 	url = https://github.com/foundry-rs/forge-std
+
+    in {
+
       packages = rec {
+        openzeppelin-contracts = pkgs.stdenv.mkDerivation {
+          name = "openzeppelin-contracts";
+          src = pkgs.fetchgit {
+            url = "https://github.com/OpenZeppelin/openzeppelin-contracts.git";
+            rev = "fd81a96f01cc42ef1c9a5399364968d0e07e9e90";
+            sha256 = "sha256-ggdq/9VgvxeFez8ouJpjRtBwOtJFgmVgOqTkzCb83oc=";
+            fetchSubmodules = true;
+          };
+          phases = [ "installPhase" ];
+          installPhase = ''
+            cp -rf $src $out
+          '';
+        };
+        forge-std = pkgs.stdenv.mkDerivation {
+          name = "forge-std";
+          src = pkgs.fetchgit {
+            url = "https://github.com/foundry-rs/forge-std.git";
+            rev = "1d9650e951204a0ddce9ff89c32f1997984cef4d";
+            sha256 = "sha256-KJU6k0w8ZCE8WXgwySBpatPzgf6jydB3cbKAiJIwWQY=";
+            fetchSubmodules = true;
+          };
+          phases = [ "installPhase" ];
+          installPhase = ''
+            cp -rf $src $out
+          '';
+        };
+
+        protobuf3-solidity-lib = pkgs.stdenv.mkDerivation {
+          name = "protobuf3-solidity-lib";
+          src = pkgs.fetchgit {
+            url = "https://github.com/lazyledger/protobuf3-solidity-lib.git";
+            rev = "bc4e75a0bf6e365e820929eb293ef9b6d6d69678";
+            sha256 = "sha256-+HHUYhWDNRgA7x7p3Z0l0lS1e6pkJh4ZOSCCS4jQZQk=";
+            fetchSubmodules = true;
+          };
+          phases = [ "installPhase" ];
+          installPhase = ''
+            cp -rf $src $out
+          '';
+        };
+
+        evm-cvm-src = pkgs.stdenv.mkDerivation {
+          name = "evm-cvm-src";
+          src = ./.;
+          phases = [ "installPhase" ];
+          installPhase = ''
+            mkdir -p $out/lib
+            cp --no-preserve=mode,ownership --dereference  -rf $src/* $out
+            cp --no-preserve=mode,ownership --dereference  -rf "${openzeppelin-contracts}" $out/lib/openzeppelin-contracts
+            cp --no-preserve=mode,ownership --dereference  -rf "${forge-std}" $out/lib/forge-std
+            cp --no-preserve=mode,ownership --dereference  -rf "${protobuf3-solidity-lib}" $out/lib/protobuf3-solidity-lib
+          '';
+        };
+
         evm-cvm-gateway = pkgs.stdenv.mkDerivation rec {
           name = "evm-cvm-gateway";
-          FOUNDRY_SOLC="${pkgs.solc}/bin/solc";
+          FOUNDRY_SOLC = "${pkgs.solc}/bin/solc";
           nativeBuildInputs = [ self'.packages.forge pkgs.solc ];
-          pname = "evm-cvm-gateway";
-          src = ./.;
+          src = evm-cvm-src;
           patchPhase = "true";
           buildPhase = "true";
           installPhase = ''
-            ls /build
-            echo "12321321321321321"
-            ls /build/evm/
-            echo "asdsadsads"
-            ls /build/evm/lib/
-            echo "zxczxcxzczxczxczxcxc"
-            ls $src/lib
-
             mkdir --parents $out/lib
-            exit
-            forge build --offline --out $out/lib --lib-paths $src/lib 
+            forge build --offline --out $out/lib --lib-paths $src/lib/forge-std --lib-paths $src/lib/openzeppelin-contracts --lib-paths $src/lib/protobuf3-solidity-lib
           '';
           dontFixup = true;
           dontStrip = true;
