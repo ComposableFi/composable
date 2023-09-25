@@ -2,42 +2,27 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
-      mkXcvmContract = name:
-        let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
-        in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
-          src = systemCommonRust.rustSrc;
-          version = "0.1";
-          pnameSuffix = "-${name}";
-          nativeBuildInputs = [
-            pkgs.binaryen
-            self.inputs.cosmos.packages.${system}.cosmwasm-check
-          ];
-          pname = name;
-          cargoBuildCommand =
-            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name} --no-default-features";
-          RUSTFLAGS = "-C link-arg=-s";
-          installPhaseCommand = ''
-            mkdir --parents $out/lib
-            # from CosmWasm/rust-optimizer
-            # --signext-lowering is needed to support blockchains runnning CosmWasm < 1.3. It can be removed eventually
-            wasm-opt target/wasm32-unknown-unknown/cosmwasm-contracts/${binaryName} -o $out/lib/${binaryName} -Os --signext-lowering
-            cosmwasm-check $out/lib/${binaryName}
-          '';
-        });
-    in {
+      x = "";
+    in
+    {
       packages = rec {
-        xcvm-mount = pkgs.stdenv.mkDerivation rec {
-          name = "xcvm-mount";
-          pname = "${name}";
-          src = systemCommonRust.rustSrc;
+        evm-cvm-gateway = pkgs.stdenv.mkDerivation rec {
+          name = "evm-cvm-gateway";
+          runtimeDependencies = [ pkgs.solc ];
+          buildInputs = [ pkgs.solc ];
+          FOUNDRY_SOLC="${pkgs.solc}/bin/solc";
+          nativeBuildInputs = [ self'.packages.forge pkgs.solc ];
+          pname = "evm-cvm-gateway";
+          src = ./.;
           patchPhase = "true";
-
+          buildPhase = "true";
           installPhase = ''
-            mkdir --parents $out
-            mkdir --parents $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
-            cp --recursive --no-preserve=mode,ownership $src/. $out/
-            cp  "${xc-cw-contracts}/lib/cw_xc_interpreter.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
-            cp  "${xc-cw-contracts}/lib/cw_xc_gateway.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
+            ls /build
+            ls /build/evm/
+            ls /build/evm/lib/
+            exit 42
+            mkdir --parents $out/lib
+            forge build --offline --out $out/lib 
           '';
           dontFixup = true;
           dontStrip = true;

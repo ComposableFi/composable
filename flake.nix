@@ -108,6 +108,7 @@
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
         ./code/xcvm/flake-module.nix
+        ./code/xcvm/evm/flake-module.nix
         ./docs/docs.nix
         ./flake/all.nix
         ./flake/nixos-configuration.nix
