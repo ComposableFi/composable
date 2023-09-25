@@ -2,17 +2,7 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
-      x = "";
-      #             [submodule "code/xcvm/evm/lib/openzeppelin-contracts"]
-      # 	path = code/xcvm/evm/lib/openzeppelin-contracts
-      # 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-      # [submodule "code/xcvm/evm/lib/protobuf3-solidity-lib"]
-      # 	path = code/xcvm/evm/lib/protobuf3-solidity-lib
-      # 	url = https://github.com/lazyledger/protobuf3-solidity-lib
-      # [submodule "code/xcvm/evm/lib/forge-std"]
-      # 	path = code/xcvm/evm/lib/forge-std
-      # 	url = https://github.com/foundry-rs/forge-std
-
+      nix = " --offline --out $out/lib ";
     in {
 
       packages = rec {
@@ -79,7 +69,7 @@
           buildPhase = "true";
           installPhase = ''
             mkdir --parents $out/lib
-            forge build --offline --out $out/lib --lib-paths $src/lib/forge-std --lib-paths $src/lib/openzeppelin-contracts --lib-paths $src/lib/protobuf3-solidity-lib
+            forge build ${nix}
           '';
           dontFixup = true;
           dontStrip = true;
