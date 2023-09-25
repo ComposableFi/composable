@@ -107,12 +107,16 @@ jobs:
       - uses: actionsdesk/lfs-warning@v3.2
         name: lfs-warning
         with:
-          filesizelimit: 10KB
+          labelName: lfs-detected!
+          filesizelimit: 20KB
           exclusionPatterns: |
             **/*.rs
             **/*.ts
+            **/*.md
             **/*.json
             **/*.lock
+            **/*.nix
+            **/*.sol
       - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
   nix-flake-check:
