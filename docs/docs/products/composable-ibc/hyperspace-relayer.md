@@ -6,7 +6,7 @@ This section introduces [Hyperspace] - the first event-driven, chain-agnostic IB
 
 [Hyperspace]: https://github.com/ComposableFi/centauri/blob/master/hyperspace/README.md
 
-As Composable IBC was designed to extend the reach of IBC beyond the Cosmos ecosystem, we realized that we needed a relayer that was both rust-based and IBC-compatible in order to birth interoperability between the various ecosystems on our roadmap. 
+As Composable IBC was designed to extend the reach of IBC beyond the Cosmos ecosystem, it was necessary to develop a relayer that was both rust-based and IBC-compatible in order to birth interoperability on new ecosystems on. 
 
 :::info
 
@@ -14,7 +14,7 @@ At present, there are three IBC relayers available in Rust, Golang, and Typescri
 
 :::
 
-There are several client verification algorithms currently available in our light-client directory for different consensus engines, including:
+There are several client verification algorithms currently available in Composable's light-client directory for different consensus engines, including:
 
 - [Ics07-tendermint](https://github.com/ComposableFi/centauri/tree/master/light-clients/ics07-tendermint)
 - [Ics10-grandpa](https://github.com/ComposableFi/centauri/tree/master/light-clients/ics10-grandpa)
@@ -44,7 +44,7 @@ The diagram below provides a visual representation of the different components o
 
 ## Hyperspace runs the Fisherman Protocol
 
-While trustless bridges are a preferable alternative to trusted solutions, they are still subject to attacks if one of the blockchains in question is taken over by a malicious validator set. To address this threat, we implement the Fisherman Protocol. Thus, any relayer running Hyperspace in ‘Fisherman mode’ can report malicious blockchain headers to freeze bridges if a chain is taken over by bad actors. The relayer then receives the associated slashing rewards for themselves, thus incentivizing relayers to remain vigilant and on the lookout for malicious blockchain takeovers.
+While trustless bridges are a preferable alternative to trusted solutions, they are still subject to attacks if one of the blockchains in question is taken over by a malicious validator set. The solution lies in the Fisherman Protocol. Thus, any relayer running Hyperspace in ‘Fisherman mode’ can report malicious blockchain headers to freeze bridges if a chain is taken over by bad actors. The relayer then receives the associated slashing rewards for themselves, thus incentivizing relayers to remain vigilant and on the lookout for malicious blockchain takeovers.
 
 ![hyperspace_fisherman](../images-centauri/hyperspace-fisherman.png)
 
