@@ -166,6 +166,7 @@
      "products/composable-ibc",
      "products/composable-ibc/cosmos-ibc",
      "products/composable-ibc/polkadot-kusama-ibc",
+     "products/composable-ibc/ethereum-ibc",
      "products/composable-ibc/near-ibc-bridge",
      "products/composable-ibc/hyperspace-relayer",
      "products/composable-ibc/light-clients",
