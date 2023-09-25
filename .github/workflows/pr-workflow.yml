@@ -117,6 +117,7 @@ jobs:
             **/*.lock
             **/*.nix
             **/*.sol
+            code/xcvm/evm/lib
       - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
   nix-flake-check:
