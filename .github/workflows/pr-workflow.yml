@@ -98,11 +98,14 @@ jobs:
       group: ${{ inputs.github_workflow }}-lfs-check-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.2
         with:
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
+          submodules: false
+          lfs: true
       - uses: actionsdesk/lfs-warning@v3.2
+        name: lfs-warning
         with:
           filesizelimit: 10KB
           exclusionPatterns: |
@@ -110,6 +113,7 @@ jobs:
             **/*.ts
             **/*.json
             **/*.lock
+      - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
   nix-flake-check:
     name: "nix-flake-check"
