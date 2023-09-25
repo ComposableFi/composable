@@ -1,11 +1,14 @@
 { self, ... }: {
   perSystem =
     { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools, ... }: {
-      apps = rec {
-        forge = self.inputs.flake-utils.lib.mkApp {
+      packages = rec {
+        forge = pkgs.stdenv.mkDerivation rec {
           name = "forge";
-          drv = self.inputs.ethereum.packages.${system}.foundry;
-          exePath = "/bin/forge";
+          src = self.inputs.ethereum.packages.${system}.foundry;
+          installPhase = ''
+            mkdir --parents $out/bin
+            cp $src/bin/forge $out/bin/forge
+          '';
         };
       };
     };
