@@ -15,7 +15,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp -rf $src $out
+            cp --recursive --force $src $out
           '';
         };
         forge-std = pkgs.stdenv.mkDerivation {
@@ -28,7 +28,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp -rf $src $out
+            cp --recursive --force $src $out
           '';
         };
 
@@ -42,7 +42,7 @@
           };
           phases = [ "installPhase" ];
           installPhase = ''
-            cp -rf $src $out
+            cp --recursive --force $src $out
           '';
         };
 
@@ -52,11 +52,10 @@
           phases = [ "installPhase" ];
           installPhase = ''
             mkdir --parents $out/lib
-            cp --no-preserve=mode,ownership --dereference  -rf $src/* $out
-            ls "${openzeppelin-contracts}"
-            cp --no-preserve=mode,ownership --dereference  -rf "${openzeppelin-contracts}" $out/lib/openzeppelin-contracts
-            cp --no-preserve=mode,ownership --dereference  -rf "${forge-std}" $out/lib/forge-std
-            cp --no-preserve=mode,ownership --dereference  -rf "${protobuf3-solidity-lib}" $out/lib/protobuf3-solidity-lib
+            cp --no-preserve=mode,ownership --dereference  --recursive --force $src/* $out
+            cp --no-preserve=mode,ownership --dereference  --recursive --force  "${openzeppelin-contracts}/" $out/lib/openzeppelin-contracts
+            cp --no-preserve=mode,ownership --dereference  --recursive --force "${forge-std}/" $out/lib/forge-std
+            cp --no-preserve=mode,ownership --dereference  --recursive --force "${protobuf3-solidity-lib}/" $out/lib/protobuf3-solidity-lib
           '';
         };
 
