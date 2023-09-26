@@ -70,6 +70,12 @@
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
+    eth-pos-devnet-src = {
+      flake = false;
+      url =
+        "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
+    };
+
     ethereum = { url = "github:nix-community/ethereum.nix"; };
   };
 

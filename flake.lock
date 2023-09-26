@@ -515,6 +515,23 @@
         "type": "github"
       }
     },
+    "eth-pos-devnet-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694203365,
+        "narHash": "sha256-Vc+BMJtfk/ATxxF28FAD9Uwwz1RBkEOkdeY7hCIWTaY=",
+        "owner": "OffchainLabs",
+        "repo": "eth-pos-devnet",
+        "rev": "4f4c28e71fd39bc50788dc1b858c1cc6b983defb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "OffchainLabs",
+        "repo": "eth-pos-devnet",
+        "rev": "4f4c28e71fd39bc50788dc1b858c1cc6b983defb",
+        "type": "github"
+      }
+    },
     "ethereum": {
       "inputs": {
         "devshell": "devshell",
@@ -2314,6 +2331,7 @@
         "crane": "crane",
         "darwin": "darwin",
         "devenv": "devenv",
+        "eth-pos-devnet-src": "eth-pos-devnet-src",
         "ethereum": "ethereum",
         "flake-parts": "flake-parts_6",
         "flake-utils": "flake-utils_7",
