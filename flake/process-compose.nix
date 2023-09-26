@@ -12,7 +12,8 @@
         failure_threshold = 16;
         timeout_seconds = 4;
       };
-    in {
+    in
+    {
 
       packages = rec {
         devnet-xc-fresh-background = pkgs.writeShellApplication {
@@ -92,7 +93,6 @@
       };
       process-compose = rec {
         devnet-xc-background = devnet-xc // { tui = false; };
-
         devnet-xc-dotsama-background = devnet-xc-dotsama // { tui = false; };
         devnet-xc-dotsama = {
           debug = true;
@@ -368,6 +368,20 @@
           };
         };
 
+        devnet-xc-eth = {
+          debug = true;
+          settings = {
+            processes = {
+              eth-gen = {
+                command = self'.packages.eth-gen;
+                log_location = "${devnet-root-directory}/eth-gen.log";
+                availability = { restart = chain-restart; };
+              };
+            };
+          };
+        };
+
+
         devnet-xc-cosmos = {
           debug = true;
           settings = {
@@ -464,6 +478,9 @@
             };
           };
         };
+
+
+
       };
     };
 }

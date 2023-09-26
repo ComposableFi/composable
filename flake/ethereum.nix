@@ -14,10 +14,11 @@
         eth-gen = pkgs.writeShellApplication {
           name = "eth-gen";
           text = ''
-            DATADIR=/tmp/composable-devnet/eth
+            BASE_DIR=/tmp/composable-devnet
+            DATADIR="$BASE_DIR/eth"
             rm --recursive --force "$DATADIR"
-            mkdir --parents "$DATADIR"
-            cp --dereference --no-preserve=mode,ownership --recursive --force "${self.inputs.eth-pos-devnet-src}/" "$DATADIR"  
+            mkdir --parents "$BASE_DIR"
+            cp --dereference --no-preserve=mode,ownership --recursive --force "${self.inputs.eth-pos-devnet-src}/" "$DATADIR"
           '';
         };
 
