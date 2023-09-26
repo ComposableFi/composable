@@ -41,6 +41,18 @@ fn load_spec(id_or_path: &str) -> std::result::Result<Box<dyn sc_service::ChainS
 					))?),
 				file_name
 					if file_name.ends_with(".json") &&
+						file_name.contains("moon") =>
+					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				file_name
+					if file_name.ends_with(".json") &&
+						file_name.contains("local") =>
+					Box::new(chain_spec::picasso::ChainSpec::from_json_file(PathBuf::from(
+						id_or_path,
+					))?),
+				file_name
+					if file_name.ends_with(".json") &&
 						file_name.contains(chain_names::composable::DEFAULT) =>
 					Box::new(chain_spec::composable::ChainSpec::from_json_file(PathBuf::from(
 						id_or_path,
