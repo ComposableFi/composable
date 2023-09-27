@@ -166,7 +166,7 @@ type Tag = Uint8Array
 /// allows one user to have several Executors to isolate funds and allowances
 type Salt = Uint8Array
 
-type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order 
+type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | Abort
 
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend.
 /// Set `ExchangeError` to result register in case of fail.
@@ -246,6 +246,14 @@ type Self = Account
 
 /// Pop - pops value from program stack into binding placeholder
 type BindingValue = Self | Tip | Result | AssetAmount | GlobalId | Pop
+
+/// Aborts transaction on execution chain if BindingValue contains Error.
+/// In comparison with ResultRegister just set to error and stop executing (with funds retained on CVM Executor), 
+/// this instruction rollbacks changed made by this transaction (including results and funds) up to sender network if possible.
+interface Abort {
+    abort_of_error: BindingValue
+}
+
 
 /// transfer from Executor account to
 interface Transfer {
