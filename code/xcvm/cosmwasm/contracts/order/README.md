@@ -25,8 +25,12 @@ More details semantics will be described in whitepaper. including Solver operati
 
 Current implementation is for 1 solution for one user, 1 to 1 asset, with explicit approval for CFMM route.
 
-Bribers are owner of their CVM Executor instance. 
-The transfer amounts to it and set CFMM identifiers for routing via which they are to bribe.
+### Bribing
+
+Bribers call this contract with CFMM identifier and percentage of volume they bribe. 
+This contract instantiates CVM executor per CFMM and transfer amount to it, and tracks percentage per briber.
+When briber joins, percentage averaged appropriately, with always larger bribe for same volume.
+For each accepted route, Solver is delegated with relevant amount to withdraw.
 
 
 
