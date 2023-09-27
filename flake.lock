@@ -387,6 +387,22 @@
         "type": "github"
       }
     },
+    "devour-flake": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694098737,
+        "narHash": "sha256-O51F4YFOzlaQAc9b6xjkAqpvrvCtw/Os2M7TU0y4SKQ=",
+        "owner": "srid",
+        "repo": "devour-flake",
+        "rev": "30a34036b29b0d12989ef6c8be77aa949d85aef5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "devour-flake",
+        "type": "github"
+      }
+    },
     "devshell": {
       "inputs": {
         "nixpkgs": [
@@ -534,6 +550,7 @@
     },
     "ethereum": {
       "inputs": {
+        "devour-flake": "devour-flake",
         "devshell": "devshell",
         "flake-compat": "flake-compat_4",
         "flake-parts": "flake-parts_3",
@@ -545,16 +562,17 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1695640328,
-        "narHash": "sha256-xfhyhLx+XM5fY9cvjRNBF3rkzCHS74CnfNFmEK6O87k=",
-        "owner": "nix-community",
+        "lastModified": 1695804355,
+        "narHash": "sha256-OnotZR0upHP8WWKqfq0mvYvs+t51OkvJjmx9EHSFf8g=",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
-        "rev": "cb8e7d838cffb8f732098cc7fe068d3124403c97",
+        "rev": "cb325d73153295ffa914f13b5d8226cb81c40d55",
         "type": "github"
       },
       "original": {
-        "owner": "nix-community",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
+        "rev": "cb325d73153295ffa914f13b5d8226cb81c40d55",
         "type": "github"
       }
     },

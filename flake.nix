@@ -76,7 +76,7 @@
         "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
     };
 
-    ethereum = { url = "github:nix-community/ethereum.nix"; };
+    ethereum = { url = "github:dzmitry-lahoda-forks/ethereum.nix/cb325d73153295ffa914f13b5d8226cb81c40d55"; };
   };
 
   nixConfig = {
