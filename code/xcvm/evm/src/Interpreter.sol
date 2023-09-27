@@ -2,8 +2,8 @@
 pragma solidity ^0.8.14;
 
 import "protobuf3-solidity-lib/ProtobufLib.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./interfaces/IInterpreter.sol";
 import "./interfaces/IRouter.sol";
 import "./libraries/SDK.sol";
@@ -19,20 +19,6 @@ contract Interpreter is IInterpreter {
     bytes public override salt;
     mapping(address => bool) public owners;
     IRouter.Origin origin;
-
-    enum BindingValueType {
-        NONE,
-        ADDRESS,
-        UINT256,
-        BYTES,
-        BALANCE
-    }
-
-    struct Binding {
-        uint32 position;
-        bytes bindingValue;
-        BindingValueType bindingType;
-    }
 
     modifier onlyOwnerOrCreator() {
         require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || owners[msg.sender] || address(this) == msg.sender);

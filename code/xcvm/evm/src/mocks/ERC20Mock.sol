@@ -2,8 +2,8 @@
 pragma solidity ^0.8.14;
 pragma abicoder v2;
 
-import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "openzeppelin-contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
 contract ERC20Mock is ERC20, ERC20Permit {
     constructor(

@@ -89,10 +89,10 @@ CVM `program`s is tree of instructions with attached assets.
 Opaque contract has program as input.
 Program format is executable language to describe what user wants to do cross chains.
 
-Instructions in side programs are interpreted by `interpreter`.
+Instructions in side programs are interpreted by `Executor`.
 It owns all user funds and fully owned by she. 
-Interpreter delegates bridges to manage funds operations cross chain.
-`Interpeter` is user's cross chain account. 
+Executor delegates bridges to manage funds operations cross chain.
+`Executor` is user's cross chain account. 
 
 Inductions are, but not limited to:
 - Transfer, transfer funds from account to account on single chain
@@ -114,9 +114,9 @@ There is no requirement for CVM contracts to be deployed on chains as long as ch
 Exchange/Transfer/Spawn are just shortcuts for specific Calls.
 From no will use Call to refer any on chain execution.
 
-During program interpretation, current executing instruction, result of call execution and bridging state (internal of Spawn) are recorded in Interpreter state.
-In case of CVM program error, funds are retained on sender or receiving interpreter.
-User can observe state of interpreter and send program to handle current state.
+During program interpretation, current executing instruction, result of call execution and bridging state (internal of Spawn) are recorded in Executor state.
+In case of CVM program error, funds are retained on sender or receiving Executor.
+User can observe state of Executor and send program to handle current state.
 For example move funds to other account or chain.   
 
 ### CVM definition deconstruction
@@ -129,7 +129,7 @@ For example move funds to other account or chain.
 
 `trust minimized` - internally CVM uses most secured, trustless bridges, to execute CVM programs, CVM contracts are subject for cross chain governance
 
-`non custodial` - each user owns all assets on each chain, he just delegates ability to move this funds cross chain from cross chain account (interpreter).
+`non custodial` - each user owns all assets on each chain, he just delegates ability to move this funds cross chain from cross chain account (Executor).
 
 `non turing complete` - means that there are no procedural loops or recursion, means CVM programs are predictable, determinist and will stop
 
@@ -163,12 +163,13 @@ interface Program {
 type Tag = Uint8Array
 
 
-/// allows one user to have several interpreters to isolate funds and allowances
+/// allows one user to have several Executors to isolate funds and allowances
 type Salt = Uint8Array
 
-type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order 
+type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | Abort | If
 
-/// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend 
+/// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend.
+/// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
     in: AssetAmount[]
     min_out: AssetAmount[]
@@ -182,14 +183,14 @@ interface Bond {
 }
 
 /// exchange which may happen in future
-/// puts into ResultRegister either cross chain error error or PositionId
+/// puts into ResultRegister either cross chain error error or OrderPositionId
 interface Order {
     exchange : Exchange
     timeout : Duration
     partial: Ratio[]
 }
 
-type PositionId = Uint128 
+type OrderPositionId = Uint128 
 
 /// cross chain transaction/tracing identifier
 interface ProgramInvocation {
@@ -200,7 +201,7 @@ interface ProgramInvocation {
 }
     
 interface Spawn {
-    invocatioN: ProgramInvocation
+    invocation: ProgramInvocation
     program : Program
     salt : Salt
     assets : Assets
@@ -240,13 +241,21 @@ interface AssetAmount {
 
 type Account = Uint8Array
 
-/// Self is account of interpreter
+/// Self is account of Executor
 type Self = Account
 
 /// Pop - pops value from program stack into binding placeholder
 type BindingValue = Self | Tip | Result | AssetAmount | GlobalId | Pop
 
-/// transfer from interpreter account to
+/// Aborts transaction on execution chain if BindingValue contains Error.
+/// In comparison with ResultRegister just set to error and stop executing (with funds retained on CVM Executor), 
+/// this instruction rollbacks changed made by this transaction (including results and funds) up to sender network if possible. 
+interface Abort {
+    abort_of_error: BindingValue
+}
+
+
+/// transfer from Executor account to
 interface Transfer {
     assets : Assets,
     to: Tip | Account
@@ -269,14 +278,14 @@ interface UserOrigin = {
     network: Network
 }
 
-type InterpreterOrigin = Account
+type ExecutorOrigin = Account
 
 /// data send to other chain
 interface SpawnPackage = {
-    interpreter_origin : InterpreterOrigin
+    Executor_origin : ExecutorOrigin
     user_origin: UserOrigin
-    /// used by the while instantiating the interpreter
-    /// so user can have several interpreters on same chain or reuse existing (same salt)
+    /// used by the while instantiating the Executor
+    /// so user can have several Executors on same chain or reuse existing (same salt)
     salt: Salt
     program : Program
     assets: Assets
@@ -286,16 +295,19 @@ interface SpawnPackage = {
 
 type ResultRegister = Error | ExecutionResult
 
-type Error = CallError | TransferError | SpawnError | QueryError
+type Error = CallError | TransferError | SpawnError | QueryError | OrderError | BondError | ExchangeError
+
+/// open set of well know exchange errors
+type ExchangeError = Uint8
+
 type ExecutionResult = Ok | bytes
 type Ok = '0'
 
 
 type Owners = Identity[]
 type Identity = [Network, Account]
-```
 
-/// this happens in interpreter
+/// this happens in Executor
 function execute_program(caller: Account, program: Program) {
     ensureOneOf(caller, this.owners, this.gateway)
     
@@ -344,7 +356,7 @@ erDiagram
     OFFCHAIN_WALLET }|..|| CVM : execute  
 ```
 
-So user(wallet) has interpreter(CVM account) on each chain (instantiated on demand).
+So user(wallet) has Executor(CVM account) on each chain (instantiated on demand).
 
 CVM account delegates CVM contract to bridge assets and execution on behalf of user across chains.
 
@@ -358,11 +370,11 @@ Let look into one hop from one chain to other chain in detail (three hops will j
 sequenceDiagram
    actor User
    User ->>CVMOnCentauri : Execute program with funds
-   CVMOnCentauri ->> CVMOnCentauri: Instantiate Interpreter for user
-   CVMOnCentauri ->> InterpreterOnCentauri : Transfer funds
-   InterpreterOnCentauri ->> Program : Interpret 
+   CVMOnCentauri ->> CVMOnCentauri: Instantiate Executor for user
+   CVMOnCentauri ->> ExecutorOnCentauri : Transfer funds
+   ExecutorOnCentauri ->> Program : Interpret 
    loop Program
-        InterpreterOnCentauri-->InterpreterOnCentauri: Interact with contracts.
+        ExecutorOnCentauri-->ExecutorOnCentauri: Interact with contracts.
    end
    Program ->> CVMOnCentauri : Execute Subprogram on Osmosis
    CVMOnCentauri ->> CVMOnCentauri: Bridge SubProgram
@@ -370,13 +382,13 @@ sequenceDiagram
    IBCRelayer ->>  IBCOnCentauri: Take packet
    IBCRelayer ->> IBCOnOsmosis: Put packet
    IBCOnOsmosis ->> CVMOnOsmosis: Invoke contract with SubProgram
-   CVMOnOsmosis ->> InterpreterOnOsmosis: Instantiate, transfer funds, execute SubProgram
+   CVMOnOsmosis ->> ExecutorOnOsmosis: Instantiate, transfer funds, execute SubProgram
    loop SubProgram
-        InterpreterOnOsmosis-->InterpreterOnOsmosis: Interact with contracts.
+        ExecutorOnOsmosis-->ExecutorOnOsmosis: Interact with contracts.
    end
-   InterpreterOnOsmosis ->> InterpreterOnOsmosis: Map CVM assets to CW/Bank assets
-   InterpreterOnOsmosis ->> PoolManager : Swap
-   InterpreterOnOsmosis ->> IBCOnOsmosis : Send transfer to Ethereum without CVM program
+   ExecutorOnOsmosis ->> ExecutorOnOsmosis: Map CVM assets to CW/Bank assets
+   ExecutorOnOsmosis ->> PoolManager : Swap
+   ExecutorOnOsmosis ->> IBCOnOsmosis : Send transfer to Ethereum without CVM program
    IBCRelayer ->> IBCOnOsmosis: Take packet 
    IBCRelayer ->> IBCOnEthereum: Put transfer
    IBCOnEthereum ->> ERC20: Mint 
@@ -405,7 +417,7 @@ The call instruction supports bindings values on the executing side of the progr
 This allows us to construct a program that uses data only available on the executing side.
 Binding values are lazy filled in on target chain.
 
-Binding value `Self` injects account in interpreter into call.
+Binding value `Self` injects account in Executor into call.
 
 Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of `AssetId` conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting `Ratio` to absolute `Balance` type.
 
@@ -422,9 +434,9 @@ function swap(in_amount: number, in_asset: String, min_out: number, out_asset: S
 }
 ```
 
-If the caller wants to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the payload being passed to the contract.
+If the caller wants to swap funds from the Executor account and receive the funds into the Executor account, we need to specify the BindingValue `Self`, using the index of the `to` field for the payload being passed to the contract.
 
-Sender chain spawns with  `swap(100, "dot", "eth", 1, BindingValue::Self)` call, and on target chain Self replaced with address on execution interpreter.  
+Sender chain spawns with  `swap(100, "dot", "eth", 1, BindingValue::Self)` call, and on target chain Self replaced with address on execution Executor.  
 
 
 ### Spawn
@@ -433,12 +445,12 @@ Sends a `Program` to another chain to be executed asynchronously. It is only gua
 
 If Spawn fails it may fail on sender chain or on receiver chain, but not both. 
 
-Funds are retained in interpreter. 
+Funds are retained in Executor. 
 
 `ResultRegister` is written.
 
 
-`AssetId` in `Assets` are converted from sender to receiver identifiers by interpreter. 
+`AssetId` in `Assets` are converted from sender to receiver identifiers by Executor. 
 
 
 #### How Spawn fails
@@ -450,7 +462,7 @@ There 2 types of failures.
 First when `SpawnPackage` failed fully without event calling `Inteprter`, in this case all funds are rollback to sending interpret.
 Target chain will not have on chain trace of execution.
 
-Second when `SpawnPackage` reach target chain, started execution in interpreter and failed. In this case `ResultRegister` is filled on target chain and funds stay here.
+Second when `SpawnPackage` reach target chain, started execution in Executor and failed. In this case `ResultRegister` is filled on target chain and funds stay here.
 Sender chain considers Spawn to be success.
 
 There no in between scenario when fail spread onto to chains.
@@ -466,7 +478,7 @@ Amounts of assets can be specified using the `Balance` type. This allows foreign
 
 ### Registers
 
-Each interpreter keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
+Each Executor keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
 
 #### Result Register
 
@@ -477,16 +489,16 @@ If `ResultRegister` was set to `Error` and there is `Restoration` register conta
 
 #### IP Register
 
-The instruction pointer register contains the instruction pointer of the last executed program and is updated during program execution. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
+The instruction pointer register contains the instruction pointer of the last executed program and is updated during program execution. Querying for the `IP` and `Result` can be used to compute the state of the Executor on another chain.
 
 
 #### Tip Register
 
-The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for interpreter execution.
+The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for Executor execution.
 
 #### Self Register
 
-The self register contains the `Account` of the interpreter. Most implementations will not need to use storage but have access to special keywords, such as `this` in Solidity.
+The self register contains the `Account` of the Executor. Most implementations will not need to use storage but have access to special keywords, such as `this` in Solidity.
 
 ####  Version Register
 
@@ -494,7 +506,7 @@ The version register contains the semantic version of the contract code, which c
 
 ### Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The interpreter SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
+Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The Executor SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
 
 If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
 
@@ -512,15 +524,15 @@ Each chain contains a singleton bridge aggregator, the `Gateway`, which abstract
 
 ### Router
 
-Each program arriving through the `Gateway` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Interpreter` instance. The router then transfers funds to the `Interpreter` instance.
+Each program arriving through the `Gateway` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Executor` instance. The router then transfers funds to the `Executor` instance.
 
-Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Interpreter` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
+Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Executor` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
 
-If no interpreter instance has been created for a given caller, the call to the `Router` must either come from the `IBC`, `XCM`, `OTP`, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
+If no Executor instance has been created for a given caller, the call to the `Router` must either come from the `IBC`, `XCM`, `OTP`, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
 
 **Example**
 
-For a given CVM program, its interpreter instance is derived from `Network Account Salt`. This allows users to create different interpreter instances to execute programs against. Note that the `Salt` is not additive and only the composite `Network Account` is forwarded to remote chains as the user origin:
+For a given CVM program, its Executor instance is derived from `Network Account Salt`. This allows users to create different Executor instances to execute programs against. Note that the `Salt` is not additive and only the composite `Network Account` is forwarded to remote chains as the user origin:
 ```kdl
 spawn network=A salt=0x01 { // the origin for the instructions is (A, AccountOnA, 0x1)
     call 0x1337 // Call instruction executed on A
@@ -530,7 +542,7 @@ spawn network=A salt=0x01 { // the origin for the instructions is (A, AccountOnA
 Possible usage is to allow one program execution to act on state of other program execution to restore funds. 
 
 
-In the above CVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's interpreter origin using a fine grained mode. The following program is an example on how we can spread a salt:
+In the above CVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's Executor origin using a fine grained mode. The following program is an example on how we can spread a salt:
 ```kdl
 Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
     Call 0x1337,                                        // Call instruction executed on A
@@ -548,15 +560,15 @@ Spawn A 0x01 [
 
 ### Ownership
 
-interpreter instances maintain a set of owners.
+Executor instances maintain a set of owners.
 
-Programs are only executed by the interpreter if the caller is in the set of owners.
+Programs are only executed by the Executor if the caller is in the set of owners.
 
-On initial instantiation of the `CVM` interpreter, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the interpreter instance and the funds held and can make delegate calls from the instance's account.
+On initial instantiation of the `CVM` Executor, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the Executor instance and the funds held and can make delegate calls from the instance's account.
 
-Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each interpreter keeps track of a set of `Identities`, which share ownership of the interpreter. Each owning `Identity` has full permissions on the interpreter instance.
+Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each Executor keeps track of a set of `Identities`, which share ownership of the Executor. Each owning `Identity` has full permissions on the Executor instance.
 
-Owners may be added by having the interpreter call the appropriate setters. We will consider adding specialized instructions later. Owners may be removed by other owners. An CVM instance MUST always have at least one owner.
+Owners may be added by having the Executor call the appropriate setters. We will consider adding specialized instructions later. Owners may be removed by other owners. An CVM instance MUST always have at least one owner.
 
 
 # Fees
@@ -578,21 +590,21 @@ The following example program performs an operation, and rewards the tip address
 
 Assets can be identified using a global asset identifier.
 
-Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Interpreter instances can be reconfigured by the owner to use alternative registries.
+Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Executor instances can be reconfigured by the owner to use alternative registries.
 
 Propagating updates across registries is handled by the `CVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
 ## Security Considerations
 
-Ensuring that the caller is an owner is an incredibly important check, as the owner can delegate calls through the interpreter, directly owning all state, funds, and possible (financial) positions associated with the interpreter account. Since each interpreter has their own `Identity`, they might own other accounts as well. Thus the owners control more accounts than just the contract storing the owners.
+Ensuring that the caller is an owner is an incredibly important check, as the owner can delegate calls through the Executor, directly owning all state, funds, and possible (financial) positions associated with the Executor account. Since each Executor has their own `Identity`, they might own other accounts as well. Thus the owners control more accounts than just the contract storing the owners.
 
 The `Call` instruction has the same security risks as calling any arbitrary smart contract, such as setting unlimited allowances.
 
 Adding an owner to the set of owners grants them the ability to evict other owners.
 
-Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the interpreter account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
+Failure to execute an instruction will lead to a transaction being reverted, however, the funds will still be in the Executor account's control. Ensure that changing ownership is always done atomically (add and remove in the same transaction) to ensure funds are not lost forever.
 
-Using bridges is equivalent to adding them as owners on your interpreter instance.
+Using bridges is equivalent to adding them as owners on your Executor instance.
 
 In general different security can be applied to different programs.
 
