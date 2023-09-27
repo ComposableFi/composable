@@ -11,6 +11,37 @@ library SDK {
 
     using BytesLib for bytes;
 
+    struct SpawnPacket {
+        Spawn[] spawn;
+        Program program;
+    }
+
+    struct Spawn {
+        Program program;
+    }
+
+    /// as program interpetered, operatios poped out
+    /// for each operation, it goes to relevant instuction index to pop
+    struct Program {
+        OPERATION[] operation;            
+        /// actually recursive definition (which is not part of solidity language)
+        uint8[] spawns;
+    }   
+
+    enum BindingValueType {
+        NONE,
+        ADDRESS,
+        UINT256,
+        BYTES,
+        BALANCE
+    }
+    
+    struct Binding {
+        uint32 position;
+        bytes bindingValue;
+        BindingValueType bindingType;
+    }
+
     enum OPERATION {
         NONE,
         TRANSFER,

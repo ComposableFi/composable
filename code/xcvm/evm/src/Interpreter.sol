@@ -20,20 +20,6 @@ contract Interpreter is IInterpreter {
     mapping(address => bool) public owners;
     IRouter.Origin origin;
 
-    enum BindingValueType {
-        NONE,
-        ADDRESS,
-        UINT256,
-        BYTES,
-        BALANCE
-    }
-
-    struct Binding {
-        uint32 position;
-        bytes bindingValue;
-        BindingValueType bindingType;
-    }
-
     modifier onlyOwnerOrCreator() {
         require(keccak256(abi.encodePacked(msg.sender)) == keccak256(origin.account) || owners[msg.sender] || address(this) == msg.sender);
         _;
