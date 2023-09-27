@@ -429,7 +429,6 @@
               };
             };
           };
-
         };
 
         devnet-xc-cosmos = {

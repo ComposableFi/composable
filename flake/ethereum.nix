@@ -97,7 +97,6 @@
               --interop-num-validators=64 \
               --interop-start-index=0 \
               --chain-config-file="$BASE_DIR/consensus/config.yml"
-
           '';
         };
       };
