@@ -3,7 +3,7 @@ libs = ['lib']
 out = 'out'
 remappings = [
   'forge-std/=lib/forge-std/src/',
-  'openzeppelin-contracts/=lib/openzeppelin-contracts/',
+  'openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/',
   'protobuf3-solidity-lib/=lib/protobuf3-solidity-lib/contracts/',
 ]
 src = 'src'
