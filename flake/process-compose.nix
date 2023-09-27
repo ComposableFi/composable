@@ -92,7 +92,6 @@
       };
       process-compose = rec {
         devnet-xc-background = devnet-xc // { tui = false; };
-
         devnet-xc-dotsama-background = devnet-xc-dotsama // { tui = false; };
         devnet-xc-dotsama = {
           debug = true;
@@ -368,6 +367,70 @@
           };
         };
 
+        devnet-xc-eth = {
+          debug = true;
+          settings = {
+            processes = {
+              eth-gen = {
+                command = self'.packages.eth-gen;
+                log_location = "${devnet-root-directory}/eth-gen.log";
+                availability = { restart = chain-restart; };
+              };
+              eth-consensus-gen = {
+                command = self'.packages.eth-consensus-gen;
+                log_location = "${devnet-root-directory}/eth-consensus-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+                };
+              };
+              eth-executor-gen = {
+                command = self'.packages.eth-executor-gen;
+                log_location = "${devnet-root-directory}/eth-executor-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+
+                };
+              };
+              eth-executor = {
+                command = self'.packages.eth-executor;
+                log_location = "${devnet-root-directory}/eth-executor.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-executor-gen".condition =
+                    "process_completed_successfully";
+                };
+                readiness_probe = {
+                  exec.command = ''
+                    test -f ${devnet-root-directory}/eth/jwtsecret
+                  '';
+                } // parachain-startup;
+
+              };
+              eth-consensus = {
+                command = self'.packages.eth-consensus;
+                log_location = "${devnet-root-directory}/eth-consensus.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                  "eth-executor".condition = "process_healthy";
+                };
+              };
+              eth-validator = {
+                command = self'.packages.eth-validator;
+                log_location = "${devnet-root-directory}/eth-validator.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                };
+              };
+            };
+          };
+        };
+
         devnet-xc-cosmos = {
           debug = true;
           settings = {
@@ -461,9 +524,66 @@
                   "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
               };
+              eth-gen = {
+                command = self'.packages.eth-gen;
+                log_location = "${devnet-root-directory}/eth-gen.log";
+                availability = { restart = chain-restart; };
+              };
+              eth-consensus-gen = {
+                command = self'.packages.eth-consensus-gen;
+                log_location = "${devnet-root-directory}/eth-consensus-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+                };
+              };
+              eth-executor-gen = {
+                command = self'.packages.eth-executor-gen;
+                log_location = "${devnet-root-directory}/eth-executor-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+
+                };
+              };
+              eth-executor = {
+                command = self'.packages.eth-executor;
+                log_location = "${devnet-root-directory}/eth-executor.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-executor-gen".condition =
+                    "process_completed_successfully";
+                };
+                readiness_probe = {
+                  exec.command = ''
+                    test -f ${devnet-root-directory}/eth/jwtsecret
+                  '';
+                } // parachain-startup;
+
+              };
+              eth-consensus = {
+                command = self'.packages.eth-consensus;
+                log_location = "${devnet-root-directory}/eth-consensus.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                  "eth-executor".condition = "process_healthy";
+                };
+              };
+              eth-validator = {
+                command = self'.packages.eth-validator;
+                log_location = "${devnet-root-directory}/eth-validator.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                };
+              };
             };
           };
         };
+
       };
     };
 }

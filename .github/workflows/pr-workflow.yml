@@ -121,6 +121,7 @@ jobs:
             code/xcvm/evm/lib/forge-std
             code/xcvm/evm/lib/openzeppelin-contracts
             code/xcvm/evm/lib/protobuf3-solidity-lib
+            flake/eth-pos-devnet
       - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
   nix-flake-check:

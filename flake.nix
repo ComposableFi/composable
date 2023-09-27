@@ -70,7 +70,13 @@
         "github:ComposableFi/centauri/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
-    ethereum = { url = "github:nix-community/ethereum.nix"; };
+    eth-pos-devnet-src = {
+      flake = false;
+      url =
+        "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
+    };
+
+    ethereum = { url = "github:dzmitry-lahoda-forks/ethereum.nix/9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4"; };
   };
 
   nixConfig = {

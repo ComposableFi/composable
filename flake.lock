@@ -387,6 +387,22 @@
         "type": "github"
       }
     },
+    "devour-flake": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694098737,
+        "narHash": "sha256-O51F4YFOzlaQAc9b6xjkAqpvrvCtw/Os2M7TU0y4SKQ=",
+        "owner": "srid",
+        "repo": "devour-flake",
+        "rev": "30a34036b29b0d12989ef6c8be77aa949d85aef5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "devour-flake",
+        "type": "github"
+      }
+    },
     "devshell": {
       "inputs": {
         "nixpkgs": [
@@ -515,8 +531,26 @@
         "type": "github"
       }
     },
+    "eth-pos-devnet-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694203365,
+        "narHash": "sha256-Vc+BMJtfk/ATxxF28FAD9Uwwz1RBkEOkdeY7hCIWTaY=",
+        "owner": "OffchainLabs",
+        "repo": "eth-pos-devnet",
+        "rev": "4f4c28e71fd39bc50788dc1b858c1cc6b983defb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "OffchainLabs",
+        "repo": "eth-pos-devnet",
+        "rev": "4f4c28e71fd39bc50788dc1b858c1cc6b983defb",
+        "type": "github"
+      }
+    },
     "ethereum": {
       "inputs": {
+        "devour-flake": "devour-flake",
         "devshell": "devshell",
         "flake-compat": "flake-compat_4",
         "flake-parts": "flake-parts_3",
@@ -528,16 +562,17 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1695640328,
-        "narHash": "sha256-xfhyhLx+XM5fY9cvjRNBF3rkzCHS74CnfNFmEK6O87k=",
-        "owner": "nix-community",
+        "lastModified": 1695824803,
+        "narHash": "sha256-HI3O0f362lvVrErrcZJ1EWq3/7MQYegolkfP1bF03Wk=",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
-        "rev": "cb8e7d838cffb8f732098cc7fe068d3124403c97",
+        "rev": "9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4",
         "type": "github"
       },
       "original": {
-        "owner": "nix-community",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
+        "rev": "9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4",
         "type": "github"
       }
     },
@@ -2314,6 +2349,7 @@
         "crane": "crane",
         "darwin": "darwin",
         "devenv": "devenv",
+        "eth-pos-devnet-src": "eth-pos-devnet-src",
         "ethereum": "ethereum",
         "flake-parts": "flake-parts_6",
         "flake-utils": "flake-utils_7",
