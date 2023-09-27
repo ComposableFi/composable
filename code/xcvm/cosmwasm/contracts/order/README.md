@@ -23,7 +23,7 @@ More details semantics will be described in whitepaper. including Solver operati
 
 ## Implementation
 
-Current implementation is for 1 solution for one user, 1 to 1 asset, with explicit approval for CFMM route.
+Current implementation is for 1 solution for one user, 1 to 1 asset, permissioned solvers without collateral.
 
 ### Bribing
 
