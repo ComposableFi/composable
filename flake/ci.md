@@ -71,7 +71,7 @@ su actions-runner
 ## User
 
 ```bash
-nix profile install "nixpkgs#git" "nixpkgs#git-lfs" "nixpkgs#cachix" "nixpkgs#process-compose" "nixpkgs#dasel" "nixpkgs#nix-tree"
+nix profile install "nixpkgs#git" "nixpkgs#git-lfs" "nixpkgs#cachix" "nixpkgs#process-compose" "nixpkgs#dasel" "nixpkgs#nix-tree" "nixpkgs#hx" "nixpkgs#lazygit"
 ```
 
 ### x84_64

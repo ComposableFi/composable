@@ -562,17 +562,17 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1695807866,
-        "narHash": "sha256-UnEPhtwo297SqvArOFnO5PFJc/kD0Vy3ITCZjezmrpI=",
+        "lastModified": 1695824803,
+        "narHash": "sha256-HI3O0f362lvVrErrcZJ1EWq3/7MQYegolkfP1bF03Wk=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
-        "rev": "c79d1e2379242be55b16925fb8f4aece73be243d",
+        "rev": "9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "ethereum.nix",
-        "rev": "c79d1e2379242be55b16925fb8f4aece73be243d",
+        "rev": "9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4",
         "type": "github"
       }
     },
