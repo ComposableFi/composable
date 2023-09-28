@@ -149,6 +149,8 @@ runtime-benchmarks = [
   "treasury/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
+  "pallet-custom-origins/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
 ]
 std = [
   "cumulus-pallet-dmp-queue/std",

@@ -49,6 +49,7 @@ ibc-rs-scale = { workspace = true, default-features = false, features = [
   "parity-scale-codec",
   "serde",
 ] }
+pallet-ibc = { workspace = true, default-features = false }
 
 cosmwasm-std = { workspace = true, default-features = false, features = [
   "ibc3",
@@ -86,6 +87,7 @@ std = [
   "ibc-rs-scale/std",
   "orml-tokens/std",
   "orml-traits/std",
+  "pallet-ibc/std",
   "polkadot-primitives/std",
   "primitives/std",
   "scale-info/std",

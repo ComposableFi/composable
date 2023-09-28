@@ -138,17 +138,17 @@
     "centauri-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1692289034,
-        "narHash": "sha256-FHAVtfe3uLTNzPbe8HqPONj6B56gb9vz7vXM0kle0ks=",
+        "lastModified": 1695927008,
+        "narHash": "sha256-i1Q5D6SdFWWkjdRdh/baU881igP6TRkBFPdNttx8c1A=",
         "owner": "ComposableFi",
-        "repo": "centauri",
-        "rev": "629eb0da075350ae514bacfde70e15a1c93debd7",
+        "repo": "composable-ibc",
+        "rev": "53ba734707cece5da64222352c8d619b203fcd11",
         "type": "github"
       },
       "original": {
         "owner": "ComposableFi",
-        "repo": "centauri",
-        "rev": "629eb0da075350ae514bacfde70e15a1c93debd7",
+        "repo": "composable-ibc",
+        "rev": "53ba734707cece5da64222352c8d619b203fcd11",
         "type": "github"
       }
     },
