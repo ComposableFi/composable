@@ -19,3 +19,5 @@ the CVM serves as an orchestration framework for cross-chain communication and f
 User transactions and intents need a language for execution across different environments/ecosystems. CVM is the building block that energizes the Inter-Blockchain Communication (IBC) Protocol to be able to meet this need.
 
 For example, the CVM enables the ability to move Polkadot’s DOT token to Osmosis, swap to DOT to ETH, move ETH to Ethereum, swap to ETH to USDC, and move funds to Composable’s Cosmos chain. This all occurs in one user-signed transaction, which is expressed in plain English.
+
+## [Specification](./cvm/specification.md)

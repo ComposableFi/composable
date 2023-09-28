@@ -1,12 +1,7 @@
-# Codespaces
+# Remote developer environment (Codespaces)
 
-:::danger
-Codespaces is not yet fully compatible with our new build and developer environment system, [Nix](./nix).
-The recommended approach is to follow our [Nix Guide](./nix) and work locally for now.
-:::
-
-At Composable Finance, we use [Codespaces](https://github.com/features/codespaces) in order to provide 
-**blazing fast cloud developer environments.** This means that we all use the same 
+[Codespaces](https://github.com/features/codespaces) provides 
+**cloud developer environments.** This means that we all use the same 
 Dockerized devcontainer environment. It moves all of the resource-intensive processing 
 such as code compilation and analysis to the cloud, while the UI is rendered locally, providing a 
 **fast, responsive, and consistent user experience**.
