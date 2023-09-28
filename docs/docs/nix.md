@@ -6,7 +6,7 @@ After configuration, familiarize yourself with the following commands:
 
 `nix develop --impure` in to enter dev shell (command line, variables, tools, compilers).
 
-`nix run "composable#devnet-picasso"` to run local devnet for Polkakdot CosmWasm development.
+`nix run "composable#devnet-picasso"` to run local devnet for Polkadot CosmWasm development.
 
 `nix run "composable#fmt"` format all files.
 
