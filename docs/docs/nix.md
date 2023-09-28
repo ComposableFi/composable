@@ -10,4 +10,3 @@ After configuration, familiarize yourself with the following commands:
 
 `nix run "composable#fmt"` format all files.
 
-`nix build "composable#unit-tests"` check unit tests.
