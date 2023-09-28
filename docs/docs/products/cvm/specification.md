@@ -168,7 +168,9 @@ type Salt = Uint8Array
 
 type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | Abort | If
 
+/// Is atomic with not position recorded for user
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend.
+/// So it is super set of what usually called swap over CFMM(AMMs). 
 /// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
     in: AssetAmount[]
@@ -176,13 +178,14 @@ interface Exchange {
 }
 
 // time locks tokens, potentially getting some tokens out
+// can be Stake or liquidity provision 
 interface Bond {
     exchange : Exchange 
     /// maximum time for bonding, so as close as possible to it 
     time: Duration
 }
 
-/// exchange which may happen in future
+/// intention for exchange which may happen in future
 /// puts into ResultRegister either cross chain error error or OrderPositionId
 interface Order {
     exchange : Exchange
@@ -325,6 +328,9 @@ function execute_program(caller: Account, program: Program) {
     }
 }
 ```
+
+Above model does not maps exactly what chains receive as bytes input and put onto the bridge, 
+but properly models semantic model of execution. 
 
 ## Detailed
 
@@ -585,12 +591,21 @@ The following example program performs an operation, and rewards the tip address
 <Transfer> <Tip> { USDC: 15000000000000 }
 ```
 
+## Configuration registry
 
-# Asset Registries
+Stores mapping of native identifiers to CVM. Example asset.
 
-Assets can be identified using a global asset identifier.
+### Assets and other CVM identifiers
+
+Each asset identifier `AssetId` is 128 bit number with bits first bytes are network identifier `NetworkId`. 
 
 Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Executor instances can be reconfigured by the owner to use alternative registries.
+
+So it will never be case that same asset id means different on different chains. 
+
+So it will not be the case that on one chain 123213 means PEPA and on other chain 123213 means SHIB.
+
+Prefix allows to find network to look at for asset info and each chain introduce new assets independently.
 
 Propagating updates across registries is handled by the `CVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
@@ -637,7 +652,49 @@ In this case program can be executed if it was send by several chains.
 
 For operations of high importance EDSCA signature of program can be propagated from sending chain and verified on target chain.  
 
-## Limited instruction support and shortcuts
+### Bridges
+
+CVM does not have any hardcoded requirement for bridge to be trustless or trustful.
+
+
+
+## Cross chain Transfer
+
+Transfer is most common operation in blockchain, that why it deserver to be more detailed.
+
+CVM on CW Cosmos to Cosmos uses ICS20 for value transfers. Each ICS20 channel must be upserted into CVM config.
+
+CVM uses ICS-20 assets transfers on Cosmos chains. On Polkadot and Ethereum it uses escrow/mint, path dependant semantics compatible with ICS-20.
+
+
+## Data encoding
+
+There is no single encoding used across all CVM hosts.
+
+But encoding is always deterministic(like SCALE) or using deterministic subset of well known encoding(for example protobuf). 
+
+Specific encoding usage is subject to price, performance and usability constraints decided per chain to chain connection. 
+Please look into code and/or indexers. 
+
+
+
+## Deployments
+
+CVM is deployed in different hosts which are different in their capabilities.
+
+CVM handles differences without chaining program semantics and reaches chains without contracts too.
+
+Security of such multi deploy is described in other section.
+
+## Deployments
+
+Can be considered as 3 layers,
+
+1. Full deployment of contract with all capabilities. Can do anything.
+2. Partial fulfillment of CVM spec using on chain features in case not deployment is possible (usually can multi hop transfer, swap). 
+3. Edges which may start or terminate CVM programs, but do not execute anything except simple sings (like one hop final transfer). `Shortcuts` capable doing only limited subset of operation on top of existing cross chain protocol.
+
+For each chain and protocol it makes pragmatics solution to use existing liquidity and execution primitives.
 
 ### No support for arbitrary contracts
 
@@ -661,6 +718,173 @@ In this case for specific subset of instructions to specific whitelisted contrac
 
 On Near cannot abort Swap transaction if amount less than expected limit.
 In this case only trusted Swap contracts will be callable.
+
+## Examples 
+
+This documents shows some usages example of CVM.
+
+### Unwrap token
+
+Shorten path of wrapped token. 
+
+Just spawn on unwrapping chain and spawn to target chain for execution.
+
+### Bond (stake, lock)
+
+
+Call Bond instruction or do raw Call for Bonding.
+
+**Example**
+
+Program to `Bond` on Stride and transfer staked token to Osmosis
+is detected as pattern expressed in CVM.
+
+That part of program is translated to IBC calls to Stride without contracts deployed.
+ 
+So this program is possible
+```kdl
+execute amount=100atom { // on osmosis
+    spawn Osmosis amount=100atom {
+        spawn CosmosHub amount=All {
+            spawn Stride amount=All {
+                bond amount=All
+                spawn Osmosis amount=100%stAtom {
+                    spawn Centauri amount=All {
+
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+
+### Borrow
+
+A concrete example of using the CVM protocol is to transfer funds to a different chain, use them as collateral in a loan, transmit funds back to the source chain, and use them there. For this example, we'll omit querying for current account `health` and repayments.
+
+Concretely, we want to execute the following operations:
+
+- Transfer funds to chain XYZ.
+- Call a smart contract to take out a loan.
+- Reward the relayer, to incentivize execution.
+- Send funds back.
+
+Since we might not know the current interest rates, we'll use relative values for fund transfers, instead of absolute ones.
+
+For this example, we have the source initiator be a regular user, however, a smart contract is capable of executing the same operations.
+
+```mermaid
+sequenceDiagram
+    User->>Interpreter ABC: Submit Program
+    Interpreter ABC->>Router ABC: Spawn Program
+    Router ABC->>Gateway ABC: Submit Program
+    Gateway ABC->>Gateway XYZ: Relay Program
+    Gateway XYZ->>Router XYZ: Instantiate VM
+    Router XYZ->>Interpreter XYZ: Execute Spawn
+    Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
+    Lender->>Interpreter XYZ: Transfer USDC
+    Interpreter XYZ->>Tip: Transfer USDC fee to Relayer
+    Interpreter XYZ->>Router XYZ: Spawn Program
+    Router XYZ->>Gateway XYZ: Submit Program
+    Gateway XYZ->>Gateway ABC: Relay Program
+    Gateway ABC->>Router ABC: Instantiate VM
+    Router ABC->>Interpreter ABC: Execute Spawn
+    Interpreter ABC->>Tip: Transfer USDC fee to Relayer
+    Interpreter ABC->>User: Transfer USDC
+```
+
+Although these operations are quite complicated to code by hand, using the CVM protocol, we can very succinctly express them:
+
+```kdl
+spawn "XYZ" 0 {
+    call "0x1337"                           // chain-specific encoding to make a smart contract call
+    transfer tip=50usdc                     // 50 bucks for the fee. The relayer earns this if the inner spawn is dispatched
+    spawn HOME 0 amount=ALL {              // We send over 100 DOT from ABC to XYZ.
+        transfer tip=50usdc                // Another 50 bucks fee for the operation, but now reverse direction.
+        transfer to=Alice amount=All       // On ABC, we transfer all USDC to the user.
+    }
+}
+```
+
+### Cross-Chain Exchange (swap)
+
+Traditionally, users and applications were trading tokens that were only
+available on their native chain. If you were operating on a chain **X**, you
+would only be able to **swap** tokens that were registered on **X** (be it
+native, ERC20 virtualized or even virtualized and wrapped like WETH).
+
+Manipulating tokens is very complex already. Users willing to move assets
+between chains are facing incredible difficulties. Not only bridging is hard,
+but also insecure. In most cases, the bridges are centralized and hackable by
+design. We, at Composable, try to push the blockchain vision forward, trustless
+from the start to the end.
+
+In this example, we will execute a cross-chain swap through CVM and understand
+how programs are relayed, instructions executed and funds transferred. Be aware
+that this use case can be generalized to any DeFi protocol and it is the reason
+why **CVM makes protocols cross-chain native**.
+
+Under CVM, tokens are **free to fly** between any chain connected to its
+network. Not only they can be traded regardless of their origin, but they are
+completely abstracted thanks to a globally unique CVM **asset identifier**.
+
+**Alice** could submit the following **CVM program**, along **250 PICA** to execute a cross-chain swap:
+
+```kdl
+[
+  -- 1. Move to Osmosis with a bag of 250 PICA.
+  Spawn Osmosis Deterministic 0x0 [
+    -- 1.1. (OPTIONAL) Tip the relayer for the journey.
+    Transfer Relayer (PICA (Unit 25)),
+    -- 1.2. Execute a swap, effectively trading 200 PICA for OSMO with 1% slippage tolerance.
+    -- This might be replaced by an arbitrary `Call 0x042502` representing the swap,
+    -- but for some well-known protocols, we decided to include a custom, strongly typed instruction.
+    Swap (PICA (Unit 200)) OSMO 1%,
+    -- 1.3. At this point, we don't know how many OSMO/PICA we have.
+    -- But we can ask CVM to move 100% of both!
+    Spawn Picasso Deterministic 0x01 [
+      -- 1.3.1. (OPTIONAL) Tip the relayer for the cosy home with the remaining PICA.
+      Transfer Relayer (PICA 100%),
+      -- 1.3.2. Funds are safu.
+      Transfer (OSMO 100% Alice)
+    ] { OSMO: 100%, PICA: 100% }
+  ] { PICA: Unit 250 }
+]
+```
+
+1. Alice submits the CVM program and the instruction **1.** is executed,
+   resulting in:
+   1. the **child CVM program**, consisting of the instructions **[1.1., 1.2.,
+     1.3.]** is being submitted within an IBC packet to **Osmosis**.
+   2. the funds attached to the child program, **250 PICA**, are being
+transferred to **Osmosis** using an [**ICS20
+transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4a5993a0/spec/app/ics-020-fungible-token-transfer/README.md).
+2. An IBC relayer, listening to on-chain events, determine that relaying the IBC
+  packet containing the CVM program is profitable. It proceeds and relays both
+  the funds and the packet to **Osmosis**.
+3. The packet is being submitted by the relayer and subsequently processed on
+   **Osmosis**, resulting in the **child CVM program** being executed:
+   1. the instruction **1.1.** is executed: **25 PICA** are transferred to the
+      relayer.
+   2. the instruction **1.2.** is executed: **200 PICA** are traded against an
+      unknown amount **X** of **OSMO**.
+   3. the instruction **1.3.** is executed, resulting in:
+      1. the **second child CVM program**, consisting of the instructions
+      **[1.3.1., 1.3.2.]** is being submitted within an IBC packet to
+      **Picasso**.
+      2. the funds attached to the second child program, **100% of the OSMO and
+         100% of the remaining PICA** are being transferred to **Picasso** using
+         an **ICS20 transfer**.
+4. Finally, an IBC relayer determines that relaying the program is again
+   profitable, the packet and the funds are relayed to **Picasso**.
+5. The packet is being submitted by the relayer and subsequently processed on
+   **Picasso**, resulting in the **second child CVM program** being executed:
+   1. the instruction **1.3.1.** is executed: **100% of the remaining PICA**
+      (25 + dust from the swap) is transferred to the relayer.
+   2. the instruction **1.3.2.** is executed: **100% of the OSMO** is
+      transferred back to **Alice**.
 
 ## Historical
 

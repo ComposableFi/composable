@@ -226,6 +226,7 @@ This address will be used to query `interpreter` state.
 In generally Celatone and other generalized indexers show execution very well. I happens according to sequence diagram in CVM description.
 
 
+
 ### Query state of contract 
 
 
@@ -336,3 +337,4 @@ Also `interpreter` implements CW1 proxy contract allowing user to unstuck funds 
               }
             }
 ```
+
