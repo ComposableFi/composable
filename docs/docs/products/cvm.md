@@ -20,4 +20,4 @@ User transactions and intents need a language for execution across different env
 
 For example, the CVM enables the ability to move Polkadot’s DOT token to Osmosis, swap to DOT to ETH, move ETH to Ethereum, swap to ETH to USDC, and move funds to Composable’s Cosmos chain. This all occurs in one user-signed transaction, which is expressed in plain English.
 
-## [Specification](./cvm/specification.md)
+## [Specification](https://github.com/ComposableFi/composable/blob/main/docs/docs/products/cvm/specification.md)
