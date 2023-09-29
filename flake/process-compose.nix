@@ -80,6 +80,16 @@
           '';
         };
 
+        devnet-xc-cosmos-fresh-background = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools;
+          name = "devnet-xc-cosmos-fresh-background";
+          text = ''
+            rm --force --recursive ${devnet-root-directory}             
+            mkdir --parents ${devnet-root-directory}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos-background}
+          '';
+        };
+
         devnet-xc-fresh = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
           name = "devnet-xc-fresh";
@@ -180,6 +190,62 @@
           debug = true;
           settings = {
             processes = {
+              eth-gen = {
+                command = self'.packages.eth-gen;
+                log_location = "${devnet-root-directory}/eth-gen.log";
+                availability = { restart = chain-restart; };
+              };
+              eth-consensus-gen = {
+                command = self'.packages.eth-consensus-gen;
+                log_location = "${devnet-root-directory}/eth-consensus-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+                };
+              };
+              eth-executor-gen = {
+                command = self'.packages.eth-executor-gen;
+                log_location = "${devnet-root-directory}/eth-executor-gen.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-gen".condition = "process_completed_successfully";
+
+                };
+              };
+              eth-executor = {
+                command = self'.packages.eth-executor;
+                log_location = "${devnet-root-directory}/eth-executor.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-executor-gen".condition =
+                    "process_completed_successfully";
+                };
+                readiness_probe = {
+                  exec.command = ''
+                    test -f ${devnet-root-directory}/eth/jwtsecret
+                  '';
+                } // parachain-startup;
+
+              };
+              eth-consensus = {
+                command = self'.packages.eth-consensus;
+                log_location = "${devnet-root-directory}/eth-consensus.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                  "eth-executor".condition = "process_healthy";
+                };
+              };
+              eth-validator = {
+                command = self'.packages.eth-validator;
+                log_location = "${devnet-root-directory}/eth-validator.log";
+                availability = { restart = chain-restart; };
+                depends_on = {
+                  "eth-consensus-gen".condition =
+                    "process_completed_successfully";
+                };
+              };
               centauri = {
                 command = pkgs.writeShellApplication {
                   runtimeInputs = devnetTools.withBaseContainerTools;
@@ -367,69 +433,7 @@
           };
         };
 
-        devnet-xc-eth = {
-          debug = true;
-          settings = {
-            processes = {
-              eth-gen = {
-                command = self'.packages.eth-gen;
-                log_location = "${devnet-root-directory}/eth-gen.log";
-                availability = { restart = chain-restart; };
-              };
-              eth-consensus-gen = {
-                command = self'.packages.eth-consensus-gen;
-                log_location = "${devnet-root-directory}/eth-consensus-gen.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-gen".condition = "process_completed_successfully";
-                };
-              };
-              eth-executor-gen = {
-                command = self'.packages.eth-executor-gen;
-                log_location = "${devnet-root-directory}/eth-executor-gen.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-gen".condition = "process_completed_successfully";
-
-                };
-              };
-              eth-executor = {
-                command = self'.packages.eth-executor;
-                log_location = "${devnet-root-directory}/eth-executor.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-executor-gen".condition =
-                    "process_completed_successfully";
-                };
-                readiness_probe = {
-                  exec.command = ''
-                    test -f ${devnet-root-directory}/eth/jwtsecret
-                  '';
-                } // parachain-startup;
-
-              };
-              eth-consensus = {
-                command = self'.packages.eth-consensus;
-                log_location = "${devnet-root-directory}/eth-consensus.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-consensus-gen".condition =
-                    "process_completed_successfully";
-                  "eth-executor".condition = "process_healthy";
-                };
-              };
-              eth-validator = {
-                command = self'.packages.eth-validator;
-                log_location = "${devnet-root-directory}/eth-validator.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-consensus-gen".condition =
-                    "process_completed_successfully";
-                };
-              };
-            };
-          };
-        };
+        devnet-xc-cosmos-background = devnet-xc-cosmos // { tui = false; };
 
         devnet-xc-cosmos = {
           debug = true;

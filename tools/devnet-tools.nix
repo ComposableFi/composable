@@ -22,6 +22,8 @@
         git-lfs
         gnused
         procps
+        wget
+        curl
       ];
       withDevNetContainerTools = with pkgs;
         [ bottom gawk gnugrep less nettools nix self'.packages.bech32cli ]
