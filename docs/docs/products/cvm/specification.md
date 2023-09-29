@@ -51,7 +51,7 @@ More detail on this architecture can be found in the rest of this documentation.
 
 ## Additional References
 
-Cross-chain DeFi gets complicated. To understand this documentation at the deepest level, it is helpful to have existing knowledge about the application side of messaging protocols, like [Parity’s XCM](https://github.com/paritytech/xcm-format), [Cosmos’s IBC-ICS-20/27](https://github.com/cosmos/ibc), or [NEAR’s multi block execution](https://docs.near.org/concepts/advanced/near-indexer-framework).
+Cross-chain DeFi gets complicated. To understand this documentation at the deepest level, it is helpful to have existing knowledge about the application side of messaging protocols, like [Parity’s XCM](https://github.com/paritytech/xcm-format), [Cosmos’s IBC-ICS-20/27](https://github.com/cosmos/ibc), or [NEAR’s multi block execution](https://docs.near.org/concepts/basics/transactions/overview).
 
 
 ## What is CVM, and what are its functions?
