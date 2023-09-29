@@ -361,7 +361,7 @@ sequenceDiagram
 
 The diagram starts with a fully CVM-enabled flow.
 
-In the end, it shortcuts VM execution to a standard protocol without doing SubProgram execution. This happens if there is an incentive to do a shortcut (for example, gas costs or limited CVM support on the target) and the subprogram is simple, like transfer (or another build in a cross-chain protocol.
+In the end, it shortcuts VM execution to a standard protocol without doing SubProgram execution. This happens if there is an incentive to do a shortcut (for example, gas costs or limited CVM support on the target) and the subprogram is simple, like transfer (or another build in a cross-chain protocol).
 
 All the CVM receives is CVM programs. It then uses routing configuration (of assets and bridges, and their features) to dispatch programs over underlying protocols.
 
