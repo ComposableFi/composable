@@ -47,7 +47,7 @@ More detail on this architecture can be found in the rest of this documentation.
 - Assets, tokens, coins, funds, amounts: used interchangeably
 - Chain, blockchain, consensus, domain: also used interchangeably to refer to `execution systems using different instances of proofs systems`
 - Address, account, wallet: also used interchangeably; each can do something on-chain from its own identity, and hold some funds
-- Bridge, relayer: Something which can act on one chain on behalf of another, for example mint tokens (transfer)First, assets, tokens, coins, funds, amounts - used semirandomly for same thing.
+- Bridge, relayer: Something which can act on one chain on behalf of another, for example mint tokens (transfer)
 
 ## Additional References
 
