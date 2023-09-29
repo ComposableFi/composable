@@ -67,7 +67,7 @@
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/53ba734707cece5da64222352c8d619b203fcd11";
+        "github:ComposableFi/composable-ibc/44b05025ba055a444c38708426cdcdbee363df18";
     };
 
     eth-pos-devnet-src = {
