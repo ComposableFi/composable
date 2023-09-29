@@ -24,6 +24,18 @@
           FEE = "uosmo";
           BINARY = "osmosisd";
         };
+
+        remote-devnet = {
+          FEE = "uosmo";
+          NETWORK_ID = 3;
+          CHAIN_ID = "osmosis-dev";
+          DIR = "remote-devnet/.osmosisd";
+          BINARY = "osmosisd";
+          BLOCK_SECONDS = 6;
+          NODE =
+            "https://static.28.137.109.65.clients.your-server.de:443/osmosis/";
+        };
+
         testnet = {
           FEE = "uosmo";
           NETWORK_ID = 3;
