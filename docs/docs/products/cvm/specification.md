@@ -1,8 +1,6 @@
 # Overview
 
-CVM are opaque contracts for execution of non atomic, asynchronous, trust minimized, non custodial, bridge agnostic and  non turing complete cross chain programs with code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems and messaging protocols.
-
-Lest try to define what above means.
+The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimized, non-custodial, bridge-agnostic and non-Turing complete cross-chain programs. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
 
 ## Why?
 
@@ -22,10 +20,9 @@ sequenceDiagram
     Ethereum ->> Centauri : Transfer USDC
 ```
 
-Sounds simple, but you need to know several encodings, transports protocols and SDKs to do that. 
-Also one may not easy start on Polkadot and proceed to the end using single transaction.
+This sounds simple, but you need to know several encodings, transports protocols, and SDKs to do this. Also, without the CVM, one may not easily start on Polkadot and proceed to the end using a single transaction.
 
-CVM solves it this way (still simplified):
+CVM solves it this way (displayed in a simplified manner):
 ```mermaid
 sequenceDiagram
     actor User
@@ -43,109 +40,73 @@ sequenceDiagram
     Centauri ->> Centauri : No more instructions, stop here
 ```
 
-Later will show more deep diagrams on how it is implemented.
+More detail on this architecture can be found in the rest of this documentation. Carrying out cross-chain swaps is just one of the many possible operations
 
-Exchange is one of many operations possible.
+## Definitions
 
-## Some definitions
+- Assets, tokens, coins, funds, amounts: used interchangeably
+- Chain, blockchain, consensus, domain: also used interchangeably to refer to `execution systems using different instances of proofs systems`
+- Address, account, wallet: also used interchangeably; each can do something on-chain from its own identity, and hold some funds
+- Bridge, relayer: Something which can act on one chain on behalf of another, for example mint tokens (transfer)First, assets, tokens, coins, funds, amounts - used semirandomly for same thing.
 
-First, assets, tokens, coins, funds, amounts - used semirandomly for same thing.
+## Additional References
 
-Second,  chain, blockchain, consensus, domain - are same. I feel that best definition for that are `execution systems using different instances of proofs systems`.
+Cross-chain DeFi gets complicated. To understand this documentation at the deepest level, it is helpful to have existing knowledge about the application side of messaging protocols, like [Parity’s XCM](https://github.com/paritytech/xcm-format), [Cosmos’s IBC-ICS-20/27](https://github.com/cosmos/ibc), or [NEAR’s multi block execution](https://docs.near.org/concepts/advanced/near-indexer-framework).
 
-Third, address, account, wallet. Each of this can do something on chain from own identity and hold some funds. I use these interchanged.
 
-Last, bridge, relayer. Something which can act on one chain on behalf of other, for example mint tokens (transfer).  
+## What is CVM, and what are its functions?
 
-For anything else looks into Blockchain academies.
-
-## Prerequisites
-
-Assuming you know most common blockchain nomenclature and definitions. I stick to that as possible. 
-
-Would be helpfull if you are aware of anything cross chain.
-I touching application side of messaging protocols, like Parity XCM or Cosmos IBC-ICS-20/27 or Axelar GMP useful. 
-Also NEAR multi block execution very inspiring.
-
-This text targets people who can read basic programming notations, but tries to text them around a lot, so hopefully non tech people get that. 
-
-For layman description look at product and marketing materials, and presentations.
-
-## What is CVM
-
-Next 3 sections try to answer that question. 
-
-Please pick up to start what is best for you, may be switch back and forth several times.
-
-Text partially overlap.
+The following aims to answer this question. You can being reading any of these sections first, perhaps switching back and forth between sections several times as needed; the contents of these categories partially overlap
 
 ### Building blocks
 
-CVM is set of opaque contracts on chains.
-`Opaque contract`  may be one contract on specific chain or several, or it can be module.
-Just contract in all text after.
+The CVM is a set of opaque contracts on chains. Each `opaque contract` may be one contract on a specific chain or several, or it can be a module. We will refer to this simply as a contract from this point onwards.
  
-CVM `program`s is tree of instructions with attached assets.
-Opaque contract has program as input.
-Program format is executable language to describe what user wants to do cross chains.
+A CVM `program` is a tree of instructions with attached assets. Each opaque contract has a program as input. The program format is an executable language to describe what the user wants to do across chains.
 
-Instructions in side programs are interpreted by `Executor`.
-It owns all user funds and fully owned by she. 
-Executor delegates bridges to manage funds operations cross chain.
-`Executor` is user's cross chain account. 
+Instructions inside programs are interpreted by the `Executor`. It owns all of the user's funds. The executor delegates bridges to manage funds operations cross-chain. The `executor` is the user's cross-chain account.
 
-Inductions are, but not limited to:
-- Transfer, transfer funds from account to account on single chain
-- Spawn, transfer leaf of tree (subprogram) to other chain with assets, for further execution
-- Call, arbitrary ABI builder call per chain allowing invoke arbitrary opaque contracts
-- Exchange, most used operation, allowing to give some tokens and get other tokens back
+Instructions include, but are not limited to:
+- Transfer: transfer funds from account to account on a single chain
+- Spawn: transfer leaf of tree (subprogram) to other chain with assets, for further execution
+- Call: arbitrary ABI builder call per chain allowing invoke arbitrary opaque contracts
+- Exchange: the most used operation, allowing the provision of some tokens in order to receive other tokens in return
 
-Detailed description of each instruction are described later, but most important aspects are described in this section.
+A detailed description of each instruction is described later, but the most important aspects are described in this section.
 
-Spawn uses path dependant reserve transfer escrow/mint protocol to move funds.
+Spawn uses a path-dependant reserve transfer escrow/mint protocol to move funds.
 
-Call is way to represent native call in encoding executable on each chain, and yet able to fill in(bind) some context details like amount of assets and some addresses in cross chain(CVM) way.
+Call is a way to represent a native call in encoding that is executable on each chain, and yet able to fill in (bind) some context details like the amount of assets and some addresses in a cross-chain (CVM) way.
 
-Exchange requires configuration of pool in CVM contract storage. 
-So do mapping of native assets and chains routing capabilities available for CVM programs. 
-Routing information describes what type of bridge with what capabilities and limitations connecting chains.
-There is no requirement for CVM contracts to be deployed on chains as long as chains reachable by some form of execution.
+Exchange requires configuration of the pool in CVM contract storage. So do mapping of native assets and chains’ routing capabilities available for CVM programs. Routing information describes the type of bridge and what capabilities and limitations connecting chains it has. There is no requirement for CVM contracts to be deployed on chains as long as chains are reachable by some form of execution.
 
-Exchange/Transfer/Spawn are just shortcuts for specific Calls.
-From no will use Call to refer any on chain execution.
+Exchange/Transfer/Spawn are shortcuts for specific Calls. From here onwards, we will use `Call` to refer to any of these types of on-chain execution.
 
-During program interpretation, current executing instruction, result of call execution and bridging state (internal of Spawn) are recorded in Executor state.
-In case of CVM program error, funds are retained on sender or receiving Executor.
-User can observe state of Executor and send program to handle current state.
-For example move funds to other account or chain.   
+During program interpretation, while the instruction is executing, the result of call execution and bridging state (internal of Spawn) are recorded in executor state. In case of a CVM program error, funds are retained on the sending or receiving executor. Users can observe the state of the executor and send a program to handle the current state. For example, they can move funds to another account or chain.
 
 ### CVM definition deconstruction
 
-`opaque contracts` - CVM may be module or contract, one or many on chain it executes
+`Opaque contracts` - In the CVM, these may be module or contract, executing on one or many chains
 
-`non atomic` - it is not the case that whole program executed in single block, it is not all or nothing transaction
+`Non-atomic` - the whole program is not executed in single block; it is not an all-or-nothing transaction
 
-`asynchronous` - two Spawns in single program, but are sent to bridges at same time, execute concurrently on on several chains, other instruction are sequential
+`Asynchronous` - two Spawns in single program, but are sent to bridges at same time, execute concurrently on on several chains; other instruction are sequential
 
-`trust minimized` - internally CVM uses most secured, trustless bridges, to execute CVM programs, CVM contracts are subject for cross chain governance
+`Trust minimized` - internally, the  CVM uses the most secured, trustless bridges, to execute CVM programs; CVM contracts are subject to cross-chain governance
 
-`non custodial` - each user owns all assets on each chain, he just delegates ability to move this funds cross chain from cross chain account (Executor).
+`Non-custodial` - each user owns all assets on each chain; they delegate the ability to move these funds cross-chain from their cross-chain account (executor)
 
-`non turing complete` - means that there are no procedural loops or recursion, means CVM programs are predictable, determinist and will stop
+`Non-Turing complete` - that there are no procedural loops or recursion, meaning that CVM programs are predictable, deterministic, and will stop
 
-`code propagated along with data` - you do not need to deploy programs, you just send program, as subprograms move from chain to chain, they move assets along.
+`Code propagated along with data` - you do not need to deploy programs, you just send programs; as subprograms move from chain to chain, they move assets along
 
-`cross chain programs` - same program input works consistently on all supported chain, write once run anywhere
+`Cross-chain programs` - the same program input works consistently on all supported chains; you can write it once to run anywhere
 
-`accessing de facto native liquidity markets` - CVM uses native assets contracts contracts on each chain and each bridge it use, programs can defi existing liquidity on chains, as new bridges and chains added, CVM incorporates these without any modification from user
+`Accessing de facto native liquidity markets` - the CVM uses native assets contracts on each chain and each bridge it uses, so programs can leverage existing liquidity on chains; as new bridges and chains are added, the CVM incorporates these without any modification from the user
 
-`abstracting away in several underlying transports, encodings, assets systems and messaging protocols` - you do not need to know assets systems, way to talk to bridges, encode common operation on each chain you want to act on, you learn CVM, and it helps you to handle details
+`Abstracting away in several underlying transports, encodings, assets systems and messaging protocols` - you do not need to know assets systems, how to talk to bridges, or how to encode common operation on each chain you want to act on; you learn the CVM, and it helps you to handle these details
 
-### More formally
-
-
-This is simplified model of CVM design:
-
+### Simplified CVM Design
 
 ```typescript
 /// CVM may be physically implemented differently on different chains
@@ -168,7 +129,7 @@ type Salt = Uint8Array
 
 type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | Abort | If
 
-/// Is atomic with not position recorded for user
+/// Is atomic without position recorded for user
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend.
 /// So it is super set of what usually called swap over CFMM(AMMs). 
 /// Set `ExchangeError` to result register in case of fail.
@@ -329,16 +290,15 @@ function execute_program(caller: Account, program: Program) {
 }
 ```
 
-Above model does not maps exactly what chains receive as bytes input and put onto the bridge, 
-but properly models semantic model of execution. 
+The model above does not map exactly what chains receive as bytes that are being input and then outputted to the bridge, rather it outlines the correct semantic model of execution. 
 
-## Detailed
+## Detailed CVM Design
 
-Here are more details for each instructions, roles and security model of things above.
+Here are more details for instructions, roles, and the security model of the CVM.
 
-### Architecture and flows
+### Architecture and Flow
 
-Here is logical state of CVM:
+Here is the logical state of the CVM:
 
 ```mermaid
 erDiagram
@@ -362,15 +322,14 @@ erDiagram
     OFFCHAIN_WALLET }|..|| CVM : execute  
 ```
 
-So user(wallet) has Executor(CVM account) on each chain (instantiated on demand).
+So, the user (wallet) has an executor (CVM account) on each chain (instantiated on demand).
 
-CVM account delegates CVM contract to bridge assets and execution on behalf of user across chains.
+The CVM account delegates a CVM contract to bridge assets and execute on behalf of the user across chains.
 
-CVM is bridge agnostic, it has full capabilities when target chain allows permissionless contracts an general message passing, 
-and limited `shortcut`s when no custom code allowed and only subset of target cross chain operations possible.
+The CVM is bridge agnostic, with full capabilities when the target chain allows permissionless contracts and general message passing, as well as limited shortcuts when no custom code is allowed and only a subset of target cross-chain operations are possible.
 
+Let’s look into one hop from one chain to another chain in detail (additional hops will just repeat part of the picture):
 
-Let look into one hop from one chain to other chain in detail (three hops will just repeat part of picture):
 
 ```mermaid
 sequenceDiagram
@@ -400,34 +359,28 @@ sequenceDiagram
    IBCOnEthereum ->> ERC20: Mint 
 ```
 
-Above diagram starts with fully CVM enabled flow. 
+The diagram starts with a fully CVM-enabled flow.
 
-In the end it short cuts VM execution to standard protocol without doing SubProgram execution.
-This happens if there is incentive to do shortcut (for example, gas costs or limited CVM support on target) 
-and subprogram is simple like transfer (or other build in cross chain protocol).
- 
-All CVM receives CVM programs, uses routing configuration (of assets and bridges, and their features)
-to dispatch programs over underlying protocols.
+In the end, it shortcuts VM execution to a standard protocol without doing SubProgram execution. This happens if there is an incentive to do a shortcut (for example, gas costs or limited CVM support on the target) and the subprogram is simple, like transfer (or another build in a cross-chain protocol.
+
+All the CVM receives is CVM programs. It then uses routing configuration (of assets and bridges, and their features) to dispatch programs over underlying protocols.
+
 
 ### Instructions
 
-Spawn instructions executed concurrently.
-
-All other instruction executed sequentially in subprogram. 
+Spawn instructions are executed concurrently. All other instructions are executed sequentially in a subprogram. 
 
 ### Call
 
-Executes a payload which is ABI call to opaque contract within the execution context of the chain. 
+This executes a payload which is an ABI call to an opaque contract within the execution context of the chain.
 
-The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`.
-This allows us to construct a program that uses data only available on the executing side.
-Binding values are lazy filled in on target chain.
+The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. Binding values are lazy filled in on the target chain.
 
-Binding value `Self` injects account in Executor into call.
+The binding value `Self` injects the account in the Executor into a call.
 
-Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of `AssetId` conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting `Ratio` to absolute `Balance` type.
+Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of `AssetId` conversions. This is done by using `BindingValue::AssetId(GlobalId)`, or lazily converting `Ratio` to absolute `Balance` type.
 
-Bindings support byte aligned encodings (all prominent in crypto).
+Bindings support byte aligned encodings (all that are prominent in crypto).
 
 
 **Example**
@@ -440,58 +393,55 @@ function swap(in_amount: number, in_asset: String, min_out: number, out_asset: S
 }
 ```
 
-If the caller wants to swap funds from the Executor account and receive the funds into the Executor account, we need to specify the BindingValue `Self`, using the index of the `to` field for the payload being passed to the contract.
+If the caller wants to swap funds from the Executor account and receive the funds into the Executor account, they need to specify the BindingValue `Self`, using the index of the `to` field for the payload being passed to the contract.
 
-Sender chain spawns with  `swap(100, "dot", "eth", 1, BindingValue::Self)` call, and on target chain Self replaced with address on execution Executor.  
+The sender chain spawns with  `swap(100, "dot", "eth", 1, BindingValue::Self)` call, and on target chain Self replaced with address on execution Executor.  
 
 
 ### Spawn
 
-Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction that to execute on the `Network` of the `Spawn` context.
+Sends a `Program` to another chain to be executed asynchronously. It is only guaranteed to execute on the specified `Network` if its `Program` contains an instruction to execute on the `Network` of the `Spawn` context.
 
-If Spawn fails it may fail on sender chain or on receiver chain, but not both. 
+If `Spawn` fails, it may fail on the sender chain or on the receiver chain, but not both. 
 
-Funds are retained in Executor. 
+Funds are retained in the Executor. 
 
 `ResultRegister` is written.
 
 
-`AssetId` in `Assets` are converted from sender to receiver identifiers by Executor. 
-
+`AssetId` in `Assets` are converted from the sender to receiver identifiers by the Executor. 
 
 #### How Spawn fails
 
-Failure on sender chain is asynchronously too.
+Failure on the sender chain is asynchronous too.
 
-There 2 types of failures.
+There are two types of failures.
 
-First when `SpawnPackage` failed fully without event calling `Inteprter`, in this case all funds are rollback to sending interpret.
-Target chain will not have on chain trace of execution.
+1. When `SpawnPackage` fails fully without even calling the `executor`, in this case all funds are rolled back to the executor. Target chain will not have an on-chain trace of execution.
 
-Second when `SpawnPackage` reach target chain, started execution in Executor and failed. In this case `ResultRegister` is filled on target chain and funds stay here.
-Sender chain considers Spawn to be success.
+2. When `SpawnPackage` reaches the target chain, starts execution in the Executor and fails. In this case `ResultRegister` is filled on the target chain and funds remain there. The sender chain considers Spawn to be a success.
 
-There no in between scenario when fail spread onto to chains.
+There no in-between scenario when the failure is spread onto both chains.
 
 ### Query
 
-Queries register values of an `CVM` instance across chains. It sets the current `Result Register` to `QueryResult`. on the semantics of registers and `RegisterValues`.
+Queries register values of a `CVM` instance across chains. It sets the current `Result Register` to `QueryResult` on the semantics of registers and `RegisterValues`.
 
 
 ###  Balances
 
-Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`.  or if the caller knows amount of the assets on the destination side: `Absolute`.
+The amount of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`.  Or, if the caller knows amount of the assets on the destination side using `Absolute`.
 
 ### Registers
 
-Each Executor keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
+Each executor keeps track of persistent states during and across executions, which are stored in different registers. Register values are always updated during execution and can be observed by other contracts.
 
 #### Result Register
 
 The result register contains the result of the last executed instruction.
 
 
-If `ResultRegister` was set to `Error` and there is `Restoration` register contains CVM program it will be executed.
+If `ResultRegister` was set to `Error` and there is `Restoration` register containing a CVM program, it will be executed.
 
 #### IP Register
 
@@ -500,7 +450,7 @@ The instruction pointer register contains the instruction pointer of the last ex
 
 #### Tip Register
 
-The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for Executor execution.
+The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for the Executor's execution.
 
 #### Self Register
 
@@ -512,13 +462,19 @@ The version register contains the semantic version of the contract code, which c
 
 ### Program Execution Semantics
 
-Execution of a program is a two-stage process. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. Third, the instructions are iterated over and executed. Implementors MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The Executor SHOULD NOT mangle the return values but store them as returned. Because the return values are chain specific, the actual structure is left *undefined*.
+Execution of a program is a two-stage process. 
 
-If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this document require the transaction to be aborted on failure, however, subsequent addendums may define new instructions with different behavior.
+1. First, the virtual machine MUST verify that the caller is allowed to execute programs for that specific instance, by verifying that the caller is one of the owners. 
+2. Second, the instructions are iterated over and executed. 
+
+Implementers MUST execute each instruction in the provided order and MUST update the IP register after each instruction is executed. After each instruction is executed, the result register MUST be set to the return value of the instruction. The executor SHOULD NOT alter the return values but store them as returned. Because the return values are chain-specific, the actual structure is left undefined.
+
+If an error is encountered by executing an instruction, the defined transactional behavior for that instruction should be abided by. All instructions defined in this documentation require the transaction to be aborted on failure. However, subsequent addendums may define new instructions with different behavior.
 
 After the final instruction has been executed and registers are set, the execution stops and the transaction ends.
 
 See Appendix A for the algorithm.
+
 
 ## CVM Execution Semantics
 
@@ -532,9 +488,9 @@ Each chain contains a singleton bridge aggregator, the `Gateway`, which abstract
 
 Each program arriving through the `Gateway` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Executor` instance. The router then transfers funds to the `Executor` instance.
 
-Subsequent calls by the same `Origin` will not result in an instantiation, but instead in re-use of the `Executor` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
+Subsequent calls by the same `Origin` will not result in an instantiation, but instead in a re-use of the `Executor` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
 
-If no Executor instance has been created for a given caller, the call to the `Router` must either come from the `IBC`, `XCM`, `OTP`, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
+If no Executor instance has been created for a given caller, the call to the `Router` must either come from the `IBC`, `XCM`, or a local origin. After the instance has been created, it can be configured to accept other origins by the caller.
 
 **Example**
 
@@ -545,10 +501,10 @@ spawn network=A salt=0x01 { // the origin for the instructions is (A, AccountOnA
     spawn network="B" salt=0x02 {} // Sub-program spawned on B, with 0x02 as salt, the origin for the instructions is (A, AccountOnA, 0x2) 
 }
 ```
-Possible usage is to allow one program execution to act on state of other program execution to restore funds. 
+A possible usage is to allow one program execution to act on the state of another program execution to restore funds. 
 
 
-In the above CVM program, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make it's Executor origin using a fine grained mode. The following program is an example on how we can spread a salt:
+In the CVM program above, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make its Executor origin using a fine grained mode. The following program is an example on how we can spread a salt:
 ```kdl
 Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
     Call 0x1337,                                        // Call instruction executed on A
@@ -570,7 +526,7 @@ Executor instances maintain a set of owners.
 
 Programs are only executed by the Executor if the caller is in the set of owners.
 
-On initial instantiation of the `CVM` Executor, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the Executor instance and the funds held and can make delegate calls from the instance's account.
+On initial instantiation of the `CVM` Executor, the calling `Identity` is the owner. This can be a local or foreign account, depending on the origin. The owning `Identity` has total control of the Executor instance and the funds held can make delegate calls from the instance's account.
 
 Oftentimes, multiple `Identities` represent a single real-world entity, such as a cross-chain protocol or a user. To accommodate for shared/global ownership of resources, each Executor keeps track of a set of `Identities`, which share ownership of the Executor. Each owning `Identity` has full permissions on the Executor instance.
 
@@ -593,19 +549,17 @@ The following example program performs an operation, and rewards the tip address
 
 ## Configuration registry
 
-Stores mapping of native identifiers to CVM. Example asset.
+This stores the mapping of native identifiers to CVM such as an asset.
 
 ### Assets and other CVM identifiers
 
-Each asset identifier `AssetId` is 128 bit number with bits first bytes are network identifier `NetworkId`. 
+Each asset identifier `AssetId` is 128 bit number in which the iniital bytes represent the network identifier `NetworkId`. 
 
 Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Executor instances can be reconfigured by the owner to use alternative registries.
 
-So it will never be case that same asset id means different on different chains. 
+It is impossible for a scenario where the same asset id is different on another chain. To put it simply, it will not be possible that on one chain 123213 means PEPA and on other chains 123213 means SHIB.
 
-So it will not be the case that on one chain 123213 means PEPA and on other chain 123213 means SHIB.
-
-Prefix allows to find network to look at for asset info and each chain introduce new assets independently.
+The Prefix allows you to find which network to look at for asset information as each chain introduces new assets independently.
 
 Propagating updates across registries is handled by the `CVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
 
@@ -625,38 +579,33 @@ In general different security can be applied to different programs.
 
 ### Anonymous programs
 
-These programs operating only on funds inside program and with limited set of instructions can be executed without sender authentication. 
+These programs operate only on funds inside a program and a limited set of instructions can be executed without sender authentication. 
 
-Specific case is program consist of `Transfer`, `Spawn`, `Exchange` only on assets transferred.
+A specific case of this occurence can be in a program that consists of `Transfer`, `Spawn`, `Exchange` only on assets transferred.
 
 
 ### Cross protocol verification
 
 **Example**
 
-When program needs to transfer assets in IBC use ICS20 protocol.
-In order to execute remote  transaction on behalf of account, it can use ICS27.
-In both packets same program can be sent as part of batch and verified on other end to be exact same when assembled for execution.
-For this if one protocol compromised we still validate via second one.
+When a program needs to transfer assets in the IBC, it will use the ICS20 protocol. In order to execute remote transactions on behalf of an account, it can use ICS27. In both packets, the same program can be sent as part of the batch and verified on the other end to be exactly the same when assembled for execution. For this, if one protocol is compromised we are still able to validate via the second one.
 
 
 ### Trusted topology
 
-Program can be executed iff these where send only from some subset of of trusted channels.
+A program can be executed if these are sent only from some subset of trusted channels.
 
 ### Cross chain multisignatures
 
-In this case program can be executed if it was send by several chains.
+In this case, a program can be executed if it was sent by several chains.
 
 ### Signatures
 
-For operations of high importance EDSCA signature of program can be propagated from sending chain and verified on target chain.  
+For operations of high importance, the EDSCA signature of the program can be propagated from the sending chain and verified on the target chain.  
 
 ### Bridges
 
 CVM does not have any hardcoded requirement for bridge to be trustless or trustful.
-
-
 
 ## Cross chain Transfer
 
@@ -698,16 +647,14 @@ For each chain and protocol it makes pragmatics solution to use existing liquidi
 
 ### No support for arbitrary contracts
 
-Some chains do not support arbitrary contracts, but support limited subset of instructions. 
-In this case only programs which use limited subset of instruction will be executed on target chain via virtual spawns.
+Some chains do not support arbitrary contracts, but support a limited subset of instructions. In this case, only programs which use a limited subset of instruction will be executed on the target chain via virtual spawns.
 
 **Example**
 
-Cosmos Hub has complies with IBC ICS Atomic swap spec, but does not host contract runtime. 
+The Cosmos Hub complies with the IBC ICS Atomic swap spec, but does not host a contract runtime.
 
-In this case, programs trying to reach Cosmos Hub from other chains, will not spawn full programs on it.
+In this case, programs trying to reach the Cosmos Hub from other chains will not spawn full programs on it. However, it will send only swaps and handle the invocation return on the sender chain.
 
-But will send only swaps and handle invocation return on sender chain.  
 
 ### No support for contract postconditions
 
@@ -716,8 +663,7 @@ In this case for specific subset of instructions to specific whitelisted contrac
 
 **Example**
 
-On Near cannot abort Swap transaction if amount less than expected limit.
-In this case only trusted Swap contracts will be callable.
+On Near, you cannot abort a Swap transaction if the amount is less than the expected limit. In this case, only trusted Swap contracts will be callable.
 
 ## Examples 
 
@@ -834,7 +780,7 @@ completely abstracted thanks to a globally unique CVM **asset identifier**.
 
 ```kdl
 [
-  -- 1. Move to Osmosis with a bag of 250 PICA.
+  -- 1. Move to Osmosis with 250 PICA.
   Spawn Osmosis Deterministic 0x0 [
     -- 1.1. (OPTIONAL) Tip the relayer for the journey.
     Transfer Relayer (PICA (Unit 25)),
@@ -885,11 +831,4 @@ transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4
       (25 + dust from the swap) is transferred to the relayer.
    2. the instruction **1.3.2.** is executed: **100% of the OSMO** is
       transferred back to **Alice**.
-
-## Historical
-
-Here is essentially history of CVM 
-
-https://www.youtube.com/watch?v=L_DMHAoO6kg
-
 

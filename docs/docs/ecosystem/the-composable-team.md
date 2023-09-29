@@ -38,9 +38,22 @@ Joon is a seasoned Frontend software engineer with a background primarily focuse
 
 After graduating from UC Berkeley, Kostya worked on analyzing financial data and supporting storage infrastructure for various IT companies. In 2020, he joined a blockchain startup, where he developed both the front-end and back-end of a Web 3 application. Later on, Kostya shifted his focus to Substrate and Rust. Currently, Kostya is responsible for overseeing the technical aspects and delivery of innovative solutions on Composable's parachains, Picasso and Composable.
 
+## Dzmitry Lahoda | Staff Software Engineer
+Dzmitry is a seasoned software developer with 20 years of experience, specializing in blockchain and cryptocurrency. With 95% of his assets in crypto and a net-zero trading portfolio, he is deeply committed to the crypto ecosystem. Currently, he's contributing to the Composable project, focusing on practical applications for cross-chain interoperability. For Dzmitry, code is not just a tool, but a language for shaping the future.
+
 ## Vladislav Marshukin | Bridging Lead
 
 Vlad is a skilled software engineer with experience in blockchain technology and programming languages like Rust, Java, C++, and Android development. He currently works as the Bridging Lead, focusing on developing several Centauri connections. In the past, he has delivered successful projects at companies like Soramitsu, Bitfury, and Paymon Inc. Vlad has a particular interest in functional programming, formal verification, and embedded systems, which he applies to internal projects and helps the team succeed.
+
+## Michal Nazarewicz | Senior Researcher
+Michal Nazarewicz is a skilled programmer proficient in languages like C, C++, Rust, and Python, with extensive experience in GNU/Linux systems and cloud infrastructure management. They've contributed significantly as a Senior Software Engineer at NEAR, optimized low-latency solutions at Hudson River Trading, and played key roles at Google, including Site Reliability Engineer and Software Engineer, while also making substantial contributions to the Linux kernel during their tenure at Samsung Electronics.
+
+## JayB | Researcher
+Prior to joining Composable, JayB served as an early engineer at Cosmostation and eventually took on the role of CTO, leading the development team. He contributed to help the company becoming one of the industry leading validator node operators and a key software provider for the ecosystem. Additionally, he served as a core blockchain engineer at Crescent Network, where he contributed to the development of core modules for its Layer 1 blockchain. He possesses a high level of proficiency in utilizing Cosmos technology stacks, including Tendermint, Cosmos SDK, IBC Protocol, and CosmWasm.
+
+## Sydney Sweck | Lead Research Associate
+Sydney has broad experience encompassing academia, writing, research, and blockchain. She has previously worked as a university lecture professor, lab specialist, and researcher in biology and the life sciences. She has also participated in the blockchain and DeFi industries for over 6 years, bringing her skills in writing, education, and research to these fields. This includes her present role as the Lead Research Associate at Composable, where she leads the organization, documentation, and dissemination of the company’s research efforts. 
+
 
 ## Jafar Azam | Developer Relations
 
