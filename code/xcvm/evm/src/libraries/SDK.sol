@@ -5,7 +5,8 @@ import "protobuf3-solidity-lib/ProtobufLib.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/IRouter.sol";
-import "./BytesLib.sol";
+import "bytes-utils/BytesLib.sol";
+import "../libraries/xc/xcvm.sol";
 
 library SDK {
 
@@ -964,40 +965,32 @@ library SDK {
     returns (
         bytes memory originInterpreter, IRouter.Origin memory origin, bytes memory spawnedProgram, bytes memory salt, address[] memory assetAddresses, uint256[] memory assetAmounts)
     {
-        // reading spawn instruction
-        uint64 size;
-        uint64 pos;
+        CvmXcvmPacket.Data memory packet = CvmXcvmPacket.decode(program);
+        require(false, "next PRs will switch from manual parser to generated");
+        // // reading spawn instruction
+        // uint64 size;
+        // uint64 pos;
 
-        pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
-        (originInterpreter, pos) = _handleInterpreterOrigin(program, pos);
+        // pos = _checkField(program, 1, ProtobufLib.WireType.LengthDelimited, pos);
+        // (originInterpreter, pos) = _handleInterpreterOrigin(program, pos);
 
-        pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
-        uint128 networkId;
-        address account;
-        (account, networkId, pos) = _handleUserOrigin(program, pos);
+        // pos = _checkField(program, 2, ProtobufLib.WireType.LengthDelimited, pos);
+        // uint128 networkId;
+        // address account;
+        // (account, networkId, pos) = _handleUserOrigin(program, pos);
 
-        origin.account = abi.encodePacked(account);
-        origin.networkId = networkId;
-
-
-        pos = _checkField(program, 3, ProtobufLib.WireType.LengthDelimited, pos);
-        (salt, pos) = _handleSalt(program, pos);
-
-        // read program
-        pos = _checkField(program, 4, ProtobufLib.WireType.LengthDelimited, pos);
-        (spawnedProgram, pos) = _handleProgram(program, pos);
-
-        pos = _checkField(program, 5, ProtobufLib.WireType.LengthDelimited, pos);
-        // transfer assets to router
-        (, AssetInfos memory assetInfos) = _handleAssets(
-            program,
-            pos,
-            routerAddress
-        );
-        for (uint256 count = 0; count < assetInfos.assetAddresses.length; count++){
-            IERC20(assetInfos.assetAddresses[count]).transfer(routerAddress, assetInfos.amounts[count]);
-        }
-        assetAddresses = assetInfos.assetAddresses;
-        assetAmounts = assetInfos.amounts;
+        // origin.account = abi.encodePacked(account);
+        // pos = _checkField(program, 5, ProtobufLib.WireType.LengthDelimited, pos);
+        // // transfer assets to router
+        // (, AssetInfos memory assetInfos) = _handleAssets(
+        //     program,
+        //     pos,
+        //     routerAddress
+        // );
+        // for (uint256 count = 0; count < assetInfos.assetAddresses.length; count++){
+        //     IERC20(assetInfos.assetAddresses[count]).transfer(routerAddress, assetInfos.amounts[count]);
+        // }
+        // assetAddresses = assetInfos.assetAddresses;
+        // assetAmounts = assetInfos.amounts;
     }
 }

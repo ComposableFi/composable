@@ -10,8 +10,8 @@ import "../src/mocks/ERC20Mock.sol";
 import "../utils/util.sol";
 import "../src/interfaces/IInterpreter.sol";
 import "../src/libraries/SDK.sol";
-import "../src/ibc/core/IBCHandler.sol";
-import "../src/ibc/core/IBCHost.sol";
+import "yui-ibc/core/25-handler/IBCHandler.sol";
+import "yui-ibc/core/24-host/IBCHost.sol";
 import "../src/IbcBridge.sol";
 
 contract test_IBCBridge is Test {

@@ -1,15 +1,15 @@
-// cspell:disable
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
-import "./ProtoBufRuntime.sol";
-import "./GoogleProtobufAny.sol";
+pragma solidity ^0.8.10;
+import "yui-ibc/proto/ProtoBufRuntime.sol";
+import "yui-ibc/proto/GoogleProtobufAny.sol";
 
-library MerklePrefix {
+library CvmCommonUint128 {
 
 
   //struct definition
   struct Data {
-    bytes key_prefix;
+    uint64 highBits;
+    uint64 lowBits;
   }
 
   // Decoder section
@@ -58,7 +58,10 @@ library MerklePrefix {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_key_prefix(pointer, bs, r);
+        pointer += _read_highBits(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_lowBits(pointer, bs, r);
       } else
       {
         pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
@@ -77,13 +80,30 @@ library MerklePrefix {
    * @param r The in-memory struct
    * @return The number of bytes decoded
    */
-  function _read_key_prefix(
+  function _read_highBits(
     uint256 p,
     bytes memory bs,
     Data memory r
   ) internal pure returns (uint) {
-    (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    r.key_prefix = x;
+    (uint64 x, uint256 sz) = ProtoBufRuntime._decode_uint64(p, bs);
+    r.highBits = x;
+    return sz;
+  }
+
+  /**
+   * @dev The decoder for reading a field
+   * @param p The offset of bytes array to start decode
+   * @param bs The bytes array to be decoded
+   * @param r The in-memory struct
+   * @return The number of bytes decoded
+   */
+  function _read_lowBits(
+    uint256 p,
+    bytes memory bs,
+    Data memory r
+  ) internal pure returns (uint) {
+    (uint64 x, uint256 sz) = ProtoBufRuntime._decode_uint64(p, bs);
+    r.lowBits = x;
     return sz;
   }
 
@@ -120,14 +140,23 @@ library MerklePrefix {
     uint256 offset = p;
     uint256 pointer = p;
     
-    if (r.key_prefix.length != 0) {
+    if (r.highBits != 0) {
     pointer += ProtoBufRuntime._encode_key(
       1,
-      ProtoBufRuntime.WireType.LengthDelim,
+      ProtoBufRuntime.WireType.Varint,
       pointer,
       bs
     );
-    pointer += ProtoBufRuntime._encode_bytes(r.key_prefix, pointer, bs);
+    pointer += ProtoBufRuntime._encode_uint64(r.highBits, pointer, bs);
+    }
+    if (r.lowBits != 0) {
+    pointer += ProtoBufRuntime._encode_key(
+      2,
+      ProtoBufRuntime.WireType.Varint,
+      pointer,
+      bs
+    );
+    pointer += ProtoBufRuntime._encode_uint64(r.lowBits, pointer, bs);
     }
     return pointer - offset;
   }
@@ -172,7 +201,8 @@ library MerklePrefix {
     Data memory r
   ) internal pure returns (uint) {
     uint256 e;
-    e += 1 + ProtoBufRuntime._sz_lendelim(r.key_prefix.length);
+    e += 1 + ProtoBufRuntime._sz_uint64(r.highBits);
+    e += 1 + ProtoBufRuntime._sz_uint64(r.lowBits);
     return e;
   }
   // empty checker
@@ -181,7 +211,11 @@ library MerklePrefix {
     Data memory r
   ) internal pure returns (bool) {
     
-  if (r.key_prefix.length != 0) {
+  if (r.highBits != 0) {
+    return false;
+  }
+
+  if (r.lowBits != 0) {
     return false;
   }
 
@@ -196,7 +230,8 @@ library MerklePrefix {
    * @param output The in-storage struct
    */
   function store(Data memory input, Data storage output) internal {
-    output.key_prefix = input.key_prefix;
+    output.highBits = input.highBits;
+    output.lowBits = input.lowBits;
 
   }
 
@@ -224,4 +259,4 @@ library MerklePrefix {
     }
   }
 }
-//library MerklePrefix
+//library CvmCommonUint128
