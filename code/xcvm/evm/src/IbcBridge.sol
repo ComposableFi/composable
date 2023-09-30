@@ -6,8 +6,6 @@ import "yui-ibc/core/05-port/IIBCModule.sol";
 import "yui-ibc/core/25-handler/IBCHandler.sol";
 import "yui-ibc/core/24-host/IBCHost.sol";
 import "yui-ibc/apps/commons/IBCAppBase.sol";
-// import "yui-ibc/lib/strings.sol";
-// import "yui-ibc/lib/Bytes.sol";
 import "openzeppelin-contracts/utils/Context.sol";
 import "./interfaces/IRouter.sol";
 
@@ -55,8 +53,6 @@ contract IBCBridge is Context, IIbcBridge, IBCAppBase {
 
 
     function _sendPacket(bytes memory data, uint64 timeout) virtual internal {
-        // (Channel.Data memory channel, bool found) = ibcHost.getChannel(sourcePort, sourceChannel);
-        // require(found, "channel not found");
         ibcHandler.sendPacket(
             sourcePort,
             sourceChannel,
