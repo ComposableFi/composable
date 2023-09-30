@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.9;
 
-import "./ibc/core/types/Channel.sol";
-import "./ibc/core/IBCModule.sol";
-import "./ibc/core/IBCHandler.sol";
-import "./ibc/core/IBCHost.sol";
-import "./ibc/core/types/App.sol";
-import "./ibc/lib/strings.sol";
-import "./ibc/lib/Bytes.sol";
+import "yui-ibc/proto/Channel.sol";
+import "yui-ibc/core/05-port/IIBCModule.sol";
+import "yui-ibc/core/25-handler/IBCHandler.sol";
+import "yui-ibc/core/24-host/IBCHost.sol";
+// import "yui-ibc/core/types/App.sol";
+// import "yui-ibc/lib/strings.sol";
+// import "yui-ibc/lib/Bytes.sol";
 import "openzeppelin-contracts/utils/Context.sol";
 import "./interfaces/IRouter.sol";
 
