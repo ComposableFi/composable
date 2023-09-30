@@ -5,7 +5,7 @@ import "protobuf3-solidity-lib/ProtobufLib.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/IRouter.sol";
-import "./BytesLib.sol";
+import "bytes-utils/BytesLib.sol";
 
 
 library SDK {

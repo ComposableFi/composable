@@ -10,3 +10,6 @@
 [submodule "flake/eth-pos-devnet"]
 	path = flake/eth-pos-devnet
 	url = https://github.com/OffchainLabs/eth-pos-devnet.git
+[submodule "code/xcvm/evm/lib/solidity-bytes-utils"]
+	path = code/xcvm/evm/lib/solidity-bytes-utils
+	url = https://github.com/GNSPS/solidity-bytes-utils
