@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.10;
-import "./ProtoBufRuntime.sol";
-import "./GoogleProtobufAny.sol";
+import "yui-ibc/proto/ProtoBufRuntime.sol";
+import "yui-ibc/proto/GoogleProtobufAny.sol";
 import "./common.sol";
 
 library CvmXcvmPacketAsset {
