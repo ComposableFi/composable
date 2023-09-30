@@ -5,7 +5,7 @@ import "yui-ibc/proto/Channel.sol";
 import "yui-ibc/core/05-port/IIBCModule.sol";
 import "yui-ibc/core/25-handler/IBCHandler.sol";
 import "yui-ibc/core/24-host/IBCHost.sol";
-// import "yui-ibc/core/types/App.sol";
+import "yui-ibc/apps/commons/IBCAppBase.sol";
 // import "yui-ibc/lib/strings.sol";
 // import "yui-ibc/lib/Bytes.sol";
 import "openzeppelin-contracts/utils/Context.sol";
@@ -15,17 +15,22 @@ import "protobuf3-solidity-lib/ProtobufLib.sol";
 import "./interfaces/IIbcBridge.sol";
 import "./libraries/SDK.sol";
 
-contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
+contract IBCBridge is Context, IIbcBridge, IBCAppBase {
     IBCHandler ibcHandler;
     IBCHost ibcHost;
     string public sourcePort;
     string public sourceChannel;
     address public routerAddress;
+    address public ibc;
 
     constructor(address _routerAddress, IBCHost _ibcHost, IBCHandler _ibcHandler) {
         routerAddress = _routerAddress;
         ibcHost = _ibcHost;
         ibcHandler = _ibcHandler;
+    }
+
+    function ibcAddress() public override view returns (address) {
+        return ibc;
     }
 
     function sendProgram(
@@ -50,18 +55,15 @@ contract IBCBridge is Context, IIbcBridge, IModuleCallbacks {
 
 
     function _sendPacket(bytes memory data, uint64 timeout) virtual internal {
-        (Channel.Data memory channel, bool found) = ibcHost.getChannel(sourcePort, sourceChannel);
-        require(found, "channel not found");
-        ibcHandler.sendPacket(Packet.Data({
-            sequence: ibcHost.getNextSequenceSend(sourcePort, sourceChannel),
-            source_port: sourcePort,
-            source_channel: sourceChannel,
-            destination_port: channel.counterparty.port_id,
-            destination_channel: channel.counterparty.channel_id,
-            data: data,
-            timeout_height: Height.Data({revision_number: 0, revision_height: 0}), // to 0 because remote block height is not known
-            timeout_timestamp: timeout
-        }));
+        // (Channel.Data memory channel, bool found) = ibcHost.getChannel(sourcePort, sourceChannel);
+        // require(found, "channel not found");
+        ibcHandler.sendPacket(
+            sourcePort,
+            sourceChannel,
+            Height.Data({revision_number: 0, revision_height: 0}), // to 0 because remote block height is not known
+            timeout,
+            data
+        );
     }
 
 
