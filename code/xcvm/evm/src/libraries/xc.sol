@@ -7,8 +7,11 @@ library xc {
         uint256 amount;
     }
 
-    execute Programm
+    struct ProgramRequest {
+        bytes salt; 
+        address tip;   
+    }
 
     ///
-    type AboluteAssets is AbsoluteAmount[]; 
+    //type AboluteAssets is AbsoluteAmount[]; 
 }
