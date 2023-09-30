@@ -209,7 +209,11 @@ type Account = Uint8Array
 type Self = Account
 
 /// Pop - pops value from program stack into binding placeholder
-type BindingValue = Self | Tip | Result | AssetAmount | GlobalId | Pop
+type BindingValue = Self | Tip | Result | AssetAmount | GlobalId | Pop | Home
+
+/// binds to chain id which originated message on this chain
+/// can be used just to spawn back
+type Home = NetworkId
 
 /// Aborts transaction on execution chain if BindingValue contains Error.
 /// In comparison with ResultRegister just set to error and stop executing (with funds retained on CVM Executor), 
