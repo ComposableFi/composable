@@ -45,10 +45,10 @@ Dzmitry is a seasoned software developer with 20 years of experience, specializi
 
 Vlad is a skilled software engineer with experience in blockchain technology and programming languages like Rust, Java, C++, and Android development. He currently works as the Bridging Lead, focusing on developing several Centauri connections. In the past, he has delivered successful projects at companies like Soramitsu, Bitfury, and Paymon Inc. Vlad has a particular interest in functional programming, formal verification, and embedded systems, which he applies to internal projects and helps the team succeed.
 
-## Michal Nazarewicz | Senior Researcher
+## Michal Nazarewicz | Senior Researcher
 Michal Nazarewicz is a skilled programmer proficient in languages like C, C++, Rust, and Python, with extensive experience in GNU/Linux systems and cloud infrastructure management. They've contributed significantly as a Senior Software Engineer at NEAR, optimized low-latency solutions at Hudson River Trading, and played key roles at Google, including Site Reliability Engineer and Software Engineer, while also making substantial contributions to the Linux kernel during their tenure at Samsung Electronics.
 
-## JayB | Researcher
+## JayB | Researcher
 Prior to joining Composable, JayB served as an early engineer at Cosmostation and eventually took on the role of CTO, leading the development team. He contributed to help the company becoming one of the industry leading validator node operators and a key software provider for the ecosystem. Additionally, he served as a core blockchain engineer at Crescent Network, where he contributed to the development of core modules for its Layer 1 blockchain. He possesses a high level of proficiency in utilizing Cosmos technology stacks, including Tendermint, Cosmos SDK, IBC Protocol, and CosmWasm.
 
 ## Sydney Sweck | Lead Research Associate

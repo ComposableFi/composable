@@ -23,7 +23,7 @@ slug: /
       <a href="/products/composable-ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-2_zoatit.png" alt="Networks" alt="Composable IBC" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Composable IBC" />
           </div>
           <div class="card__body">
             <h3>Composable IBC</h3>
@@ -49,7 +49,7 @@ slug: /
       <a href="/nix">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-4_wrrwga.png" alt="Networks" alt="Develop" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206944/Frame_4_gepwoe.png" alt="Networks" alt="Develop" />
           </div>
           <div class="card__body">
             <h3>Develop</h3>
@@ -59,7 +59,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/ecosystem/build-on-composable-ecosystem-development">
+      <a href="/ecosystem/composable-ecosystem">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-5_lyc6as.png" alt="Networks" alt="Networks" />

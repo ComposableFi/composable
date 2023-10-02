@@ -1,6 +1,9 @@
-# Request for Proposal: Canonical Stable Coin Design and Integration
+# Request for Proposals
+Composable is aware that the DeFi community is made up of incredibly innovative people and projects. To promote collaboration with others to deliver the best products and services to users and the industry at large, the following requests for proposal (RFPs) are open to the public:
 
-## Introduction:
+## RFP: Canonical Stable Coin Design and Integration
+
+### Introduction:
 
 Composable Finance is seeking proposals from qualified blockchain developers 
 to design and integrate a **Proof-of-Concept** for a custom stablecoin for multi-chain usage 
@@ -10,7 +13,7 @@ for issuing truly canonical stablecoins across different chains.
 
 [Composable Virtual Machine(CVM)]: https://docs.composable.finance/products/cvm
 
-## Requirements & Scope of Work:
+### Requirements & Scope of Work:
 
 The purpose of this RFP is to build a **proof of concept** for a XCVM-powered stablecoin for multi-chain usage.
 Requirements for creating a custom XCVM-powered stablecoin for multi-chain use are as follows:
@@ -22,7 +25,7 @@ Requirements for creating a custom XCVM-powered stablecoin for multi-chain use a
 
 [Inter-Blockchain Communication (IBC)]: https://ibcprotocol.org/
 
-## Evaluation Criteria:
+### Evaluation Criteria:
 
 Proposals will be evaluated based on the following criteria:
 
@@ -32,7 +35,7 @@ Proposals will be evaluated based on the following criteria:
 - Quality and clarity of the proposal
 - Cost
 
-## Submission Requirements:
+### Submission Requirements:
 
 Please submit the following materials as part of your proposal:
 
@@ -40,6 +43,6 @@ Please submit the following materials as part of your proposal:
   including timeline and deliverables
 - A detailed cost breakdown, including any additional fees or expenses
 
-## Contact Information:
+### Contact Information:
 
 If you have any questions about the RFP or the project, please contact us at outreach@composable.finance
