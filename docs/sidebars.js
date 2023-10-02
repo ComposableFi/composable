@@ -261,16 +261,16 @@
            label: "Build on Composable: Ecosystem Development",
            link: {
              type: `doc`,
-             id: `ecosystem/build-on-composable-ecosystem-development`,
+             id: `ecosystem/composable-ecosystem`,
            },
            collapsible: false,
            items: [
-             "ecosystem/rfp-canonical-stablecoin-design-and-integration",
+             "ecosystem/request-for-proposals",
            ],
          },
-         "ecosystem/composable-grants",
-         "ecosystem/press-kit",
+         "ecosystem/composable-research",
          "ecosystem/the-composable-team",
+         "ecosystem/press-kit",
        ],
      },
  

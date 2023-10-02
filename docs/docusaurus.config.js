@@ -90,7 +90,7 @@ const config = {
 						label: 'Develop',
 					  },
 					{
-						to: '/ecosystem/build-on-composable-ecosystem-development',
+						to: '/ecosystem/composable-ecosystem',
 						position: 'left',
 						label: 'Ecosystem',
 					  },	
