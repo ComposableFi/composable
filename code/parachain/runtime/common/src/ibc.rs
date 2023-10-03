@@ -69,7 +69,7 @@ impl TryFrom<RawMemo> for MemoData {
 	type Error = <MemoData as TryFrom<String>>::Error;
 
 	fn try_from(value: RawMemo) -> Result<Self, Self::Error> {
-		Ok(value.0.try_into()?)
+		value.0.try_into()
 	}
 }
 
