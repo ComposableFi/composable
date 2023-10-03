@@ -3,7 +3,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-latest.url =
-      "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
+      "github:NixOS/nixpkgs/028db4055373e227dec13d5d44132e09837a8176";
     process-compose-flake = {
       url =
         "github:Platonic-Systems/process-compose-flake/bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e";
@@ -67,7 +67,7 @@
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/44b05025ba055a444c38708426cdcdbee363df18";
+        "github:ComposableFi/composable-ibc/a888d249dffdab183f2af8da9ff422228100e35a";
     };
 
     eth-pos-devnet-src = {
