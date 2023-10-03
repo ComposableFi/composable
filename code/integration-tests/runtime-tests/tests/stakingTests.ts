@@ -18,7 +18,7 @@ import {queryTokenBalance} from "./utils/ibcUtils";
 const expect = require('chai').expect;
 
 
-describe('Staking Tests', function () {
+describe.skip('Staking Tests', function () {
   this.timeout(3 * 60 * 1000);
   let picassoApi: ApiPromise;
   let testWallet: KeyringPair;

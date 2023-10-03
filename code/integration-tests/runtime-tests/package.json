@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "tsc; ts-mocha tests/stakingTests.ts --reporter mochawesome"
+    "test": "tsc; ts-mocha --parallel ./tests/*Tests.ts"
   },
   "author": "",
   "license": "ISC",
