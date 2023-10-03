@@ -37,5 +37,5 @@ Run tool with logs enabled, for example like it is documented for Nix.
 
 ##  Output files
 
-Local running network usually located in `/tmp/`, specifically in `/tmp/composable-devnet/` directory. 
+Local running network usually located in `/tmp/`, specifically in `/tmp/composable-devnet/` directory and `/tmp/process-compose*` files. 
 Also files may be in working directory, Nix in `result`. 
