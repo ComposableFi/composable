@@ -105,6 +105,9 @@
           '';
         };
 
+      mkPatch = derivation:
+        pkgs.stdenvNoCC.mkDerivation (derivation // { buildPhase = "true"; });
+
     in {
       packages = rec {
         centauri-src = self.inputs.centauri-src;
@@ -141,35 +144,34 @@
           meta = { mainProgram = relayer; };
         });
 
-        composable-rococo-picasso-rococo-subxt-hyperspace-patch =
-          pkgs.stdenv.mkDerivation rec {
-            name = "composable-rococo-picasso-rococo-subxt-hyperspace-patch";
-            pname = "${name}";
-            buildInputs = [
-              self'.packages.composable-rococo-subxt-client
-              self'.packages.picasso-rococo-subxt-client
-            ];
-            src = centauri-src;
-            patchPhase = "true";
-            installPhase = ''
-              mkdir --parents $out
-              set +e
-              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-rococo-subxt-client}/ > $out/composable_polkadot.patch
-              if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi                
-              diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch            
-              if [[ $? -ne 1 ]] ; then
-                echo "Failed diff"              
-              fi              
-              set -e              
-            '';
-            dontFixup = true;
-            dontStrip = true;
-          };
+        composable-rococo-picasso-rococo-subxt-hyperspace-patch = mkPatch rec {
+          name = "composable-rococo-picasso-rococo-subxt-hyperspace-patch";
+          pname = "${name}";
+          buildInputs = [
+            self'.packages.composable-rococo-subxt-client
+            self'.packages.picasso-rococo-subxt-client
+          ];
+          src = centauri-src;
+          patchPhase = "true";
+          installPhase = ''
+            mkdir --parents $out
+            set +e
+            diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/composable ${self'.packages.composable-rococo-subxt-client}/ > $out/composable_polkadot.patch
+            if [[ $? -ne 1 ]] ; then
+              echo "Failed diff"              
+            fi                
+            diff --exclude=mod.rs --recursive --unified $src/utils/subxt/generated/src/picasso_kusama ${self'.packages.picasso-rococo-subxt-client}/ > $out/picasso_kusama.patch            
+            if [[ $? -ne 1 ]] ; then
+              echo "Failed diff"              
+            fi              
+            set -e              
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
 
         composable-polkadot-picasso-kusama-subxt-hyperspace-patch =
-          pkgs.stdenv.mkDerivation rec {
+          mkPatch rec {
             name = "composable-polkadot-picasso-kusama-subxt-hyperspace-patch";
             pname = "${name}";
             buildInputs = [
@@ -195,49 +197,47 @@
             dontStrip = true;
           };
 
-        composable-rococo-picasso-rococo-centauri-patched-src =
-          pkgs.stdenv.mkDerivation rec {
-            name = "composable-rococo-picasso-rococo-centauri-patched-src";
-            pname = "${name}";
-            src = centauri-src;
-            buildInputs = with pkgs; [ sd git ];
-            patchFlags = "--strip=4";
-            installPhase = ''
-              mkdir --parents $out
-              cp --recursive --no-preserve=mode,ownership $src/. $out/
+        composable-rococo-picasso-rococo-centauri-patched-src = mkPatch rec {
+          name = "composable-rococo-picasso-rococo-centauri-patched-src";
+          pname = "${name}";
+          src = centauri-src;
+          buildInputs = with pkgs; [ sd git ];
+          patchFlags = "--strip=4";
+          installPhase = ''
+            mkdir --parents $out
+            cp --recursive --no-preserve=mode,ownership $src/. $out/
 
-              cd $out/utils/subxt/generated/src/picasso_kusama
-              patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/picasso_kusama.patch"
+            cd $out/utils/subxt/generated/src/picasso_kusama
+            patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/picasso_kusama.patch"
 
-              cd $out/utils/subxt/generated/src/composable
-              patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/composable_polkadot.patch"
-              sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
-            '';
-            dontFixup = true;
-            dontStrip = true;
-          };
+            cd $out/utils/subxt/generated/src/composable
+            patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/composable_polkadot.patch"
+            sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
 
-        composable-polkadot-picasso-kusama-centauri-patched-src =
-          pkgs.stdenv.mkDerivation rec {
-            name = "composable-polkadot-picasso-kusama-centauri-patched-src";
-            pname = "${name}";
-            src = centauri-src;
-            buildInputs = with pkgs; [ sd git ];
-            patchFlags = "--strip=4";
-            installPhase = ''
-              mkdir --parents $out
-              cp --recursive --no-preserve=mode,ownership $src/. $out/
+        composable-polkadot-picasso-kusama-centauri-patched-src = mkPatch rec {
+          name = "composable-polkadot-picasso-kusama-centauri-patched-src";
+          pname = "${name}";
+          src = centauri-src;
+          buildInputs = with pkgs; [ sd git ];
+          patchFlags = "--strip=4";
+          installPhase = ''
+            mkdir --parents $out
+            cp --recursive --no-preserve=mode,ownership $src/. $out/
 
-              cd $out/utils/subxt/generated/src/picasso_kusama
-              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/picasso_kusama.patch"
+            cd $out/utils/subxt/generated/src/picasso_kusama
+            patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/picasso_kusama.patch"
 
-              cd $out/utils/subxt/generated/src/composable
-              patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/composable_polkadot.patch"
-              sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
-            '';
-            dontFixup = true;
-            dontStrip = true;
-          };
+            cd $out/utils/subxt/generated/src/composable
+            patch ${patchFlags} -- < "${composable-polkadot-picasso-kusama-subxt-hyperspace-patch}/composable_polkadot.patch"
+            sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
+          '';
+          dontFixup = true;
+          dontStrip = true;
+        };
 
         ibc-composable-to-picasso-config-1-1 =
           pkgs.writeText "config-chain-a.toml"
