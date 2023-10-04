@@ -40,7 +40,6 @@ let_unit_value = "allow"
 [workspace]
 exclude = [
   "utils/submetrics",
-  "xcvm/cosmwasm/contracts/order",
   "integration-tests",
   "parachain/frame/vesting/cli",
   "parachain/frame/cosmwasm/cli",
