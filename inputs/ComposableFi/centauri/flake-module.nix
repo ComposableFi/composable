@@ -132,17 +132,8 @@
         });
         composable-ibc-relayer = let relayer = "hyperspace";
         in crane.stable.buildPackage (subnix.subenv // {
-          name = "composable-ibc-relayer";
+          name = relayer;
           version = "0.1";
-          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // rec {
-            pname = relayer;
-            name = pname;
-            version = "0.1";
-            src = centauri-src;
-            doCheck = false;
-            cargoExtraArgs = "--package ${pname}";
-            cargoTestCommand = "";
-          });
           src = centauri-src;
           doCheck = false;
           cargoExtraArgs = "--package ${relayer}";

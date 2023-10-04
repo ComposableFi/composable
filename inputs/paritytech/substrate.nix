@@ -25,7 +25,7 @@
 
       subenv = {
         doCheck = false;
-        buildInputs = with pkgs; [ openssl zstd protobuf ];
+        buildInputs = with pkgs; [ openssl zstd protobuf zlib ];
         nativeBuildInputs = with pkgs;
         # yes, all these are in general needed, git not alwasy, but substrate checks git revision
           [ clang pkg-config self'.packages.rust-nightly git ]
