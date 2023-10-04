@@ -106,7 +106,11 @@
         };
 
       mkPatch = derivation:
-        pkgs.stdenvNoCC.mkDerivation (derivation // { buildPhase = "true"; });
+        pkgs.stdenvNoCC.mkDerivation (derivation // {
+          buildPhase = "true";
+          dontFixup = true;
+          dontStrip = true;
+        });
 
     in {
       packages = rec {
@@ -193,8 +197,6 @@
               fi              
               set -e              
             '';
-            dontFixup = true;
-            dontStrip = true;
           };
 
         composable-rococo-picasso-rococo-centauri-patched-src = mkPatch rec {
@@ -214,8 +216,6 @@
             patch ${patchFlags} -- < "${composable-rococo-picasso-rococo-subxt-hyperspace-patch}/composable_polkadot.patch"
             sd "rococo" "polkadot" "$out/utils/subxt/generated/src/composable/relaychain.rs"
           '';
-          dontFixup = true;
-          dontStrip = true;
         };
 
         composable-polkadot-picasso-kusama-centauri-patched-src = mkPatch rec {
@@ -266,10 +266,12 @@
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
             version = "0.1";
+            LIBZ_SYS_STATIC = 1;
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               src = composable-rococo-picasso-rococo-centauri-patched-src;
               pname = "hyperspace";
               version = "0.1";
+              LIBZ_SYS_STATIC = 1;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
               cargoTestCommand = "";
@@ -286,9 +288,11 @@
             name = "hyperspace-composable-polkadot-picasso-kusama";
             pname = name;
             version = "0.1";
+            LIBZ_SYS_STATIC = 1;
             cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
               pname = "hyperspace";
               version = "0.1";
+              LIBZ_SYS_STATIC = 1;
               src = composable-polkadot-picasso-kusama-centauri-patched-src;
               doCheck = false;
               cargoExtraArgs = "--package hyperspace";
