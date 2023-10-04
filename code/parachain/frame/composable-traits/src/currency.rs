@@ -244,27 +244,27 @@ impl<const N: u64, const D: u64> RationalLike<N, D> for Rational64 {
 }
 
 impl Rational64 {
-	pub  fn from(n: u64, d: u64) -> Self {
+	pub fn from(n: u64, d: u64) -> Self {
 		Self::from_unchecked(n, d.max(1))
 	}
 
-	pub  fn from_unchecked(n: u64, d: u64) -> Self {
+	pub fn from_unchecked(n: u64, d: u64) -> Self {
 		Self { n, d }
 	}
 
-	pub  fn one() -> Self {
+	pub fn one() -> Self {
 		Rational64::from(1, 1)
 	}
 
-	pub  fn zero() -> Self {
+	pub fn zero() -> Self {
 		Rational64::from(0, 1)
 	}
 
-	pub  fn n(&self) -> u64 {
+	pub fn n(&self) -> u64 {
 		self.n
 	}
 
-	pub  fn d(&self) -> u64 {
+	pub fn d(&self) -> u64 {
 		self.d
 	}
 }
