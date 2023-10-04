@@ -17,7 +17,7 @@ and cross chain CFMM for the rest.
 
 Solution with maximum volume is accepted, and should settle on second largest volume (second bid auction). 
 
-Bribers reserve amounts as rewards to pay for percentage of volume solved via their preferred CFMM.
+Bidders reserve amounts as rewards to pay for percentage of volume solved via their preferred CFMM.
 
 More details semantics will be described in whitepaper. including Solver operations.
 
@@ -25,11 +25,11 @@ More details semantics will be described in whitepaper. including Solver operati
 
 Current implementation is for 1 solution for one user, 1 to 1 asset, permissioned solvers without collateral.
 
-### Bribing
+### Bidding
 
-Bribers call this contract with CFMM identifier and percentage of volume they bribe. 
-This contract instantiates CVM executor per CFMM and transfer amount to it, and tracks percentage per briber.
-When briber joins, percentage averaged appropriately, with always larger bribe for same volume.
+Bidder call this contract with CFMM identifier and percentage of volume they bid. 
+This contract instantiates CVM executor per CFMM and transfer amount to it, and tracks percentage per bidder.
+When bidder joins, percentage averaged appropriately, with always larger bid for same volume.
 For each accepted route, Solver is delegated with relevant amount to withdraw.
 
 
