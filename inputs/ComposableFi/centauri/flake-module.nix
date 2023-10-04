@@ -81,7 +81,7 @@
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
 
       build-wasm = name: src:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        crane.nightly-wasmi.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
           version = "0.1";
           src = src;

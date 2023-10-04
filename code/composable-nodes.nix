@@ -23,7 +23,7 @@
         });
 
       makeComposableNode = picasso-runtime: composable-runtime:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
+        crane.nightly-wasmi.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand = "cargo build --release --package ${name}";
@@ -107,7 +107,7 @@
           makeComposableNode self'.packages.picasso-testfast-runtime
           self'.packages.composable-testfast-runtime;
 
-        composable-bench-node = crane.nightly.cargoBuild
+        composable-bench-node = crane.nightly-wasmi.cargoBuild
           (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";
             cargoArtifacts = self'.packages.common-std-bench-deps;

@@ -125,11 +125,11 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "a888d249dffdab183f2af8da9ff422228100e35a", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "a888d249dffdab183f2af8da9ff422228100e35a", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "a888d249dffdab183f2af8da9ff422228100e35a", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "a888d249dffdab183f2af8da9ff422228100e35a", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "a888d249dffdab183f2af8da9ff422228100e35a", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "932e42931b2648529b99f07fb9ecd598a480f6ca", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "932e42931b2648529b99f07fb9ecd598a480f6ca", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "932e42931b2648529b99f07fb9ecd598a480f6ca", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "932e42931b2648529b99f07fb9ecd598a480f6ca", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "932e42931b2648529b99f07fb9ecd598a480f6ca", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }

@@ -5,7 +5,7 @@
       rustSrc = cargoTools.mkRustSrc ./.;
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features: cargoArtifacts:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        crane.nightly-wasmi.buildPackage (systemCommonRust.common-attrs // {
           pname = "${name}-runtime";
           src = rustSrc;
           inherit cargoArtifacts;
