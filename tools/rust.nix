@@ -19,16 +19,17 @@
         lib = self.inputs.crane.mkLib pkgs;
         stable = lib.overrideToolchain self'.packages.rust-stable;
         nightly = lib.overrideToolchain rust-toolchain;
-      nightly-wasmi = lib.overrideToolchain self'.packages.rust-nightly-wasmi;
+        nightly-wasmi = lib.overrideToolchain self'.packages.rust-nightly-wasmi;
       };
 
       packages = {
         rust-stable = pkgs.rust-bin.stable.latest.default;
-        rust-nightly-wasmi = pkgs.rust-bin.nightly."2023-02-07".default.override {
-          # Set the build targets supported by the toolchain,
-          # wasm32-unknown-unknown is required for trunk
-          targets = [ "wasm32-unknown-unknown" ];
-        };
+        rust-nightly-wasmi =
+          pkgs.rust-bin.nightly."2023-02-07".default.override {
+            # Set the build targets supported by the toolchain,
+            # wasm32-unknown-unknown is required for trunk
+            targets = [ "wasm32-unknown-unknown" ];
+          };
         rust-nightly = rust-toolchain;
 
         cargo-fmt-check = crane.nightly.cargoFmt (systemCommonRust.common-attrs
