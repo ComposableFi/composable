@@ -39,7 +39,7 @@
     "import-sort-style-module": "^6.0.0",
     "import-sort-style-react": "^5.1.0",
     "my-loaders": "file:plugins/my-loaders",
-    "postcss": "^8.4.19",
+    "postcss": "^8.4.31",
     "postcss-import": "^15.0.0",
     "postcss-loader": "^7.0.1",
     "postcss-preset-env": "^7.8.3",
