@@ -1,0 +1,15 @@
+[package]
+name = "cvm-cw-order"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cosmwasm-std = { version = "1.3.1", features = ["staking"] }
+sylvia = "0.8.1"
+schemars = "0.8.12"
+cosmwasm-schema = "1.3.1"
+serde = "1.0.182"
+cw-storage-plus = "1.1"
