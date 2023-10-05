@@ -77,4 +77,9 @@ impl OrderContract<'_> {
 			 .map(|r| r.map(|(_, order)|  order))
 			.collect::<StdResult<Vec<OrderItem>>>()
 	}
+
+	// next steps are:
+	// 1. receive solution without verification
+	// 2. solves cows
+	// 3. send CVM program for cross chain
 }
