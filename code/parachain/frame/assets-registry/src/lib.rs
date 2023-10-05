@@ -167,7 +167,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { assets: sp_std::vec![], phantom: <_>::default() }
+			Self { assets: sp_std::vec![], phantom: PhantomData::<_> }
 		}
 	}
 

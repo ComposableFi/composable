@@ -91,8 +91,7 @@ impl<
 {
 	fn new() -> Self {
 		Self {
-			_marker:
-				PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFeeConverter)>::default(),
+			_marker: PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFeeConverter)>,
 			fee: 0,
 			price: 0,
 			asset_location: None,

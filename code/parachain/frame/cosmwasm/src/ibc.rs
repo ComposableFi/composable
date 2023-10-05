@@ -191,7 +191,7 @@ pub struct Router<T: Config> {
 
 impl<T: Config> Default for Router<T> {
 	fn default() -> Self {
-		Self { _marker: <_>::default() }
+		Self { _marker: PhantomData::<_> }
 	}
 }
 
