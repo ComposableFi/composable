@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Uint128, Uint64};
+use cosmwasm_std::{Coin, Order, Uint128, Uint64, StdError};
 use cw_storage_plus::{Item, Map};
 use sylvia::{
 	contract,
@@ -29,17 +29,22 @@ pub struct OrderSubMsg {
 pub struct OrderItem {
 	pub msg: OrderSubMsg,
 	pub coin: Coin,
+order_id: u128,
 }
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
+	pub next_order_id: Item<'a, u128>,
 }
 
 #[entry_points]
 #[contract]
 impl OrderContract<'_> {
 	pub fn new() -> Self {
-		Self { orders: Map::new("orders") }
+		Self { 
+			orders: Map::new("orders"),
+			next_order_id: Item::new("next_order_id"),
+		 }
 	}
 
 	#[msg(instantiate)]
@@ -47,13 +52,34 @@ impl OrderContract<'_> {
 		Ok(Response::default())
 	}
 
-	/// This contracts receives user order, takes ddos protection deposit (to protect solvers from spamming),
-    /// and stores order for searchers.
+	/// This contracts receives user order, takes ddos protection deposit (to protect solvers from
+	/// spamming), and stores order for searchers.
 	#[msg(exec)]
 	pub fn order(&self, ctx: ExecCtx, msg: OrderSubMsg) -> StdResult<Response> {
 		/// for now we just use bank for ics20 tokens
 		let funds = ctx.info.funds.get(0).expect("there are some funds in order");
-		let order = OrderItem { msg, coin: funds.clone() };
+		
+
+		/// just save order under incremented id
+		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
+		let order = OrderItem { msg, coin: funds.clone(), order_id, };
+		self.orders.save(ctx.deps.storage, order_id, &order)?;
+		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
+		
 		Ok(Response::default())
 	}
+
+	/// Simple get all orders
+	#[msg(query)]
+	pub fn get_all_orders(&self, ctx: QueryCtx) -> StdResult<Vec<OrderItem>> {
+		self.orders
+		 	.range_raw(ctx.deps.storage, None, None, Order::Ascending)
+			 .map(|r| r.map(|(_, order)|  order))
+			.collect::<StdResult<Vec<OrderItem>>>()
+	}
+
+	// next steps are:
+	// 1. receive solution without verification
+	// 2. solves cows
+	// 3. send CVM program for cross chain
 }
