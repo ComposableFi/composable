@@ -28,7 +28,7 @@
           pkgs.rust-bin.nightly."2023-03-09".default.override {
             # Set the build targets supported by the toolchain,
             # wasm32-unknown-unknown is required for trunk
-            targets = [ "wasm32-unknown-unknown" ];
+            targets = [ "wasm32-unknown-unknown"  "thumbv7em-none-eabi" ];
           };
         rust-nightly = rust-toolchain;
 
