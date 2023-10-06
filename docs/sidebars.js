@@ -244,6 +244,10 @@
     "developer-guides/oracle-set-up-guide",
     "developer-guides/collator-guide",
     "developer-guides/local-picasso-guide",
+    "developer-guides/composable-cosmos-mainnet",
+    "developer-guides/testnet-3",
+    "developer-guides/testnet-4",
+
   ],
    ecosystem: [
      {
