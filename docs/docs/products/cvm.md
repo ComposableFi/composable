@@ -22,7 +22,3 @@ For example, the CVM enables the ability to move Polkadot’s DOT token to Osmos
 
 
 ## [Specification](./cvm/specification.md)
-
-## [Solver](./cvm/sovler.mdx)
- 
- 
