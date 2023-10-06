@@ -1,7 +1,7 @@
 {
   "extends": "@tsconfig/docusaurus/tsconfig.json",
   "compilerOptions": {
-    "target": "es2015",
+    "target": "ES2021",
     "lib": [
       "dom",
       "dom.iterable",
