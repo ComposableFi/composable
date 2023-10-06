@@ -115,7 +115,7 @@
         ./code/utils/price-feed/price-feed.nix
         ./code/xcvm/flake-module.nix
         ./code/xcvm/evm/flake-module.nix
-        ./docs/docs.nix
+        ./docs/flake-module.nix
         ./flake/all.nix
         ./flake/nixos-configuration.nix
         ./flake/cargo-tools.nix

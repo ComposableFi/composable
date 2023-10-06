@@ -1,6 +1,6 @@
 # Composable Virtual Machine (CVM)
 
-Previously known as XCVM, the Composable Virtual Machine (CVM) allows for cross-domain communication enabled through cross-chain smart contracts. The CVM is by no means a new standard for cross-chain communication, which is already the object of numerous projects, but rather an orchestration layer for protocols connected to [Composable IBC](./composable-ibc.md).
+Previously known as XCVM, the Composable Virtual Machine (CVM) allows is language and execution runtime for cross chain programs. The CVM is a orchestration language on top of standards for cross-chain communication, specifically over [IBC](./composable-ibc.md).
 
 ## Summary
 With the Composable Virtual Machine (CVM), developers can execute complex cross-chain operations in a single, user-signed transaction. With CVM, you're not restricted to a single blockchain universe. Just like you wouldn't want to be confined to one streaming service for all your entertainment needs, why settle for one blockchain network? CVM offers you a plethora of options, letting your digital assets enjoy the best of all worlds.
@@ -20,4 +20,9 @@ User transactions and intents need a language for execution across different env
 
 For example, the CVM enables the ability to move Polkadot’s DOT token to Osmosis, swap to DOT to ETH, move ETH to Ethereum, swap to ETH to USDC, and move funds to Composable’s Cosmos chain. This all occurs in one user-signed transaction, which is expressed in plain English.
 
-## [Specification](https://github.com/ComposableFi/composable/blob/main/docs/docs/products/cvm/specification.md)
+
+## [Specification](./cvm/specification.md)
+
+## [Solver](./cvm/sovler.mdx)
+ 
+ 
