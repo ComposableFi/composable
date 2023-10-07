@@ -13,7 +13,6 @@ runs:
   using: "composite"
   steps:
     - run: |
-        echo test
         # Marker status code in case of network failure.
         STATUS_TRANSIENT_FAILURE=200
         # Maximum retries in case of network failures.
