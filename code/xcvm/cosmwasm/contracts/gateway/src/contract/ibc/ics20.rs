@@ -22,6 +22,9 @@ use crate::{
 	state,
 };
 
+// 1. if there is know short cat multi hop path it is used up to point in cannot be used anymore (in this case CVM Executor call is propagated)
+// 2. if there is no solved multiprop route, only single hope route checked amid 2 networks and if can do shortcut
+// 3. else full CVM Executor call is propagated
 pub(crate) fn handle_bridge_forward(
 	_: auth::Interpreter,
 	deps: DepsMut,
@@ -35,54 +38,56 @@ pub(crate) fn handle_bridge_forward(
 	));
 
 	ensure_eq!(msg.msg.assets.0.len(), 1, ContractError::ProgramCannotBeHandledByDestination);
-	// algorithm to handle for multihop
-	// 1. recurse on program until can with memo
-	// 2. as soon as see no Spawn/Transfer, stop memo and do Wasm call with remaining Packet
-
 	let (local_asset, amount) = msg.msg.assets.0.get(0).expect("proved above");
 
-	let route: IbcIcs20Route = get_route(deps.storage, msg.to, *local_asset)?;
-	state::tracking::bridge_lock(deps.storage, (msg.clone(), route.clone()))?;
+	let (msg, event) = if let Some(transfer_shortcut) = get_direct() {
+	} else {
+		let route: IbcIcs20Route = get_this_route(deps.storage, msg.to, *local_asset)?;
+		state::tracking::bridge_lock(deps.storage, (msg.clone(), route.clone()))?;
 
-	let asset = msg
-		.msg
-		.assets
-		.0
-		.get(0)
-		.map(|(_, amount)| (route.on_remote_asset, *amount))
-		.expect("not empty");
+		let asset = msg
+			.msg
+			.assets
+			.0
+			.get(0)
+			.map(|(_, amount)| (route.on_remote_asset, *amount))
+			.expect("not empty");
 
-	let packet = XcPacket {
-		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin.clone(),
-		salt: msg.msg.salt,
-		program: msg.msg.program,
-		assets: vec![asset].into(),
+		let packet = XcPacket {
+			interpreter: String::from(info.sender).into_bytes(),
+			user_origin: msg.interpreter_origin.user_origin.clone(),
+			salt: msg.msg.salt,
+			program: msg.msg.program,
+			assets: vec![asset].into(),
+		};
+
+		deps.api.debug(&format!(
+			"cvm::gateway::ibc::ics20 route {}",
+			&serde_json_wasm::to_string(&route)?
+		));
+
+		let mut event = make_event("bridge")
+			.add_attribute("to_network_id", msg.to.to_string())
+			.add_attribute(
+				"assets",
+				serde_json_wasm::to_string(&packet.assets)
+					.map_err(|_| ContractError::FailedToSerialize)?,
+			)
+			.add_attribute(
+				"program",
+				serde_json_wasm::to_string(&packet.program)
+					.map_err(|_| ContractError::FailedToSerialize)?,
+			);
+		if !packet.salt.is_empty() {
+			let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
+			event = event.add_attribute("salt", salt_attr);
+		}
+
+		let coin = Coin::new(amount.0, route.local_native_denom.clone());
+
+		let msg = to_cw_message(deps.as_ref(), deps.api, coin, route, packet, block)?;
+		(msg, event)
 	};
-
-	deps.api
-		.debug(&format!("cvm::gateway::ibc::ics20 route {}", &serde_json_wasm::to_string(&route)?));
-
-	let mut event = make_event("bridge")
-		.add_attribute("to_network_id", msg.to.to_string())
-		.add_attribute(
-			"assets",
-			serde_json_wasm::to_string(&packet.assets)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		)
-		.add_attribute(
-			"program",
-			serde_json_wasm::to_string(&packet.program)
-				.map_err(|_| ContractError::FailedToSerialize)?,
-		);
-	if !packet.salt.is_empty() {
-		let salt_attr = Binary::from(packet.salt.as_slice()).to_string();
-		event = event.add_attribute("salt", salt_attr);
-	}
-
-	let coin = Coin::new(amount.0, route.local_native_denom.clone());
-
-	let msg = to_cw_message(deps.as_ref(), deps.api, coin, route, packet, block)?;
 
 	Ok(Response::default()
 		.add_event(event)
@@ -92,7 +97,8 @@ pub(crate) fn handle_bridge_forward(
 /// given target network and this network assets identifier,
 /// find channels, target denomination and gateway on other network
 /// so can form and sent ICS20 PFM Wasm terminated packet
-pub fn get_route(
+/// starts on this network only
+pub fn get_this_route(
 	storage: &dyn Storage,
 	to: xc_core::NetworkId,
 	this_asset_id: AssetId,
@@ -106,12 +112,10 @@ pub fn get_route(
 		.load(storage, (this_asset_id, to))
 		.map_err(|_| ContractError::AssetCannotBeTransferredToNetwork(this_asset_id, to))?;
 	let gateway_to_send_to = other.network.gateway.ok_or(ContractError::UnsupportedNetwork)?;
-	let gateway_to_send_to = match gateway_to_send_to {
-		GatewayId::CosmWasm { contract, .. } => contract,
-	};
 
 	let sender_gateway = match this.gateway.expect("we execute here") {
 		GatewayId::CosmWasm { contract, .. } => contract,
+    	GatewayId::Evm { .. } => Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?,		
 	};
 
 	let channel = other.connection.ics_20.ok_or(ContractError::ICS20NotFound)?.source;

@@ -82,6 +82,8 @@ pub enum ContractError {
 	AnonymousCallsCanDoOnlyLimitedSetOfActions,
 	#[error("Not supported runtime on this network")]
 	NotSupportedRuntimeOnThisNetwork,
+	#[error("Badly configured route because this chain can send only from cosmwasm")]
+	BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm,
 }
 
 impl From<xc_core::proto::DecodeError> for ContractError {
