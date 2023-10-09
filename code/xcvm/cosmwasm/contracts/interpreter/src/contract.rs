@@ -137,14 +137,18 @@ pub fn handle_execute_step(
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
 		deps.api.debug(&format!("cvm::interpreter::execute:: {:?}", &instruction));
 		let response = match instruction {
-			Instruction::Transfer { to, assets } =>
-				interpret_transfer(&mut deps, &env, &tip, to, assets),
-			Instruction::Call { bindings, encoded } =>
-				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
-			Instruction::Spawn { network_id, salt, assets, program } =>
-				interpret_spawn(&mut deps, &env, network_id, salt, assets, program),
-			Instruction::Exchange { exchange_id, give, want } =>
-				interpret_exchange(&mut deps, give, want, exchange_id, env.contract.address.clone()),
+			Instruction::Transfer { to, assets } => {
+				interpret_transfer(&mut deps, &env, &tip, to, assets)
+			},
+			Instruction::Call { bindings, encoded } => {
+				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip)
+			},
+			Instruction::Spawn { network_id, salt, assets, program } => {
+				interpret_spawn(&mut deps, &env, network_id, salt, assets, program)
+			},
+			Instruction::Exchange { exchange_id, give, want } => {
+				interpret_exchange(&mut deps, give, want, exchange_id, env.contract.address.clone())
+			},
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -273,8 +277,9 @@ impl<'a> BindingResolver<'a> {
 		match binding {
 			BindingValue::Register(reg) => self.resolve_register(*reg),
 			BindingValue::Asset(asset_id) => self.resolve_asset(*asset_id),
-			BindingValue::AssetAmount(asset_id, balance) =>
-				self.resolve_asset_amount(*asset_id, balance),
+			BindingValue::AssetAmount(asset_id, balance) => {
+				self.resolve_asset_amount(*asset_id, balance)
+			},
 		}
 	}
 
@@ -295,6 +300,7 @@ impl<'a> BindingResolver<'a> {
 		let value = match reference.local {
 			AssetReference::Cw20 { contract } => contract.into_string(),
 			AssetReference::Native { denom } => denom,
+			AssetReference::Erc20 { contract } => contract.to_string(),
 		};
 		Ok(Cow::Owned(value.into()))
 	}
@@ -314,7 +320,7 @@ impl<'a> BindingResolver<'a> {
 			)?,
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
-					return Err(ContractError::InvalidBindings)
+					return Err(ContractError::InvalidBindings);
 				}
 				let coin =
 					self.deps.querier.query_balance(self.env.contract.address.clone(), denom)?;
@@ -323,6 +329,7 @@ impl<'a> BindingResolver<'a> {
 					.apply(coin.amount.into())
 					.map_err(|_| ContractError::ArithmeticError)?
 			},
+			AssetReference::Erc20 { .. } => Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
 		};
 		Ok(Cow::Owned(amount.to_string().into_bytes()))
 	}
@@ -346,7 +353,7 @@ pub fn interpret_spawn(
 		let transfer_amount = match &reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
-					return Err(ContractError::DecimalsInNativeToken)
+					return Err(ContractError::DecimalsInNativeToken);
 				}
 				let coin =
 					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
@@ -361,6 +368,7 @@ pub fn interpret_spawn(
 				contract,
 				&env.contract.address,
 			),
+			AssetReference::Erc20 { .. } => Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
 		}?;
 
 		if !transfer_amount.is_zero() {
@@ -371,11 +379,15 @@ pub fn interpret_spawn(
 					to_address: gateway.address().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Cw20 { contract } =>
+				AssetReference::Cw20 { contract } => {
 					response.add_message(Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
 						recipient: gateway.address().into(),
 						amount: transfer_amount.into(),
-					})?),
+					})?)
+				},
+				AssetReference::Erc20 { .. } => {
+					Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?
+				},
 			};
 		}
 	}
@@ -411,14 +423,14 @@ pub fn interpret_transfer(
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
 		if balance.amount.is_zero() {
-			continue
+			continue;
 		}
 
 		let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 		response = match reference.local {
 			AssetReference::Native { denom } => {
 				if balance.is_unit {
-					return Err(ContractError::DecimalsInNativeToken)
+					return Err(ContractError::DecimalsInNativeToken);
 				}
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
 				coin.amount = balance.amount.apply(coin.amount.into())?.into();
@@ -440,6 +452,9 @@ pub fn interpret_transfer(
 					amount: transfer_amount.into(),
 				})?)
 			},
+			AssetReference::Erc20 { .. } => {
+				Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?
+			},
 		};
 	}
 
@@ -450,8 +465,9 @@ pub fn interpret_transfer(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 	match msg {
 		QueryMsg::Register(Register::Ip) => Ok(to_binary(&IP_REGISTER.load(deps.storage)?)?),
-		QueryMsg::Register(Register::Result) =>
-			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
+		QueryMsg::Register(Register::Result) => {
+			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?)
+		},
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
 		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 		QueryMsg::State() => Ok(state::read(deps.storage)?.try_into()?),
@@ -502,8 +518,9 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 				.unwrap_or(ExchangeId::default());
 			Response::new().add_event(CvmInterpreterExchangeSucceeded::new(exchange_id))
 		},
-		SubMsgResult::Err(err) =>
-			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone())),
+		SubMsgResult::Err(err) => {
+			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone()))
+		},
 	};
 	RESULT_REGISTER.save(deps.storage, &msg.result.into_result())?;
 	Ok(response)

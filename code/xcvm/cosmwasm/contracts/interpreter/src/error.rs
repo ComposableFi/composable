@@ -65,12 +65,15 @@ pub enum ContractError {
 
 	#[error("The asset is not yet supported")]
 	UnsupportedAsset,
-
+	
 	#[error("Only single asset exchange is supported by pool")]
 	OnlySingleAssetExchangeIsSupportedByPool,
-
+	
 	#[error("Asset not found: {0}")]
 	AssetNotFound(StdError),
 	#[error("Exchange not found: {0}")]
 	ExchangeNotFound(StdError),
+	
+	#[error("Not supported asset standard on thi network")]
+	NotSupportedAssetStandardOnThiNetwork,
 }

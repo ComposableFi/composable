@@ -80,6 +80,8 @@ pub enum ContractError {
 	GatewayForNetworkNotFound(NetworkId),
 	#[error("Anonymous calls can do only limitet set of actions")]
 	AnonymousCallsCanDoOnlyLimitedSetOfActions,
+	#[error("Not supported runtime on this network")]
+	NotSupportedRuntimeOnThisNetwork,
 }
 
 impl From<xc_core::proto::DecodeError> for ContractError {
