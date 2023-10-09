@@ -232,6 +232,11 @@ pub enum GatewayId {
 		/// admin of everything
 		admin: Addr,
 	},
+	Evm {
+		contract: eth_primitive_types::H160,
+		admin: eth_primitive_types::H160,
+	}
+
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

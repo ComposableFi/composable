@@ -1,6 +1,6 @@
 # Overview
 
-The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimized, non-custodial, bridge-agnostic and non-Turing complete cross-chain programs. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
+The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimized, non-custodial, bridge-agnostic and non-Turing complete cross-chain programs and intents. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
 
 ## Why?
 
