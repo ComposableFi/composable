@@ -99,14 +99,14 @@
            label: "CosmWasm",
            link: {
              type: "doc",
-             id: "products/cosmwasm-vm-overview",
+             id: "technology/cosmwasm-vm-overview",
            },
            collapsible: true,
            collapsed: true,
            items: [
-             "products/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm",
-             "products/cosmwasm/synergy-with-ibc-for-cvm",
-             "products/cosmwasm/writing-smart-contracts-with-cosmwasm",
+             "technology/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm",
+             "technology/cosmwasm/synergy-with-ibc-for-cvm",
+             "technology/cosmwasm/writing-smart-contracts-with-cosmwasm",
            ],
          },
          {
@@ -114,14 +114,14 @@
            label: "Apollo",
            link: {
              type: "doc",
-             id: "products/apollo-overview",
+             id: "technology/apollo-overview",
            },
            collapsible: true,
            collapsed: true,
            items: [
-             "products/apollo/apollo-how-it-works",
-             "products/apollo/technical-details",
-             "products/apollo/apollo-deployment",
+             "technology/apollo/apollo-how-it-works",
+             "technology/apollo/technical-details",
+             "technology/apollo/apollo-deployment",
            ],
          },
          {
@@ -129,14 +129,14 @@
           label: "Pablo",
           link: {
             type: "doc",
-            id: "products/pablo-overview",
+            id: "technology/pablo-overview",
           },
           collapsible: true,
           collapsed: true,
           items: [
-            "products/pablo/swaps-trading",
-            "products/pablo/launch-pools",
-            "products/pablo/cross-chain-DEX",
+            "technology/pablo/swaps-trading",
+            "technology/pablo/launch-pools",
+            "technology/pablo/cross-chain-DEX",
           ],
         },
        ],
@@ -163,19 +163,19 @@
    ],
  
    centauri: [
-     "products/composable-ibc",
-     "products/composable-ibc/cosmos-ibc",
-     "products/composable-ibc/polkadot-kusama-ibc",
-     "products/composable-ibc/ethereum-ibc",
-     "products/composable-ibc/near-ibc-bridge",
-     "products/composable-ibc/hyperspace-relayer",
-     "products/composable-ibc/light-clients",
-     "products/composable-ibc/merkle-mountain-ranges",
-     "products/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
+     "technology/composable-ibc",
+     "technology/composable-ibc/cosmos-ibc",
+     "technology/composable-ibc/polkadot-kusama-ibc",
+     "technology/composable-ibc/ethereum-ibc",
+     "technology/composable-ibc/near-ibc-bridge",
+     "technology/composable-ibc/hyperspace-relayer",
+     "technology/composable-ibc/light-clients",
+     "technology/composable-ibc/merkle-mountain-ranges",
+     "technology/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
    ],
 
    technology: [
-     "products/cvm",
+     "technology/cvm",
    ],
    develop: [
     {
@@ -303,20 +303,20 @@
         {
           "type": "doc",
           "label": "Mosaic (Discontinued)",
-          "id": "products/mosaic/mosaic-withdrawal-guide"
+          "id": "technology/mosaic/mosaic-withdrawal-guide"
         },
         {
           "type": "category",
           "label": "Parachain Vault Strategy (Discontinued)",
           "link": {
             "type": "doc",
-            "id": "products/parachain-vault-strategy/composable-strategies-withdrawal-guide"
+            "id": "technology/parachain-vault-strategy/composable-strategies-withdrawal-guide"
           },
           "collapsible": true,
           "collapsed": true,
           "items": [
-            "products/parachain-vault-strategy/vault-process-in-detail",
-            "products/parachain-vault-strategy/contracts-technical-details"
+            "technology/parachain-vault-strategy/vault-process-in-detail",
+            "technology/parachain-vault-strategy/contracts-technical-details"
           ],
         },
       ],

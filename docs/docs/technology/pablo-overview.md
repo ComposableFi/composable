@@ -3,7 +3,7 @@
 [Pablo](https://www.pablo.finance/) is the native decentralized exchange (DEX) of Picasso. It is a DeFi primitive, in that it fulfills a fundamental basic need of any DeFi ecosystem. In this case that function is token swaps whilst incorporating novel innovations to provide a complete suite of features that together form a protocol that is greater than the sum of its parts. 
 
 Pablo will offer multiple AMM-types, enhanced customizability for LPs and traders, liquidity-bootstrapping pools and 
-cross-chain assets and liquidity pools via [Composable IBC](../products/compsable-ibc.md).
+cross-chain assets and liquidity pools via [Composable IBC](../technology/compsable-ibc.md).
 Upon launch, Pablo will support dual asset Constant product(x * y = k) pools based on [BalancerFi weighted math]
 followed shortly after by Stableswap and the aforementioned liquidity-bootstrapping pools (LBP). 
 In addition, Pablo aims to overcome the short-falls that other DEXs face such as mercenary capital

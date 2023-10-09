@@ -3,7 +3,7 @@
 
 ## Overview
 
-[Apollo](../products/apollo-overview.md) is an oracle for submitting prices on-chain. 
+[Apollo](../technology/apollo-overview.md) is an oracle for submitting prices on-chain. 
 We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. 
 By taking part in Apollo and becoming an oracle operator, 
 you will be securing the price of assets on-chain and help the network become more resilient in a decentralized manner. 
