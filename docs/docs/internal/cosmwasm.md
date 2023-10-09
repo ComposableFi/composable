@@ -17,7 +17,7 @@ All features are supported (as defined by CW SDK feature flags).
 
 Second part is substrate [pallet-cosmwasm](../../../code/parachain/frame/cosmwasm). 
 Which integrates CW with Substrate storage, RPC, [cli](../../../code/parachain/frame/cosmwasm/cli),
-[Polkadot.JS](products/cosmwasm/deploy-and-run-cosmwasm-contracts-with-pdjs.md). 
+[Polkadot.JS](technology/cosmwasm/deploy-and-run-cosmwasm-contracts-with-pdjs.md). 
 
 PD.js and cli can be used to execute transactions and qeury contract state.
 

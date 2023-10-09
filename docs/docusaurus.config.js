@@ -73,12 +73,12 @@ const config = {
 						label: 'Networks',
 					},
 					{
-						to: '/products/composable-ibc',
+						to: '/technology/composable-ibc',
 						position: 'left',
 						label: 'Composable IBC',
 					},
 					{
-						to: '/products/cvm',
+						to: '/technology/cvm',
 						position: 'left',
 						label: 'Composable VM',
 					},

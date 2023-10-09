@@ -17,9 +17,9 @@ and its proprietary technology stack.
 - [Composable-IBC] - trustless bridging between major DeFi ecosystems
 - [Apollo] - Picasso’s native oracle pallet
 
-[Pablo]: ../products/pablo-overview.md
-[Composable-IBC]: ../products/composable-ibc.md
-[Apollo]: ../products/apollo-overview.md
+[Pablo]: ../technology/pablo-overview.md
+[Composable-IBC]: ../technology/composable-ibc.md
+[Apollo]: ../technology/apollo-overview.md
 
 ## How is Picasso enabling interoperable DeFi
 
@@ -31,7 +31,7 @@ The actual passing of messages between parachains is done through the use of Cro
 
 ### CosmWasm & IBC
 
-Picasso exists as the only [CosmWasm](../products/cosmwasm-vm-overview.md) and IBC-enabled parachain. 
+Picasso exists as the only [CosmWasm](../technology/cosmwasm-vm-overview.md) and IBC-enabled parachain. 
 Thus, Picasso will be able to seamlessly integrate with other parachains 
 as well as IBC-enabled blockchains in the Cosmos ecosystem. 
 As the first instance of an IBC implementation outside of the Cosmos ecosystem, 
@@ -48,7 +48,7 @@ Picasso offers an extensive range of Substrate pallets that synergize to form a 
 
 ### Composable’s VM on Picasso
 
-Composable’s Virtual Machine [CVM](../products/cvm.md) powered by CosmWasm will be able to leverage the pallets above to facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. Applications on any IBC-enabled chain can leverage the CVM to interact via cross-chain contracts in order to simplify cross-chain user experiences.
+Composable’s Virtual Machine [CVM](../technology/cvm.md) powered by CosmWasm will be able to leverage the pallets above to facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. Applications on any IBC-enabled chain can leverage the CVM to interact via cross-chain contracts in order to simplify cross-chain user experiences.
 
 ### Insights into Picasso’s Security
 
@@ -78,6 +78,6 @@ or leverage core pallets such as the Oracle [(Apollo)],
 DEX [(Pablo)] and Trustless Bridging [(Composable-IBC)] pallets. 
 These pallets and their functionalities are the foundation for Picasso that will lead us to enable interoperable DeFi.
 
-[(Apollo)]: ../products/apollo-overview.md
-[(Pablo)]: ../products/pablo-overview.md
-[(Composable-IBC)]: ../products/composable-ibc.md
+[(Apollo)]: ../technology/apollo-overview.md
+[(Pablo)]: ../technology/pablo-overview.md
+[(Composable-IBC)]: ../technology/composable-ibc.md
