@@ -31,8 +31,7 @@ ibc-proto = { workspace = true, default-features = false, features = [
 ] }
 serde-cw-value = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false, optional = true }
-# forked for schema support, pr sent
-eth-primitive-types ={ package = "primitive-types", git = "https://github.com/dzmitry-lahoda-forks/parity-common",  default-features = false, rev = "52c7e8fc53cb0524c1f3813ca4c0ee99416229db"}
+
 
 [build-dependencies]
 prost-build = { workspace = true }
