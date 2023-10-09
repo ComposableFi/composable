@@ -92,16 +92,7 @@ pub struct ForceNetworkToNetworkMsg {
 
 	/// on `to` chain
 	pub other: OtherNetworkItem,
-
-	/// if true, than will use shortcuts
-	/// for example,
-	/// if program transfer only program will just use native transfer
-	/// or if connection supports exchange, it will use exchange
-	/// default is false if target chain has CVM gateway 
-	pub use_shortcut : Option<bool>
 }
-
-
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -176,6 +167,12 @@ pub struct OtherNetworkItem {
 	pub counterparty_timeout: RelativeTimeout,
 	/// if there is custom IBC channel opened
 	pub xcvm_channel: Option<ChannelInfo>,
+	/// if true, than will use shortcuts
+	/// for example,
+	/// if program transfer only program will just use native transfer
+	/// or if connection supports exchange, it will use exchange
+	/// default is false if target chain has CVM gateway
+	pub use_shortcut: Option<bool>,
 }
 
 /// cross cross chain routing requires a lot of configuration,
@@ -255,8 +252,7 @@ pub enum GatewayId {
 	Evm {
 		contract: EthAddress,
 		admin: EthAddress,
-	}
-
+	},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -288,6 +284,8 @@ pub struct BridgeAsset {
 /// Definition of an asset native to some chain to operate on.
 /// For example for Cosmos CW and EVM chains both CW20 and ERC20 can be actual.
 /// So if asset is local or only remote to some chain depends on context of network or connection.
+/// this design leads to some dummy matches, but in general unifies code (so that if one have to
+/// solve other chain route it can)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -296,7 +294,6 @@ pub enum AssetReference {
 	Cw20 { contract: Addr },
 	Erc20 { contract: EthAddress },
 }
-
 
 impl AssetReference {
 	pub fn denom(&self) -> String {
