@@ -1,3 +1,5 @@
+mod error;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, BankMsg};
 use cosmwasm_std::{Coin, Order, StdError, Uint128, Uint64};
@@ -62,7 +64,7 @@ pub struct Cow {
 	/// how much of order to be solved by from bank for all aggregated cows
 	pub cow_amount: u128,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: u128,
+	pub taken: Option<u128>,
 	/// amount user should get after order executed
 	pub given: u128,
 }
@@ -70,13 +72,19 @@ pub struct Cow {
 pub struct SolvedOrder {
 	pub order: OrderItem,
 	pub solution: Cow,
-	pub banked : u128,
 }
 
 impl SolvedOrder {
+
 	pub fn new(order: OrderItem, solution: Cow) -> Self {
-		Self { order, solution, banked: 0 }
+		
+		Self { order, solution }
 	}
+
+	pub fn cross_chain(&self) -> u128 {
+		self.order.msg.wants.amount - self.solution.cow_amount
+	}
+
 
 	pub fn given(&self) -> &Coin {
 		&self.order.given
@@ -84,6 +92,10 @@ impl SolvedOrder {
 
 	pub fn wants(&self) -> &Coin {
 		&self.order.msg.wants
+	}
+
+	pub fn owner(&self) -> &Addr {
+		&self.order.owner
 	}
 }
 
@@ -137,7 +149,7 @@ impl OrderContract<'_> {
 		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
-
+order
 		Ok(Response::default())
 	}
 
@@ -146,7 +158,7 @@ impl OrderContract<'_> {
 	#[msg(exec)]
 	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {
 		/// read all orders as solver provided
-		let all_orders = msg
+		let mut all_orders = msg
 			.cows
 			.iter()
 			.map(|x| {
@@ -165,25 +177,32 @@ impl OrderContract<'_> {
 		/// total in bank as put by all `order` calls
 		/// very inefficient, but for now it is ok - let do logic, than make it secure, than efficient - or we never release
 		/// so ignores fully Constant factors and sometimes n**2 instead of n log n
-		
-		let a_total_in = all_orders
+		let mut a_total_in = all_orders
 			.iter()
 			.filter(|x| x.given().denom == a)
 			.map(|x| x.given().amount)
 			.sum::<Uint128>();
-		let b_total_in = all_orders
+		let mut b_total_in = all_orders
 			.iter()
 			.filter(|x| x.given().denom == b)
 			.map(|x| x.given().amount)
 			.sum::<Uint128>();
 
 		/// so do all cows up to bank
-		let mut transfers = vec![]; 
-		for order in all_orders {
-			BankMsg::Send { to_address: order., amount: () } 
+		let mut transfers = vec![];
+		for order in all_orders.iter_mut() {
+			let cowed = order.solution.cow_amount;
+			let amount = Coin { amount: cowed, ..order.given() };
+			
+			if amount == a {
+				a_total_in -= cowed;
+			} else {
+				b_total_in -= cowed;
+			};			
+			transfers.push(BankMsg::Send { to_address: order.owner(), amount: vec![amount] });
 		}
 
-		Ok(Response::default())
+		Ok(Response::default().add_messages(transfers))
 	}
 
 	/// Simple get all orders
