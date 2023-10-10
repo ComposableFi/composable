@@ -138,7 +138,7 @@ fn transfer_from_user(
 					amount: (*program_amount).into(),
 				})?),
 			msg::AssetReference::Erc20 { .. } =>
-				Err(ContractError::NotSupportedRuntimeOnThisNetwork)?,
+				Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 		}
 	}
 	Ok(transfers)
@@ -261,7 +261,7 @@ fn send_funds_to_interpreter(
 				})?
 			},
 			msg::AssetReference::Erc20 { .. } =>
-				Err(ContractError::NotSupportedRuntimeOnThisNetwork)?,
+				Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 		};
 		response = response.add_message(msg);
 	}

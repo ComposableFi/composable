@@ -80,8 +80,8 @@ pub enum ContractError {
 	GatewayForNetworkNotFound(NetworkId),
 	#[error("Anonymous calls can do only limitet set of actions")]
 	AnonymousCallsCanDoOnlyLimitedSetOfActions,
-	#[error("Not supported runtime on this network")]
-	NotSupportedRuntimeOnThisNetwork,
+	#[error("Runtime unsupported on network")]
+	RuntimeUnsupportedOnNetwork,
 	#[error("Badly configured route because this chain can send only from cosmwasm")]
 	BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm,
 }
