@@ -74,3 +74,22 @@ The Composable ecosystem connects to the following blockchains:
 Composable aims to bridge the gap between DeFi and other industries, such as FinTech and TradFi. Current collaborations include [INESC Lisboa](https://www.inesclx.pt/).
 
 INESC Lisboa is a research consortium based out of Lisbon, Portugal. Composable is collaborating with [INESC-ID](https://www.inesc-id.pt/), a subset of INESC Lisboa that focuses on research, development, and innovation (R&D+i) in computer science and electrical and computer engineering. It specifically promotes collaboration between academia and industry. Composable is working with [Professor Miguel Matos](https://www.cienciavitae.pt/CD1F-6851-B224) and his team at INESC-ID to research and develop a number of cutting edge technologies, such as a mechanism for enabling chains without light clients to connect to the Inter-Blockchain Communication (IBC) protocol.
+
+## Supporters
+We are incredibly grateful to all of the supporters of our funding rounds, including:
+
+- [Longhash Ventures](https://www.longhash.vc/)
+- [Fundamental Labs](https://www.cth.group/what_we_do/fundamental_labs/)
+- [Spartan Group](https://www.spartangroup.io/) 
+- [Coinbase Ventures](https://www.coinbase.com/ventures) 
+- [GSR](https://www.gsr.io/) 
+- [SOSV](https://sosv.com/)
+- [Figment Capital](https://www.figmentcapital.io/)
+- [Jump Capital](https://jumpcap.com/)
+- [DFG](https://www.dfg.group/)
+- [Maven 11](https://www.maven11.com/) 
+- [Hash CIB](https://hashcib.com/) 
+- [Advanced Blockchain AG](https://www.advancedblockchain.com/)
+- [Rarestone Capital](https://www.rarestone.ventures/)
+- [NGC Ventures](https://ngc.fund/)
+- [New Form Capital](https://www.newformcap.com/)

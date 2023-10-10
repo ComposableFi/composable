@@ -262,7 +262,7 @@
        items: [
          {
            type: "category",
-           label: "Build on Composable: Ecosystem Development",
+           label: "Composable Ecosystem",
            link: {
              type: `doc`,
              id: `ecosystem/composable-ecosystem`,
