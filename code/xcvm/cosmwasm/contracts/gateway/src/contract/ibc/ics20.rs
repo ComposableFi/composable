@@ -154,7 +154,7 @@ pub fn ibc_ics_20_transfer_shortcut(
 						.ics20
 						.expect("ics20")
 						.sender,
-				});
+				})
 			}
 		}
 	}
@@ -182,9 +182,8 @@ pub fn get_this_route(
 
 	let sender_gateway = match this.gateway.expect("we execute here") {
 		GatewayId::CosmWasm { contract, .. } => contract,
-		GatewayId::Evm { .. } => {
-			Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?
-		},
+		GatewayId::Evm { .. } =>
+			Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?,
 	};
 
 	let channel = other.connection.ics_20.ok_or(ContractError::ICS20NotFound)?.source;

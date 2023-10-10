@@ -74,6 +74,6 @@ pub enum ContractError {
 	#[error("Exchange not found: {0}")]
 	ExchangeNotFound(StdError),
 
-	#[error("Not supported asset standard on thi network")]
-	NotSupportedAssetStandardOnThiNetwork,
+	#[error("Asset unsupported on this network")]
+	AssetUnsupportedOnThisNetwork,
 }

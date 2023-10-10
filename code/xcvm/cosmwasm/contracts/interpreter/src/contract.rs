@@ -325,7 +325,7 @@ impl<'a> BindingResolver<'a> {
 					.map_err(|_| ContractError::ArithmeticError)?
 			},
 			AssetReference::Erc20 { .. } =>
-				Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
+				Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 		};
 		Ok(Cow::Owned(amount.to_string().into_bytes()))
 	}
@@ -365,7 +365,7 @@ pub fn interpret_spawn(
 				&env.contract.address,
 			),
 			AssetReference::Erc20 { .. } =>
-				Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
+				Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 		}?;
 
 		if !transfer_amount.is_zero() {
@@ -382,7 +382,7 @@ pub fn interpret_spawn(
 						amount: transfer_amount.into(),
 					})?),
 				AssetReference::Erc20 { .. } =>
-					Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
+					Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 			};
 		}
 	}
@@ -448,7 +448,7 @@ pub fn interpret_transfer(
 				})?)
 			},
 			AssetReference::Erc20 { .. } =>
-				Err(ContractError::NotSupportedAssetStandardOnThiNetwork)?,
+				Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 		};
 	}
 
