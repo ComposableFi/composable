@@ -5,10 +5,10 @@ use cosmwasm_std::{StdResult, Storage};
 use cw_storage_plus::{Item, Map};
 use xc_core::{
 	gateway::BridgeForwardMsg,
-	transport::ibc::{IbcIcs20Route, TransportTrackerId},
+	transport::ibc::{IbcIcs20ProgramRoute, TransportTrackerId},
 };
 
-pub(crate) const CURRENT_BRIDGE: Item<(BridgeForwardMsg, IbcIcs20Route)> =
+pub(crate) const CURRENT_BRIDGE: Item<(BridgeForwardMsg, IbcIcs20ProgramRoute)> =
 	Item::new("current_bridge");
 
 pub(crate) const CHANNEL_SEQUENCE_TO_BRIDGE_MSG: Map<(String, u64), BridgeForwardMsg> =
@@ -29,7 +29,7 @@ pub fn track(
 
 pub fn bridge_lock(
 	storage: &mut dyn Storage,
-	lock: (BridgeForwardMsg, IbcIcs20Route),
+	lock: (BridgeForwardMsg, IbcIcs20ProgramRoute),
 ) -> StdResult<()> {
 	if CURRENT_BRIDGE.load(storage).is_ok() {
 		return Err(cosmwasm_std::StdError::GenericErr { msg: "bridge is locked".to_string() })
@@ -39,7 +39,9 @@ pub fn bridge_lock(
 	Ok(())
 }
 
-pub fn bridge_unlock(storage: &mut dyn Storage) -> StdResult<(BridgeForwardMsg, IbcIcs20Route)> {
+pub fn bridge_unlock(
+	storage: &mut dyn Storage,
+) -> StdResult<(BridgeForwardMsg, IbcIcs20ProgramRoute)> {
 	let item = CURRENT_BRIDGE.load(storage)?;
 	CURRENT_BRIDGE.remove(storage);
 	Ok(item)

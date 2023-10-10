@@ -44,11 +44,11 @@ pub enum TransportTrackerId {
 	Ibc { channel_id: ChannelId, sequence: u64 },
 }
 
-/// route is used to describe how to send a packet to another network
+/// route is used to describe how to send a full program packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
-pub struct IbcIcs20Route {
+pub struct IbcIcs20ProgramRoute {
 	pub from_network: NetworkId,
 	pub local_native_denom: String,
 	pub channel_to_send_over: ChannelId,
@@ -65,7 +65,7 @@ pub fn to_cosmwasm_message<T>(
 	_deps: Deps,
 	api: &dyn Api,
 	coin: Coin,
-	route: IbcIcs20Route,
+	route: IbcIcs20ProgramRoute,
 	packet: XcPacket,
 	block: BlockInfo,
 	gateway_to_send_to: Addr,

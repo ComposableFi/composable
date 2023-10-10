@@ -10,7 +10,7 @@ use cosmwasm_std::{
 use xc_core::{
 	gateway::{AssetItem, ExecuteMsg, ExecuteProgramMsg, GatewayId},
 	shared::{XcFunds, XcPacket, XcProgram},
-	transport::ibc::{to_cosmwasm_message, IbcIcs20Route, XcMessageData},
+	transport::ibc::{to_cosmwasm_message, IbcIcs20ProgramRoute, XcMessageData},
 	AssetId, CallOrigin,
 };
 
@@ -50,7 +50,7 @@ pub(crate) fn handle_bridge_forward(
 
 		unimplemented!("add tracking lock for funds return usual cosmos message to transfer as defined in {:?}", transfer_shortcut);
 	} else {
-		let route: IbcIcs20Route = get_this_route(deps.storage, msg.to, *local_asset)?;
+		let route: IbcIcs20ProgramRoute = get_this_route(deps.storage, msg.to, *local_asset)?;
 		state::tracking::bridge_lock(deps.storage, (msg.clone(), route.clone()))?;
 
 		let asset = msg
@@ -116,10 +116,13 @@ pub(crate) fn handle_bridge_forward(
 		.add_submessage(SubMsg::reply_on_success(msg, ReplyId::TransportSent.into())))
 }
 
+/// When target network supports native cross chain operation of Transfer,
+/// and program as simple as just Transfer,
+/// can use instance of this structure to route pure funds transfer
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
-pub struct Shortcut {
+pub struct IbcIcs20TransferShortcutRoute {
 	pub source: ChannelId,
 	pub denom: String,
 	pub sending: xc_core::transport::ibc::IbcIcs20Sender,
@@ -129,7 +132,7 @@ pub struct Shortcut {
 pub fn ibc_ics_20_transfer_shortcut(
 	deps: Deps,
 	msg: &xc_core::gateway::BridgeForwardMsg,
-) -> Result<Shortcut, ContractError> {
+) -> Result<IbcIcs20TransferShortcutRoute, ContractError> {
 	let storage = deps.storage;
 	let this = load_this(storage)?;
 	let other = network::load_other(storage, msg.to)?;
@@ -140,7 +143,7 @@ pub fn ibc_ics_20_transfer_shortcut(
 	if let Some(ics20) = other.connection.ics_20 {
 		if let Some(shortcut) = other.connection.use_shortcut {
 			if shortcut {
-				return Ok(Shortcut {
+				return Ok(IbcIcs20TransferShortcutRoute {
 					source: ics20.source,
 					denom: asset.local.denom(),
 					sending: this
@@ -166,7 +169,7 @@ pub fn get_this_route(
 	storage: &dyn Storage,
 	to: xc_core::NetworkId,
 	this_asset_id: AssetId,
-) -> Result<IbcIcs20Route, ContractError> {
+) -> Result<IbcIcs20ProgramRoute, ContractError> {
 	let this = load_this(storage)?;
 	let other = network::load_other(storage, to)?;
 	let asset: AssetItem = state::assets::ASSETS
@@ -185,7 +188,7 @@ pub fn get_this_route(
 
 	let channel = other.connection.ics_20.ok_or(ContractError::ICS20NotFound)?.source;
 
-	Ok(IbcIcs20Route {
+	Ok(IbcIcs20ProgramRoute {
 		from_network: this.network_id,
 		local_native_denom: asset.local.denom(),
 		channel_to_send_over: channel,
