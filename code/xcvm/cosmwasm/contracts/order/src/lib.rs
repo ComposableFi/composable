@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Order, Uint128, Uint64, StdError};
+use cosmwasm_std::Addr;
+use cosmwasm_std::{Coin, Order, StdError, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
 use sylvia::{
 	contract,
@@ -7,9 +8,7 @@ use sylvia::{
 	entry_points,
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
-use cosmwasm_std::Addr;
 use xc_core::{service::dex::ExchangeId, NetworkId};
-
 
 pub type Amount = u128;
 pub type OrderId = u128;
@@ -32,7 +31,7 @@ pub struct OrderSubMsg {
 
 #[cw_serde]
 pub struct OrderItem {
-	pub owner : Addr,
+	pub owner: Addr,
 	pub msg: OrderSubMsg,
 	pub coin: Coin,
 	pub order_id: u128,
@@ -45,10 +44,10 @@ pub struct OrderItem {
 /// on chain cares each user gets what it wants and largest volume solution selected.
 #[cw_serde]
 pub struct SolutionSubMsg {
-    pub cows: Vec<Cow>,
-    pub fill: Vec<Fill>,
-    /// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of routes possible)
-    pub routes: Vec<Route>,	
+	pub cows: Vec<Cow>,
+	pub fill: Vec<Fill>,
+	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of routes possible)
+	pub routes: Vec<Route>,
 }
 
 /// how much of order to be solved by CoW.
@@ -56,41 +55,40 @@ pub struct SolutionSubMsg {
 /// aggregate pool of all orders in solution is used to give user amount he wants.
 #[cw_serde]
 pub struct Cow {
-    pub order_id: OrderId,
-    pub amount: u128,
+	pub order_id: OrderId,
+	/// how much of order to be solved by from bank for all aggregated cows
+	pub amount: u128,
 }
-
 
 #[cw_serde]
 pub struct Route {
-    // on this chain
-    pub exchange: Vec<Exchange>,
-    pub spawn: Vec<Spawn>,
+	// on this chain
+	pub exchange: Vec<Exchange>,
+	pub spawn: Vec<Spawn>,
 }
 
 #[cw_serde]
 pub struct Spawn {
-    pub to_chain: NetworkId,
-    pub carry: Vec<Amount>,
-    pub execute: Option<Route>,
+	pub to_chain: NetworkId,
+	pub carry: Vec<Amount>,
+	pub execute: Option<Route>,
 }
 
 #[cw_serde]
 pub struct Exchange {
-    pub pool_id: ExchangeId,
-    pub give: Amount,
-    pub want_min: Amount,
+	pub pool_id: ExchangeId,
+	pub give: Amount,
+	pub want_min: Amount,
 }
 
 #[cw_serde]
 pub struct Fill {
-    pub order_id: OrderId,
-    /// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-    pub taken: u128,
-    /// amount user should get after order executed
-    pub given: u128,
+	pub order_id: OrderId,
+	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
+	pub taken: u128,
+	/// amount user should get after order executed
+	pub given: u128,
 }
-
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
@@ -101,10 +99,7 @@ pub struct OrderContract<'a> {
 #[contract]
 impl OrderContract<'_> {
 	pub fn new() -> Self {
-		Self { 
-			orders: Map::new("orders"),
-			next_order_id: Item::new("next_order_id"),
-		 }
+		Self { orders: Map::new("orders"), next_order_id: Item::new("next_order_id") }
 	}
 
 	#[msg(instantiate)]
@@ -118,30 +113,38 @@ impl OrderContract<'_> {
 	pub fn order(&self, ctx: ExecCtx, msg: OrderSubMsg) -> StdResult<Response> {
 		/// for now we just use bank for ics20 tokens
 		let funds = ctx.info.funds.get(0).expect("there are some funds in order");
-		
 
 		/// just save order under incremented id
 		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
 		let order = OrderItem { msg, coin: funds.clone(), order_id, owner: ctx.info.sender };
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
-		
+
 		Ok(Response::default())
 	}
 
 	/// Provides solution for set of orders.
 	/// All fully
 	#[msg(exec)]
-	pub fn solve(&self, ctx: ExecCtx, msg: OrderSubMsg) -> StdResult<Response> {
-		todo!()
+	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {		
+		
+		/// read all orders as solver provided
+		let all_orders = msg.fill.iter().map(|x| {
+			self.orders.load(ctx.deps.storage, x.order_id)
+		}).collect::<Result<Vec<_>, _>>()?;
+
+		/// aggregate a
+		 
+
+		Ok(Response::default())
 	}
 
 	/// Simple get all orders
 	#[msg(query)]
 	pub fn get_all_orders(&self, ctx: QueryCtx) -> StdResult<Vec<OrderItem>> {
 		self.orders
-		 	.range_raw(ctx.deps.storage, None, None, Order::Ascending)
-			 .map(|r| r.map(|(_, order)|  order))
+			.range_raw(ctx.deps.storage, None, None, Order::Ascending)
+			.map(|r| r.map(|(_, order)| order))
 			.collect::<StdResult<Vec<OrderItem>>>()
 	}
 
