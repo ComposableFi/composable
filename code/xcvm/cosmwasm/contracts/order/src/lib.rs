@@ -1,7 +1,8 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, BankMsg};
 use cosmwasm_std::{Coin, Order, StdError, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
+use itertools::*;
 use sylvia::{
 	contract,
 	cw_std::{ensure, Response, StdResult},
@@ -9,8 +10,6 @@ use sylvia::{
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
 use xc_core::{service::dex::ExchangeId, NetworkId};
-use itertools::*;
-
 
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
@@ -26,7 +25,7 @@ pub type Ratio = (Uint64, Uint64);
 pub struct OrderSubMsg {
 	/// denom users wants to get, it can be cw20, bank or cvm denoms
 	/// minimum amount to get for given amount given (sure user wants more than at least `wants`)
-	pub wants : Coin,
+	pub wants: Coin,
 
 	/// how much blocks to wait for solution, if none, then cleaned up
 	pub timeout: Blocks,
@@ -68,7 +67,25 @@ pub struct Cow {
 	pub given: u128,
 }
 
+pub struct SolvedOrder {
+	pub order: OrderItem,
+	pub solution: Cow,
+	pub banked : u128,
+}
 
+impl SolvedOrder {
+	pub fn new(order: OrderItem, solution: Cow) -> Self {
+		Self { order, solution, banked: 0 }
+	}
+
+	pub fn given(&self) -> &Coin {
+		&self.order.given
+	}
+
+	pub fn wants(&self) -> &Coin {
+		&self.order.msg.wants
+	}
+}
 
 #[cw_serde]
 pub struct Route {
@@ -90,7 +107,6 @@ pub struct Exchange {
 	pub give: Amount,
 	pub want_min: Amount,
 }
-
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
@@ -128,26 +144,44 @@ impl OrderContract<'_> {
 	/// Provides solution for set of orders.
 	/// All fully
 	#[msg(exec)]
-	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {		
-		
+	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {
 		/// read all orders as solver provided
-		let all_orders = msg.fill.iter().map(|x| {
-			self.orders.load(ctx.deps.storage, x.order_id)
-		}).collect::<Result<Vec<OrderItem>, _>>()?;
-		let at_least_one = all_orders.first().expect("at least one") ;
+		let all_orders = msg
+			.cows
+			.iter()
+			.map(|x| {
+				self.orders
+					.load(ctx.deps.storage, x.order_id)
+					.map(|order| SolvedOrder::new(order, x.clone()))
+			})
+			.collect::<Result<Vec<SolvedOrder>, _>>()?;
+		let at_least_one = all_orders.first().expect("at least one");
 
 		/// unfortunately itertools std really:
-		/// Disable to compile itertools using #![no_std]. This disables any items that depend on collections (like group_by, unique, kmerge, join and many more).				
-
-		let a = at_least_one.given.denom;
-		let b = at_least_one.msg.wants.denom;
+		/// Disable to compile itertools using #![no_std]. This disables any items that depend on collections (like group_by, unique, kmerge, join and many more).
+		let a = at_least_one.given().denom.clone();
+		let b = at_least_one.wants().denom.clone();
 
 		/// total in bank as put by all `order` calls
 		/// very inefficient, but for now it is ok - let do logic, than make it secure, than efficient - or we never release
-		let a_total_in =  all_orders.iter().filter(|x| x.given.denom == a).map(|x| x.given.amount).sum::<u128>();	
-		let b_total_in =  all_orders.iter().filter(|x| x.given.denom == b).map(|x| x.given.amount).sum::<u128>();
+		/// so ignores fully Constant factors and sometimes n**2 instead of n log n
+		
+		let a_total_in = all_orders
+			.iter()
+			.filter(|x| x.given().denom == a)
+			.map(|x| x.given().amount)
+			.sum::<Uint128>();
+		let b_total_in = all_orders
+			.iter()
+			.filter(|x| x.given().denom == b)
+			.map(|x| x.given().amount)
+			.sum::<Uint128>();
 
-
+		/// so do all cows up to bank
+		let mut transfers = vec![]; 
+		for order in all_orders {
+			BankMsg::Send { to_address: order., amount: () } 
+		}
 
 		Ok(Response::default())
 	}
