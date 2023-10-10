@@ -36,7 +36,7 @@ pub struct GetExchangeResponse {
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct GetIbcIcs20RouteResponse {
-	pub route: crate::transport::ibc::IbcIcs20Route,
+	pub route: crate::transport::ibc::IbcIcs20ProgramRoute,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

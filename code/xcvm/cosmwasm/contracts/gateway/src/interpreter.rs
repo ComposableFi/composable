@@ -25,6 +25,7 @@ pub(crate) fn force_instantiate(
 	let config = load_this(deps.storage)?;
 	let interpreter_code_id = match config.gateway.expect("expected setup") {
 		GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
+		GatewayId::Evm { .. } => Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 	};
 	let salt = salt.into_bytes();
 

@@ -8,13 +8,15 @@ use crate::{
 	AssetId, NetworkId,
 };
 
+type EthAddress = eth_primitive_types::H160;
+
 /// Version of IBC channels used by the gateway.
 pub const IBC_VERSION: &str = "xcvm-v0";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct WasmHooks {
+pub struct OsmosisIbcHooks {
 	pub callback: bool,
 }
 
@@ -23,13 +25,20 @@ pub struct WasmHooks {
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct PFM {}
 
+/// if chain has IBC SDK callbacks enabled
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Adr08IbcCallbacks {}
+
 /// what features/modules/version enabled/installed/configured
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct Ics20Features {
 	/// if it is exists, chain has that enabled
-	pub wasm_hooks: Option<WasmHooks>,
+	pub wasm_hooks: Option<OsmosisIbcHooks>,
+	pub ibc_callbacks: Option<Adr08IbcCallbacks>,
 	pub pfm: Option<PFM>,
 }
 
@@ -70,6 +79,8 @@ impl From<PrefixedDenom> for ForeignAssetId {
 pub enum Prefix {
 	SS58(u16),
 	Bech(String),
+	/// no prefix, pure Ethereum EVM
+	EthEvm,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -156,6 +167,12 @@ pub struct OtherNetworkItem {
 	pub counterparty_timeout: RelativeTimeout,
 	/// if there is custom IBC channel opened
 	pub xcvm_channel: Option<ChannelInfo>,
+	/// if true, than will use shortcuts
+	/// for example,
+	/// if program transfer only program will just use native transfer
+	/// or if connection supports exchange, it will use exchange
+	/// default is false if target chain has CVM gateway
+	pub use_shortcut: Option<bool>,
 }
 
 /// cross cross chain routing requires a lot of configuration,
@@ -232,6 +249,10 @@ pub enum GatewayId {
 		/// admin of everything
 		admin: Addr,
 	},
+	Evm {
+		contract: EthAddress,
+		admin: EthAddress,
+	},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -260,23 +281,26 @@ pub struct BridgeAsset {
 	pub location_on_network: ForeignAssetId,
 }
 
-/// Definition of an asset on this local chain to operate with
+/// Definition of an asset native to some chain to operate on.
+/// For example for Cosmos CW and EVM chains both CW20 and ERC20 can be actual.
+/// So if asset is local or only remote to some chain depends on context of network or connection.
+/// this design leads to some dummy matches, but in general unifies code (so that if one have to
+/// solve other chain route it can)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub enum AssetReference {
 	Native { denom: String },
 	Cw20 { contract: Addr },
-	// ADR001 { sha256: cosmwasm_std::HexBinary },
+	Erc20 { contract: EthAddress },
 }
 
 impl AssetReference {
 	pub fn denom(&self) -> String {
 		match self {
-			// AssetReference::ADR001 { sha256 } => ["ibc/",
-			// &sha256.to_string()].concat().to_string(),
 			AssetReference::Native { denom } => denom.clone(),
 			AssetReference::Cw20 { contract } => ["cw20:", contract.as_str()].concat(),
+			AssetReference::Erc20 { contract } => ["erc20:", &contract.to_string()].concat(),
 		}
 	}
 }
@@ -294,6 +318,7 @@ impl cw_storage_plus::PrimaryKey<'_> for AssetReference {
 		let (tag, value) = match self {
 			AssetReference::Native { denom } => (0, denom.as_bytes()),
 			AssetReference::Cw20 { contract } => (1, contract.as_bytes()),
+			AssetReference::Erc20 { contract } => (2, contract.as_bytes()),
 		};
 		vec![Key::Val8([tag]), Key::Ref(value)]
 	}

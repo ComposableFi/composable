@@ -2,7 +2,7 @@ pub mod ics20;
 pub mod picasso;
 
 use crate::{
-	gateway::{self, RelativeTimeout},
+	gateway::{self, GatewayId, RelativeTimeout},
 	prelude::*,
 	shared::XcPacket,
 	AssetId, NetworkId,
@@ -44,29 +44,31 @@ pub enum TransportTrackerId {
 	Ibc { channel_id: ChannelId, sequence: u64 },
 }
 
-/// route is used to describe how to send a packet to another network
+/// route is used to describe how to send a full program packet to another network
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
-pub struct IbcIcs20Route {
+pub struct IbcIcs20ProgramRoute {
 	pub from_network: NetworkId,
 	pub local_native_denom: String,
 	pub channel_to_send_over: ChannelId,
 	pub sender_gateway: Addr,
 	/// the contract address of the gateway to send to assets
-	pub gateway_to_send_to: Addr,
+	pub gateway_to_send_to: GatewayId,
 	pub counterparty_timeout: RelativeTimeout,
 	pub ibc_ics_20_sender: IbcIcs20Sender,
 	pub on_remote_asset: AssetId,
 }
 
-pub fn to_cw_message<T>(
+/// send to target chain with cosmwasm receiver
+pub fn to_cosmwasm_message<T>(
 	_deps: Deps,
 	api: &dyn Api,
 	coin: Coin,
-	route: IbcIcs20Route,
+	route: IbcIcs20ProgramRoute,
 	packet: XcPacket,
 	block: BlockInfo,
+	gateway_to_send_to: Addr,
 ) -> StdResult<CosmosMsg<T>> {
 	let msg = gateway::ExecuteMsg::MessageHook(XcMessageData {
 		from_network_id: route.from_network,
@@ -75,9 +77,10 @@ pub fn to_cw_message<T>(
 	let memo = SendMemo {
 		inner: Memo {
 			wasm: Some(Callback {
-				contract: route.gateway_to_send_to.clone(),
+				contract: gateway_to_send_to.clone(),
 				msg: serde_cw_value::to_value(msg).expect("can always serde"),
 			}),
+
 			forward: None,
 		},
 		ibc_callback: None,
@@ -88,7 +91,7 @@ pub fn to_cw_message<T>(
 		IbcIcs20Sender::SubstratePrecompile(addr) => {
 			let transfer = picasso::IbcMsg::Transfer {
 				channel_id: route.channel_to_send_over.clone(),
-				to_address: route.gateway_to_send_to,
+				to_address: gateway_to_send_to,
 				amount: coin,
 				timeout: route.counterparty_timeout.absolute(block),
 				memo: Some(memo),
@@ -116,7 +119,7 @@ pub fn to_cw_message<T>(
 				source_channel: route.channel_to_send_over.to_string(),
 				token: Some(Coin { denom: coin.denom, amount: coin.amount.to_string() }),
 				sender: route.sender_gateway.to_string(),
-				receiver: route.gateway_to_send_to.to_string(),
+				receiver: gateway_to_send_to.to_string(),
 				timeout_height: route.counterparty_timeout.absolute(block.clone()).block().map(
 					|x| ibc_proto::ibc::core::client::v1::Height {
 						revision_height: x.height,

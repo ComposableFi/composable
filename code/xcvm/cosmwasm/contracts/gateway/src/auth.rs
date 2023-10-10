@@ -59,6 +59,7 @@ impl Auth<policy::WasmHook> {
 			.map(|x| match x {
 				msg::Prefix::SS58(prefix) => prefix.to_string(),
 				msg::Prefix::Bech(prefix) => prefix,
+				msg::Prefix::EthEvm => "".to_string(),
 			})
 			.unwrap_or_default();
 		let sender = state::NETWORK
@@ -68,6 +69,7 @@ impl Auth<policy::WasmHook> {
 
 		let sender = match sender {
 			msg::GatewayId::CosmWasm { contract, .. } => contract.to_string(),
+			msg::GatewayId::Evm { contract, .. } => contract.to_string(),
 		};
 
 		let channel = this_to_other.ics_20.ok_or(ContractError::ICS20NotFound)?.source;

@@ -137,6 +137,7 @@ fn transfer_from_user(
 					recipient: self_address.to_string(),
 					amount: (*program_amount).into(),
 				})?),
+			msg::AssetReference::Erc20 { .. } => Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 		}
 	}
 	Ok(transfers)
@@ -202,6 +203,8 @@ pub(crate) fn handle_execute_program_privilleged(
 		// and save it)
 		let interpreter_code_id = match config.gateway.expect("expected setup") {
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
+			msg::GatewayId::Evm { .. } =>
+				Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?,
 		};
 		deps.api.debug("instantiating interpreter");
 		let this = msg::Gateway::new(env.contract.address);
@@ -256,6 +259,7 @@ fn send_funds_to_interpreter(
 					amount: amount.into(),
 				})?
 			},
+			msg::AssetReference::Erc20 { .. } => Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 		};
 		response = response.add_message(msg);
 	}
