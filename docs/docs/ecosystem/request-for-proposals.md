@@ -1,7 +1,7 @@
 # Request for Proposals
-Composable is aware that the DeFi community is made up of incredibly innovative people and projects. To promote collaboration with others to deliver the best products and services to users and the industry at large, the following requests for proposal (RFPs) are open to the public:
+Composable is aware that the DeFi community is made up of incredibly innovative people and projects. To promote collaboration with others to deliver the best products and services to users and the industry at large, the following requests for proposals (RFPs) are open to the public:
 
-## RFP: Canonical Stable Coin Design and Integration
+## RFP : Canonical Stable Coin Design and Integration
 
 ### Introduction:
 
