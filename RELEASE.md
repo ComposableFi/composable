@@ -8,7 +8,7 @@
 
 ### 3.1. Release Numbers
 
-Each composable node release involves a release of (at-least) the following components,
+Each composable node release involves a release of (at least) the following components,
 
 1. Runtime wasm - Picasso and Composable at the time of this writing.
 
@@ -30,7 +30,7 @@ Release template name is:
 
 ### 3.2. Release Process
 
-Typical Composable releases involve multiple rounds of QA and external audits/testing that may cause multiple patch(rc) versions to be released based on feedback/issues. This means that a release branch may have a longer maintenance life cycle independent of the main branch where most of the bleeding edge development happens. In order to execute this expected workflow, following release process steps are proposed.
+Typical Composable releases involve multiple rounds of QA and external audits/testing that may cause multiple patch(rc) versions to be released based on feedback/issues. This means that a release branch may have a longer maintenance life cycle independent of the main branch where most of the bleeding edge development happens. In order to execute this expected workflow, the following release process steps are proposed.
 
 As the work starts for a `vMajor` (eg: v5) release,
 
@@ -52,7 +52,7 @@ The following section lays out the release steps for each release in a checklist
 
 ### 4.2. Verify
 
-- [ ] Storage/logic migrations from the previous versions has been removed.
+- [ ] Storage/logic migrations from the previous versions have been removed.
 - [ ] Make sure proper logic/storage migrations are included as necessary
 - [ ] Verify documentation has been updated.
 - [ ] Verify that there are no critical update instructions in release notes from Substrate/Cumulus/Polkadot releases that may not have been taken into account.
@@ -68,7 +68,7 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
-- [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before next step.
+- [ ] Update the `v<Major>` branch on Github and make PR to master. Get it merged to main before the next step.
 - [ ] Get the tip of the branch signed according to 3.2.4 section.
 - [ ] Finally, create a tag `v<Branch.Spec_version.Path>` (eg: `v5.4201.0`) to trigger the release artifact build.
 
