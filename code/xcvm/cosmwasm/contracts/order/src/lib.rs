@@ -9,6 +9,11 @@ use sylvia::{
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
 use xc_core::{service::dex::ExchangeId, NetworkId};
+use itertools::*;
+
+
+/// so this is just to make code easy to read, we will optimize later
+use num_rational::BigRational;
 
 pub type Amount = u128;
 pub type OrderId = u128;
@@ -20,9 +25,9 @@ pub type Ratio = (Uint64, Uint64);
 #[cw_serde]
 pub struct OrderSubMsg {
 	/// denom users wants to get, it can be cw20, bank or cvm denoms
-	pub denom: String,
 	/// minimum amount to get for given amount given (sure user wants more than at least `wants`)
-	pub wants: u128,
+	pub wants : Coin,
+
 	/// how much blocks to wait for solution, if none, then cleaned up
 	pub timeout: Blocks,
 	/// if ok with partial fill, what is the minimum amount
@@ -33,7 +38,7 @@ pub struct OrderSubMsg {
 pub struct OrderItem {
 	pub owner: Addr,
 	pub msg: OrderSubMsg,
-	pub coin: Coin,
+	pub given: Coin,
 	pub order_id: u128,
 }
 
@@ -45,7 +50,6 @@ pub struct OrderItem {
 #[cw_serde]
 pub struct SolutionSubMsg {
 	pub cows: Vec<Cow>,
-	pub fill: Vec<Fill>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of routes possible)
 	pub routes: Vec<Route>,
 }
@@ -57,8 +61,14 @@ pub struct SolutionSubMsg {
 pub struct Cow {
 	pub order_id: OrderId,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub amount: u128,
+	pub cow_amount: u128,
+	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
+	pub taken: u128,
+	/// amount user should get after order executed
+	pub given: u128,
 }
+
+
 
 #[cw_serde]
 pub struct Route {
@@ -81,14 +91,6 @@ pub struct Exchange {
 	pub want_min: Amount,
 }
 
-#[cw_serde]
-pub struct Fill {
-	pub order_id: OrderId,
-	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: u128,
-	/// amount user should get after order executed
-	pub given: u128,
-}
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
@@ -116,7 +118,7 @@ impl OrderContract<'_> {
 
 		/// just save order under incremented id
 		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
-		let order = OrderItem { msg, coin: funds.clone(), order_id, owner: ctx.info.sender };
+		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
 
@@ -131,10 +133,21 @@ impl OrderContract<'_> {
 		/// read all orders as solver provided
 		let all_orders = msg.fill.iter().map(|x| {
 			self.orders.load(ctx.deps.storage, x.order_id)
-		}).collect::<Result<Vec<_>, _>>()?;
+		}).collect::<Result<Vec<OrderItem>, _>>()?;
+		let at_least_one = all_orders.first().expect("at least one") ;
 
-		/// aggregate a
-		 
+		/// unfortunately itertools std really:
+		/// Disable to compile itertools using #![no_std]. This disables any items that depend on collections (like group_by, unique, kmerge, join and many more).				
+
+		let a = at_least_one.given.denom;
+		let b = at_least_one.msg.wants.denom;
+
+		/// total in bank as put by all `order` calls
+		/// very inefficient, but for now it is ok - let do logic, than make it secure, than efficient - or we never release
+		let a_total_in =  all_orders.iter().filter(|x| x.given.denom == a).map(|x| x.given.amount).sum::<u128>();	
+		let b_total_in =  all_orders.iter().filter(|x| x.given.denom == b).map(|x| x.given.amount).sum::<u128>();
+
+
 
 		Ok(Response::default())
 	}
