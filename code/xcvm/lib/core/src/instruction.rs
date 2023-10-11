@@ -136,7 +136,7 @@ pub fn apply_bindings<'a, E>(
 		let binding_index =
 			usize::try_from(*binding_index).map_err(|_| LateBindingError::InvalidBinding)?;
 
-		#[allow(clippy::comparison-chain)]
+		#[allow(clippy::comparison_chain)]
 		if binding_index < start {
 			// The bindings weren’t ordered by index.
 			return Err(LateBindingError::InvalidBinding)
