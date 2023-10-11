@@ -2,7 +2,7 @@
 mod error;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, BankMsg, Coin, Order, StdError, Uint128, Uint64};
+use cosmwasm_std::{Addr, BankMsg, BlockInfo, Coin, Order, StdError, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
 use itertools::*;
 use sylvia::{
@@ -21,6 +21,12 @@ use crate::error::ContractError;
 pub type Amount = Displayed<u128>;
 pub type OrderId = Displayed<u128>;
 pub type Blocks = u32;
+
+/// each pair waits ate least this amount of blocks before being decided
+pub const BATCH_EPOCH: u32 = 1;
+
+/// count of solutions at minimum which can be decided, just set 1 for ease of devtest
+pub const MIN_SOLUTION_COUNT: u32 = 1;
 
 /// parts of a whole, numerator / denominator
 pub type Ratio = (Uint64, Uint64);
@@ -45,6 +51,14 @@ pub struct OrderItem {
 	pub order_id: Displayed<u128>,
 }
 
+#[cw_serde]
+pub struct SolutionItem {
+	pub solver: Addr,
+	pub msg: SolutionSubMsg,
+	/// at which block solution was added
+	pub block_added: u64,
+}
+
 /// price information will not be used on chain or deciding.
 /// it will fill orders on chain as instructed
 /// and check that max/min from orders respected
@@ -56,6 +70,9 @@ pub struct SolutionSubMsg {
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
 	pub routes: Vec<Route>,
+
+	/// after some time, solver will not commit to success
+	pub timeout: Blocks,
 }
 
 /// how much of order to be solved by CoW.
@@ -197,22 +214,9 @@ impl OrderContract<'_> {
 			.sum();
 
 		/// so do all cows up to bank
-		let mut transfers = vec![];
-		for order in all_orders.iter_mut() {
-			let cowed = order.solution.cow_amount;
-			let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
+		let transfers = solves_cows_via_bank(all_orders, a, a_total_in, b_total_in);
 
-			if amount.denom == a {
-				a_total_in -= cowed.0;
-			} else {
-				b_total_in -= cowed.0;
-			};
-			transfers.push(BankMsg::Send {
-				to_address: order.owner().to_string(),
-				amount: vec![amount],
-			});
-		}
-
+		/// so now need to form and send cross chain solution
 		Ok(Response::default().add_messages(transfers))
 	}
 
@@ -224,9 +228,27 @@ impl OrderContract<'_> {
 			.map(|r| r.map(|(_, order)| order))
 			.collect::<StdResult<Vec<OrderItem>>>()
 	}
+}
 
-	// next steps are:
-	// 1. receive solution without verification
-	// 2. solves cows
-	// 3. send CVM program for cross chain
+fn solves_cows_via_bank(
+	mut all_orders: Vec<SolvedOrder>,
+	a: String,
+	mut a_total_in: u128,
+	mut b_total_in: u128,
+) -> Vec<BankMsg> {
+	let mut transfers = vec![];
+	for order in all_orders.iter_mut() {
+		let cowed = order.solution.cow_amount;
+		let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
+
+		/// so if not enough was deposited as was taken from original orders, it will fails - so solver cannot rob the bank
+		if amount.denom == a {
+			a_total_in -= cowed.0;
+		} else {
+			b_total_in -= cowed.0;
+		};
+		transfers
+			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
+	}
+	transfers
 }

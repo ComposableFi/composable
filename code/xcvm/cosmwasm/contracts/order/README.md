@@ -17,6 +17,8 @@ and cross chain CFMM for the rest.
 
 Solution with maximum volume is accepted, and should settle on second largest volume (second bid auction). 
 
+
+
 Bidders reserve amounts as rewards to pay for percentage of volume solved via their preferred CFMM.
 
 More details semantics will be described in whitepaper. including Solver operations.
