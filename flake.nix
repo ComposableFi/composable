@@ -3,7 +3,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-latest.url =
-      "github:NixOS/nixpkgs/0135b7a556ee60144b143b071724fa44348a188e";
+      "github:NixOS/nixpkgs/21de6eb092fe93fc5e22bc39b35656999d80be45";
     process-compose-flake = {
       url =
         "github:Platonic-Systems/process-compose-flake/bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e";
@@ -46,7 +46,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/d27ef222d49807b4fc05d00cb256ebaf61dbc75e";
+        "github:dzmitry-lahoda-forks/cosmos.nix/fdd55f90c664fed94699a45b01338a10bd5c368e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
