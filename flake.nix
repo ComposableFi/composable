@@ -46,7 +46,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
+        "github:dzmitry-lahoda-forks/cosmos.nix/d27ef222d49807b4fc05d00cb256ebaf61dbc75e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
