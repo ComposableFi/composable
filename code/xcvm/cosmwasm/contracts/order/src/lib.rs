@@ -1,8 +1,8 @@
+#![feature(result_flattening)]
 mod error;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, BankMsg};
-use cosmwasm_std::{Coin, Order, StdError, Uint128, Uint64};
+use cosmwasm_std::{Addr, BankMsg, Coin, Order, StdError, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
 use itertools::*;
 use sylvia::{
@@ -11,13 +11,15 @@ use sylvia::{
 	entry_points,
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
-use xc_core::{service::dex::ExchangeId, NetworkId};
+use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
 
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
-pub type Amount = u128;
-pub type OrderId = u128;
+use crate::error::ContractError;
+
+pub type Amount = Displayed<u128>;
+pub type OrderId = Displayed<u128>;
 pub type Blocks = u32;
 
 /// parts of a whole, numerator / denominator
@@ -40,7 +42,7 @@ pub struct OrderItem {
 	pub owner: Addr,
 	pub msg: OrderSubMsg,
 	pub given: Coin,
-	pub order_id: u128,
+	pub order_id: Displayed<u128>,
 }
 
 /// price information will not be used on chain or deciding.
@@ -51,7 +53,8 @@ pub struct OrderItem {
 #[cw_serde]
 pub struct SolutionSubMsg {
 	pub cows: Vec<Cow>,
-	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of routes possible)
+	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
+	/// routes possible)
 	pub routes: Vec<Route>,
 }
 
@@ -62,11 +65,11 @@ pub struct SolutionSubMsg {
 pub struct Cow {
 	pub order_id: OrderId,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub cow_amount: u128,
+	pub cow_amount: Displayed<u128>,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: Option<u128>,
+	pub taken: Option<Displayed<u128>>,
 	/// amount user should get after order executed
-	pub given: u128,
+	pub given: Displayed<u128>,
 }
 
 pub struct SolvedOrder {
@@ -75,16 +78,18 @@ pub struct SolvedOrder {
 }
 
 impl SolvedOrder {
+	pub fn new(order: OrderItem, solution: Cow) -> StdResult<Self> {
+		ensure!(
+			order.msg.wants.amount.u128() >= solution.given.0,
+			StdError::GenericErr { msg: "user limit was not satisfied".to_string() }
+		);
 
-	pub fn new(order: OrderItem, solution: Cow) -> Self {
-		
-		Self { order, solution }
+		Ok(Self { order, solution })
 	}
 
 	pub fn cross_chain(&self) -> u128 {
-		self.order.msg.wants.amount - self.solution.cow_amount
+		self.order.msg.wants.amount.u128() - self.solution.cow_amount.0
 	}
-
 
 	pub fn given(&self) -> &Coin {
 		&self.order.given
@@ -145,11 +150,10 @@ impl OrderContract<'_> {
 		let funds = ctx.info.funds.get(0).expect("there are some funds in order");
 
 		/// just save order under incremented id
-		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
+		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default().into();
 		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
-		self.orders.save(ctx.deps.storage, order_id, &order)?;
-		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
-order
+		self.orders.save(ctx.deps.storage, order_id.0, &order)?;
+		self.next_order_id.save(ctx.deps.storage, &(order_id.0 + 1))?;
 		Ok(Response::default())
 	}
 
@@ -163,43 +167,50 @@ order
 			.iter()
 			.map(|x| {
 				self.orders
-					.load(ctx.deps.storage, x.order_id)
+					.load(ctx.deps.storage, x.order_id.0)
+					.map_err(|_| StdError::not_found("order"))
 					.map(|order| SolvedOrder::new(order, x.clone()))
+					.flatten()
 			})
 			.collect::<Result<Vec<SolvedOrder>, _>>()?;
 		let at_least_one = all_orders.first().expect("at least one");
 
 		/// unfortunately itertools std really:
-		/// Disable to compile itertools using #![no_std]. This disables any items that depend on collections (like group_by, unique, kmerge, join and many more).
+		/// Disable to compile itertools using #![no_std]. This disables any items that depend on
+		/// collections (like group_by, unique, kmerge, join and many more).
 		let a = at_least_one.given().denom.clone();
 		let b = at_least_one.wants().denom.clone();
 
 		/// total in bank as put by all `order` calls
-		/// very inefficient, but for now it is ok - let do logic, than make it secure, than efficient - or we never release
-		/// so ignores fully Constant factors and sometimes n**2 instead of n log n
-		let mut a_total_in = all_orders
+		/// very inefficient, but for now it is ok - let do logic, than make it secure, than
+		/// efficient - or we never release so ignores fully Constant factors and sometimes n**2
+		/// instead of n log n
+		let mut a_total_in: u128 = all_orders
 			.iter()
 			.filter(|x| x.given().denom == a)
-			.map(|x| x.given().amount)
-			.sum::<Uint128>();
-		let mut b_total_in = all_orders
+			.map(|x: &SolvedOrder| x.given().amount.u128())
+			.sum();
+		let mut b_total_in: u128 = all_orders
 			.iter()
 			.filter(|x| x.given().denom == b)
-			.map(|x| x.given().amount)
-			.sum::<Uint128>();
+			.map(|x| x.given().amount.u128())
+			.sum();
 
 		/// so do all cows up to bank
 		let mut transfers = vec![];
 		for order in all_orders.iter_mut() {
 			let cowed = order.solution.cow_amount;
-			let amount = Coin { amount: cowed, ..order.given() };
-			
-			if amount == a {
-				a_total_in -= cowed;
+			let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
+
+			if amount.denom == a {
+				a_total_in -= cowed.0;
 			} else {
-				b_total_in -= cowed;
-			};			
-			transfers.push(BankMsg::Send { to_address: order.owner(), amount: vec![amount] });
+				b_total_in -= cowed.0;
+			};
+			transfers.push(BankMsg::Send {
+				to_address: order.owner().to_string(),
+				amount: vec![amount],
+			});
 		}
 
 		Ok(Response::default().add_messages(transfers))

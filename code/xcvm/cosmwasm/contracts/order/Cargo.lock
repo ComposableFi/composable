@@ -407,6 +407,7 @@ dependencies = [
  "schemars",
  "serde",
  "sylvia",
+ "thiserror-core",
  "xc-core",
 ]
 
