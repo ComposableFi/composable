@@ -2,8 +2,10 @@
 mod error;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, BankMsg, BlockInfo, Coin, Order, StdError, Uint128, Uint64};
-use cw_storage_plus::{Item, Map};
+use cosmwasm_std::{
+	wasm_execute, Addr, BankMsg, BlockInfo, Coin, Order, StdError, Uint128, Uint64,
+};
+use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use itertools::*;
 use sylvia::{
 	contract,
@@ -53,7 +55,7 @@ pub struct OrderItem {
 
 #[cw_serde]
 pub struct SolutionItem {
-	pub solver: Addr,
+	pub pair: (String, String),
 	pub msg: SolutionSubMsg,
 	/// at which block solution was added
 	pub block_added: u64,
@@ -75,6 +77,13 @@ pub struct SolutionSubMsg {
 	pub timeout: Blocks,
 }
 
+/// after cows solved, need to route remaining cross chain
+#[cw_serde]
+pub struct RouteSubMsg {
+	pub all_orders: Vec<SolvedOrder>,
+	pub routes: Vec<Route>,
+}
+
 /// how much of order to be solved by CoW.
 /// difference with `Fill` to be solved by cross chain exchange
 /// aggregate pool of all orders in solution is used to give user amount he wants.
@@ -89,6 +98,7 @@ pub struct Cow {
 	pub given: Displayed<u128>,
 }
 
+#[cw_serde]
 pub struct SolvedOrder {
 	pub order: OrderItem,
 	pub solution: Cow,
@@ -144,14 +154,40 @@ pub struct Exchange {
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
+	/// (a,b,solver)
+	pub solutions: IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
+}
+
+/// so we need to have several solution per pair to pick one best
+pub struct SolutionIndexes<'a> {
+	pub pair: MultiIndex<'a, (String, String), SolutionItem, (String, String, Addr)>,
+}
+
+impl<'a> IndexList<SolutionItem> for SolutionIndexes<'a> {
+	fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<SolutionItem>> + '_> {
+		let v: Vec<&dyn Index<SolutionItem>> = vec![&self.pair];
+		Box::new(v.into_iter())
+	}
+}
+
+pub fn solution<'a>(
+) -> IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>> {
+	let indexes = SolutionIndexes {
+		pair: MultiIndex::new(|_pk: &[u8], d: &SolutionItem| d.pair.clone(), "pair_solver", "pair"),
+	};
+	IndexedMap::new("solutions", indexes)
 }
 
 #[entry_points]
 #[contract]
 impl OrderContract<'_> {
 	pub fn new() -> Self {
-		Self { orders: Map::new("orders"), next_order_id: Item::new("next_order_id") }
+		Self {
+			orders: Map::new("orders"),
+			next_order_id: Item::new("next_order_id"),
+			solutions: solution(),
+		}
 	}
 
 	#[msg(instantiate)]
@@ -174,11 +210,103 @@ impl OrderContract<'_> {
 		Ok(Response::default())
 	}
 
+	#[msg(exec)]
+	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
+		ensure!(
+			ctx.info.sender == ctx.env.contract.address,
+			StdError::GenericErr { msg: "only self can call this".to_string() }
+		);
+		unimplemented!(
+			"so here we add route execution tracking to storage and map route to CVM program"
+		)
+	}
+
 	/// Provides solution for set of orders.
 	/// All fully
 	#[msg(exec)]
 	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {
 		/// read all orders as solver provided
+		let mut all_orders = self.merge_solution_with_orders(&msg, &ctx)?;
+		let at_least_one = all_orders.first().expect("at least one");
+
+		/// normalize pair
+		let mut ab = [at_least_one.given().denom.clone(), at_least_one.wants().denom.clone()];
+		ab.sort();
+		let [a, b] = ab;
+
+		// add solution to total solutions
+		let possible_solution = SolutionItem {
+			pair: (a.clone(), b.clone()),
+			msg: msg.clone(),
+			block_added: ctx.env.block.height,
+		};
+		self.solutions.save(
+			ctx.deps.storage,
+			&(a.clone(), b.clone(), ctx.info.sender.clone()),
+			&possible_solution,
+		)?;
+
+		/// get all solution for pair
+		let all_solutions: Result<Vec<SolutionItem>, _> = self
+			.solutions
+			.idx
+			.pair
+			.prefix((a.clone(), b.clone()))
+			.range(ctx.deps.storage, None, None, Order::Ascending)
+			.map(|r| r.map(|(_, solution)| solution))
+			.collect();
+		let all_solutions = all_solutions?;
+
+
+
+		/// pick up optimal solution with solves with bank
+		let mut a_in = 0;
+		let mut b_in = 0;
+		let mut transfers = vec![];
+		let mut solution_item = possible_solution;
+		for solution in all_solutions {
+			let alternative_all_orders = self.merge_solution_with_orders(&solution.msg, &ctx)?;
+			let mut a_total_in: u128 = alternative_all_orders
+				.iter()
+				.filter(|x| x.given().denom == a)
+				.map(|x: &SolvedOrder| x.given().amount.u128())
+				.sum();
+			let mut b_total_in: u128 = alternative_all_orders
+				.iter()
+				.filter(|x| x.given().denom == b)
+				.map(|x| x.given().amount.u128())
+				.sum();
+			/// so do all cows up to bank
+			let alternative_transfers = solves_cows_via_bank(
+				alternative_all_orders.clone(),
+				a.clone(),
+				a_total_in,
+				b_total_in,
+			);
+			if a_total_in * b_total_in > a_in * b_in {
+				a_in = a_total_in;
+				b_in = b_total_in;
+				all_orders = alternative_all_orders;
+				transfers = alternative_transfers;
+				solution_item = solution;
+			}
+		}
+
+		/// send remaining for settlement
+		let route = wasm_execute(
+			ctx.env.contract.address,
+			&ExecMsg::route(RouteSubMsg { all_orders, routes: solution_item.msg.routes }),
+			vec![],
+		)?;
+
+		Ok(Response::default().add_messages(transfers).add_message(route))
+	}
+
+	fn merge_solution_with_orders(
+		&self,
+		msg: &SolutionSubMsg,
+		ctx: &ExecCtx<'_>,
+	) -> Result<Vec<SolvedOrder>, StdError> {
 		let mut all_orders = msg
 			.cows
 			.iter()
@@ -190,34 +318,7 @@ impl OrderContract<'_> {
 					.flatten()
 			})
 			.collect::<Result<Vec<SolvedOrder>, _>>()?;
-		let at_least_one = all_orders.first().expect("at least one");
-
-		/// unfortunately itertools std really:
-		/// Disable to compile itertools using #![no_std]. This disables any items that depend on
-		/// collections (like group_by, unique, kmerge, join and many more).
-		let a = at_least_one.given().denom.clone();
-		let b = at_least_one.wants().denom.clone();
-
-		/// total in bank as put by all `order` calls
-		/// very inefficient, but for now it is ok - let do logic, than make it secure, than
-		/// efficient - or we never release so ignores fully Constant factors and sometimes n**2
-		/// instead of n log n
-		let mut a_total_in: u128 = all_orders
-			.iter()
-			.filter(|x| x.given().denom == a)
-			.map(|x: &SolvedOrder| x.given().amount.u128())
-			.sum();
-		let mut b_total_in: u128 = all_orders
-			.iter()
-			.filter(|x| x.given().denom == b)
-			.map(|x| x.given().amount.u128())
-			.sum();
-
-		/// so do all cows up to bank
-		let transfers = solves_cows_via_bank(all_orders, a, a_total_in, b_total_in);
-
-		/// so now need to form and send cross chain solution
-		Ok(Response::default().add_messages(transfers))
+		Ok(all_orders)
 	}
 
 	/// Simple get all orders
@@ -241,7 +342,7 @@ fn solves_cows_via_bank(
 		let cowed = order.solution.cow_amount;
 		let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
 
-		/// so if not enough was deposited as was taken from original orders, it will fails - so solver cannot rob the bank
+		// so if not enough was deposited as was taken from original orders, it will fails - so solver cannot rob the bank
 		if amount.denom == a {
 			a_total_in -= cowed.0;
 		} else {
