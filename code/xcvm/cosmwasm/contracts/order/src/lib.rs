@@ -35,10 +35,26 @@ pub type Ratio = (Uint64, Uint64);
 
 #[cw_serde]
 pub struct OrderSubMsg {
-	/// denom users wants to get, it can be cw20, bank or cvm denoms
-	/// minimum amount to get for given amount given (sure user wants more than at least `wants`)
+	/// Amount is minimum amount to get for given amount (sure user wants more than `wants` and we try to achieve that).
+	/// Denom users wants to get, it can be cw20, bank or this chain CVM asset identifier.
+	/// Only local CVM identifiers are accepted.
+	/// If target asset identifier on other chain, use `transfer` to identity it.
+	/// Why this is the case? It allows to CoW with user wanted assets which is not on settlement(this) chain.
 	pub wants: Coin,
 
+	/// How offchain SDK must work with it?
+	/// ```example
+	/// Alice gives token 42 on this(settlement chain).
+	/// But she wants token 123 on other chain.
+	/// SDK reads all CVM configurations.
+	/// And tells Alice that there are 2 routes of asset 123 to/from settlement chain. 
+	/// These routes are 666 and 777. Each asset has unique route to settlement chain in CVM configuration.
+	/// Alice picks route 777.
+	/// So SDK sends 42 token as given to  and 777 as wanted,
+	/// but additionally with attached transfer route Alice picked.  
+	/// ```
+	/// This allow to to CoWs for assets not on this chain.
+	pub transfer: Option<TransferRoute>,
 	/// how much blocks to wait for solution, if none, then cleaned up
 	pub timeout: Blocks,
 	/// if ok with partial fill, what is the minimum amount
@@ -71,7 +87,7 @@ pub struct SolutionSubMsg {
 	pub cows: Vec<Cow>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
-	pub routes: Vec<Route>,
+	pub routes: Vec<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
 	pub timeout: Blocks,
@@ -81,7 +97,7 @@ pub struct SolutionSubMsg {
 #[cw_serde]
 pub struct RouteSubMsg {
 	pub all_orders: Vec<SolvedOrder>,
-	pub routes: Vec<Route>,
+	pub routes: Vec<ExchangeRoute>,
 }
 
 /// how much of order to be solved by CoW.
@@ -131,15 +147,24 @@ impl SolvedOrder {
 	}
 }
 
+/// Route which may spawn on the way.
 #[cw_serde]
-pub struct Route {
+pub struct ExchangeRoute {
 	// on this chain
 	pub exchange: Vec<Exchange>,
-	pub spawn: Vec<Spawn>,
+	pub spawn: Vec<Spawn<ExchangeRoute>>,
 }
 
+/// Purely transfer route.
 #[cw_serde]
-pub struct Spawn {
+pub struct TransferRoute {
+	pub spawn: Vec<Spawn<TransferRoute>>,
+}
+
+/// Abstracted out route of underlying encoding on specific transport. 
+/// In the end of route, amount is always put onto user CVM executor.
+#[cw_serde]
+pub struct Spawn<Route> {
 	pub to_chain: NetworkId,
 	pub carry: Vec<Amount>,
 	pub execute: Option<Route>,
