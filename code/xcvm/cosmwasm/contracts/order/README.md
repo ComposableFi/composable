@@ -1,6 +1,6 @@
 # Overview
 
-This contract implements `Order` instruction of CVM.
+This contract implements `Order` instruction of CVM via (CoW)(https://en.wikipedia.org/wiki/Coincidence_of_wants).
 It integrates CoW with CFMM cross chain execution found by Solvers.
 
 ## General flow
