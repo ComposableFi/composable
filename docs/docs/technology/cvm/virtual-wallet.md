@@ -106,5 +106,3 @@ And provide transfer path to settle token on desired chain.
 
 Direct exchange on same and pure transfer are more safe and cheaper,
 than allowing someone to transfer and swap on some other chain.
-
-
