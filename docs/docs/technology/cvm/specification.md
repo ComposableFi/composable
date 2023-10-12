@@ -230,7 +230,7 @@ interface Transfer {
 } 
 
 /// sorted with unique ids
-type Assets = { AssetId,  Balance}[]
+type Assets = [AssetId,  Balance][]
 type AssetId = GlobalId | LocalId
 type GlobalId = Uint128
 type LocalId  = Uint8Array
@@ -271,8 +271,11 @@ type ExchangeError = Uint8
 type ExecutionResult = Ok | bytes
 type Ok = '0'
 
-
+/// One or more ordered set of unique cross chain accounts. 
+/// Owners have full control over funds in CVM Executor
 type Owners = Identity[]
+
+/// Network prefixed cross chain native chain Account 
 type Identity = [Network, Account]
 
 /// this happens in Executor
@@ -783,25 +786,21 @@ completely abstracted thanks to a globally unique CVM **asset identifier**.
 **Alice** could submit the following **CVM program**, along **250 PICA** to execute a cross-chain swap:
 
 ```kdl
-[
-  -- 1. Move to Osmosis with 250 PICA.
-  Spawn Osmosis Deterministic 0x0 [
-    -- 1.1. (OPTIONAL) Tip the relayer for the journey.
-    Transfer Relayer (PICA (Unit 25)),
-    -- 1.2. Execute a swap, effectively trading 200 PICA for OSMO with 1% slippage tolerance.
-    -- This might be replaced by an arbitrary `Call 0x042502` representing the swap,
-    -- but for some well-known protocols, we decided to include a custom, strongly typed instruction.
-    Swap (PICA (Unit 200)) OSMO 1%,
-    -- 1.3. At this point, we don't know how many OSMO/PICA we have.
-    -- But we can ask CVM to move 100% of both!
-    Spawn Picasso Deterministic 0x01 [
-      -- 1.3.1. (OPTIONAL) Tip the relayer for the cosy home with the remaining PICA.
-      Transfer Relayer (PICA 100%),
-      -- 1.3.2. Funds are safu.
-      Transfer (OSMO 100% Alice)
-    ] { OSMO: 100%, PICA: 100% }
-  ] { PICA: Unit 250 }
-]
+spawn network=Osmosis amount=250PICA { // Move to Osmosis with 250 PICA 
+    transfer to=Tip amount=25PICA // optional tip to the relayer for the journey
+    // Execute a swap, effectively trading 200 PICA for OSMO with 1% slippage tolerance.
+    // This might be replaced by an arbitrary `call 0x042502` representing the swap,
+    // but for some well-known protocols, we decided to include a custom, strongly typed instruction.
+    exchange give=200PICA want=99%OSMO
+    // At this point, we don't know how many OSMO/PICA we have.
+    // But we can ask CVM to move 100% of both!
+    spawn network=Picasso amount=100%OSMO,100%PICA {
+      // optional tip the relayer for the cosy home with the remaining PICA.
+      transfer to=Tip amount=100%PICA
+      // 1.3.2. Funds are safu.
+      transfer to=Alice amount=100%OSMO
+    }
+}
 ```
 
 1. Alice submits the CVM program and the instruction **1.** is executed,
