@@ -159,7 +159,7 @@ const config = {
 						],
 					},
 				],
-				copyright: `Copyright © ${new Date().getFullYear()} Composable Finance, Ltd.`,
+				copyright: `Copyright © ${new Date().getFullYear()} Composable Foundation`,
 			},
 			prism: {
 				additionalLanguages: ['rust', 'haskell', 'nix', 'typescript', 'tsx', 'toml', 'yaml', 'json', 'bash'],
