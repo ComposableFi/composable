@@ -18,9 +18,11 @@
                 with self'.packages;
                 [
                   clang
+                  cmake
                   dasel
                   git
                   git-lfs
+                  gnumake
                   nodejs
                   python3
                   sad
