@@ -69,7 +69,14 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
 # variables are put into this file, but also some extra vars
 # seems shole file conflicts with vscode startup injection
 # so getting one by one for evaluation
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "CARGO_NET_GIT_FETCH_WITH_CLI" >> ~/.profile
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "CARGO_NET_RETRY" >> ~/.profile
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "LIBCLANG_PATH" >> ~/.profile
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.profile
-RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.bashrc
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "ROCKSDB_LIB_DIR" >> ~/.profile
+
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "CARGO_NET_GIT_FETCH_WITH_CLI" >> ~/.bashrc
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "CARGO_NET_RETRY" >> ~/.bashrc
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "LIBCLANG_PATH" >> ~/.bashrc
+RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "PROTOC" >> ~/.bashrc
 RUN cat ~/.nix-profile/etc/profile.d/hm-session-vars.sh | grep "ROCKSDB_LIB_DIR" >> ~/.bashrc
