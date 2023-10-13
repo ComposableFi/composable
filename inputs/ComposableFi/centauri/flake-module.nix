@@ -268,12 +268,18 @@
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);
 
-        hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
+        hyperspace-composable-rococo-picasso-rococo = crane.nightly-latest.buildPackage
           (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
             version = "0.1";
-            cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+            buildInputs = with pkgs; [
+                self'.packages.rust-nightly-latest
+              ];
+            cargoArtifacts = crane.nightly-latest.buildDepsOnly (subnix.subenv // {
+              buildInputs = with pkgs; [
+                self'.packages.rust-nightly-latest
+              ];
               src = composable-rococo-picasso-rococo-centauri-patched-src;
               pname = "hyperspace";
               version = "0.1";
