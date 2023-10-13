@@ -4,8 +4,8 @@ As of December 21, 2022
 
 Without limiting the generality of the factors enumerated below, you are hereby informed and made aware of all the
 potential risks and liabilities relating to the PICA tokens, LAYR tokens, financial non-fungible tokens (fNFTs), 
-and other tokens or products (the “Composable Tokens”)  issued or developed by Composable Finance Ltd. 
-(the “Company”) that is found within the Polkadot or Kusama blockchain ecosystem.
+and other tokens or products (the “Composable Tokens”)  issued or developed by Composable Foundation 
+(the “Company”) that is found within the Ethereum, Polkadot, Kusama and Cosmos blockchain ecosystem.
 
 In this regard, you assume, among others, 
 the following potential risks and liabilities with respect to the Composable Tokens, its performance or utility, 
