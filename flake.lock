@@ -1980,6 +1980,22 @@
         "type": "indirect"
       }
     },
+    "nixpkgs_11": {
+      "locked": {
+        "lastModified": 1697009197,
+        "narHash": "sha256-viVRhBTFT8fPJTb1N3brQIpFZnttmwo3JVKNuWRVc3s=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "01441e14af5e29c9d27ace398e6dd0b293e25a54",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1629252929,
@@ -2290,17 +2306,16 @@
     },
     "process-compose-flake": {
       "locked": {
-        "lastModified": 1691182187,
-        "narHash": "sha256-dmHKgFXstdfX7nfnpbzR5H4DWGdWo610zsW9BCtI2WQ=",
+        "lastModified": 1695992918,
+        "narHash": "sha256-5tHNbk0ldLUjAqKRZog/3asiVvkD51VGK9TvwzUBs38=",
         "owner": "Platonic-Systems",
         "repo": "process-compose-flake",
-        "rev": "bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e",
+        "rev": "1ebecb83f15736f5d4ae3feb01a8391977dd71da",
         "type": "github"
       },
       "original": {
         "owner": "Platonic-Systems",
         "repo": "process-compose-flake",
-        "rev": "bacdaf54ffe3a2c1734fd973a95e6b39b1560c2e",
         "type": "github"
       }
     },
@@ -2434,16 +2449,14 @@
     "rust-overlay_4": {
       "inputs": {
         "flake-utils": "flake-utils_9",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs_11"
       },
       "locked": {
-        "lastModified": 1689906077,
-        "narHash": "sha256-2tjLXKoSK7O0LYHlA6GCWL0gy2kZZno4krg+KZpDh6U=",
+        "lastModified": 1697163235,
+        "narHash": "sha256-HzGr9LbTKf8x4NeDH94i1J2Cq/0CY1Qrt4z5pETk9HA=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "c88b28944129eeff5e819bdc21248dc07eb0625d",
+        "rev": "b48a7e5dab1b472dd9c9ee9053401489dbb4d6fc",
         "type": "github"
       },
       "original": {

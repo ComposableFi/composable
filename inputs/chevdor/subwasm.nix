@@ -3,6 +3,8 @@
     , subnix, ... }: {
       packages = rec {
         subwasm = let
+          rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+            (pkgs.rust-bin.stable."1.72.0".default);
           name = "subwasm";
           src = pkgs.fetchFromGitHub {
             owner = "chevdor";
@@ -10,10 +12,10 @@
             rev = "04e655675411b2f85ff36a24209be455c9f08d33";
             hash = "sha256-Pg1B2oKoF6RgKot+Rv+ytRGd0Dt6AODRHfC+Qf5VN3Y=";
           };
-        in crane.nightly.buildPackage (subnix.subenv // {
+        in rust.buildPackage (subnix.subenv // {
           name = name;
           pname = name;
-          cargoArtifacts = crane.nightly.buildDepsOnly (subnix.subenv // {
+          cargoArtifacts = rust.buildDepsOnly (subnix.subenv // {
             inherit src;
             pname = name;
             doCheck = false;

@@ -22,7 +22,7 @@
       };
 
       packages = {
-        rust-stable = pkgs.rust-bin.stable.latest.default;
+        rust-stable = pkgs.rust-bin."1.71.0".latest.default;
         rust-nightly = rust-toolchain;
 
         cargo-fmt-check = crane.nightly.cargoFmt (systemCommonRust.common-attrs
