@@ -7,8 +7,8 @@
           src = pkgs.fetchFromGitHub {
             owner = "chevdor";
             repo = name;
-            rev = "2815d4f4a60918339afc9a48804786f6c70b22f6";
-            hash = "sha256-Ex18cH+lxYQuSad2w9GM1eHX8TWNHyMTOBCKTzyJ/YY=";
+            rev = "04e655675411b2f85ff36a24209be455c9f08d33";
+            hash = "sha256-Pg1B2oKoF6RgKot+Rv+ytRGd0Dt6AODRHfC+Qf5VN3Y=";
           };
         in crane.stable.buildPackage (subnix.subenv // {
           name = name;
