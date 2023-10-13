@@ -10,10 +10,10 @@
             rev = "04e655675411b2f85ff36a24209be455c9f08d33";
             hash = "sha256-Pg1B2oKoF6RgKot+Rv+ytRGd0Dt6AODRHfC+Qf5VN3Y=";
           };
-        in crane.stable.buildPackage (subnix.subenv // {
+        in crane.nightly.buildPackage (subnix.subenv // {
           name = name;
           pname = name;
-          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
+          cargoArtifacts = crane.nightly.buildDepsOnly (subnix.subenv // {
             inherit src;
             pname = name;
             doCheck = false;
@@ -22,6 +22,7 @@
           });
           inherit src;
           cargoTestCommand = "";
+          doCheck = false;
           meta = { mainProgram = name; };
         });
 
