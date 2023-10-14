@@ -4,7 +4,7 @@
       packages = rec {
         subwasm = let
           rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-            (pkgs.rust-bin.stable."1.72.0".default);
+            (pkgs.rust-bin.stable."1.73.0".default);
           name = "subwasm";
           src = pkgs.fetchFromGitHub {
             owner = "chevdor";
@@ -15,13 +15,7 @@
         in rust.buildPackage (subnix.subenv // {
           name = name;
           pname = name;
-          cargoArtifacts = rust.buildDepsOnly (subnix.subenv // {
-            inherit src;
-            pname = name;
-            doCheck = false;
-            cargoTestCommand = "";
-            nativeBuildInputs = systemCommonRust.darwin-deps;
-          });
+          nativeBuildInputs = systemCommonRust.darwin-deps;
           inherit src;
           cargoTestCommand = "";
           doCheck = false;

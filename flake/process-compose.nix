@@ -104,8 +104,11 @@
         devnet-xc-background = devnet-xc // { tui = false; };
         devnet-xc-dotsama-background = devnet-xc-dotsama // { tui = false; };
         devnet-xc-dotsama = {
-          debug = true;
+
+          outputs.settingsYaml = true;
           settings = {
+            log_level = "trace";
+            log_location = "/tmp/composable-devnet/pc.log";
             processes = {
               picasso = {
                 command = self'.packages.zombienet-rococo-local-picasso-dev;
@@ -187,8 +190,11 @@
         };
 
         devnet-xc = {
-          debug = true;
+
+          outputs.settingsYaml = true;
           settings = {
+            log_level = "trace";
+            log_location = "/tmp/composable-devnet/pc.log";
             processes = {
               eth-gen = {
                 command = self'.packages.eth-gen;
@@ -436,8 +442,11 @@
         devnet-xc-cosmos-background = devnet-xc-cosmos // { tui = false; };
 
         devnet-xc-cosmos = {
-          debug = true;
+
+          outputs.settingsYaml = true;
           settings = {
+            log_level = "trace";
+            log_location = "/tmp/composable-devnet/pc.log";
             processes = {
               centauri = {
                 command = self'.packages.centaurid-gen;
