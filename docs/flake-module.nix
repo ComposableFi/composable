@@ -13,17 +13,16 @@
         '';
       };
 
-      docs-server =
-        let PORT = 8008;
-        in pkgs.writeShellApplication {
-          name = "docs-server";
-          runtimeInputs = [ pkgs.miniserve ];
-          text = ''
-            miniserve -p ${
-              builtins.toString PORT
-            } --spa --index index.html ${docs-static}
-          '';
-        };
+      docs-server = let PORT = 8008;
+      in pkgs.writeShellApplication {
+        name = "docs-server";
+        runtimeInputs = [ pkgs.miniserve ];
+        text = ''
+          miniserve -p ${
+            builtins.toString PORT
+          } --spa --index index.html ${docs-static}
+        '';
+      };
       docs-dev = pkgs.writeShellApplication {
         name = "docs-dev";
         runtimeInputs = [ pkgs.nodejs ];
