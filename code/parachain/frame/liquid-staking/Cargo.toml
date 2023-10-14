@@ -1,0 +1,45 @@
+[package]
+authors = ["Composable Developers"]
+description = "Provides reward mechanism for LP tokens"
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-liquid-staking"
+version = "1.0.0"
+
+[dependencies]
+parity-scale-codec = { workspace = true, default-features = false, features = ['max-encoded-len'] }
+# codec              = { workspace = true, package = 'parity-scale-codec', features = ['max-encoded-len'] }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support      = { workspace = true }
+frame-system       = { workspace = true }
+# pallet-assets      = { workspace = true }
+# pallet-traits      = { workspace = true }
+pallet-utility     = { workspace = true }
+pallet-xcm         = { workspace = true }
+# pallet-xcm-helper  = { workspace = true }
+scale-info         = { workspace = true, features = ['derive'] }
+sp-runtime         = { workspace = true }
+sp-std             = { workspace = true }
+sp-trie            = { workspace = true }
+xcm                = { workspace = true }
+polkadot-primitives = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
+polkadot-parachain          = { workspace = true, features = ['std'] }
+cumulus-primitives-core = { workspace = true }
+
+[features]
+default = ["std"]
+std                = [
+  'parity-scale-codec/std',
+  'frame-support/std',
+  'frame-system/std',
+  'frame-benchmarking/std',
+  'sp-runtime/std',
+  'sp-std/std',
+  'sp-trie/std',
+  'xcm/std',
+  'scale-info/std',
+  'pallet-xcm/std',
+  'polkadot-primitives/std',
+  'polkadot-parachain/std',
+  'cumulus-primitives-core/std',
+]

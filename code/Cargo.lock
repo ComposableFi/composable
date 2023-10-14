@@ -9311,6 +9311,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-liquid-staking"
+version = "1.0.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-utility",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "scale-info",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "sp-trie",
+ "xcm",
+]
+
+[[package]]
 name = "pallet-membership"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
