@@ -104,8 +104,6 @@
         devnet-xc-background = devnet-xc // { tui = false; };
         devnet-xc-dotsama-background = devnet-xc-dotsama // { tui = false; };
         devnet-xc-dotsama = {
-
-          outputs.settingsYaml = true;
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
@@ -190,8 +188,6 @@
         };
 
         devnet-xc = {
-
-          outputs.settingsYaml = true;
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
@@ -442,8 +438,6 @@
         devnet-xc-cosmos-background = devnet-xc-cosmos // { tui = false; };
 
         devnet-xc-cosmos = {
-
-          outputs.settingsYaml = true;
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
