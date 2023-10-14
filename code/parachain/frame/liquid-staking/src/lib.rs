@@ -240,12 +240,108 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        Staked
+        /// The assets get staked successfully
+        Staked(T::AccountId, BalanceOf<T>),
+        /// The derivative get unstaked successfully
+        Unstaked(T::AccountId, BalanceOf<T>, BalanceOf<T>),
+        /// Staking ledger updated
+        StakingLedgerUpdated(DerivativeIndex, StakingLedger<T::AccountId, BalanceOf<T>>),
+        /// Sent staking.bond call to relaychain
+        Bonding(
+            DerivativeIndex,
+            T::AccountId,
+            BalanceOf<T>,
+            RewardDestination<T::AccountId>,
+        ),
+        /// Sent staking.bond_extra call to relaychain
+        BondingExtra(DerivativeIndex, BalanceOf<T>),
+        /// Sent staking.unbond call to relaychain
+        Unbonding(DerivativeIndex, BalanceOf<T>),
+        /// Sent staking.rebond call to relaychain
+        Rebonding(DerivativeIndex, BalanceOf<T>),
+        /// Sent staking.withdraw_unbonded call to relaychain
+        WithdrawingUnbonded(DerivativeIndex, u32),
+        /// Sent staking.nominate call to relaychain
+        Nominating(DerivativeIndex, Vec<T::AccountId>),
+        /// Staking ledger's cap was updated
+        StakingLedgerCapUpdated(BalanceOf<T>),
+        /// Reserve_factor was updated
+        ReserveFactorUpdated(Ratio),
+        /// Exchange rate was updated
+        ExchangeRateUpdated(Rate),
+        /// Notification received
+        /// [multi_location, query_id, res]
+        NotificationReceived(Box<MultiLocation>, QueryId, Option<(u32, XcmError)>),
+        /// Claim user's unbonded staking assets
+        /// [account_id, amount]
+        ClaimedFor(T::AccountId, BalanceOf<T>),
+        /// New era
+        /// [era_index]
+        NewEra(EraIndex),
+        /// Matching stakes & unstakes for optimizing operations to be done
+        /// on relay chain
+        /// [bond_amount, rebond_amount, unbond_amount]
+        Matching(BalanceOf<T>, BalanceOf<T>, BalanceOf<T>),
+        /// Event emitted when the reserves are reduced
+        /// [receiver, reduced_amount]
+        ReservesReduced(T::AccountId, BalanceOf<T>),
+        /// Unstake cancelled
+        /// [account_id, amount, liquid_amount]
+        UnstakeCancelled(T::AccountId, BalanceOf<T>, BalanceOf<T>),
+        /// Commission rate was updated
+        CommissionRateUpdated(Rate),
+        /// Fast Unstake Matched
+        /// [unstaker, received_staking_amount, matched_liquid_amount, fee_in_liquid_currency]
+        FastUnstakeMatched(T::AccountId, BalanceOf<T>, BalanceOf<T>, BalanceOf<T>),
+        /// Incentive amount was updated
+        IncentiveUpdated(BalanceOf<T>),
+        /// Not the ideal staking ledger
+        NonIdealStakingLedger(DerivativeIndex),
     }
 
     #[pallet::error]
     pub enum Error<T> {
+        /// Exchange rate is invalid.
         InvalidExchangeRate,
+        /// The stake was below the minimum, `MinStake`.
+        StakeTooSmall,
+        /// The unstake was below the minimum, `MinUnstake`.
+        UnstakeTooSmall,
+        /// Invalid liquid currency
+        InvalidLiquidCurrency,
+        /// Invalid staking currency
+        InvalidStakingCurrency,
+        /// Invalid derivative index
+        InvalidDerivativeIndex,
+        /// Invalid staking ledger
+        InvalidStakingLedger,
+        /// Exceeded liquid currency's market cap
+        CapExceeded,
+        /// Invalid market cap
+        InvalidCap,
+        /// The factor should be bigger than 0% and smaller than 100%
+        InvalidFactor,
+        /// Nothing to claim yet
+        NothingToClaim,
+        /// Stash wasn't bonded yet
+        NotBonded,
+        /// Stash is already bonded.
+        AlreadyBonded,
+        /// Can not schedule more unlock chunks.
+        NoMoreChunks,
+        /// Staking ledger is locked due to mutation in notification_received
+        StakingLedgerLocked,
+        /// Not withdrawn unbonded yet
+        NotWithdrawn,
+        /// Cannot have a nominator role with value less than the minimum defined by
+        /// `MinNominatorBond`
+        InsufficientBond,
+        /// The merkle proof is invalid
+        InvalidProof,
+        /// No unlocking items
+        NoUnlockings,
+        /// Invalid commission rate
+        InvalidCommissionRate,
     }
 
     /// The exchange rate between relaychain native asset and the voucher.

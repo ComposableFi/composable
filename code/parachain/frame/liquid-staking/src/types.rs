@@ -22,6 +22,21 @@ use sp_std::{cmp::Ordering, result::Result, vec, vec::Vec};
 // use polkadot_primitives::PersistedValidationData;
 pub use polkadot_primitives::PersistedValidationData;
 
+/// A destination account for payment.
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum RewardDestination<AccountId> {
+    /// Pay into the stash account, increasing the amount at stake accordingly.
+    Staked,
+    /// Pay into the stash account, not increasing the amount at stake.
+    Stash,
+    /// Pay into the controller account.
+    Controller,
+    /// Pay into a specified account.
+    Account(AccountId),
+    /// Receive no reward.
+    None,
+}
+
 
 pub trait ValidationDataProvider {
     fn validation_data() -> Option<PersistedValidationData>;
