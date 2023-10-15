@@ -85,6 +85,7 @@ pub mod pallet {
     use sp_trie::StorageProof;
     use xcm::latest::prelude::*;
     use polkadot_parachain::primitives::Id as ParaId;
+    use frame_support::traits::tokens::{Preservation, Fortitude, Precision};
 
     use crate::distribution::*;
 
@@ -537,6 +538,89 @@ pub mod pallet {
             Self::deposit_event(Event::<T>::Staked(who, amount));
             Ok(().into())
         }
+
+
+        /// Unstake by exchange derivative for assets, the assets will not be available immediately.
+        /// Instead, the request is recorded and pending for the nomination accounts on relaychain
+        /// chain to do the `unbond` operation.
+        ///
+        /// - `amount`: the amount of derivative
+        #[pallet::call_index(1)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::unstake())]
+        #[transactional]
+        pub fn unstake(
+            origin: OriginFor<T>,
+            #[pallet::compact] liquid_amount: BalanceOf<T>,
+            unstake_provider: UnstakeProvider,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            ensure!(
+                liquid_amount >= T::MinUnstake::get(),
+                Error::<T>::UnstakeTooSmall
+            );
+
+            if unstake_provider.is_matching_pool() {
+                use frame_support::traits::tokens::{Preservation, Fortitude};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+                FastUnstakeRequests::<T>::try_mutate(&who, |b| -> DispatchResult {
+                    let balance =
+                        T::Assets::reducible_balance(Self::liquid_currency()?, &who, keep_alive, Fortitude::Polite);
+                    *b = b.saturating_add(liquid_amount).min(balance);
+                    Ok(())
+                })?;
+                return Ok(().into());
+            }
+
+            let amount =
+                Self::liquid_to_staking(liquid_amount).ok_or(Error::<T>::InvalidExchangeRate)?;
+            let unlockings_key = if unstake_provider.is_loans() {
+                Self::loans_account_id()
+            } else {
+                who.clone()
+            };
+
+            Unlockings::<T>::try_mutate(&unlockings_key, |b| -> DispatchResult {
+                let mut chunks = b.take().unwrap_or_default();
+                let target_era = Self::target_era();
+                if let Some(mut chunk) = chunks.last_mut().filter(|chunk| chunk.era == target_era) {
+                    chunk.value = chunk.value.saturating_add(amount);
+                } else {
+                    chunks.push(UnlockChunk {
+                        value: amount,
+                        era: target_era,
+                    });
+                }
+                ensure!(
+                    chunks.len() <= MAX_UNLOCKING_CHUNKS,
+                    Error::<T>::NoMoreChunks
+                );
+                *b = Some(chunks);
+                Ok(())
+            })?;
+
+            T::Assets::burn_from(Self::liquid_currency()?, &who, liquid_amount, Precision::BestEffort, Fortitude::Polite)?;
+
+            //TODO rust.dev uncomment this line
+            // if unstake_provider.is_loans() {
+            //     Self::do_loans_instant_unstake(&who, amount)?;
+            // }
+
+            MatchingPool::<T>::try_mutate(|p| p.add_unstake_amount(amount))?;
+
+            log::trace!(
+                target: "liquidStaking::unstake",
+                "unstake_amount: {:?}, liquid_amount: {:?}",
+                &amount,
+                &liquid_amount,
+            );
+
+            Self::deposit_event(Event::<T>::Unstaked(who, liquid_amount, amount));
+            Ok(().into())
+        }
+
 
 
         /// Internal call which is expected to be triggered only by xcm instruction
@@ -1413,8 +1497,6 @@ pub mod pallet {
                 if b.is_none() {
                     return Ok(());
                 }
-
-                use frame_support::traits::tokens::{Preservation, Fortitude, Precision};
                 let keep_alive = false;
                 let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
                 let current_liquid_amount =
