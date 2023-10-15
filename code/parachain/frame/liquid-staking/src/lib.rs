@@ -1139,6 +1139,8 @@ pub mod pallet {
             Ok(())
         }
 
+        */
+
         #[require_transactional]
         fn do_update_exchange_rate() -> DispatchResult {
             let matching_ledger = Self::matching_pool();
@@ -1166,6 +1168,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_update_ledger(
             derivative_index: DerivativeIndex,
@@ -1182,6 +1186,8 @@ pub mod pallet {
                 Ok(())
             })
         }
+
+        
 
         #[require_transactional]
         pub fn do_matching() -> DispatchResult {
@@ -1215,6 +1221,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         pub fn do_advance_era(offset: EraIndex) -> DispatchResult {
             if offset.is_zero() {
@@ -1240,7 +1248,7 @@ pub mod pallet {
             Ok(())
         }
 
-        */
+        
 
         #[require_transactional]
         fn do_claim_for(who: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
