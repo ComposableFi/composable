@@ -1290,6 +1290,8 @@ pub mod pallet {
             Ok(())
         }
 
+        */
+
         // liquid_amount_to_fee=TotalLiquidCurrency * (commission_rate*total_rewards/(TotalStakeCurrency+(1-commission_rate)*total_rewards))
         fn get_inflate_liquid_amount(rewards: BalanceOf<T>) -> Result<BalanceOf<T>, DispatchError> {
             let issuance = T::Assets::total_issuance(Self::liquid_currency()?);
@@ -1318,7 +1320,7 @@ pub mod pallet {
             Ok(inflate_liquid_amount)
         }
 
-        */
+        
 
         #[require_transactional]
         fn do_fast_match_unstake(unstaker: &T::AccountId) -> DispatchResult {
