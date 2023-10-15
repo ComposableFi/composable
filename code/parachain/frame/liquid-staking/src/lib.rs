@@ -763,7 +763,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /* 
+        
 
         #[require_transactional]
         fn do_unbond(derivative_index: DerivativeIndex, amount: BalanceOf<T>) -> DispatchResult {
@@ -813,6 +813,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_rebond(derivative_index: DerivativeIndex, amount: BalanceOf<T>) -> DispatchResult {
             if amount.is_zero() {
@@ -853,6 +855,8 @@ pub mod pallet {
 
             Ok(())
         }
+
+        
 
         #[require_transactional]
         fn do_withdraw_unbonded(
@@ -902,6 +906,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_nominate(
             derivative_index: DerivativeIndex,
@@ -941,6 +947,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_multi_bond(
             total_amount: BalanceOf<T>,
@@ -974,6 +982,8 @@ pub mod pallet {
 
             Ok(())
         }
+
+        
 
         #[require_transactional]
         fn do_multi_unbond(total_amount: BalanceOf<T>) -> DispatchResult {
@@ -1018,6 +1028,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_multi_withdraw_unbonded(num_slashing_spans: u32) -> DispatchResult {
             for derivative_index in StakingLedgers::<T>::iter_keys() {
@@ -1026,6 +1038,8 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /* 
 
         #[require_transactional]
         fn do_notification_received(
@@ -1304,14 +1318,20 @@ pub mod pallet {
             Ok(inflate_liquid_amount)
         }
 
+        */
+
         #[require_transactional]
         fn do_fast_match_unstake(unstaker: &T::AccountId) -> DispatchResult {
             FastUnstakeRequests::<T>::try_mutate_exists(unstaker, |b| -> DispatchResult {
                 if b.is_none() {
                     return Ok(());
                 }
+
+                use frame_support::traits::tokens::{Preservation, Fortitude, Precision};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
                 let current_liquid_amount =
-                    T::Assets::reducible_balance(Self::liquid_currency()?, unstaker, false);
+                    T::Assets::reducible_balance(Self::liquid_currency()?, unstaker, keep_alive, Fortitude::Polite);
                 let request_liquid_amount = b
                     .take()
                     .expect("Could not be none, qed;")
@@ -1327,13 +1347,13 @@ pub mod pallet {
                     let matched_fee = T::MatchingPoolFastUnstakeFee::get()
                         .saturating_mul_int(matched_liquid_amount);
                     let liquid_to_burn = matched_liquid_amount.saturating_sub(matched_fee);
-                    T::Assets::burn_from(Self::liquid_currency()?, unstaker, liquid_to_burn)?;
+                    T::Assets::burn_from(Self::liquid_currency()?, unstaker, liquid_to_burn, Precision::BestEffort, Fortitude::Polite)?;
                     T::Assets::transfer(
                         Self::liquid_currency()?,
                         unstaker,
                         &T::ProtocolFeeReceiver::get(),
                         matched_fee,
-                        false,
+                        keep_alive,
                     )?;
 
                     let staking_to_receive = Self::liquid_to_staking(liquid_to_burn)
@@ -1345,7 +1365,7 @@ pub mod pallet {
                         &Self::account_id(),
                         unstaker,
                         staking_to_receive,
-                        false,
+                        keep_alive,
                     )?;
 
                     Self::deposit_event(Event::<T>::FastUnstakeMatched(
@@ -1373,7 +1393,7 @@ pub mod pallet {
             })
         }
 
-        */
+        
 
         fn ensure_origin(origin: OriginFor<T>) -> DispatchResult {
             if T::RelayOrigin::ensure_origin(origin.clone()).is_ok() {
@@ -1543,4 +1563,21 @@ impl<T: Config> LiquidStakingCurrenciesProvider<AssetIdOf<T>> for Pallet<T> {
 pub trait LiquidStakingCurrenciesProvider<CurrencyId> {
     fn get_staking_currency() -> Option<CurrencyId>;
     fn get_liquid_currency() -> Option<CurrencyId>;
+}
+
+pub trait LiquidStakingConvert<Balance> {
+    fn staking_to_liquid(amount: Balance) -> Option<Balance>;
+    fn liquid_to_staking(liquid_amount: Balance) -> Option<Balance>;
+}
+
+impl<T: Config, Balance: BalanceT + FixedPointOperand> LiquidStakingConvert<Balance> for Pallet<T> {
+    fn staking_to_liquid(amount: Balance) -> Option<Balance> {
+        Self::exchange_rate()
+            .reciprocal()
+            .and_then(|r| r.checked_mul_int(amount))
+    }
+
+    fn liquid_to_staking(liquid_amount: Balance) -> Option<Balance> {
+        Self::exchange_rate().checked_mul_int(liquid_amount)
+    }
 }
