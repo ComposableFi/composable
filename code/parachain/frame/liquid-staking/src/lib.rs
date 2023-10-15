@@ -622,6 +622,148 @@ pub mod pallet {
         }
 
 
+        /// Update insurance pool's reserve_factor
+        #[pallet::call_index(2)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::update_reserve_factor())]
+        #[transactional]
+        pub fn update_reserve_factor(
+            origin: OriginFor<T>,
+            reserve_factor: Ratio,
+        ) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            ensure!(
+                reserve_factor > Ratio::zero() && reserve_factor < Ratio::one(),
+                Error::<T>::InvalidFactor,
+            );
+
+            log::trace!(
+                target: "liquidStaking::update_reserve_factor",
+                 "reserve_factor: {:?}",
+                &reserve_factor,
+            );
+
+            ReserveFactor::<T>::mutate(|v| *v = reserve_factor);
+            Self::deposit_event(Event::<T>::ReserveFactorUpdated(reserve_factor));
+            Ok(().into())
+        }
+
+        /// Update ledger's max bonded cap
+        #[pallet::call_index(3)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::update_staking_ledger_cap())]
+        #[transactional]
+        pub fn update_staking_ledger_cap(
+            origin: OriginFor<T>,
+            #[pallet::compact] cap: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            ensure!(!cap.is_zero(), Error::<T>::InvalidCap);
+
+            log::trace!(
+                target: "liquidStaking::update_staking_ledger_cap",
+                "cap: {:?}",
+                &cap,
+            );
+            StakingLedgerCap::<T>::mutate(|v| *v = cap);
+            Self::deposit_event(Event::<T>::StakingLedgerCapUpdated(cap));
+            Ok(().into())
+        }
+
+        /// Bond on relaychain via xcm.transact
+        #[pallet::call_index(4)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::bond())]
+        #[transactional]
+        pub fn bond(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            #[pallet::compact] amount: BalanceOf<T>,
+            payee: RewardDestination<T::AccountId>,
+        ) -> DispatchResult {
+            T::RelayOrigin::ensure_origin(origin)?;
+            Self::do_bond(derivative_index, amount, payee)?;
+            Ok(())
+        }
+
+        /// Bond_extra on relaychain via xcm.transact
+        #[pallet::call_index(5)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::bond_extra())]
+        #[transactional]
+        pub fn bond_extra(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResult {
+            T::RelayOrigin::ensure_origin(origin)?;
+            Self::do_bond_extra(derivative_index, amount)?;
+            Ok(())
+        }
+
+        /// Unbond on relaychain via xcm.transact
+        #[pallet::call_index(6)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::unbond())]
+        #[transactional]
+        pub fn unbond(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResult {
+            T::RelayOrigin::ensure_origin(origin)?;
+            Self::do_unbond(derivative_index, amount)?;
+            Ok(())
+        }
+
+        /// Rebond on relaychain via xcm.transact
+        #[pallet::call_index(7)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::rebond())]
+        #[transactional]
+        pub fn rebond(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResult {
+            T::RelayOrigin::ensure_origin(origin)?;
+            Self::do_rebond(derivative_index, amount)?;
+            Ok(())
+        }
+
+        /// Withdraw unbonded on relaychain via xcm.transact
+        #[pallet::call_index(8)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::withdraw_unbonded())]
+        #[transactional]
+        pub fn withdraw_unbonded(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            num_slashing_spans: u32,
+        ) -> DispatchResult {
+            Self::ensure_origin(origin)?;
+            Self::do_withdraw_unbonded(derivative_index, num_slashing_spans)?;
+            Ok(())
+        }
+
+        /// Nominate on relaychain via xcm.transact
+        #[pallet::call_index(9)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::nominate())]
+        #[transactional]
+        pub fn nominate(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            targets: Vec<T::AccountId>,
+        ) -> DispatchResult {
+            Self::ensure_origin(origin)?;
+            Self::do_nominate(derivative_index, targets)?;
+            Ok(())
+        }
+
+
 
         /// Internal call which is expected to be triggered only by xcm instruction
         #[pallet::call_index(10)]
