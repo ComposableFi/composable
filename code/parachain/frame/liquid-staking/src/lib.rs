@@ -782,8 +782,7 @@ pub mod pallet {
                 })?;
             if let Response::ExecutionResult(res) = response {
                 if let Some(request) = Self::xcm_request(query_id) {
-                    //TODO rust.dev uncomment this line
-                    //Self::do_notification_received(query_id, request, res)?;
+                    Self::do_notification_received(query_id, request, res)?;
                 }
 
                 Self::deposit_event(Event::<T>::NotificationReceived(
@@ -794,9 +793,6 @@ pub mod pallet {
             }
             Ok(().into())
         }
-
-        
-
     }
 
     impl<T: Config> Pallet<T> {
@@ -1330,7 +1326,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /* 
+        
 
         //todo rust.dev you need this function to call from callable fn in pallet
         #[require_transactional]
@@ -1370,7 +1366,7 @@ pub mod pallet {
                     MatchingPool::<T>::try_mutate(|p| -> DispatchResult {
                         p.consolidate_stake(amount)
                     })?;
-                    T::Assets::burn_from(Self::staking_currency()?, &Self::account_id(), amount)?;
+                    T::Assets::burn_from(Self::staking_currency()?, &Self::account_id(), amount, Precision::BestEffort, Fortitude::Polite)?;
                 }
                 BondExtra {
                     index: derivative_index,
@@ -1383,7 +1379,7 @@ pub mod pallet {
                     MatchingPool::<T>::try_mutate(|p| -> DispatchResult {
                         p.consolidate_stake(amount)
                     })?;
-                    T::Assets::burn_from(Self::staking_currency()?, &Self::account_id(), amount)?;
+                    T::Assets::burn_from(Self::staking_currency()?, &Self::account_id(), amount, Precision::BestEffort, Fortitude::Polite)?;
                 }
                 Unbond {
                     index: derivative_index,
@@ -1431,7 +1427,7 @@ pub mod pallet {
             Ok(())
         }
 
-        */
+        
 
         #[require_transactional]
         fn do_update_exchange_rate() -> DispatchResult {
