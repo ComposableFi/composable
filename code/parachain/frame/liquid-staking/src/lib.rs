@@ -1041,6 +1041,7 @@ pub mod pallet {
 
         /* 
 
+        //todo rust.dev you need this function to call from callable fn in pallet
         #[require_transactional]
         fn do_notification_received(
             query_id: QueryId,
