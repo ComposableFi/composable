@@ -1240,57 +1240,68 @@ pub mod pallet {
             Ok(())
         }
 
+        */
+
         #[require_transactional]
         fn do_claim_for(who: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let module_id = Self::account_id();
             let collateral_currency = T::CollateralCurrency::get();
             let staking_currency = Self::staking_currency()?;
 
-            if who == &Self::loans_account_id() {
-                let account_borrows =
-                    T::Loans::get_current_borrow_balance(&module_id, staking_currency)?;
-                T::Loans::do_repay_borrow(
-                    &module_id,
-                    staking_currency,
-                    min(account_borrows, amount),
-                )?;
-                let redeem_amount = T::Loans::get_market_info(collateral_currency)?
-                    .collateral_factor
-                    .saturating_reciprocal_mul_ceil(amount);
-                T::Loans::do_redeem(&module_id, collateral_currency, redeem_amount)?;
-                T::Assets::burn_from(collateral_currency, &module_id, redeem_amount)?;
+            //TODO rust.dev double check
+            // if who == &Self::loans_account_id() {
+            if false {
+                // let account_borrows =
+                //     T::Loans::get_current_borrow_balance(&module_id, staking_currency)?;
+                // T::Loans::do_repay_borrow(
+                //     &module_id,
+                //     staking_currency,
+                //     min(account_borrows, amount),
+                // )?;
+                // let redeem_amount = T::Loans::get_market_info(collateral_currency)?
+                //     .collateral_factor
+                //     .saturating_reciprocal_mul_ceil(amount);
+                // T::Loans::do_redeem(&module_id, collateral_currency, redeem_amount)?;
+                // T::Assets::burn_from(collateral_currency, &module_id, redeem_amount)?;
             } else {
-                T::Assets::transfer(staking_currency, &module_id, who, amount, false)?;
+                use frame_support::traits::tokens::{Preservation};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+                T::Assets::transfer(staking_currency, &module_id, who, amount, keep_alive)?;
             }
 
             Ok(())
         }
 
-        #[require_transactional]
-        fn do_loans_instant_unstake(who: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
-            let loans_instant_unstake_fee = T::LoansInstantUnstakeFee::get()
-                .checked_mul_int(amount)
-                .ok_or(ArithmeticError::Overflow)?;
-            let borrow_amount = amount
-                .checked_sub(loans_instant_unstake_fee)
-                .ok_or(ArithmeticError::Underflow)?;
-            let collateral_currency = T::CollateralCurrency::get();
-            let mint_amount = T::Loans::get_market_info(collateral_currency)?
-                .collateral_factor
-                .saturating_reciprocal_mul_ceil(amount);
-            let module_id = Self::account_id();
-            let staking_currency = Self::staking_currency()?;
+        
 
-            T::Assets::mint_into(collateral_currency, &module_id, mint_amount)?;
-            T::Loans::do_mint(&module_id, collateral_currency, mint_amount)?;
-            let _ = T::Loans::do_collateral_asset(&module_id, collateral_currency, true);
-            T::Loans::do_borrow(&module_id, staking_currency, borrow_amount)?;
-            T::Assets::transfer(staking_currency, &module_id, who, borrow_amount, false)?;
 
-            Ok(())
-        }
+        //TODO rust.dev this one does not exist because loan pallet does not exist
+        // #[require_transactional]
+        // fn do_loans_instant_unstake(who: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
+        //     let loans_instant_unstake_fee = T::LoansInstantUnstakeFee::get()
+        //         .checked_mul_int(amount)
+        //         .ok_or(ArithmeticError::Overflow)?;
+        //     let borrow_amount = amount
+        //         .checked_sub(loans_instant_unstake_fee)
+        //         .ok_or(ArithmeticError::Underflow)?;
+        //     let collateral_currency = T::CollateralCurrency::get();
+        //     let mint_amount = T::Loans::get_market_info(collateral_currency)?
+        //         .collateral_factor
+        //         .saturating_reciprocal_mul_ceil(amount);
+        //     let module_id = Self::account_id();
+        //     let staking_currency = Self::staking_currency()?;
 
-        */
+        //     T::Assets::mint_into(collateral_currency, &module_id, mint_amount)?;
+        //     T::Loans::do_mint(&module_id, collateral_currency, mint_amount)?;
+        //     let _ = T::Loans::do_collateral_asset(&module_id, collateral_currency, true);
+        //     T::Loans::do_borrow(&module_id, staking_currency, borrow_amount)?;
+        //     T::Assets::transfer(staking_currency, &module_id, who, borrow_amount, false)?;
+
+        //     Ok(())
+        // }
+
+        
 
         // liquid_amount_to_fee=TotalLiquidCurrency * (commission_rate*total_rewards/(TotalStakeCurrency+(1-commission_rate)*total_rewards))
         fn get_inflate_liquid_amount(rewards: BalanceOf<T>) -> Result<BalanceOf<T>, DispatchError> {
