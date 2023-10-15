@@ -473,27 +473,64 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
 
+
+        /// Internal call which is expected to be triggered only by xcm instruction
+        #[pallet::call_index(10)]
+        //TODO rust.dev update weight
+        // #[pallet::weight(<T as Config>::WeightInfo::notification_received())]
+        #[pallet::weight(1000)]
+        #[transactional]
+        pub fn notification_received(
+            origin: OriginFor<T>,
+            query_id: QueryId,
+            response: Response,
+        ) -> DispatchResultWithPostInfo {
+            let responder = ensure_response(<T as Config>::RuntimeOrigin::from(origin.clone()))
+                .or_else(|_| {
+                    T::UpdateOrigin::ensure_origin(origin).map(|_| MultiLocation::here())
+                })?;
+            if let Response::ExecutionResult(res) = response {
+                if let Some(request) = Self::xcm_request(query_id) {
+                    //TODO rust.dev uncomment this line
+                    //Self::do_notification_received(query_id, request, res)?;
+                }
+
+                Self::deposit_event(Event::<T>::NotificationReceived(
+                    Box::new(responder),
+                    query_id,
+                    res,
+                ));
+            }
+            Ok(().into())
+        }
+
         
 
     }
 
     impl<T: Config> Pallet<T> {
 
-        /* 
+        
         /// Staking pool account
         pub fn account_id() -> T::AccountId {
             T::PalletId::get().into_account_truncating()
         }
+
+        
 
         /// Loans pool account
         pub fn loans_account_id() -> T::AccountId {
             T::LoansPalletId::get().into_account_truncating()
         }
 
+        
+
         /// Parachain's sovereign account
         pub fn sovereign_account_id() -> T::AccountId {
             T::SelfParaId::get().into_account_truncating()
         }
+
+        
 
         /// Target era_index if users unstake in current_era
         pub fn target_era() -> EraIndex {
@@ -502,6 +539,8 @@ pub mod pallet {
             Self::current_era() + T::BondingDuration::get() + 1
         }
 
+        
+
         /// Get staking currency or return back an error
         pub fn staking_currency() -> Result<AssetIdOf<T>, DispatchError> {
             Self::get_staking_currency()
@@ -509,25 +548,35 @@ pub mod pallet {
                 .map_err(Into::into)
         }
 
+        
+
         /// Get liquid currency or return back an error
         pub fn liquid_currency() -> Result<AssetIdOf<T>, DispatchError> {
             Self::get_liquid_currency()
                 .ok_or(Error::<T>::InvalidLiquidCurrency)
                 .map_err(Into::into)
         }
+        
 
         /// Get total unclaimed
         pub fn get_total_unclaimed(staking_currency: AssetIdOf<T>) -> BalanceOf<T> {
-            T::Assets::reducible_balance(staking_currency, &Self::account_id(), false)
+            use frame_support::traits::tokens::{Preservation, Fortitude};
+            let keep_alive = false;
+            let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+            T::Assets::reducible_balance(staking_currency, &Self::account_id(), keep_alive, Fortitude::Polite)
                 .saturating_sub(Self::total_reserves())
                 .saturating_sub(Self::matching_pool().total_stake_amount.total)
         }
+
+        
 
         /// Derivative of parachain's account
         pub fn derivative_sovereign_account_id(index: DerivativeIndex) -> T::AccountId {
             let para_account = Self::sovereign_account_id();
             pallet_utility::Pallet::<T>::derivative_account_id(para_account, index)
         }
+
+        
 
         fn offset(relaychain_block_number: BlockNumberFor<T>) -> EraIndex {
             relaychain_block_number
@@ -537,19 +586,27 @@ pub mod pallet {
                 .unwrap_or_else(Zero::zero)
         }
 
+        
+
         fn total_bonded_of(index: DerivativeIndex) -> BalanceOf<T> {
             Self::staking_ledger(index).map_or(Zero::zero(), |ledger| ledger.total)
         }
 
+        
+
         fn active_bonded_of(index: DerivativeIndex) -> BalanceOf<T> {
             Self::staking_ledger(index).map_or(Zero::zero(), |ledger| ledger.active)
         }
+
+        
 
         fn unbonding_of(index: DerivativeIndex) -> BalanceOf<T> {
             Self::staking_ledger(index).map_or(Zero::zero(), |ledger| {
                 ledger.total.saturating_sub(ledger.active)
             })
         }
+
+        
 
         fn unbonded_of(index: DerivativeIndex) -> BalanceOf<T> {
             let current_era = Self::current_era();
@@ -563,6 +620,8 @@ pub mod pallet {
                 })
             })
         }
+
+        
 
         fn get_total_unbonding() -> BalanceOf<T> {
             StakingLedgers::<T>::iter_values().fold(Zero::zero(), |acc, ledger| {
@@ -581,10 +640,14 @@ pub mod pallet {
             })
         }
 
+        
+
         fn get_market_cap() -> BalanceOf<T> {
             Self::staking_ledger_cap()
                 .saturating_mul(T::DerivativeIndexList::get().len() as BalanceOf<T>)
         }
+
+        /* 
 
         #[require_transactional]
         fn do_bond(
@@ -1448,4 +1511,30 @@ pub trait XcmHelper<T: pallet_xcm::Config, Balance, TAccountId> {
         index: u16,
         notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
     ) -> Result<QueryId, DispatchError>;
+}
+
+use crate::types::DecimalProvider;
+impl<T: Config> LiquidStakingCurrenciesProvider<AssetIdOf<T>> for Pallet<T> {
+    fn get_staking_currency() -> Option<AssetIdOf<T>> {
+        let asset_id = T::StakingCurrency::get();
+        if T::Decimal::get_decimal(&asset_id).is_some() {
+            Some(asset_id)
+        } else {
+            None
+        }
+    }
+
+    fn get_liquid_currency() -> Option<AssetIdOf<T>> {
+        let asset_id = T::LiquidCurrency::get();
+        if T::Decimal::get_decimal(&asset_id).is_some() {
+            Some(asset_id)
+        } else {
+            None
+        }
+    }
+}
+
+pub trait LiquidStakingCurrenciesProvider<CurrencyId> {
+    fn get_staking_currency() -> Option<CurrencyId>;
+    fn get_liquid_currency() -> Option<CurrencyId>;
 }
