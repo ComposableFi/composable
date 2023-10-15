@@ -1,5 +1,5 @@
-// Copyright 2021 Parallel Finance Developer.
-// This file is part of Parallel Finance.
+// Copyright 2021 Composable Finance Developer.
+// This file is part of Composable Finance
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -470,8 +470,73 @@ pub mod pallet {
     }
 
 
+    //TODO rust.dev update weight
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+
+        /// Put assets under staking, the native assets will be transferred to the account
+        /// owned by the pallet, user receive derivative in return, such derivative can be
+        /// further used as collateral for lending.
+        ///
+        /// - `amount`: the amount of staking assets
+        #[pallet::call_index(0)]
+        // #[pallet::weight(<T as Config>::WeightInfo::stake())]
+        #[pallet::weight(1000)]
+        #[transactional]
+        pub fn stake(
+            origin: OriginFor<T>,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            ensure!(amount >= T::MinStake::get(), Error::<T>::StakeTooSmall);
+
+            let reserves = Self::reserve_factor().mul_floor(amount);
+
+            let xcm_fees = T::XcmFees::get();
+            let amount = amount
+                .checked_sub(xcm_fees)
+                .ok_or(ArithmeticError::Underflow)?;
+
+            use frame_support::traits::tokens::{Preservation};
+            let keep_alive = false;
+            let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+            T::Assets::transfer(
+                Self::staking_currency()?,
+                &who,
+                &Self::account_id(),
+                amount,
+                keep_alive,
+            )?;
+            T::XCM::add_xcm_fees(&who, xcm_fees)?;
+
+            let amount = amount
+                .checked_sub(reserves)
+                .ok_or(ArithmeticError::Underflow)?;
+            let liquid_amount =
+                Self::staking_to_liquid(amount).ok_or(Error::<T>::InvalidExchangeRate)?;
+            let liquid_currency = Self::liquid_currency()?;
+            Self::ensure_market_cap(amount)?;
+
+            T::Assets::mint_into(liquid_currency, &who, liquid_amount)?;
+
+            log::trace!(
+                target: "liquidStaking::stake",
+                "stake_amount: {:?}, liquid_amount: {:?}, reserved: {:?}",
+                &amount,
+                &liquid_amount,
+                &reserves
+            );
+
+            MatchingPool::<T>::try_mutate(|p| -> DispatchResult { p.add_stake_amount(amount) })?;
+            TotalReserves::<T>::try_mutate(|b| -> DispatchResult {
+                *b = b.checked_add(reserves).ok_or(ArithmeticError::Overflow)?;
+                Ok(())
+            })?;
+
+            Self::deposit_event(Event::<T>::Staked(who, amount));
+            Ok(().into())
+        }
 
 
         /// Internal call which is expected to be triggered only by xcm instruction
