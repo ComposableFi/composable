@@ -647,7 +647,7 @@ pub mod pallet {
                 .saturating_mul(T::DerivativeIndexList::get().len() as BalanceOf<T>)
         }
 
-        /* 
+        
 
         #[require_transactional]
         fn do_bond(
@@ -711,6 +711,8 @@ pub mod pallet {
             Ok(())
         }
 
+        
+
         #[require_transactional]
         fn do_bond_extra(
             derivative_index: DerivativeIndex,
@@ -760,6 +762,8 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /* 
 
         #[require_transactional]
         fn do_unbond(derivative_index: DerivativeIndex, amount: BalanceOf<T>) -> DispatchResult {
@@ -1369,6 +1373,8 @@ pub mod pallet {
             })
         }
 
+        */
+
         fn ensure_origin(origin: OriginFor<T>) -> DispatchResult {
             if T::RelayOrigin::ensure_origin(origin.clone()).is_ok() {
                 return Ok(());
@@ -1456,7 +1462,7 @@ pub mod pallet {
         pub(crate) fn get_current_era_key() -> Vec<u8> {
             storage_prefix("Staking".as_bytes(), "CurrentEra".as_bytes()).to_vec()
         }
-        */
+        
     }
     
 }

@@ -109,3 +109,4 @@ wasm_client_data/**
 
 .secret/**
 .ssh/**
+code/xcvm/evm/lib/openzeppelin-contracts
