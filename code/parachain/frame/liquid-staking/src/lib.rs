@@ -28,7 +28,7 @@ use sp_runtime::{
 
 pub use pallet::*;
 use types::RewardDestination;
-use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm}};
+use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm, MultiAsset}};
 // use pallet_traits::{
 //     DecimalProvider, DistributionStrategy, ExchangeRateProvider, LiquidStakingConvert,
 //     LiquidStakingCurrenciesProvider, Loans, LoansMarketDataProvider, LoansPositionDataProvider,
@@ -46,6 +46,7 @@ use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm}};
 pub mod distribution;
 // pub mod migrations;
 pub mod types;
+pub mod ump;
 // pub mod weights;
 // pub use weights::WeightInfo;
 
@@ -240,6 +241,10 @@ pub mod pallet {
         /// The asset id for native currency.
         #[pallet::constant]
         type NativeCurrency: Get<AssetIdOf<Self>>;
+
+         /// Relay currency
+         #[pallet::constant]
+         type RelayCurrency: Get<AssetIdOf<Self>>;
     }
 
     #[pallet::event]
@@ -347,6 +352,9 @@ pub mod pallet {
         NoUnlockings,
         /// Invalid commission rate
         InvalidCommissionRate,
+
+
+        InsufficientXcmFees,
     }
 
     /// The exchange rate between relaychain native asset and the voucher.
@@ -1866,6 +1874,110 @@ impl<T: Config> LiquidStakingCurrenciesProvider<AssetIdOf<T>> for Pallet<T> {
         }
     }
 }
+
+use frame_support::{traits::fungibles::{Inspect, Mutate}};
+use frame_support::traits::tokens::{Preservation};
+
+use xcm::{latest::prelude::*};
+
+/* 
+
+impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
+    fn add_xcm_fees(payer: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
+        let keep_alive = false;
+        let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+        T::Assets::transfer(
+            T::RelayCurrency::get(),
+            payer,
+            &Self::account_id(),
+            amount,
+            keep_alive,
+        )?;
+        Ok(())
+    }
+
+    fn do_ump_transact(
+        call: DoubleEncoded<()>,
+        weight: Weight,
+        beneficiary: MultiLocation,
+        fees: BalanceOf<T>,
+    ) -> Result<Xcm<()>, DispatchError> {
+        let asset: MultiAsset = (MultiLocation::here(), fees).into();
+        T::Assets::burn_from(T::RelayCurrency::get(), &Self::account_id(), fees, Precision::BestEffort, Fortitude::Polite)
+            .map_err(|_| Error::<T>::InsufficientXcmFees)?;
+
+        Ok(Xcm(vec![
+            WithdrawAsset(MultiAssets::from(asset.clone())),
+            BuyExecution {
+                fees: asset.clone(),
+                weight_limit: Unlimited,
+            },
+            Transact {
+                origin_kind: OriginKind::SovereignAccount,
+                require_weight_at_most: weight,
+                call,
+            },
+            RefundSurplus,
+            DepositAsset {
+                assets: asset.into(),
+                beneficiary,
+            },
+        ]))
+    }
+
+    fn do_bond(
+        value: BalanceOf<T>,
+        payee: RewardDestination<AccountIdOf<T>>,
+        stash: AccountIdOf<T>,
+        index: u16,
+        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
+    ) -> Result<QueryId, DispatchError> {
+        let controller = stash.clone();
+        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Bond);
+        Ok(switch_relay!({
+            let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
+                BalancesTransferKeepAliveCall {
+                    dest: T::Lookup::unlookup(stash),
+                    value,
+                },
+            ));
+            let mut msg = Self::do_ump_transact(
+                call.encode().into(),
+                xcm_weight_fee_misc.weight,
+                Self::refund_location(),
+                xcm_weight_fee_misc.fee,
+            )?;
+            let call = RelaychainCall::<T>::Utility(Box::new(UtilityCall::AsDerivative(
+                UtilityAsDerivativeCall {
+                    index,
+                    call: RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
+                        controller: T::Lookup::unlookup(controller),
+                        value,
+                        payee,
+                    })),
+                },
+            )));
+
+            Self::append_transact(&mut msg, call.encode().into(), xcm_weight_fee_misc.weight);
+
+            let query_id = Self::report_outcome_notify(
+                &mut msg,
+                MultiLocation::parent(),
+                notify,
+                T::NotifyTimeout::get(),
+            )?;
+
+            if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
+                return Err(Error::<T>::SendFailure.into());
+            }
+
+            query_id
+        }))
+    }
+
+}
+
+*/
 
 pub trait LiquidStakingCurrenciesProvider<CurrencyId> {
     fn get_staking_currency() -> Option<CurrencyId>;
