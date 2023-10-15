@@ -61,11 +61,14 @@ pub mod pallet {
         require_transactional,
         storage::{storage_prefix, with_transaction},
         traits::{
-            fungibles::{Inspect, Mutate, /*Transfer*/ },
+            // fungibles::{Inspect, Mutate, /*Transfer*/ },
             IsType, SortedMembers,
         },
         transactional, PalletId, StorageHasher,
     };
+    use frame_support::{
+		traits::
+			fungibles::{Inspect, Mutate}};
     use frame_system::{
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
