@@ -565,20 +565,20 @@ parameter_types! {
 	pub const RelayCurrency: CurrencyId = CurrencyId::DOT;
 }
 
-// impl pallet_xcm_helper::Config for Runtime {
-//     type RuntimeEvent = RuntimeEvent;
-//     type UpdateOrigin = EnsureRootOrHalfCouncil;
-//     type Assets = Assets;
-//     type XcmSender = crate::xcmp::XcmRouter;
-//     type RelayNetwork = RelayNetwork;
-//     type PalletId = XcmHelperPalletId;
-//     type NotifyTimeout = NotifyTimeout;
-//     type AccountIdToMultiLocation = AccountIdToMultiLocation;
-//     type RefundLocation = RefundLocation;
-//     type BlockNumberProvider = frame_system::Pallet<Runtime>;
-//     type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
-//     type RelayCurrency = RelayCurrency;
-// }
+impl pallet_xcm_helper::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type UpdateOrigin = EnsureRootOrHalfCouncil;
+    type Assets = Assets;
+    type XcmSender = crate::xcmp::XcmRouter;
+    type RelayNetwork = RelayNetwork;
+    type PalletId = XcmHelperPalletId;
+    type NotifyTimeout = NotifyTimeout;
+    type AccountIdToMultiLocation = AccountIdToMultiLocation;
+    type RefundLocation = RefundLocation;
+    type BlockNumberProvider = frame_system::Pallet<Runtime>;
+    type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+    type RelayCurrency = RelayCurrency;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -648,7 +648,7 @@ construct_runtime!(
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
 
 		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
-		// PalletXcmHelper: pallet_xcm_helper = 193,
+		PalletXcmHelper: pallet_xcm_helper = 193,
 	}
 );
 
