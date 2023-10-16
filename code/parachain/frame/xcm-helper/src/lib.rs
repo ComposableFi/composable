@@ -49,8 +49,8 @@ use frame_support::traits::tokens::{Preservation, Fortitude, Precision};
 // #[cfg(test)]
 // mod tests;
 
-// pub mod weights;
-// pub use weights::WeightInfo;
+pub mod weights;
+pub use weights::WeightInfo;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type CallIdOf<T> = <T as pallet_xcm::Config>::RuntimeCall;
 pub type AssetIdOf<T> =
@@ -104,7 +104,7 @@ pub mod pallet {
         type UpdateOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
         /// Weight information
-        // type WeightInfo: WeightInfo;
+        type WeightInfo: WeightInfo;
 
         /// Relay currency
         #[pallet::constant]
@@ -150,8 +150,7 @@ pub mod pallet {
         /// Update xcm fees amount to be used in xcm.Withdraw message
         #[pallet::call_index(0)]
         //TODO rust.dev: uncomment this line
-        // #[pallet::weight(<T as Config>::WeightInfo::update_xcm_weight_fee())]
-        #[pallet::weight(1000)]
+        #[pallet::weight(<T as Config>::WeightInfo::update_xcm_weight_fee())]
         #[transactional]
         pub fn update_xcm_weight_fee(
             origin: OriginFor<T>,

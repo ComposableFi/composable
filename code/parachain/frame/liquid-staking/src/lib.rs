@@ -481,8 +481,7 @@ pub mod pallet {
         ///
         /// - `amount`: the amount of staking assets
         #[pallet::call_index(0)]
-        // #[pallet::weight(<T as Config>::WeightInfo::stake())]
-        #[pallet::weight(1000)]
+        #[pallet::weight(<T as Config>::WeightInfo::stake())]
         #[transactional]
         pub fn stake(
             origin: OriginFor<T>,
@@ -546,8 +545,8 @@ pub mod pallet {
         ///
         /// - `amount`: the amount of derivative
         #[pallet::call_index(1)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::unstake())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::unstake())]
         #[transactional]
         pub fn unstake(
             origin: OriginFor<T>,
@@ -624,8 +623,8 @@ pub mod pallet {
 
         /// Update insurance pool's reserve_factor
         #[pallet::call_index(2)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::update_reserve_factor())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::update_reserve_factor())]
         #[transactional]
         pub fn update_reserve_factor(
             origin: OriginFor<T>,
@@ -651,8 +650,8 @@ pub mod pallet {
 
         /// Update ledger's max bonded cap
         #[pallet::call_index(3)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::update_staking_ledger_cap())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::update_staking_ledger_cap())]
         #[transactional]
         pub fn update_staking_ledger_cap(
             origin: OriginFor<T>,
@@ -674,8 +673,8 @@ pub mod pallet {
 
         /// Bond on relaychain via xcm.transact
         #[pallet::call_index(4)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::bond())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::bond())]
         #[transactional]
         pub fn bond(
             origin: OriginFor<T>,
@@ -690,8 +689,8 @@ pub mod pallet {
 
         /// Bond_extra on relaychain via xcm.transact
         #[pallet::call_index(5)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::bond_extra())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::bond_extra())]
         #[transactional]
         pub fn bond_extra(
             origin: OriginFor<T>,
@@ -705,8 +704,8 @@ pub mod pallet {
 
         /// Unbond on relaychain via xcm.transact
         #[pallet::call_index(6)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::unbond())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::unbond())]
         #[transactional]
         pub fn unbond(
             origin: OriginFor<T>,
@@ -720,8 +719,8 @@ pub mod pallet {
 
         /// Rebond on relaychain via xcm.transact
         #[pallet::call_index(7)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::rebond())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::rebond())]
         #[transactional]
         pub fn rebond(
             origin: OriginFor<T>,
@@ -735,8 +734,8 @@ pub mod pallet {
 
         /// Withdraw unbonded on relaychain via xcm.transact
         #[pallet::call_index(8)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::withdraw_unbonded())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::withdraw_unbonded())]
         #[transactional]
         pub fn withdraw_unbonded(
             origin: OriginFor<T>,
@@ -750,8 +749,8 @@ pub mod pallet {
 
         /// Nominate on relaychain via xcm.transact
         #[pallet::call_index(9)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::nominate())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::nominate())]
         #[transactional]
         pub fn nominate(
             origin: OriginFor<T>,
@@ -768,8 +767,8 @@ pub mod pallet {
         /// Internal call which is expected to be triggered only by xcm instruction
         #[pallet::call_index(10)]
         //TODO rust.dev update weight
-        // #[pallet::weight(<T as Config>::WeightInfo::notification_received())]
-        #[pallet::weight(1000)]
+        #[pallet::weight(<T as Config>::WeightInfo::notification_received())]
+        
         #[transactional]
         pub fn notification_received(
             origin: OriginFor<T>,
@@ -797,8 +796,8 @@ pub mod pallet {
         /// Claim assets back when current era index arrived
         /// at target era
         #[pallet::call_index(11)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::claim_for())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::claim_for())]
         #[transactional]
         pub fn claim_for(
             origin: OriginFor<T>,
@@ -853,8 +852,8 @@ pub mod pallet {
 
         /// Force set era start block
         #[pallet::call_index(12)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_set_era_start_block())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_set_era_start_block())]
         #[transactional]
         pub fn force_set_era_start_block(
             origin: OriginFor<T>,
@@ -867,8 +866,8 @@ pub mod pallet {
 
         /// Force set current era
         #[pallet::call_index(13)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
         #[transactional]
         pub fn force_set_current_era(origin: OriginFor<T>, era: EraIndex) -> DispatchResult {
             T::UpdateOrigin::ensure_origin(origin)?;
@@ -879,8 +878,8 @@ pub mod pallet {
 
         /// Force advance era
         #[pallet::call_index(14)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_advance_era())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_advance_era())]
         #[transactional]
         pub fn force_advance_era(
             origin: OriginFor<T>,
@@ -895,8 +894,8 @@ pub mod pallet {
 
         /// Force matching
         #[pallet::call_index(15)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_matching())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_matching())]
         #[transactional]
         pub fn force_matching(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             T::UpdateOrigin::ensure_origin(origin)?;
@@ -908,8 +907,8 @@ pub mod pallet {
 
         /// Force set staking_ledger
         #[pallet::call_index(16)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
         #[transactional]
         pub fn force_set_staking_ledger(
             origin: OriginFor<T>,
@@ -933,8 +932,8 @@ pub mod pallet {
 
         /// Set current era by providing storage proof
         #[pallet::call_index(17)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
         #[transactional]
         pub fn set_current_era(
             origin: OriginFor<T>,
@@ -971,8 +970,8 @@ pub mod pallet {
 
         /// Set staking_ledger by providing storage proof
         #[pallet::call_index(18)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
         #[transactional]
         pub fn set_staking_ledger(
             origin: OriginFor<T>,
@@ -1045,8 +1044,8 @@ pub mod pallet {
 
         /// Reduces reserves by transferring to receiver.
         #[pallet::call_index(19)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::reduce_reserves())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::reduce_reserves())]
         #[transactional]
         pub fn reduce_reserves(
             origin: OriginFor<T>,
@@ -1082,8 +1081,8 @@ pub mod pallet {
 
         /// Cancel unstake
         #[pallet::call_index(20)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::cancel_unstake())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::cancel_unstake())]
         #[transactional]
         pub fn cancel_unstake(
             origin: OriginFor<T>,
@@ -1107,8 +1106,8 @@ pub mod pallet {
 
         /// Update commission rate
         #[pallet::call_index(21)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::update_commission_rate())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::update_commission_rate())]
         #[transactional]
         pub fn update_commission_rate(
             origin: OriginFor<T>,
@@ -1134,8 +1133,8 @@ pub mod pallet {
 
         /// Fast match unstake through matching pool
         #[pallet::call_index(22)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::fast_match_unstake(unstaker_list.len() as u32))]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::fast_match_unstake(unstaker_list.len() as u32))]
         #[transactional]
         pub fn fast_match_unstake(
             origin: OriginFor<T>,
@@ -1150,8 +1149,8 @@ pub mod pallet {
 
         /// Update incentive amount
         #[pallet::call_index(23)]
-        #[pallet::weight(1000)]
-        // #[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
         #[transactional]
         pub fn update_incentive(
             origin: OriginFor<T>,
