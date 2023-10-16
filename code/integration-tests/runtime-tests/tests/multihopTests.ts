@@ -46,7 +46,6 @@ describe('MultiHop Tests', function () {
   let centauriAssets = createAssets('centauri');
   let osmosisAssets = createAssets('osmosis');
   const ksmTransferAmount = new BigNumber('10000000000000');
-  // const centauriAssets = createAssets('centauri');
   const ksmOnKusama = createAsset("1", 12, 'kusama', true);
   const dotOnPolkadot = createAsset("1", 10, 'composable', true);
   let ibcSentAmount: BigNumber;
