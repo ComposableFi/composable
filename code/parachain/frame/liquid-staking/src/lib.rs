@@ -110,7 +110,7 @@ pub mod pallet {
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     #[pallet::without_storage_info]
-    pub struct Pallet<T>(_);
+    pub struct Pallet<T>(PhantomData<T>);
 
     /// Utility type for managing upgrades/migrations.
     #[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
@@ -793,6 +793,376 @@ pub mod pallet {
             }
             Ok(().into())
         }
+
+        /// Claim assets back when current era index arrived
+        /// at target era
+        #[pallet::call_index(11)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::claim_for())]
+        #[transactional]
+        pub fn claim_for(
+            origin: OriginFor<T>,
+            dest: <T::Lookup as StaticLookup>::Source,
+        ) -> DispatchResultWithPostInfo {
+            Self::ensure_origin(origin)?;
+            let who = T::Lookup::lookup(dest)?;
+            let current_era = Self::current_era();
+
+            Unlockings::<T>::try_mutate_exists(&who, |b| -> DispatchResult {
+                let mut amount: BalanceOf<T> = Zero::zero();
+                let chunks = b.as_mut().ok_or(Error::<T>::NoUnlockings)?;
+                chunks.retain(|chunk| {
+                    if chunk.era > current_era {
+                        true
+                    } else {
+                        amount += chunk.value;
+                        false
+                    }
+                });
+
+                let total_unclaimed = Self::get_total_unclaimed(Self::staking_currency()?);
+
+                log::trace!(
+                    target: "liquidStaking::claim_for",
+                    "current_era: {:?}, beneficiary: {:?}, total_unclaimed: {:?}, amount: {:?}",
+                    &current_era,
+                    &who,
+                    &total_unclaimed,
+                    amount
+                );
+
+                if amount.is_zero() {
+                    return Err(Error::<T>::NothingToClaim.into());
+                }
+
+                if total_unclaimed < amount {
+                    return Err(Error::<T>::NotWithdrawn.into());
+                }
+
+                Self::do_claim_for(&who, amount)?;
+
+                if chunks.is_empty() {
+                    *b = None;
+                }
+
+                Self::deposit_event(Event::<T>::ClaimedFor(who.clone(), amount));
+                Ok(())
+            })?;
+            Ok(().into())
+        }
+
+        /// Force set era start block
+        #[pallet::call_index(12)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_set_era_start_block())]
+        #[transactional]
+        pub fn force_set_era_start_block(
+            origin: OriginFor<T>,
+            block_number: BlockNumberFor<T>,
+        ) -> DispatchResult {
+            T::UpdateOrigin::ensure_origin(origin)?;
+            EraStartBlock::<T>::put(block_number);
+            Ok(())
+        }
+
+        /// Force set current era
+        #[pallet::call_index(13)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
+        #[transactional]
+        pub fn force_set_current_era(origin: OriginFor<T>, era: EraIndex) -> DispatchResult {
+            T::UpdateOrigin::ensure_origin(origin)?;
+            IsMatched::<T>::put(false);
+            CurrentEra::<T>::put(era);
+            Ok(())
+        }
+
+        /// Force advance era
+        #[pallet::call_index(14)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_advance_era())]
+        #[transactional]
+        pub fn force_advance_era(
+            origin: OriginFor<T>,
+            offset: EraIndex,
+        ) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            Self::do_advance_era(offset)?;
+
+            Ok(().into())
+        }
+
+        /// Force matching
+        #[pallet::call_index(15)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_matching())]
+        #[transactional]
+        pub fn force_matching(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            Self::do_matching()?;
+
+            Ok(().into())
+        }
+
+        /// Force set staking_ledger
+        #[pallet::call_index(16)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
+        #[transactional]
+        pub fn force_set_staking_ledger(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            staking_ledger: StakingLedger<T::AccountId, BalanceOf<T>>,
+        ) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            Self::do_update_ledger(derivative_index, |ledger| {
+                ensure!(
+                    !Self::is_updated(derivative_index)
+                        && XcmRequests::<T>::iter().count().is_zero(),
+                    Error::<T>::StakingLedgerLocked
+                );
+                *ledger = staking_ledger;
+                Ok(())
+            })?;
+
+            Ok(().into())
+        }
+
+        /// Set current era by providing storage proof
+        #[pallet::call_index(17)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_set_current_era())]
+        #[transactional]
+        pub fn set_current_era(
+            origin: OriginFor<T>,
+            era: EraIndex,
+            proof: Vec<Vec<u8>>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            let offset = era.saturating_sub(Self::current_era());
+
+            let key = Self::get_current_era_key();
+            let value = era.encode();
+            ensure!(
+                Self::verify_merkle_proof(key, value, proof),
+                Error::<T>::InvalidProof
+            );
+
+            Self::do_advance_era(offset)?;
+            if !offset.is_zero() {
+                use frame_support::traits::tokens::{Preservation};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+                let _ = T::Assets::transfer(
+                    T::NativeCurrency::get(),
+                    &Self::account_id(),
+                    &who,
+                    Self::incentive(),
+                    keep_alive,
+                );
+            }
+
+            Ok(().into())
+        }
+
+        /// Set staking_ledger by providing storage proof
+        #[pallet::call_index(18)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::force_set_staking_ledger())]
+        #[transactional]
+        pub fn set_staking_ledger(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+            staking_ledger: StakingLedger<T::AccountId, BalanceOf<T>>,
+            proof: Vec<Vec<u8>>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            Self::do_update_ledger(derivative_index, |ledger| {
+                ensure!(
+                    !Self::is_updated(derivative_index),
+                    Error::<T>::StakingLedgerLocked
+                );
+                let requests = XcmRequests::<T>::iter().count();
+                if staking_ledger.total < ledger.total
+                    || staking_ledger.active < ledger.active
+                    || staking_ledger.unlocking != ledger.unlocking
+                    || !requests.is_zero()
+                {
+                    log::trace!(
+                        target: "liquidStaking::set_staking_ledger::invalidStakingLedger",
+                        "index: {:?}, staking_ledger: {:?}, xcm_request: {:?}",
+                        &derivative_index,
+                        &staking_ledger,
+                        requests,
+                    );
+                    Self::deposit_event(Event::<T>::NonIdealStakingLedger(derivative_index));
+                }
+                let key = Self::get_staking_ledger_key(derivative_index);
+                let value = staking_ledger.encode();
+                ensure!(
+                    Self::verify_merkle_proof(key, value, proof),
+                    Error::<T>::InvalidProof
+                );
+                let rewards = staking_ledger.total.saturating_sub(ledger.total);
+
+                let inflate_liquid_amount = Self::get_inflate_liquid_amount(rewards)?;
+                if !inflate_liquid_amount.is_zero() {
+                    T::Assets::mint_into(
+                        Self::liquid_currency()?,
+                        &T::ProtocolFeeReceiver::get(),
+                        inflate_liquid_amount,
+                    )?;
+                }
+
+                log::trace!(
+                    target: "liquidStaking::set_staking_ledger",
+                    "index: {:?}, staking_ledger: {:?}, inflate_liquid_amount: {:?}",
+                    &derivative_index,
+                    &staking_ledger,
+                    inflate_liquid_amount,
+                );
+                use frame_support::traits::tokens::{Preservation};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+                let _ = T::Assets::transfer(
+                    T::NativeCurrency::get(),
+                    &Self::account_id(),
+                    &who,
+                    Self::incentive(),
+                    keep_alive,
+                );
+                *ledger = staking_ledger;
+                Ok(())
+            })?;
+
+            Ok(().into())
+        }
+
+        /// Reduces reserves by transferring to receiver.
+        #[pallet::call_index(19)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::reduce_reserves())]
+        #[transactional]
+        pub fn reduce_reserves(
+            origin: OriginFor<T>,
+            receiver: <T::Lookup as StaticLookup>::Source,
+            #[pallet::compact] reduce_amount: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            T::UpdateOrigin::ensure_origin(origin)?;
+            let receiver = T::Lookup::lookup(receiver)?;
+
+            TotalReserves::<T>::try_mutate(|b| -> DispatchResult {
+                *b = b
+                    .checked_sub(reduce_amount)
+                    .ok_or(ArithmeticError::Underflow)?;
+                Ok(())
+            })?;
+
+            use frame_support::traits::tokens::{Preservation};
+            let keep_alive = false;
+            let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+
+            T::Assets::transfer(
+                Self::staking_currency()?,
+                &Self::account_id(),
+                &receiver,
+                reduce_amount,
+                keep_alive,
+            )?;
+
+            Self::deposit_event(Event::<T>::ReservesReduced(receiver, reduce_amount));
+
+            Ok(().into())
+        }
+
+        /// Cancel unstake
+        #[pallet::call_index(20)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::cancel_unstake())]
+        #[transactional]
+        pub fn cancel_unstake(
+            origin: OriginFor<T>,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+
+            FastUnstakeRequests::<T>::try_mutate(&who, |b| -> DispatchResultWithPostInfo {
+                use frame_support::traits::tokens::{Preservation, Fortitude};
+                let keep_alive = false;
+                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+                let balance = T::Assets::reducible_balance(Self::liquid_currency()?, &who, keep_alive, Fortitude::Polite);
+                *b = (*b).min(balance).saturating_sub(amount);
+
+                // reserve two amounts in event
+                Self::deposit_event(Event::<T>::UnstakeCancelled(who.clone(), amount, amount));
+
+                Ok(().into())
+            })
+        }
+
+        /// Update commission rate
+        #[pallet::call_index(21)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::update_commission_rate())]
+        #[transactional]
+        pub fn update_commission_rate(
+            origin: OriginFor<T>,
+            commission_rate: Rate,
+        ) -> DispatchResult {
+            T::UpdateOrigin::ensure_origin(origin)?;
+
+            ensure!(
+                commission_rate > Rate::zero() && commission_rate < Rate::one(),
+                Error::<T>::InvalidCommissionRate,
+            );
+
+            log::trace!(
+                target: "liquidStaking::update_commission_rate",
+                 "commission_rate: {:?}",
+                &commission_rate,
+            );
+
+            CommissionRate::<T>::put(commission_rate);
+            Self::deposit_event(Event::<T>::CommissionRateUpdated(commission_rate));
+            Ok(())
+        }
+
+        /// Fast match unstake through matching pool
+        #[pallet::call_index(22)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::fast_match_unstake(unstaker_list.len() as u32))]
+        #[transactional]
+        pub fn fast_match_unstake(
+            origin: OriginFor<T>,
+            unstaker_list: Vec<T::AccountId>,
+        ) -> DispatchResult {
+            Self::ensure_origin(origin)?;
+            for unstaker in unstaker_list {
+                Self::do_fast_match_unstake(&unstaker)?;
+            }
+            Ok(())
+        }
+
+        /// Update incentive amount
+        #[pallet::call_index(23)]
+        #[pallet::weight(1000)]
+        // #[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
+        #[transactional]
+        pub fn update_incentive(
+            origin: OriginFor<T>,
+            #[pallet::compact] amount: BalanceOf<T>,
+        ) -> DispatchResult {
+            T::UpdateOrigin::ensure_origin(origin)?;
+            Incentive::<T>::put(amount);
+            Self::deposit_event(Event::<T>::IncentiveUpdated(amount));
+            Ok(())
+        }
+        
     }
 
     impl<T: Config> Pallet<T> {
