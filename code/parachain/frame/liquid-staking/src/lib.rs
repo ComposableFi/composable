@@ -148,8 +148,8 @@ pub mod pallet {
         type PalletId: Get<PalletId>;
 
         /// The pallet id of loans used for fast unstake
-        #[pallet::constant]
-        type LoansPalletId: Get<PalletId>;
+        // #[pallet::constant]
+        // type LoansPalletId: Get<PalletId>;
 
         /// Returns the parachain ID we are running with.
         #[pallet::constant]
@@ -575,11 +575,12 @@ pub mod pallet {
 
             let amount =
                 Self::liquid_to_staking(liquid_amount).ok_or(Error::<T>::InvalidExchangeRate)?;
-            let unlockings_key = if unstake_provider.is_loans() {
-                Self::loans_account_id()
-            } else {
-                who.clone()
-            };
+            let unlockings_key = who.clone();
+            // let unlockings_key = if unstake_provider.is_loans() {
+            //     Self::loans_account_id()
+            // } else {
+            //     who.clone()
+            // };
 
             Unlockings::<T>::try_mutate(&unlockings_key, |b| -> DispatchResult {
                 let mut chunks = b.take().unwrap_or_default();
@@ -1211,10 +1212,10 @@ pub mod pallet {
 
         
 
-        /// Loans pool account
-        pub fn loans_account_id() -> T::AccountId {
-            T::LoansPalletId::get().into_account_truncating()
-        }
+        // /// Loans pool account
+        // pub fn loans_account_id() -> T::AccountId {
+        //     T::LoansPalletId::get().into_account_truncating()
+        // }
 
         
 

@@ -378,9 +378,9 @@ impl UnstakeProvider {
         self == &UnstakeProvider::RelayChain
     }
 
-    pub fn is_loans(&self) -> bool {
-        self == &UnstakeProvider::Loans
-    }
+    // pub fn is_loans(&self) -> bool {
+    //     self == &UnstakeProvider::Loans
+    // }
 
     pub fn is_matching_pool(&self) -> bool {
         self == &UnstakeProvider::MatchingPool
