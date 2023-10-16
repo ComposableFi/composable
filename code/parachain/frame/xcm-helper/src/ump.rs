@@ -334,11 +334,11 @@ pub enum XcmCall {
 macro_rules! switch_relay {
     ({ $( $code:tt )* }) => {
         if <T as Config>::RelayNetwork::get() == NetworkId::Polkadot {
-            use pallet_traits::ump::PolkadotCall as RelaychainCall;
+            use crate::ump::PolkadotCall as RelaychainCall;
 
             $( $code )*
         } else if <T as Config>::RelayNetwork::get() == NetworkId::Kusama {
-            use pallet_traits::ump::KusamaCall as RelaychainCall;
+            use crate::ump::KusamaCall as RelaychainCall;
 
             $( $code )*
         } else {

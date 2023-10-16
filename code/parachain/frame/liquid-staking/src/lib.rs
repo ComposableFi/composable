@@ -46,7 +46,6 @@ use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm, MultiAsset}};
 pub mod distribution;
 // pub mod migrations;
 pub mod types;
-pub mod ump;
 // pub mod weights;
 // pub use weights::WeightInfo;
 
