@@ -46,8 +46,8 @@ use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm, MultiAsset}};
 pub mod distribution;
 // pub mod migrations;
 pub mod types;
-// pub mod weights;
-// pub use weights::WeightInfo;
+pub mod weights;
+pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -192,7 +192,7 @@ pub mod pallet {
         type MinUnstake: Get<BalanceOf<Self>>;
 
         /// Weight information
-        // type WeightInfo: WeightInfo;
+        type WeightInfo: WeightInfo;
 
         /// Number of unbond indexes for unlocking.
         #[pallet::constant]
@@ -1162,7 +1162,44 @@ pub mod pallet {
             Self::deposit_event(Event::<T>::IncentiveUpdated(amount));
             Ok(())
         }
-        
+    }
+
+    #[pallet::hooks]
+    impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+        fn on_initialize(_block_number: T::BlockNumber) -> frame_support::weights::Weight {
+            let mut weight = <T as Config>::WeightInfo::on_initialize();
+            let relaychain_block_number =
+                T::RelayChainValidationDataProvider::current_block_number();
+            let mut do_on_initialize = || -> DispatchResult {
+                if !Self::is_matched()
+                    && T::ElectionSolutionStoredOffset::get()
+                        .saturating_add(Self::era_start_block())
+                        <= relaychain_block_number
+                {
+                    weight += <T as Config>::WeightInfo::force_matching();
+                    Self::do_matching()?;
+                }
+
+                let offset = Self::offset(relaychain_block_number);
+                if offset.is_zero() {
+                    return Ok(());
+                }
+                weight += <T as Config>::WeightInfo::force_advance_era();
+                Self::do_advance_era(offset)
+            };
+            let _ = with_transaction(|| match do_on_initialize() {
+                Ok(()) => TransactionOutcome::Commit(Ok(())),
+                Err(err) => TransactionOutcome::Rollback(Err(err)),
+            });
+            weight
+        }
+
+        fn on_finalize(_n: T::BlockNumber) {
+            let _ = IsUpdated::<T>::clear(u32::max_value(), None);
+            if let Some(data) = T::RelayChainValidationDataProvider::validation_data() {
+                ValidationData::<T>::put(data);
+            }
+        }
     }
 
     impl<T: Config> Pallet<T> {
