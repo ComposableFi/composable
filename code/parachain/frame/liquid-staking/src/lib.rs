@@ -22,9 +22,10 @@
 
 use frame_support::{traits::{tokens::Balance as BalanceT, Get}, weights::Weight};
 use sp_runtime::{
-    traits::{One, Zero},
+    traits::{One, Zero, Convert},
     FixedPointNumber, FixedPointOperand, DispatchResult, DispatchError,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 
 pub use pallet::*;
 use types::RewardDestination;
@@ -242,9 +243,45 @@ pub mod pallet {
         #[pallet::constant]
         type NativeCurrency: Get<AssetIdOf<Self>>;
 
-         /// Relay currency
+         
+
+
+        //XCM related assciated types. from xcm_helper.
+
+
+        /// XCM message sender
+        type XcmSender: SendXcm;
+
+        /// Relay network
+        #[pallet::constant]
+        type RelayNetwork: Get<NetworkId>;
+
+        /// Account on relaychain for receiving refunded fees
+        #[pallet::constant]
+        type RefundLocation: Get<Self::AccountId>;
+
+        /// Convert `T::AccountId` to `MultiLocation`.
+        type AccountIdToMultiLocation: Convert<Self::AccountId, MultiLocation>;
+
+        
+
+         /// Notify call timeout
          #[pallet::constant]
-         type RelayCurrency: Get<AssetIdOf<Self>>;
+         type NotifyTimeout: Get<BlockNumberFor<Self>>;
+
+         /// The block number provider
+        type BlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
+
+        /// The origin which can update reserve_factor, xcm_fees etc
+        type UpdateOriginXCM: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
+
+        /// Weight information
+        // type WeightInfo: WeightInfo;
+
+        /// Relay currency
+        #[pallet::constant]
+        type RelayCurrency: Get<AssetIdOf<Self>>;
+
     }
 
     #[pallet::event]
@@ -1879,7 +1916,6 @@ use frame_support::{traits::fungibles::{Inspect, Mutate}};
 use frame_support::traits::tokens::{Preservation};
 
 use xcm::{latest::prelude::*};
-
 /* 
 
 impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
