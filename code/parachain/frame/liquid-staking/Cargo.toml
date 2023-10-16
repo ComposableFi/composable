@@ -25,6 +25,7 @@ xcm                = { workspace = true }
 polkadot-primitives = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
 polkadot-parachain          = { workspace = true, features = ['std'] }
 cumulus-primitives-core = { workspace = true }
+pallet-xcm-helper = { path = '../xcm-helper'}
 
 [features]
 default = ["std"]
@@ -42,4 +43,5 @@ std                = [
   'polkadot-primitives/std',
   'polkadot-parachain/std',
   'cumulus-primitives-core/std',
+  'pallet-xcm-helper/std'
 ]
