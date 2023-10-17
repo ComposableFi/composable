@@ -46,7 +46,9 @@ use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use reward::RewardsApi;
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32Bit, CheckedDiv, CheckedAdd, CheckedMul, Saturating, Zero},
+	traits::{
+		AccountIdConversion, AtLeast32Bit, CheckedAdd, CheckedDiv, CheckedMul, Saturating, Zero,
+	},
 	ArithmeticError, DispatchError,
 };
 use sp_std::vec::Vec;
