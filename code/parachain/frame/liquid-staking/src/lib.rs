@@ -767,9 +767,7 @@ pub mod pallet {
 
         /// Internal call which is expected to be triggered only by xcm instruction
         #[pallet::call_index(10)]
-        //TODO rust.dev update weight
         #[pallet::weight(<T as Config>::WeightInfo::notification_received())]
-        
         #[transactional]
         pub fn notification_received(
             origin: OriginFor<T>,
@@ -797,7 +795,6 @@ pub mod pallet {
         /// Claim assets back when current era index arrived
         /// at target era
         #[pallet::call_index(11)]
-        
         #[pallet::weight(<T as Config>::WeightInfo::claim_for())]
         #[transactional]
         pub fn claim_for(

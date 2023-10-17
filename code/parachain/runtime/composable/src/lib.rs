@@ -9,7 +9,7 @@
 		clippy::panic
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -37,7 +37,7 @@ use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, xcmp::AccountIdToMultiLocation,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
@@ -552,6 +552,34 @@ parameter_types! {
 	pub FlatFeeUSDTAmount: Balance = 0;
 }
 
+parameter_types! {
+    pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
+	pub const XcmHelperPalletId: PalletId = PalletId(*b"com/fees");
+	pub const NotifyTimeout: BlockNumber = 100;
+	// pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
+    // pub RelayCurrency: CurrencyId = DOT;
+    // pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
+    // pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
+
+	pub const RelayCurrency: CurrencyId = CurrencyId::DOT;
+}
+
+impl pallet_xcm_helper::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type UpdateOrigin = EnsureRootOrHalfCouncil;
+    type Assets = Assets;
+    type XcmSender = crate::xcmp::XcmRouter;
+    type RelayNetwork = RelayNetwork;
+    type PalletId = XcmHelperPalletId;
+    type NotifyTimeout = NotifyTimeout;
+    type AccountIdToMultiLocation = AccountIdToMultiLocation;
+    type RefundLocation = RefundLocation;
+    type BlockNumberProvider = frame_system::Pallet<Runtime>;
+    type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+    type RelayCurrency = RelayCurrency;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -620,7 +648,7 @@ construct_runtime!(
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
 
 		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
-
+		PalletXcmHelper: pallet_xcm_helper = 193,
 	}
 );
 

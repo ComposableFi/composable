@@ -58,7 +58,7 @@ pub type AssetIdOf<T> =
 pub type BalanceOf<T> =
     <<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
-pub type CurrencyId = u32;
+pub type CurrencyId = primitives::currency::CurrencyId;
 
 #[frame_support::pallet]
 pub mod pallet {
