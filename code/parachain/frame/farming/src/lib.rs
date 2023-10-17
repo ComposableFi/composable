@@ -46,7 +46,7 @@ use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use reward::RewardsApi;
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32Bit, CheckedDiv, Saturating, Zero},
+	traits::{AccountIdConversion, AtLeast32Bit, CheckedDiv, CheckedAdd, CheckedMul, Saturating, Zero},
 	ArithmeticError, DispatchError,
 };
 use sp_std::vec::Vec;
@@ -251,7 +251,7 @@ pub mod pallet {
 				reward_currency_id,
 				&treasury_account_id,
 				&pool_account_id,
-				amount,
+				amount.clone(),
 			)?;
 
 			RewardSchedules::<T>::try_mutate(
@@ -268,8 +268,19 @@ pub mod pallet {
                         ArithmeticError::Overflow
                     })?;
 
+					let total_prev_free = reward_schedule.total().ok_or_else(|| {
+						log::error!("Overflow error: Failed to calculate total rewards for pool_currency_id : {:?}, reward_currency_id : {:?}, old per_period : {:?}, old period_count : {}, extend period_count : {}",
+						pool_currency_id, reward_currency_id, reward_schedule.per_period, reward_schedule.period_count, period_count
+						);
+						ArithmeticError::Overflow
+					})?;
 					let total_free =
-						T::MultiCurrency::free_balance(reward_currency_id, &pool_account_id);
+						total_prev_free.checked_add(&amount).ok_or_else(|| {
+							log::error!("Overflow error: Failed to calculate total rewards for pool_currency_id : {:?}, reward_currency_id : {:?}, old per_period : {:?}, old period_count : {}, extend period_count : {}",
+							pool_currency_id, reward_currency_id, reward_schedule.per_period, reward_schedule.period_count, period_count
+							);
+							ArithmeticError::Overflow
+						})?;
 					let total_per_period =
 						total_free.checked_div(&total_period_count.into()).unwrap_or_default();
 
