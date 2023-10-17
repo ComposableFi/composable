@@ -32,7 +32,7 @@
         cw-cvm-order = mkXcvmContract "cw-cvm-order";
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
-          paths = [ cw-xc-executor cw-xc-gateway cw-cvm-order ];
+          paths = [ cw-xc-executor cw-xc-gateway ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
