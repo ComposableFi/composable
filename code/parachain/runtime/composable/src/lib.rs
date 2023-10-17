@@ -580,6 +580,102 @@ impl pallet_xcm_helper::Config for Runtime {
     type RelayCurrency = RelayCurrency;
 }
 
+parameter_types! {
+    pub const StakingPalletId: PalletId = PalletId(*b"com/lqsk");
+	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
+	pub const XcmFees: Balance = 500_000_000; // 0.05DOT
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
+	pub const StakingCurrency: CurrencyId = CurrencyId::DOT;
+	pub const LiquidCurrency: CurrencyId = CurrencyId::stDOT;
+	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;
+	pub const MinStakeLSD: Balance = 10_000_000_000; // 1DOT
+	pub const MinUnstake: Balance = 5_000_000_000; // 0.5sDOT
+	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 28; // 28Days
+	pub const MinNominatorBond: Balance = 100_000_000_000; // 10DOT
+	pub const NumSlashingSpans: u32 = 0;
+	pub const ElectionSolutionStoredOffset: BlockNumber = 12600;
+}
+
+pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> sp_runtime::traits::BlockNumberProvider
+    for RelayChainValidationDataProvider<T>
+{
+    type BlockNumber = BlockNumber;
+
+    fn current_block_number() -> Self::BlockNumber {
+        cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+            .map(|d| d.relay_parent_number)
+            .unwrap_or_default()
+    }
+}
+
+impl<T: cumulus_pallet_parachain_system::Config> pallet_liquid_staking::types::ValidationDataProvider
+    for RelayChainValidationDataProvider<T>
+{
+    fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
+        cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+    }
+}
+
+pub struct Members<T>(sp_std::marker::PhantomData<T>);
+
+impl<AccountId : core::cmp::Ord> frame_support::traits::SortedMembers<AccountId> for Members<AccountId> {
+	fn sorted_members() -> Vec<AccountId> {
+		vec![]
+	}
+}
+
+pub struct Decimal;
+impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
+    fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
+		Some(CurrencyId::decimals())
+		// Some(asset_id.decimals())
+        // match *asset_id {
+        //     CurrencyId::COMPOSABLE_LAYR => Some(12_u8), //TODO check
+        //     _ => {
+        //         let decimal = <Assets as frame_support::traits::fungibles::Inspect<AccountId>>::decimals(asset_id);
+        //         if decimal.is_zero() {
+        //             None
+        //         } else {
+        //             Some(decimal)
+        //         }
+        //     }
+        // }
+    }
+}
+
+impl pallet_liquid_staking::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeCall = RuntimeCall;
+    type PalletId = StakingPalletId;
+    type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
+    type SelfParaId = ParachainInfo;
+    type Assets = Assets;
+    type RelayOrigin = EnsureRootOrHalfCouncil;
+    type UpdateOrigin = EnsureRootOrHalfCouncil;
+    type DerivativeIndexList = DerivativeIndexList;
+    type XcmFees = XcmFees;
+    type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
+    type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
+    type StakingCurrency = StakingCurrency;
+    type LiquidCurrency = LiquidCurrency;
+    type EraLength = EraLength;
+    type MinStake = MinStakeLSD;
+    type MinUnstake = MinUnstake;
+    type XCM = PalletXcmHelper;
+    type BondingDuration = BondingDuration;
+    type MinNominatorBond = MinNominatorBond;
+    type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
+    type Members = Members::<AccountId>; // ..LiquidStakingAgentsMembership;
+    type NumSlashingSpans = NumSlashingSpans;
+    type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
+    type ProtocolFeeReceiver = TreasuryAccount;
+    type Decimal = Decimal;
+    type NativeCurrency = NativeAssetId;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -649,6 +745,7 @@ construct_runtime!(
 
 		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
 		PalletXcmHelper: pallet_xcm_helper = 193,
+		PalletLiquidStaking: pallet_liquid_staking = 194,
 	}
 );
 

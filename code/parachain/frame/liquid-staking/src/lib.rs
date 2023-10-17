@@ -163,10 +163,6 @@ pub mod pallet {
         #[pallet::constant]
         type XcmFees: Get<BalanceOf<Self>>;
 
-        /// Loans instant unstake fee
-        #[pallet::constant]
-        type LoansInstantUnstakeFee: Get<Rate>;
-
         /// MatchingPool fast unstake fee
         #[pallet::constant]
         type MatchingPoolFastUnstakeFee: Get<Rate>;
@@ -178,10 +174,6 @@ pub mod pallet {
         /// Liquid currency
         #[pallet::constant]
         type LiquidCurrency: Get<AssetIdOf<Self>>;
-
-        /// Collateral currency
-        #[pallet::constant]
-        type CollateralCurrency: Get<AssetIdOf<Self>>;
 
         /// Minimum stake amount
         #[pallet::constant]
@@ -1945,7 +1937,6 @@ pub mod pallet {
         #[require_transactional]
         fn do_claim_for(who: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
             let module_id = Self::account_id();
-            let collateral_currency = T::CollateralCurrency::get();
             let staking_currency = Self::staking_currency()?;
 
             //TODO rust.dev double check

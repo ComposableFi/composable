@@ -152,6 +152,7 @@ impl CurrencyId {
 
 		/// DOT from Polkadot
 		pub const DOT: CurrencyId = CurrencyId(6, None);
+		pub const stDOT: CurrencyId = CurrencyId(7, None);
 		pub const COMPOSABLE_DOT: CurrencyId = CurrencyId(79228162514264337593543950342);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
