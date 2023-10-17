@@ -40,26 +40,26 @@ let_unit_value = "allow"
 [workspace]
 exclude = [
   "utils/submetrics",
-  "xcvm/cosmwasm/contracts/order",
   "integration-tests",
   "parachain/frame/vesting/cli",
   "parachain/frame/cosmwasm/cli",
 ]
 members = [
-  "services/cmc-api",
   "parachain/frame/*",
   "parachain/node",
   "parachain/runtime/*",
-  "utils/common",
+  "services/cmc-api",
   "utils/collator-sidecar",
+  "utils/common",
   "utils/price-feed",
-  "xcvm/lib/core/",
   "xcvm/cosmwasm/contracts/accounts",
   "xcvm/cosmwasm/contracts/escrow",
   "xcvm/cosmwasm/contracts/gateway",
   "xcvm/cosmwasm/contracts/interpreter",
+  "xcvm/cosmwasm/contracts/order",
   "xcvm/cosmwasm/contracts/pingpong",
   "xcvm/cosmwasm/tests",
+  "xcvm/lib/core/",
 ]
 resolver = "2"
 
