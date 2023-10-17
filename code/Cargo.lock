@@ -1917,6 +1917,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-ibc",
  "pallet-indices",
+ "pallet-liquid-staking",
  "pallet-membership",
  "pallet-multihop-xcm-ibc",
  "pallet-multisig",
@@ -9316,7 +9317,6 @@ name = "pallet-liquid-staking"
 version = "1.0.0"
 dependencies = [
  "cumulus-primitives-core",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-utility",

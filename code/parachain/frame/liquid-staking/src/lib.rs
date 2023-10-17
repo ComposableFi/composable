@@ -89,7 +89,7 @@ pub mod pallet {
 
     use crate::distribution::*;
 
-    pub type CurrencyId = u32;
+    use primitives::currency::CurrencyId;
     pub type Balance = u128;
 
     // use pallet_traits::ump::*;
