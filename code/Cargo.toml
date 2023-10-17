@@ -52,8 +52,6 @@ members = [
   "utils/collator-sidecar",
   "utils/common",
   "utils/price-feed",
-  "xcvm/cosmwasm/contracts/accounts",
-  "xcvm/cosmwasm/contracts/escrow",
   "xcvm/cosmwasm/contracts/gateway",
   "xcvm/cosmwasm/contracts/interpreter",
   "xcvm/cosmwasm/contracts/order",

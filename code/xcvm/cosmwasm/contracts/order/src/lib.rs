@@ -35,11 +35,12 @@ pub type Ratio = (Uint64, Uint64);
 
 #[cw_serde]
 pub struct OrderSubMsg {
-	/// Amount is minimum amount to get for given amount (sure user wants more than `wants` and we try to achieve that).
-	/// Denom users wants to get, it can be cw20, bank or this chain CVM asset identifier.
-	/// Only local CVM identifiers are accepted.
+	/// Amount is minimum amount to get for given amount (sure user wants more than `wants` and we
+	/// try to achieve that). Denom users wants to get, it can be cw20, bank or this chain CVM
+	/// asset identifier. Only local CVM identifiers are accepted.
 	/// If target asset identifier on other chain, use `transfer` to identity it.
-	/// Why this is the case? It allows to CoW with user wanted assets which is not on settlement(this) chain.
+	/// Why this is the case? It allows to CoW with user wanted assets which is not on
+	/// settlement(this) chain.
 	pub wants: Coin,
 
 	/// How offchain SDK must work with it?
@@ -47,7 +48,7 @@ pub struct OrderSubMsg {
 	/// Alice gives token 42 on this(settlement chain).
 	/// But she wants token 123 on other chain.
 	/// SDK reads all CVM configurations.
-	/// And tells Alice that there are 2 routes of asset 123 to/from settlement chain. 
+	/// And tells Alice that there are 2 routes of asset 123 to/from settlement chain.
 	/// These routes are 666 and 777. Each asset has unique route to settlement chain in CVM configuration.
 	/// Alice picks route 777.
 	/// So SDK sends 42 token as given to  and 777 as wanted,
@@ -161,7 +162,7 @@ pub struct TransferRoute {
 	pub spawn: Vec<Spawn<TransferRoute>>,
 }
 
-/// Abstracted out route of underlying encoding on specific transport. 
+/// Abstracted out route of underlying encoding on specific transport.
 /// In the end of route, amount is always put onto user CVM executor.
 #[cw_serde]
 pub struct Spawn<Route> {
@@ -282,8 +283,6 @@ impl OrderContract<'_> {
 			.collect();
 		let all_solutions = all_solutions?;
 
-
-
 		/// pick up optimal solution with solves with bank
 		let mut a_in = 0;
 		let mut b_in = 0;
@@ -367,7 +366,8 @@ fn solves_cows_via_bank(
 		let cowed = order.solution.cow_amount;
 		let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
 
-		// so if not enough was deposited as was taken from original orders, it will fails - so solver cannot rob the bank
+		// so if not enough was deposited as was taken from original orders, it will fails - so
+		// solver cannot rob the bank
 		if amount.denom == a {
 			a_total_in -= cowed.0;
 		} else {

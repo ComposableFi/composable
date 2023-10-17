@@ -29,10 +29,10 @@
         cw-xc-executor = mkXcvmContract "cw-xc-interpreter";
         cw-xc-gateway = mkXcvmContract "cw-xc-gateway";
         cw-xc-pingpong = mkXcvmContract "cw-xc-pingpong";
-        cw-xc-order = mkXcvmContract "cw-xc-order";
+        cw-cvm-order = mkXcvmContract "cw-cvm-order";
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
-          paths = [ cw-xc-executor cw-xc-gateway cw-xc-order ];
+          paths = [ cw-xc-executor cw-xc-gateway cw-cvm-order ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {

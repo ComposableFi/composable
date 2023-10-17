@@ -3321,7 +3321,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
-name = "cvm-cw-order"
+name = "cw-cvm-order"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.4.1",
@@ -3369,43 +3369,6 @@ dependencies = [
  "semver 1.0.18",
  "serde",
  "thiserror-core",
-]
-
-[[package]]
-name = "cw-xc-accounts"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
- "cw-utils",
- "cw2",
- "derive_more 1.0.0-beta.2",
- "parity-scale-codec",
- "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
- "strum 0.25.0",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xc-escrow"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
- "cw-utils",
- "cw2",
- "cw20",
- "derive_more 1.0.0-beta.2",
- "parity-scale-codec",
- "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
- "strum 0.25.0",
- "thiserror-core",
- "xc-core",
 ]
 
 [[package]]
