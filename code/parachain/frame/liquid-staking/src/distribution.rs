@@ -3,6 +3,7 @@ use sp_runtime::FixedPointOperand;
 use sp_std::vec::Vec;
 
 use crate::types::{DerivativeIndex, EraIndex};
+use sp_std::vec;
 
 
 pub trait DistributionStrategy<Balance> {

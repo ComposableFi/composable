@@ -77,7 +77,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
   "derive",
 ] }
 
-# pallet-liquid-staking = { package = "pallet-liquid-staking", path = "../../frame/liquid-staking", default-features = false }
+pallet-liquid-staking = { package = "pallet-liquid-staking", path = "../../frame/liquid-staking", default-features = false }
 pallet-xcm-helper = { package = "pallet-xcm-helper", path = "../../frame/pallet-xcm-helper", default-features = false }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 hex-literal.workspace = true
@@ -232,6 +232,6 @@ std = [
   "pallet-referenda/std",
   "pallet-conviction-voting/std",
   "pallet-whitelist/std",
-  # "pallet-liquid-staking/std",
+  "pallet-liquid-staking/std",
   "pallet-xcm-helper/std",
 ]

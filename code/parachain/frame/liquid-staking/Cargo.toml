@@ -8,24 +8,22 @@ version = "1.0.0"
 
 [dependencies]
 parity-scale-codec = { workspace = true, default-features = false, features = ['max-encoded-len'] }
-# codec              = { workspace = true, package = 'parity-scale-codec', features = ['max-encoded-len'] }
-frame-benchmarking = { workspace = true, optional = true }
+# frame-benchmarking = { workspace = true, optional = true }
 frame-support      = { workspace = true }
 frame-system       = { workspace = true }
-# pallet-assets      = { workspace = true }
-# pallet-traits      = { workspace = true }
+# # pallet-assets      = { workspace = true }
+# # pallet-traits      = { workspace = true }
 pallet-utility     = { workspace = true }
-pallet-xcm         = { workspace = true }
-# pallet-xcm-helper  = { workspace = true }
-scale-info         = { workspace = true, features = ['derive'] }
 sp-runtime         = { workspace = true }
 sp-std             = { workspace = true }
 sp-trie            = { workspace = true }
 xcm                = { workspace = true }
-polkadot-primitives = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
-polkadot-parachain          = { workspace = true, features = ['std'] }
+pallet-xcm         = { workspace = true }
+scale-info         = { workspace = true, features = ['derive'] }
+polkadot-parachain          = { workspace = true }
+polkadot-primitives = { workspace = true }
 cumulus-primitives-core = { workspace = true }
-pallet-xcm-helper = { path = '../pallet-xcm-helper'}
+pallet-xcm-helper = { path = '../pallet-xcm-helper', default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 [features]
@@ -34,15 +32,16 @@ std                = [
   'parity-scale-codec/std',
   'frame-support/std',
   'frame-system/std',
-  'frame-benchmarking/std',
+  'pallet-utility/std',
   'sp-runtime/std',
   'sp-std/std',
   'sp-trie/std',
+  'pallet-xcm/std',
   'xcm/std',
   'scale-info/std',
-  'pallet-xcm/std',
-  'polkadot-primitives/std',
+  
   'polkadot-parachain/std',
+  'polkadot-primitives/std',
   'cumulus-primitives-core/std',
   'pallet-xcm-helper/std',
   'primitives/std',
