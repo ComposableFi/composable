@@ -3291,43 +3291,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-accounts"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "derive_more 1.0.0-beta.2",
- "parity-scale-codec",
- "serde",
- "serde-json-wasm",
- "strum 0.25.0",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xc-escrow"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20",
- "derive_more 1.0.0-beta.2",
- "parity-scale-codec",
- "serde",
- "serde-json-wasm",
- "strum 0.25.0",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
 name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
