@@ -7,7 +7,7 @@ import {
   queryNativeBalance,
   queryTokenBalance,
   queryTotalIssuanceOfTokenOnCentauri,
-  queryTotalIssuanceOnOsmosis,
+  queryTotalIssuanceOfTokenOnOsmosis,
   waitForSeconds
 } from "./ibcUtils";
 import assetData from "./assets.json";
@@ -111,7 +111,7 @@ export async function getTotalIssuance(asset: Asset | Asset[], ecosystem: string
         if (specAsset.chain === 'centauri') {
           specAsset.totalIssuance = new BigNumber(await queryTotalIssuanceOfTokenOnCentauri(specAsset.id));
         } else {
-          specAsset.totalIssuance = new BigNumber(await queryTotalIssuanceOnOsmosis(specAsset.id));
+          specAsset.totalIssuance = new BigNumber(await queryTotalIssuanceOfTokenOnOsmosis(specAsset.id));
         }
       }
     }));
@@ -126,7 +126,7 @@ export async function getTotalIssuance(asset: Asset | Asset[], ecosystem: string
       if (asset.chain === 'centauri') {
         asset.totalIssuance = new BigNumber(await queryTotalIssuanceOfTokenOnCentauri(asset.id));
       } else {
-        asset.totalIssuance = new BigNumber(await queryTotalIssuanceOnOsmosis(asset.id));
+        asset.totalIssuance = new BigNumber(await queryTotalIssuanceOfTokenOnOsmosis(asset.id));
       }
     }
   }
