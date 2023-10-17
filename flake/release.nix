@@ -99,7 +99,7 @@
 
             # XCVM
             cp ${packages.cw-xc-gateway}/lib/cw_xc_gateway.wasm release-artifacts/to-upload/cw_xc_gateway.wasm
-            cp ${packages.cw-xc-interpreter}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_interpreter.wasm
+            cp ${packages.cw-xc-executor}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_executor.wasm
 
             echo "Generate node packages"
             cp ${
