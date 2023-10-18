@@ -1,5 +1,4 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
-#![feature(result_flattening)]
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Uint64};
@@ -236,7 +235,7 @@ impl OrderContract<'_> {
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
 		let order_created =
-			Event::new("mantis::order::created").add_attribute("order_id", &order_id);
+			Event::new("mantis::order::created").add_attribute("order_id", order_id.to_string());
 		Ok(Response::default().add_event(order_created))
 	}
 
@@ -331,8 +330,8 @@ impl OrderContract<'_> {
 		)?;
 
 		let solution_chosen = Event::new("mantis::solution::chosen")
-			.add_attribute("pair", &format!("{}{}", a, b))
-			.add_attribute("solver", &ctx.info.sender.to_string());
+			.add_attribute("pair", format!("{}{}", a, b))
+			.add_attribute("solver", ctx.info.sender.to_string());
 
 		Ok(Response::default()
 			.add_messages(transfers)

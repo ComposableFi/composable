@@ -24,13 +24,14 @@
             cosmwasm-check $out/lib/${binaryName}
           '';
         });
-      latestRust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-        (pkgs.rust-bin.nightly."2023-09-19".default);
+      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        (pkgs.rust-bin.stable."1.73.0".default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        });
       mkCvmContract = name:
         makeCosmwasmContract name crane.nightly "--no-default-features";
       mkMantisContract = name:
-        makeCosmwasmContract name latestRust
-        "--no-default-features";
+        makeCosmwasmContract name rust "--no-default-features";
     in {
       packages = rec {
         cw-xc-executor = mkCvmContract "cw-xc-interpreter";
