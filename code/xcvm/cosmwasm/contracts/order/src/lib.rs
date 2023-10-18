@@ -14,7 +14,7 @@ use sylvia::{
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
-// move these to cvm-primitives crate
+// fix core in std in contract
 // use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
 pub type ExchangeId = u128;
 pub type Amount = u128;
