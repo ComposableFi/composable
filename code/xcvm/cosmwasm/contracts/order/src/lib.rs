@@ -2,7 +2,7 @@
 #![feature(result_flattening)]
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Order, StdError, Uint64};
+use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Uint64};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use sylvia::{
 	contract,
@@ -75,7 +75,6 @@ pub struct SolutionItem {
 	/// at which block solution was added
 	pub block_added: u64,
 }
-
 /// price information will not be used on chain or deciding.
 /// it will fill orders on chain as instructed
 /// and check that max/min from orders respected
@@ -236,7 +235,9 @@ impl OrderContract<'_> {
 		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
-		Ok(Response::default())
+		let order_created =
+			Event::new("mantis::order::created").add_attribute("order_id", &order_id);
+		Ok(Response::default().add_event(order_created))
 	}
 
 	#[msg(exec)]
@@ -266,11 +267,15 @@ impl OrderContract<'_> {
 		// add solution to total solutions
 		let possible_solution =
 			SolutionItem { pair: (a.clone(), b.clone()), msg, block_added: ctx.env.block.height };
+
 		self.solutions.save(
 			ctx.deps.storage,
 			&(a.clone(), b.clone(), ctx.info.sender.clone()),
 			&possible_solution,
 		)?;
+		let solution_upserted = Event::new("mantis::solution::upserted")
+			.add_attribute("pair", &format!("{}{}", a, b))
+			.add_attribute("solver", &ctx.info.sender.to_string());
 
 		// get all solution for pair
 		let all_solutions: Result<Vec<SolutionItem>, _> = self
@@ -325,7 +330,15 @@ impl OrderContract<'_> {
 			vec![],
 		)?;
 
-		Ok(Response::default().add_messages(transfers).add_message(route))
+		let solution_chosen = Event::new("mantis::solution::chosen")
+			.add_attribute("pair", &format!("{}{}", a, b))
+			.add_attribute("solver", &ctx.info.sender.to_string());
+
+		Ok(Response::default()
+			.add_messages(transfers)
+			.add_message(route)
+			.add_event(solution_upserted)
+			.add_event(solution_chosen))
 	}
 
 	fn merge_solution_with_orders(

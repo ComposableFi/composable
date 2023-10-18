@@ -2,9 +2,9 @@
   perSystem =
     { config, self', inputs', pkgs, system, crane, systemCommonRust, ... }:
     let
-      mkXcvmContract = name:
+      makeCosmwasmContract = name: rust: std-config:
         let binaryName = "${builtins.replaceStrings [ "-" ] [ "_" ] name}.wasm";
-        in crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        in rust.buildPackage (systemCommonRust.common-attrs // {
           src = systemCommonRust.rustSrc;
           version = "0.1";
           pnameSuffix = "-${name}";
@@ -14,7 +14,7 @@
           ];
           pname = name;
           cargoBuildCommand =
-            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name} --no-default-features";
+            "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts --package ${name} ${std-config}";
           RUSTFLAGS = "-C link-arg=-s";
           installPhaseCommand = ''
             mkdir --parents $out/lib
@@ -24,17 +24,22 @@
             cosmwasm-check $out/lib/${binaryName}
           '';
         });
+      latestRust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        (pkgs.rust-bin.nightly."2023-09-19".default);
+      mkCvmContract = name:
+        makeCosmwasmContract name crane.nightly "--no-default-features";
+      mkMantisContract = name:
+        makeCosmwasmContract name latestRust
+        "--no-default-features";
     in {
       packages = rec {
-        cw-xc-executor = mkXcvmContract "cw-xc-interpreter";
-        cw-xc-gateway = mkXcvmContract "cw-xc-gateway";
-        cw-xc-pingpong = mkXcvmContract "cw-xc-pingpong";
-        cw-cvm-order = mkXcvmContract "cw-cvm-order";
-        #          rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-            # (pkgs.rust-bin.stable."1.73.0".default);
+        cw-xc-executor = mkCvmContract "cw-xc-interpreter";
+        cw-xc-gateway = mkCvmContract "cw-xc-gateway";
+        cw-xc-pingpong = mkCvmContract "cw-xc-pingpong";
+        cw-mantis-order = mkMantisContract "cw-mantis-order";
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
-          paths = [ cw-xc-executor cw-xc-gateway ];
+          paths = [ cw-xc-executor cw-xc-gateway cw-mantis-order ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
