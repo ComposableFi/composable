@@ -8,7 +8,6 @@
         polkadot-node-from-dep
         rococo-runtime-from-dep
         polkadot-parachain
-        subwasm
         zombienet
         subxt
         bech32cli
