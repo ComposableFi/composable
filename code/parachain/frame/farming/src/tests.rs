@@ -239,9 +239,14 @@ fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
 		let account_id = 0;
 
 		let second_schedule_update_amount = 9000000u128;
+		let reward_schedule_2 = 100u128;
 
 		// setup basic reward schedule
 		let reward_schedule = RewardSchedule { period_count: 100, per_period: 1000 };
+		let reward_schedule_2 = RewardSchedule {
+			period_count: reward_schedule_2 as u32,
+			per_period: second_schedule_update_amount / reward_schedule_2,
+		};
 		let total_amount = reward_schedule.total().unwrap();
 
 		assert_ok!(Tokens::set_balance(
@@ -299,19 +304,18 @@ fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
 			RuntimeOrigin::root(),
 			POOL_CURRENCY_ID,
 			REWARD_CURRENCY_ID,
-			100,
-			second_schedule_update_amount,
+			reward_schedule_2.period_count,
+			reward_schedule_2.total().unwrap(),
 		));
 
 		let reward_schedule_on_chain =
 			RewardSchedules::<Test>::get(POOL_CURRENCY_ID, REWARD_CURRENCY_ID);
 		assert_eq!(
 			reward_schedule_on_chain.period_count,
-			reward_schedule.period_count - 1 + reward_schedule.period_count
+			reward_schedule.period_count - 1 + reward_schedule_2.period_count
 		);
 
-		let prev = reward_schedule.period_count as u128 * reward_schedule.per_period -
-			reward_schedule.per_period;
+		let prev = (reward_schedule.period_count as u128 - 1) * reward_schedule.per_period;
 		let new = prev + second_schedule_update_amount;
 		let new_per_period = new / ((reward_schedule.period_count * 2 - 1) as u128);
 		assert!(reward_schedule_on_chain.per_period == new_per_period);
@@ -321,7 +325,7 @@ fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
 		assert_emitted!(Event::RewardScheduleUpdated {
 			pool_currency_id: POOL_CURRENCY_ID,
 			reward_currency_id: REWARD_CURRENCY_ID,
-			period_count: reward_schedule.period_count * 2 - 1,
+			period_count: reward_schedule.period_count + reward_schedule_2.period_count - 1,
 			per_period: new_per_period,
 		});
 
