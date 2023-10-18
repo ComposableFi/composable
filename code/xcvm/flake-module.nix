@@ -30,6 +30,8 @@
         cw-xc-gateway = mkXcvmContract "cw-xc-gateway";
         cw-xc-pingpong = mkXcvmContract "cw-xc-pingpong";
         cw-cvm-order = mkXcvmContract "cw-cvm-order";
+        #          rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+            # (pkgs.rust-bin.stable."1.73.0".default);
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
           paths = [ cw-xc-executor cw-xc-gateway ];
