@@ -1,5 +1,4 @@
 #![feature(result_flattening)]
-mod error;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
@@ -13,16 +12,21 @@ use sylvia::{
 	entry_points,
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
-use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
+
+// need to refactor xc_core to work in wasm std target for next types 
+// use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
+
+
+pub type ExchangeId = u128;
+pub type Amount = u128;
+pub type OrderId = u128;
+pub type NetworkId = u32;
+pub type Blocks = u32;
+
 
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
-use crate::error::ContractError;
-
-pub type Amount = Displayed<u128>;
-pub type OrderId = Displayed<u128>;
-pub type Blocks = u32;
 
 /// each pair waits ate least this amount of blocks before being decided
 pub const BATCH_EPOCH: u32 = 1;
@@ -67,7 +71,7 @@ pub struct OrderItem {
 	pub owner: Addr,
 	pub msg: OrderSubMsg,
 	pub given: Coin,
-	pub order_id: Displayed<u128>,
+	pub order_id: Amount,
 }
 
 #[cw_serde]
@@ -108,11 +112,11 @@ pub struct RouteSubMsg {
 pub struct Cow {
 	pub order_id: OrderId,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub cow_amount: Displayed<u128>,
+	pub cow_amount: Amount,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: Option<Displayed<u128>>,
+	pub taken: Option<Amount>,
 	/// amount user should get after order executed
-	pub given: Displayed<u128>,
+	pub given: Amount,
 }
 
 #[cw_serde]
@@ -124,7 +128,7 @@ pub struct SolvedOrder {
 impl SolvedOrder {
 	pub fn new(order: OrderItem, solution: Cow) -> StdResult<Self> {
 		ensure!(
-			order.msg.wants.amount.u128() >= solution.given.0,
+			order.msg.wants.amount.u128() >= solution.given,
 			StdError::GenericErr { msg: "user limit was not satisfied".to_string() }
 		);
 
@@ -132,7 +136,7 @@ impl SolvedOrder {
 	}
 
 	pub fn cross_chain(&self) -> u128 {
-		self.order.msg.wants.amount.u128() - self.solution.cow_amount.0
+		self.order.msg.wants.amount.u128() - self.solution.cow_amount
 	}
 
 	pub fn given(&self) -> &Coin {
@@ -231,8 +235,8 @@ impl OrderContract<'_> {
 		/// just save order under incremented id
 		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default().into();
 		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
-		self.orders.save(ctx.deps.storage, order_id.0, &order)?;
-		self.next_order_id.save(ctx.deps.storage, &(order_id.0 + 1))?;
+		self.orders.save(ctx.deps.storage, order_id, &order)?;
+		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
 		Ok(Response::default())
 	}
 
@@ -336,7 +340,7 @@ impl OrderContract<'_> {
 			.iter()
 			.map(|x| {
 				self.orders
-					.load(ctx.deps.storage, x.order_id.0)
+					.load(ctx.deps.storage, x.order_id)
 					.map_err(|_| StdError::not_found("order"))
 					.map(|order| SolvedOrder::new(order, x.clone()))
 					.flatten()
@@ -364,14 +368,14 @@ fn solves_cows_via_bank(
 	let mut transfers = vec![];
 	for order in all_orders.iter_mut() {
 		let cowed = order.solution.cow_amount;
-		let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
+		let amount = Coin { amount: cowed.into(), ..order.given().clone() };
 
 		// so if not enough was deposited as was taken from original orders, it will fails - so
 		// solver cannot rob the bank
 		if amount.denom == a {
-			a_total_in -= cowed.0;
+			a_total_in -= cowed;
 		} else {
-			b_total_in -= cowed.0;
+			b_total_in -= cowed;
 		};
 		transfers
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });

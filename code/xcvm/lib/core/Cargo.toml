@@ -12,7 +12,6 @@ cosmwasm-std = { workspace = true, features = ["ibc3"] }
 cw-storage-plus = { workspace = true, optional = true }
 cw20 = { workspace = true, optional = true }
 derive_more.workspace = true
-fixed = { workspace = true }
 hex = { workspace = true, features = ["alloc"] }
 ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
 num = { workspace = true }
