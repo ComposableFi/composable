@@ -239,13 +239,13 @@ fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
 		let account_id = 0;
 
 		let second_schedule_update_amount = 9000000u128;
-		let reward_schedule_2 = 100u128;
+		let reward_schedule_2_period_count = 100u128;
 
 		// setup basic reward schedule
 		let reward_schedule = RewardSchedule { period_count: 100, per_period: 1000 };
 		let reward_schedule_2 = RewardSchedule {
-			period_count: reward_schedule_2 as u32,
-			per_period: second_schedule_update_amount / reward_schedule_2,
+			period_count: reward_schedule_2_period_count as u32,
+			per_period: second_schedule_update_amount / reward_schedule_2_period_count,
 		};
 		let total_amount = reward_schedule.total().unwrap();
 
@@ -317,7 +317,8 @@ fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
 
 		let prev = (reward_schedule.period_count as u128 - 1) * reward_schedule.per_period;
 		let new = prev + second_schedule_update_amount;
-		let new_per_period = new / ((reward_schedule.period_count * 2 - 1) as u128);
+		let new_per_period =
+			new / ((reward_schedule.period_count - 1 + reward_schedule_2.period_count) as u128);
 		assert!(reward_schedule_on_chain.per_period == new_per_period);
 
 		// check that we distribute per period
