@@ -458,17 +458,17 @@
                 availability = { restart = chain-restart; };
               };
 
-              centauri-xcvm-init = {
-                command = self'.packages.centaurid-xcvm-init;
+              centauri-cvm-init = {
+                command = self'.packages.centaurid-cvm-init;
                 depends_on."centauri".condition = "process_healthy";
                 log_location =
-                  "${devnet-root-directory}/centauri-xcvm-init.log";
+                  "${devnet-root-directory}/centauri-cvm-init.log";
                 availability = { restart = chain-restart; };
               };
 
               centauri-xcvm-config = {
                 command = self'.packages.centaurid-xcvm-config;
-                depends_on."centauri-xcvm-init".condition =
+                depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
                 depends_on."osmosis-xcvm-init".condition =
                   "process_completed_successfully";
@@ -479,7 +479,7 @@
 
               osmosis-xcvm-config = {
                 command = self'.packages.osmosisd-xcvm-config;
-                depends_on."centauri-xcvm-init".condition =
+                depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
                 depends_on."osmosis-xcvm-init".condition =
                   "process_completed_successfully";
@@ -508,6 +508,7 @@
                 depends_on."osmosis".condition = "process_healthy";
                 log_location = "${devnet-root-directory}/osmosis-xcvm-init.log";
                 availability = { restart = chain-restart; };
+                namespace = "osmosis";
               };
 
               osmosis-centauri-hermes-init = {
@@ -516,9 +517,10 @@
                   "centauri-init".condition = "process_completed_successfully";
                   "osmosis".condition = "process_healthy";
                 };
+                  namespace = "ibc";
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
-                availability = { restart = relay; };
+                availability = { restart = relay; };                
               };
 
               osmosis-centauri-hermes-relay = {
@@ -530,63 +532,64 @@
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
+                namespace = "ibc";
               };
-              eth-gen = {
-                command = self'.packages.eth-gen;
-                log_location = "${devnet-root-directory}/eth-gen.log";
-                availability = { restart = chain-restart; };
-              };
-              eth-consensus-gen = {
-                command = self'.packages.eth-consensus-gen;
-                log_location = "${devnet-root-directory}/eth-consensus-gen.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-gen".condition = "process_completed_successfully";
-                };
-              };
-              eth-executor-gen = {
-                command = self'.packages.eth-executor-gen;
-                log_location = "${devnet-root-directory}/eth-executor-gen.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-gen".condition = "process_completed_successfully";
+              # eth-gen = {
+              #   command = self'.packages.eth-gen;
+              #   log_location = "${devnet-root-directory}/eth-gen.log";
+              #   availability = { restart = chain-restart; };
+              # };
+              # eth-consensus-gen = {
+              #   command = self'.packages.eth-consensus-gen;
+              #   log_location = "${devnet-root-directory}/eth-consensus-gen.log";
+              #   availability = { restart = chain-restart; };
+              #   depends_on = {
+              #     "eth-gen".condition = "process_completed_successfully";
+              #   };
+              # };
+              # eth-executor-gen = {
+              #   command = self'.packages.eth-executor-gen;
+              #   log_location = "${devnet-root-directory}/eth-executor-gen.log";
+              #   availability = { restart = chain-restart; };
+              #   depends_on = {
+              #     "eth-gen".condition = "process_completed_successfully";
 
-                };
-              };
-              eth-executor = {
-                command = self'.packages.eth-executor;
-                log_location = "${devnet-root-directory}/eth-executor.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-executor-gen".condition =
-                    "process_completed_successfully";
-                };
-                readiness_probe = {
-                  exec.command = ''
-                    test -f ${devnet-root-directory}/eth/jwtsecret
-                  '';
-                } // parachain-startup;
+              #   };
+              # };
+              # eth-executor = {
+              #   command = self'.packages.eth-executor;
+              #   log_location = "${devnet-root-directory}/eth-executor.log";
+              #   availability = { restart = chain-restart; };
+              #   depends_on = {
+              #     "eth-executor-gen".condition =
+              #       "process_completed_successfully";
+              #   };
+              #   readiness_probe = {
+              #     exec.command = ''
+              #       test -f ${devnet-root-directory}/eth/jwtsecret
+              #     '';
+              #   } // parachain-startup;
 
-              };
-              eth-consensus = {
-                command = self'.packages.eth-consensus;
-                log_location = "${devnet-root-directory}/eth-consensus.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-consensus-gen".condition =
-                    "process_completed_successfully";
-                  "eth-executor".condition = "process_healthy";
-                };
-              };
-              eth-validator = {
-                command = self'.packages.eth-validator;
-                log_location = "${devnet-root-directory}/eth-validator.log";
-                availability = { restart = chain-restart; };
-                depends_on = {
-                  "eth-consensus-gen".condition =
-                    "process_completed_successfully";
-                };
-              };
+              # };
+              # eth-consensus = {
+              #   command = self'.packages.eth-consensus;
+              #   log_location = "${devnet-root-directory}/eth-consensus.log";
+              #   availability = { restart = chain-restart; };
+              #   depends_on = {
+              #     "eth-consensus-gen".condition =
+              #       "process_completed_successfully";
+              #     "eth-executor".condition = "process_healthy";
+              #   };
+              # };
+              # eth-validator = {
+              #   command = self'.packages.eth-validator;
+              #   log_location = "${devnet-root-directory}/eth-validator.log";
+              #   availability = { restart = chain-restart; };
+              #   depends_on = {
+              #     "eth-consensus-gen".condition =
+              #       "process_completed_successfully";
+              #   };
+              # };
             };
           };
         };

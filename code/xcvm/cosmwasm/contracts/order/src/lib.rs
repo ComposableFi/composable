@@ -218,7 +218,10 @@ impl OrderContract<'_> {
 		Self::default()
 	}
 	#[msg(instantiate)]
-	pub fn instantiate(&self, _ctx: InstantiateCtx) -> StdResult<Response> {
+	pub fn instantiate(
+		&self,
+		_ctx: InstantiateCtx, /*	i think we would need admin, gateway, scoring/fee parameters */
+	) -> StdResult<Response> {
 		Ok(Response::default())
 	}
 
