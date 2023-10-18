@@ -35,5 +35,5 @@ Applications of CVM must never depend to Polkadot code directly which fails wasm
 
 And `primitives` will not too.
 
-So we will have process of `no-std/std`-fication as time goes and pick bests tool with lowest maintain. 
+So we will have process of `no-std/std`-fication into primitives as time goes and pick bests tool with lowest maintain. 
 

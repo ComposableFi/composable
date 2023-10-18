@@ -1,11 +1,9 @@
+#![allow(clippy::disallowed_methods)] // does unwrap inside
 #![feature(result_flattening)]
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{
-	wasm_execute, Addr, BankMsg, BlockInfo, Coin, Order, StdError, Uint128, Uint64,
-};
+use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Order, StdError, Uint64};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
-use itertools::*;
 use sylvia::{
 	contract,
 	cw_std::{ensure, Response, StdResult},
@@ -13,20 +11,16 @@ use sylvia::{
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
 
-// need to refactor xc_core to work in wasm std target for next types 
+/// so this is just to make code easy to read, we will optimize later
+use num_rational::BigRational;
+
+// move these to cvm-primitives crate
 // use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
-
-
 pub type ExchangeId = u128;
 pub type Amount = u128;
 pub type OrderId = u128;
 pub type NetworkId = u32;
 pub type Blocks = u32;
-
-
-/// so this is just to make code easy to read, we will optimize later
-use num_rational::BigRational;
-
 
 /// each pair waits ate least this amount of blocks before being decided
 pub const BATCH_EPOCH: u32 = 1;
@@ -209,17 +203,22 @@ pub fn solution<'a>(
 	IndexedMap::new("solutions", indexes)
 }
 
-#[entry_points]
-#[contract]
-impl OrderContract<'_> {
-	pub fn new() -> Self {
+impl Default for OrderContract<'_> {
+	fn default() -> Self {
 		Self {
 			orders: Map::new("orders"),
 			next_order_id: Item::new("next_order_id"),
 			solutions: solution(),
 		}
 	}
+}
 
+#[entry_points]
+#[contract]
+impl OrderContract<'_> {
+	pub fn new() -> Self {
+		Self::default()
+	}
 	#[msg(instantiate)]
 	pub fn instantiate(&self, _ctx: InstantiateCtx) -> StdResult<Response> {
 		Ok(Response::default())
@@ -229,11 +228,11 @@ impl OrderContract<'_> {
 	/// spamming), and stores order for searchers.
 	#[msg(exec)]
 	pub fn order(&self, ctx: ExecCtx, msg: OrderSubMsg) -> StdResult<Response> {
-		/// for now we just use bank for ics20 tokens
+		// for now we just use bank for ics20 tokens
 		let funds = ctx.info.funds.get(0).expect("there are some funds in order");
 
-		/// just save order under incremented id
-		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default().into();
+		// just save order under incremented id
+		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
 		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
@@ -241,7 +240,7 @@ impl OrderContract<'_> {
 	}
 
 	#[msg(exec)]
-	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
+	pub fn route(&self, ctx: ExecCtx, _msg: RouteSubMsg) -> StdResult<Response> {
 		ensure!(
 			ctx.info.sender == ctx.env.contract.address,
 			StdError::GenericErr { msg: "only self can call this".to_string() }
@@ -255,28 +254,25 @@ impl OrderContract<'_> {
 	/// All fully
 	#[msg(exec)]
 	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {
-		/// read all orders as solver provided
+		// read all orders as solver provided
 		let mut all_orders = self.merge_solution_with_orders(&msg, &ctx)?;
 		let at_least_one = all_orders.first().expect("at least one");
 
-		/// normalize pair
+		// normalize pair
 		let mut ab = [at_least_one.given().denom.clone(), at_least_one.wants().denom.clone()];
 		ab.sort();
 		let [a, b] = ab;
 
 		// add solution to total solutions
-		let possible_solution = SolutionItem {
-			pair: (a.clone(), b.clone()),
-			msg: msg.clone(),
-			block_added: ctx.env.block.height,
-		};
+		let possible_solution =
+			SolutionItem { pair: (a.clone(), b.clone()), msg, block_added: ctx.env.block.height };
 		self.solutions.save(
 			ctx.deps.storage,
 			&(a.clone(), b.clone(), ctx.info.sender.clone()),
 			&possible_solution,
 		)?;
 
-		/// get all solution for pair
+		// get all solution for pair
 		let all_solutions: Result<Vec<SolutionItem>, _> = self
 			.solutions
 			.idx
@@ -287,40 +283,42 @@ impl OrderContract<'_> {
 			.collect();
 		let all_solutions = all_solutions?;
 
-		/// pick up optimal solution with solves with bank
+		// pick up optimal solution with solves with bank
 		let mut a_in = 0;
 		let mut b_in = 0;
 		let mut transfers = vec![];
 		let mut solution_item = possible_solution;
 		for solution in all_solutions {
 			let alternative_all_orders = self.merge_solution_with_orders(&solution.msg, &ctx)?;
-			let mut a_total_in: u128 = alternative_all_orders
+			let a_total_in: u128 = alternative_all_orders
 				.iter()
 				.filter(|x| x.given().denom == a)
 				.map(|x: &SolvedOrder| x.given().amount.u128())
 				.sum();
-			let mut b_total_in: u128 = alternative_all_orders
+			let b_total_in: u128 = alternative_all_orders
 				.iter()
 				.filter(|x| x.given().denom == b)
 				.map(|x| x.given().amount.u128())
 				.sum();
-			/// so do all cows up to bank
+			// so do all cows up to bank
 			let alternative_transfers = solves_cows_via_bank(
 				alternative_all_orders.clone(),
 				a.clone(),
 				a_total_in,
 				b_total_in,
 			);
-			if a_total_in * b_total_in > a_in * b_in {
-				a_in = a_total_in;
-				b_in = b_total_in;
-				all_orders = alternative_all_orders;
-				transfers = alternative_transfers;
-				solution_item = solution;
+			if let Ok(alternative_transfers) = alternative_transfers {
+				if a_total_in * b_total_in > a_in * b_in {
+					a_in = a_total_in;
+					b_in = b_total_in;
+					all_orders = alternative_all_orders;
+					transfers = alternative_transfers;
+					solution_item = solution;
+				}
 			}
 		}
 
-		/// send remaining for settlement
+		// send remaining for settlement
 		let route = wasm_execute(
 			ctx.env.contract.address,
 			&ExecMsg::route(RouteSubMsg { all_orders, routes: solution_item.msg.routes }),
@@ -335,15 +333,14 @@ impl OrderContract<'_> {
 		msg: &SolutionSubMsg,
 		ctx: &ExecCtx<'_>,
 	) -> Result<Vec<SolvedOrder>, StdError> {
-		let mut all_orders = msg
+		let all_orders = msg
 			.cows
 			.iter()
 			.map(|x| {
 				self.orders
 					.load(ctx.deps.storage, x.order_id)
 					.map_err(|_| StdError::not_found("order"))
-					.map(|order| SolvedOrder::new(order, x.clone()))
-					.flatten()
+					.and_then(|order| SolvedOrder::new(order, x.clone()))
 			})
 			.collect::<Result<Vec<SolvedOrder>, _>>()?;
 		Ok(all_orders)
@@ -362,9 +359,11 @@ impl OrderContract<'_> {
 fn solves_cows_via_bank(
 	mut all_orders: Vec<SolvedOrder>,
 	a: String,
-	mut a_total_in: u128,
-	mut b_total_in: u128,
-) -> Vec<BankMsg> {
+	a_total_in: u128,
+	b_total_in: u128,
+) -> Result<Vec<BankMsg>, StdError> {
+	let mut a_total_in = BigRational::from_integer(a_total_in.into());
+	let mut b_total_in = BigRational::from_integer(b_total_in.into());
 	let mut transfers = vec![];
 	for order in all_orders.iter_mut() {
 		let cowed = order.solution.cow_amount;
@@ -373,12 +372,15 @@ fn solves_cows_via_bank(
 		// so if not enough was deposited as was taken from original orders, it will fails - so
 		// solver cannot rob the bank
 		if amount.denom == a {
-			a_total_in -= cowed;
+			a_total_in -= BigRational::from_integer(cowed.into());
 		} else {
-			b_total_in -= cowed;
+			b_total_in -= BigRational::from_integer(cowed.into());
 		};
 		transfers
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
-	transfers
+	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+	}
+	Ok(transfers)
 }
