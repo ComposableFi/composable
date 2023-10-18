@@ -1,4 +1,4 @@
-import {Asset} from "./types";
+import {Asset, Chains} from "./types";
 import BigNumber from "bignumber.js";
 import {ApiPromise} from "@polkadot/api";
 import {
@@ -10,46 +10,41 @@ import {
   queryTotalIssuanceOfTokenOnOsmosis,
   waitForSeconds
 } from "./ibcUtils";
-import assetData from "./assets.json";
 import {sendAndWaitForSuccess} from "./txClient";
 import {KeyringPair} from "@polkadot/keyring/types";
 import {AnyTuple, IEvent} from "@polkadot/types/types";
-import {
-  centauriAddress,
-  osmosisAddress,
-  picassoCentauriEscrowAddress,
-  picassoEscrowAddress,
-  picassoFeeAddress
-} from "./constants";
 import {bech32} from "bech32";
 import util from "node:util";
 import child_process from "child_process";
+import config from "../config.json";
 
 const exec = util.promisify(child_process.exec);
 
 
 export function createAssets(chain: string) {
   const assets: Asset[] = [];
-  Object.entries(assetData).map(([assetName, assetDetails]) => {
+  const assetConfig = config.assets;
+  Object.entries(assetConfig).map(([assetName, assetDetails]) => {
     let asset: Asset;
     if (assetName === 'pica' && chain === 'picasso') {
-      asset = createAsset(assetDetails.id[chain], assetDetails.decimals, chain, true);
+      asset = createAsset(assetDetails.id[chain], assetDetails.decimals, chain, assetName, true);
     } else {
       // @ts-ignore
-      asset = createAsset(assetDetails.id[chain], assetDetails.decimals, chain, false)
+      asset = createAsset(assetDetails.id[chain], assetDetails.decimals, chain, assetName, false)
     }
     assets.push(asset);
   })
   return assets;
 }
 
-export function createAsset(assetId: string, decimals: number, chain: string, native: boolean = false): Asset {
+export function createAsset(assetId: string, decimals: number, chain: string, assetSymbol: string, native: boolean = false): Asset {
   return {
     decimals: decimals,
     id: assetId,
     balance: new Map(),
     isNative: native,
     chain: chain,
+    symbol: assetSymbol,
   }
 }
 
@@ -133,37 +128,34 @@ export async function getTotalIssuance(asset: Asset | Asset[], ecosystem: string
 }
 
 export function mapRoutesAndChannels(startChain: string, endChain: string) {
-  const channels = returnChannels();
+  const channels = config.channels;
   // @ts-ignore
-  const chann = channels.find(chains => {
+  const foundChannel = channels.find(chains => {
     if (chains.from === startChain && chains.to === endChain) {
       return chains;
     }
   })
-  if (chann) return chann;
+  if(foundChannel) return foundChannel;
   throw new Error('Channel not found');
+
 }
 
 function isSubstrate(startChain: string, endChain: string) {
-  if (startChain === 'polkadot' || endChain === 'polkadot') return false;
-  if (startChain === 'kusama' || endChain === 'kusama') return false;
-  if (endChain === 'centauri' || endChain === 'osmo') return false;
-  return true;
-}
-
-function isCosmos(startChain: string, endChain: string) {
-  if (endChain === 'centauri' || endChain === 'osmo') return true;
+  const chains = config.chains as Chains;
+  const chainType = chains[endChain].chainType;
+  if (chainType === 'substrate') {
+    return true;
+  }
   return false;
 }
 
-function returnChannels() {
-  return [
-    {from: 'picasso', to: 'composable', channelId: 1},
-    {from: 'composable', to: 'picasso', channelId: 0},
-    {from: 'picasso', to: 'centauri', channelId: 0},
-    {from: 'centauri', to: 'picasso', channelId: 0},
-    {from: 'centauri', to: 'osmo', channelId: 1}
-  ]
+function isCosmos(startChain: string, endChain: string) {
+  const chains = config.chains as Chains;
+  const chainType = chains[endChain].chainType;
+  if (chainType === 'cosmos') {
+    return true;
+  }
+  return false;
 }
 
 export async function createRoute(api: ApiPromise, sudoKey: KeyringPair, routeId: number, channels: string [][]) {
@@ -178,7 +170,12 @@ export async function createRoute(api: ApiPromise, sudoKey: KeyringPair, routeId
     let route = api.createType('u8', routeOrder);
     let channelId;
     let paraId = api.createType('Option<u64>', null);
-    let name = api.createType('Bytes', toChain);
+    let name;
+    if(toChain === 'osmosis'){
+      name = api.createType('Bytes', 'osmo')
+    } else {
+      name = api.createType('Bytes', toChain);
+    }
     let timestamp;
     let height;
     let retries;
@@ -232,18 +229,20 @@ export async function initiateXcmTransfer(
   nbOfHops: number,
   transferAmount: BigNumber,
   toFail: boolean,
-  toCosmos = false
+  toCosmos = false,
+  centauriAddress: string,
+  osmosisAddress: string
 ) {
   const dest = setDestForXcmTransfer(api, parachainId);
   let beneficiary;
   if (!toFail && toCosmos) {
-    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, toCosmos);
+    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, toCosmos, centauriAddress, osmosisAddress);
   } else if (toFail && toCosmos) {
-    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, false);
+    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, false, centauriAddress, osmosisAddress);
   } else if (!toFail && !toCosmos) {
-    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, false);
+    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, false, centauriAddress, osmosisAddress);
   } else {
-    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, true);
+    beneficiary = setBeneficiary(api, nbOfHops, routeId, wallet, true, centauriAddress, osmosisAddress);
   }
   const assets = setNativeAssetForXcm(api, transferAmount);
   const feeAssetItem = api.createType('u32', 0);
@@ -256,7 +255,15 @@ export async function initiateXcmTransfer(
   )
 }
 
-export function setBeneficiary(api: ApiPromise, nbOfHops: number, routeId: number, wallet: KeyringPair, toCosmos: boolean) {
+export function setBeneficiary(
+  api: ApiPromise,
+  nbOfHops: number,
+  routeId: number,
+  wallet: KeyringPair,
+  toCosmos: boolean,
+  centauriAddress: string,
+  osmosisAddress: string,
+) {
   const networkHops = [];
   for (let i = 0; i < nbOfHops; i++) {
     const type = api.createType("XcmV2Junction", {
@@ -346,17 +353,12 @@ export function toNumber(bignumberAmount: BigNumber, decimals: number) {
 export async function getBalanceAndIssuanceStats(
   asset: Asset,
   walletAddress: string,
+  feeAddress: string,
+  escrowAddress: string,
   api: ApiPromise,
-  toChain: string
 ) {
-  let escrowAddress: string;
-  if (toChain === 'composable') {
-    escrowAddress = picassoEscrowAddress;
-  } else {
-    escrowAddress = picassoCentauriEscrowAddress;
-  }
-  await getBalance(asset, [picassoFeeAddress, escrowAddress, walletAddress], 'dotsama', api);
-  const preFeeAddressBalance = asset.balance.get(picassoFeeAddress) as BigNumber;
+  await getBalance(asset, [feeAddress, escrowAddress, walletAddress], 'dotsama', api);
+  const preFeeAddressBalance = asset.balance.get(feeAddress) as BigNumber;
   await getTotalIssuance(asset, 'dotsama', api);
   const preTotalIssuance = asset.totalIssuance as BigNumber;
   const preEscrowAddressBalance = asset.balance.get(escrowAddress) as BigNumber;
@@ -436,4 +438,24 @@ export function setDestForXcmTransfer(api: ApiPromise, parachainId: number) {
 export async function getNextSequenceForIbc(api: ApiPromise) {
   const nextHeader = await api.query.ibc.sequenceFee.entries();
   return nextHeader.length;
+}
+
+export function getAddressessOnPicasso(){
+  const substrateEscrowAddress = config.chains.picasso.addresses.substrateEscrowAddress;
+  const cosmosEscrowAddress = config.chains.picasso.addresses.cosmosEscrowAddress;
+  const feeAddress = config.chains.picasso.addresses.feeAddress;
+  return {substrateEscrowAddress, cosmosEscrowAddress, feeAddress}
+}
+
+export function getAddressessOnOtherChains(){
+  const centauriAddress = config.chains.centauri.addresses.centauriAddress;
+  const osmosisAddress = config.chains.osmosis.addresses.osmoAddress;
+  return {centauriAddress, osmosisAddress};
+}
+
+export function getEndpoints() {
+  const picassoEndpoint = config.endpoints.picassoEndpoint;
+  const composableEndpoint = config.endpoints.composableEndpoint;
+  const kusamaEndpoint = config.endpoints.kusamaEndpoint;
+  return {picassoEndpoint, composableEndpoint, kusamaEndpoint};
 }

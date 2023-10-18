@@ -3,8 +3,11 @@ import {
   createAsset,
   createAssets,
   createRoute,
+  getAddressessOnOtherChains,
+  getAddressessOnPicasso,
   getBalance,
   getBalanceAndIssuanceStats,
+  getEndpoints,
   getNextSequenceForIbc,
   getTotalIssuance,
   initiateXcmTransfer,
@@ -13,19 +16,6 @@ import {
   waitForEvent
 } from "./utils/multihopUtils";
 import {getWallets, initializeApi} from "./utils/apiClient";
-import {
-  centauriAddress,
-  composableEndpoint,
-  ksmOncentauri,
-  ksmOnComposable,
-  ksmOnOsmosis,
-  kusamaEndpoint,
-  osmosisAddress,
-  picassoEndpoint,
-  picassoEscrowAddress,
-  picassoFeeAddress,
-  polkadotEndpoint
-} from "./utils/constants";
 import {ApiPromise} from "@polkadot/api";
 import {Asset} from "./utils/types";
 import {waitForBlocks} from "./utils/txClient";
@@ -46,14 +36,15 @@ describe('MultiHop Tests', function () {
   let centauriAssets = createAssets('centauri');
   let osmosisAssets = createAssets('osmosis');
   const ksmTransferAmount = new BigNumber('10000000000000');
-  const ksmOnKusama = createAsset("1", 12, 'kusama', true);
-  const dotOnPolkadot = createAsset("1", 10, 'composable', true);
+  const ksmOnKusama = createAsset("1", 12, 'kusama', 'ksm', true);
+  const {substrateEscrowAddress, cosmosEscrowAddress, feeAddress} = getAddressessOnPicasso();
+  const {centauriAddress, osmosisAddress} = getAddressessOnOtherChains();
+  const {picassoEndpoint, composableEndpoint, kusamaEndpoint} = getEndpoints();
   let ibcSentAmount: BigNumber;
   let sudoKey: KeyringPair;
   let testWallet: KeyringPair;
   let picassoApi: ApiPromise;
   let composableApi: ApiPromise;
-  let polkadotApi: ApiPromise;
   let kusamaApi: ApiPromise;
   let ibcEvent: any;
 
@@ -61,45 +52,63 @@ describe('MultiHop Tests', function () {
     picassoApi = await initializeApi(picassoEndpoint);
     composableApi = await initializeApi(composableEndpoint);
     kusamaApi = await initializeApi(kusamaEndpoint);
-    polkadotApi = await initializeApi(polkadotEndpoint);
     ({sudoKey, testWallet} = getWallets('multihop'));
     await Promise.all([
-      mintAssetsToWallets(picassoApi, testWallet, sudoKey, [1, 4, 6, 130], '10000000000000000', 'picasso'),
-      mintAssetsOnRelays([kusamaApi, polkadotApi], sudoKey, testWallet.address),
+      mintAssetsToWallets(picassoApi, testWallet, sudoKey, [1], '10000000000000000', 'picasso'),
+      mintAssetsOnRelays([kusamaApi], sudoKey, testWallet.address),
     ]);
     await createRoute(picassoApi, sudoKey, 2, [['picasso', 'composable'], ['composable', 'picasso']]);
-    await createRoute(picassoApi, sudoKey, 3, [['picasso', 'centauri'], ['centauri', 'osmo']]);
+    await createRoute(picassoApi, sudoKey, 3, [['picasso', 'centauri'], ['centauri', 'osmosis']]);
     await Promise.all([
-      getBalance(picassoAssets, [testWallet.address, picassoFeeAddress, picassoEscrowAddress], 'dotsama', picassoApi),
+      getBalance(picassoAssets, [testWallet.address, feeAddress, substrateEscrowAddress, cosmosEscrowAddress], 'dotsama', picassoApi),
       getBalance(composableAssets, [testWallet.address], 'dotsama', composableApi),
       getBalance(ksmOnKusama, [testWallet.address], 'dotsama', kusamaApi),
-      getBalance(dotOnPolkadot, [testWallet.address], 'dotsama', polkadotApi),
       getBalance(centauriAssets, [centauriAddress], 'cosmos'),
       getBalance(osmosisAssets, [osmosisAddress], 'cosmos'),
     ]);
     await addFeelessChannels(composableApi, sudoKey);
   })
 
-  before('Wait for channel 1 to open to centauri', async () => {
+  before('Wait for channel to open on centauri to osmosis', async () => {
     await waitForChannelsToOpen(2, 'centauri');
   });
 
-  it('Starts a transfer to osmosis', async () => {
+  it('Initiates a transfer for kusama => picasso => centauri => osmosis', async () => {
     const preSequence = await getNextSequenceForIbc(picassoApi);
-    const ksm = picassoAssets.find(asset => asset.id === "4") as Asset;
+    const ksm = picassoAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const [preFeeAddressBalance, preTotalIssuance, preEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'centauri');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        cosmosEscrowAddress,
+        picassoApi);
     ([ibcEvent,] = await Promise.all([
         waitForEvent(picassoApi, picassoApi.events.palletMultihopXcmIbc.SuccessXcmToIbc.is),
-        initiateXcmTransfer(kusamaApi, 2087, 3, testWallet, 3, ksmTransferAmount, false, true),
+        initiateXcmTransfer(
+          kusamaApi,
+          2087,
+          3,
+          testWallet,
+          3,
+          ksmTransferAmount,
+          false,
+          true,
+          centauriAddress,
+          osmosisAddress),
       ]
     ));
     await waitForBlocks(picassoApi, 1);
-    const {data: [origin, to, amount, assetId, memo]} = ibcEvent;
+    const {data: [_origin, _to, amount, _assetId, _memo]} = ibcEvent;
     ibcSentAmount = new BigNumber((amount.toString().replaceAll(',', '')));
     const nextsequence = await getNextSequenceForIbc(picassoApi);
     const [afterFeeAddressBalance, afterTotalIssuance, afterEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'centauri');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        cosmosEscrowAddress,
+        picassoApi);
     const feeCharged = new BigNumber((ibcSentAmount.multipliedBy(0.004)).toFixed(0));
     ibcSentAmount = ibcSentAmount.minus(feeCharged);
     const diffInTotalIssuance = afterTotalIssuance.minus(preTotalIssuance);
@@ -110,7 +119,7 @@ describe('MultiHop Tests', function () {
   });
 
   it('Waits for funds on centauri', async () => {
-    const ksmOnCent = centauriAssets.find(asset => asset.id === ksmOncentauri) as Asset;
+    const ksmOnCent = centauriAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const ksmPreBal = ksmOnCent?.balance.get(centauriAddress) as BigNumber;
     await getTotalIssuance(ksmOnCent, 'cosmos');
     const preTotalIssuance = ksmOnCent.totalIssuance as BigNumber;
@@ -129,7 +138,7 @@ describe('MultiHop Tests', function () {
   });
 
   it('waits for funds on osmosis', async () => {
-    const ksmOnOsmo = osmosisAssets.find(asset => asset.id === ksmOnOsmosis) as Asset;
+    const ksmOnOsmo = osmosisAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const ksmPreBal = ksmOnOsmo?.balance.get(osmosisAddress) as BigNumber;
     await getTotalIssuance(ksmOnOsmo, 'cosmos');
     const preTotalIssuance = ksmOnOsmo.totalIssuance as BigNumber;
@@ -150,18 +159,39 @@ describe('MultiHop Tests', function () {
     const preSequence = await getNextSequenceForIbc(picassoApi);
     const ksm = picassoAssets.find(asset => asset.id === "4") as Asset;
     const [preFeeAddressBalance, preTotalIssuance, preEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'centauri');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        cosmosEscrowAddress,
+        picassoApi);
     const userPreBalance = ksm.balance.get(testWallet.address) as BigNumber;
     ([ibcEvent,] = await Promise.all([
         waitForEvent(picassoApi, picassoApi.events.palletMultihopXcmIbc.FailedCallback.is),
-        initiateXcmTransfer(kusamaApi, 2087, route, testWallet, 3, ksmTransferAmount, true, true),
+        initiateXcmTransfer(
+          kusamaApi,
+          2087,
+          route,
+          testWallet,
+          3,
+          ksmTransferAmount,
+          true,
+          true,
+          centauriAddress,
+          osmosisAddress),
       ]
-    ));
+    ))
+    ;
     await waitForBlocks(picassoApi, 1);
-    const {data: [originAddress, routeId, reason]} = ibcEvent;
+    const {data: [_originAddress, routeId, _reason]} = ibcEvent;
     expect(routeId.toString()).to.be.eq(route.toString())
     const [afterFeeAddressBalance, afterTotalIssuance, afterEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'centauri');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        cosmosEscrowAddress,
+        picassoApi);
     const userAfterBalance = ksm.balance.get(testWallet.address) as BigNumber;
     const diffInTotalIssuance = afterTotalIssuance.minus(preTotalIssuance);
     const afterSequence = await getNextSequenceForIbc(picassoApi);
@@ -172,25 +202,45 @@ describe('MultiHop Tests', function () {
     expect(afterSequence).to.be.eq(preSequence);
   });
 
-  it('Wait for channel 1 to open on picasso', async () => {
+  it('Wait for channel to open on picasso to composable', async () => {
     await waitForChannelsToOpen(2, 'picasso', picassoApi);
   });
 
-  it('Initiate a transfer from kusama to composable', async () => {
+  it('Initiate a transfer for kusama => picasso => composable => picasso', async () => {
     const preSequence = await getNextSequenceForIbc(picassoApi);
-    const ksm = picassoAssets.find(asset => asset.id === "4") as Asset;
+    const ksm = picassoAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const [preFeeAddressBalance, preTotalIssuance, preEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'composable');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        substrateEscrowAddress,
+        picassoApi);
     ([ibcEvent,] = await Promise.all([
         waitForEvent(picassoApi, picassoApi.events.palletMultihopXcmIbc.SuccessXcmToIbc.is),
-        initiateXcmTransfer(kusamaApi, 2087, 2, testWallet, 3, ksmTransferAmount, false),
+        initiateXcmTransfer(
+          kusamaApi,
+          2087,
+          2,
+          testWallet,
+          3,
+          ksmTransferAmount,
+          false,
+          false,
+          centauriAddress,
+          osmosisAddress),
       ]
     ));
-    const {data: [origin, to, amount, assetId, memo]} = ibcEvent;
+    const {data: [_origin, _to, amount, _assetId, _memo]} = ibcEvent;
     let sentAmount = new BigNumber((amount.toString().replaceAll(',', '')));
     await waitForBlocks(picassoApi, 2);
     const [afterFeeAddressBalance, afterTotalIssuance, afterEscrowAddressBalance] =
-      await getBalanceAndIssuanceStats(ksm, testWallet.address, picassoApi, 'composable');
+      await getBalanceAndIssuanceStats(
+        ksm,
+        testWallet.address,
+        feeAddress,
+        substrateEscrowAddress,
+        picassoApi);
     const diffInTotalIssuance = afterTotalIssuance.minus(preTotalIssuance);
     const afterSequence = await getNextSequenceForIbc(picassoApi);
     const feeCharged = new BigNumber((sentAmount.multipliedBy(0.004)).toFixed(0));
@@ -203,7 +253,7 @@ describe('MultiHop Tests', function () {
 
   it('Validate multihop event', () => {
     const id = picassoApi.registry.createType("AccountId", testWallet.address);
-    const {data: [origin, to, amount, assetId, memo]} = ibcEvent;
+    const {data: [origin, to, _amount, assetId, memo]} = ibcEvent;
     expect(origin.toHex()).to.be.eq(id.toHex());
     expect(to.toHex()).to.be.eq(id.toHex());
     expect(assetId.toString()).to.be.eq('4');
@@ -213,7 +263,7 @@ describe('MultiHop Tests', function () {
   });
 
   it('Wait for funds to arrive at composable', async () => {
-    const ksmOnComp = composableAssets.find(asset => asset.id === ksmOnComposable) as Asset;
+    const ksmOnComp = composableAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const ksmPreBal = ksmOnComp?.balance.get(testWallet.address) as BigNumber;
     await getTotalIssuance(ksmOnComp, 'dotsama', composableApi);
     const preTotalIssuance = ksmOnComp.totalIssuance as BigNumber;
@@ -225,28 +275,28 @@ describe('MultiHop Tests', function () {
     let ksmAfterBal = ksmOnComp.balance.get(testWallet.address) as BigNumber;
     expect(ksmAfterBal).to.be.bignumber.eq(ksmPreBal);
     expect(afterTotalIssuance).to.be.bignumber.eq(preTotalIssuance);
-    const {data: [origin, to, assetId, amount, channel, nextMemo]} = ibcEvent;
+    const {data: [_origin, _to, _assetId, amount, _channel, _nextMemo]} = ibcEvent;
     const amountRaw = amount.toString() as string;
     ibcSentAmount = new BigNumber(amountRaw.replaceAll(',', ''));
   });
 
-  it('Funds arrive at picasso', async () => {
+  it('Wait for funds to arrive at composable', async () => {
     const ksm = picassoAssets.find(asset => asset.id === '4');
     const preUserBalance = ksm?.balance.get(testWallet.address) as BigNumber;
-    const preEscrowBalance = ksm?.balance.get(picassoEscrowAddress) as BigNumber;
+    const preEscrowBalance = ksm?.balance.get(substrateEscrowAddress) as BigNumber;
     const preTotalIssuance = ksm?.totalIssuance;
     const feeCharged = ibcSentAmount.multipliedBy(0.004);
-    const event = await waitForEvent(picassoApi, picassoApi.events.ibc.TokenReceived.is);
+    await waitForEvent(picassoApi, picassoApi.events.ibc.TokenReceived.is);
     await waitForBlocks(picassoApi, 1);
     await getBalance(
       picassoAssets,
-      [testWallet.address, picassoFeeAddress, picassoEscrowAddress],
+      [testWallet.address, feeAddress, substrateEscrowAddress],
       'dotsama',
       picassoApi
     );
     await getTotalIssuance(picassoAssets, 'dotsama', picassoApi);
     const afterUserBalance = ksm?.balance.get(testWallet.address) as BigNumber;
-    const afterEscrowBalance = ksm?.balance.get(picassoEscrowAddress) as BigNumber;
+    const afterEscrowBalance = ksm?.balance.get(substrateEscrowAddress) as BigNumber;
     const afterTotalIssuance = ksm?.totalIssuance as BigNumber;
     const expectedBalanceIncrease = ibcSentAmount.minus(feeCharged);
     expect(toNumber(afterUserBalance.minus(preUserBalance), 12)).to.be
@@ -260,6 +310,5 @@ describe('MultiHop Tests', function () {
     await picassoApi.disconnect();
     await composableApi.disconnect();
     await kusamaApi.disconnect();
-    await polkadotApi.disconnect();
   });
 })
