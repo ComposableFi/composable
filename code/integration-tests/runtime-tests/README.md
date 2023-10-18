@@ -2,7 +2,7 @@
 Tests for runtime.
 ## Prerequisites
 
-In order to run the tests, centauri and osmosis binaries should be available on ~/go/ folder and should be executable.
+In order to run the tests, centauri and osmosis binaries should be executable.
 To run tests, on runtime-tests folder: 
 
 ``npm install`` 
