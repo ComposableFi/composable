@@ -28,7 +28,7 @@ impl Default for Runtime {
 	}
 }
 
-use common::ibc::{ForeignIbcIcs20Assets, RawMemo};
+use common::ibc::ForeignIbcIcs20Assets;
 pub struct IbcDenomToAssetIdConversion;
 
 impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
@@ -173,7 +173,7 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(not(feature = "testnet"))]
 	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
 	type HandleMemo = IbcMemoHandler<(), Runtime>;
-	type MemoMessage = RawMemo;
+	type MemoMessage = alloc::string::String;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
 	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;

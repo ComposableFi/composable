@@ -26,12 +26,13 @@
         });
     in {
       packages = rec {
-        cw-xc-interpreter = mkXcvmContract "cw-xc-interpreter";
+        cw-xc-executor = mkXcvmContract "cw-xc-interpreter";
         cw-xc-gateway = mkXcvmContract "cw-xc-gateway";
         cw-xc-pingpong = mkXcvmContract "cw-xc-pingpong";
+        cw-cvm-order = mkXcvmContract "cw-cvm-order";
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
-          paths = [ cw-xc-interpreter cw-xc-gateway ];
+          paths = [ cw-xc-executor cw-xc-gateway ];
         };
         xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {

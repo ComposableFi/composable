@@ -95,8 +95,7 @@
         in pkgs.stdenv.mkDerivation {
           name = name;
           phases = [ "installPhase" ];
-          nativeBuildInputs =
-            [ pkgs.binaryen self'.packages.subwasm pkgs.hexdump ];
+          nativeBuildInputs = with pkgs; [ binaryen subwasm hexdump ];
           installPhase = ''
             mkdir --parents $out/lib
             wasm-opt ${wasm}/lib/${file}.wasm -o $out/lib/${file}.wasm -Os --strip-dwarf --debuginfo --mvp-features

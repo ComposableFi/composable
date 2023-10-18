@@ -4,7 +4,7 @@
 
 Pablo will offer multiple AMM-types, enhanced customizability for LPs and traders, liquidity-bootstrapping pools and 
 cross-chain assets and liquidity pools via [Composable IBC](../technology/compsable-ibc.md).
-Upon launch, Pablo will support dual asset Constant product(x * y = k) pools based on [BalancerFi weighted math]
+Upon launch, Pablo will support dual asset Constant product $x * y = k$ pools based on [BalancerFi weighted math]
 followed shortly after by Stableswap and the aforementioned liquidity-bootstrapping pools (LBP). 
 In addition, Pablo aims to overcome the short-falls that other DEXs face such as mercenary capital
 and relying solely on a high inflationary reward token. 

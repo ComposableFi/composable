@@ -573,7 +573,7 @@ checksum = "0e97ce7de6cf12de5d7226c73f5ba9811622f4db3a5b91b55c53e987e5f91cba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -653,7 +653,7 @@ checksum = "a564d521dd56509c4c47480d00b80ee55f7e385ae48db5744c67ad50c92d2ebf"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -759,7 +759,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -885,7 +885,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more 0.99.17",
@@ -952,7 +952,7 @@ dependencies = [
  "regex",
  "rustc-hash",
  "shlex",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -1133,6 +1133,12 @@ dependencies = [
  "futures-lite",
  "log 0.4.19",
 ]
+
+[[package]]
+name = "bnum"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "128a44527fc0d6abf05f9eda748b9027536e12dff93f5acc8449f51583309350"
 
 [[package]]
 name = "borsh"
@@ -1592,7 +1598,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -1720,7 +1726,7 @@ dependencies = [
  "bs58 0.5.0",
  "composable-support",
  "composable-traits",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cumulus-pallet-xcm",
  "cumulus-primitives-core",
  "derive_more 0.99.17",
@@ -1734,7 +1740,6 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
- "pallet-ibc",
  "pallet-sudo",
  "pallet-treasury",
  "parity-scale-codec",
@@ -1742,7 +1747,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "smallvec 1.11.0",
  "sp-consensus-aura",
  "sp-core",
@@ -2010,7 +2015,7 @@ dependencies = [
  "bitflags 1.3.2",
  "composable-support",
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "frame-support",
  "frame-system",
  "pallet-ibc",
@@ -2072,6 +2077,12 @@ name = "const_fn"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbdcdcb6d86f71c5e97409ad45898af11cbc995b4ee8112d59095a28d376c935"
+
+[[package]]
+name = "const_panic"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6051f239ecec86fde3410901ab7860d458d160371533842974fc61f96d15879b"
 
 [[package]]
 name = "constant_time_eq"
@@ -2197,9 +2208,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-crypto"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6fb22494cf7d23d0c348740e06e5c742070b2991fd41db77bba0bcfbae1a723"
+dependencies = [
+ "digest 0.10.7",
+ "ed25519-zebra",
+ "k256 0.13.1",
+ "rand_core 0.6.4",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-derive"
 version = "1.2.5"
 source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
+dependencies = [
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "cosmwasm-derive"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e199424486ea97d6b211db6387fd72e26b4a439d40cc23140b2d8305728055b"
 dependencies = [
  "syn 1.0.109",
 ]
@@ -2213,7 +2246,7 @@ dependencies = [
  "base64 0.13.1",
  "bech32",
  "bs58 0.4.0",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "ed25519-zebra",
@@ -2267,11 +2300,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.2.7"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "230e5d1cefae5331db8934763c81b9c871db6a2cd899056a5694fa71d292c815"
+checksum = "fef683a9c1c4eabd6d31515719d0d2cc66952c4c87f7eb192bfc90384517dc34"
 dependencies = [
- "cosmwasm-schema-derive 1.2.7",
+ "cosmwasm-schema-derive 1.4.1",
  "schemars",
  "serde",
  "serde_json",
@@ -2290,9 +2323,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.2.7"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43dadf7c23406cb28079d69e6cb922c9c29b9157b0fe887e3b79c783b7d4bcb8"
+checksum = "9567025acbb4c0c008178393eb53b3ac3c2e492c25949d3bf415b9cbe80772d8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2305,17 +2338,37 @@ version = "1.2.5"
 source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
 dependencies = [
  "base64 0.13.1",
- "cosmwasm-crypto",
- "cosmwasm-derive",
+ "cosmwasm-crypto 1.2.5",
+ "cosmwasm-derive 1.2.5",
  "derivative",
  "forward_ref",
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "sha2 0.10.7",
  "thiserror-core",
  "uint 0.9.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cosmwasm-std"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d89d680fb60439b7c5947b15f9c84b961b88d1f8a3b20c4bd178a3f87db8bae"
+dependencies = [
+ "base64 0.21.2",
+ "bnum",
+ "cosmwasm-crypto 1.4.1",
+ "cosmwasm-derive 1.4.1",
+ "derivative",
+ "forward_ref",
+ "hex",
+ "schemars",
+ "serde",
+ "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sha2 0.10.7",
+ "thiserror",
 ]
 
 [[package]]
@@ -2323,7 +2376,7 @@ name = "cosmwasm-vm"
 version = "0.2.0"
 source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "log 0.4.19",
  "num",
  "serde",
@@ -2335,7 +2388,7 @@ name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
 source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "either",
  "hex",
@@ -2472,7 +2525,7 @@ dependencies = [
  "cranelift-codegen",
  "cranelift-entity",
  "cranelift-frontend",
- "itertools",
+ "itertools 0.10.5",
  "log 0.4.19",
  "smallvec 1.11.0",
  "wasmparser 0.102.0",
@@ -2959,7 +3012,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3267,11 +3320,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
+name = "cw-cvm-order"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.4.1",
+ "cw-storage-plus 1.1.0",
+ "itertools 0.11.0",
+ "num-rational",
+ "schemars",
+ "serde",
+ "sylvia",
+ "thiserror-core",
+ "xc-core",
+]
+
+[[package]]
 name = "cw-storage-plus"
 version = "1.0.2"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-storage-plus?rev=d0a2cf126cae3e3960c787ebcfc9baa54f59f71c#d0a2cf126cae3e3960c787ebcfc9baa54f59f71c"
 dependencies = [
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw-storage-plus"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f0e92a069d62067f3472c62e30adedb4cab1754725c0f2a682b3128d2bf3c79"
+dependencies = [
+ "cosmwasm-std 1.4.1",
  "schemars",
  "serde",
 ]
@@ -3281,8 +3361,8 @@ name = "cw-utils"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.2.7",
- "cosmwasm-std",
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.2.5",
  "cw2",
  "schemars",
  "semver 1.0.18",
@@ -3295,8 +3375,8 @@ name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
  "bech32",
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "cw-utils",
  "cw-xc-interpreter",
  "cw2",
@@ -3306,18 +3386,18 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "thiserror-core",
  "xc-core",
 ]
 
 [[package]]
 name = "cw-xc-interpreter"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "cw-utils",
  "cw2",
  "cw20",
@@ -3326,8 +3406,8 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-cw-value",
- "serde-json-wasm",
+ "serde-cw-value 0.7.0 (git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595)",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_json",
  "thiserror-core",
  "xc-core",
@@ -3337,15 +3417,15 @@ dependencies = [
 name = "cw-xc-pingpong"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "cw-utils",
  "cw2",
  "cw20",
  "num",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_json",
  "thiserror-core",
  "xc-core",
@@ -3356,9 +3436,9 @@ name = "cw2"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.2.7",
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "schemars",
  "serde",
  "thiserror-core",
@@ -3369,8 +3449,8 @@ name = "cw20"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.2.7",
- "cosmwasm-std",
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.2.5",
  "cw-utils",
  "schemars",
  "serde",
@@ -3381,9 +3461,9 @@ name = "cw20-base"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.2.7",
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "cw-utils",
  "cw2",
  "cw20",
@@ -3417,7 +3497,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "scratch",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3434,7 +3514,7 @@ checksum = "cf01e8a540f5a4e0f284595834f81cf88572f244b768f051724537afa99a2545"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3482,7 +3562,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim 0.10.0",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3504,7 +3584,7 @@ checksum = "836a9bbc7ad63342d6d6e7b815ccab164bc77a2d95d84bc3117a8c0d5c98e2d5"
 dependencies = [
  "darling_core 0.20.3",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3612,7 +3692,7 @@ checksum = "53e0efad4403bfc52dc201159c4b842a246a14b98c64b55dfd0f2d89729dfeb8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -3677,7 +3757,7 @@ dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
  "unicode-xid",
 ]
 
@@ -3782,7 +3862,7 @@ checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4047,7 +4127,7 @@ checksum = "5e9a1f9f7d83e59740248a6e14ecf93929ade55027844dfcea78beafccc15745"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4058,7 +4138,7 @@ checksum = "c2ad8cef1d801a4686bfd8919f0b30eac4c8e48968c437a6405ded4fb5272d2b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4200,7 +4280,7 @@ dependencies = [
  "fs-err",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4588,7 +4668,7 @@ dependencies = [
  "frame-system",
  "gethostname",
  "handlebars",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "linked-hash-map",
  "log 0.4.19",
@@ -4628,7 +4708,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4740,11 +4820,11 @@ dependencies = [
  "cfg-expr",
  "derive-syn-parse",
  "frame-support-procedural-tools",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro-warning",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4756,7 +4836,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4766,7 +4846,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -4977,7 +5057,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -5176,7 +5256,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5198,7 +5278,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5653,7 +5733,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "derive_more 0.99.17",
  "flex-error",
@@ -5699,7 +5779,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_derive",
  "sha2 0.10.7",
  "subtle-encoding",
@@ -5714,7 +5794,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5732,13 +5812,13 @@ dependencies = [
  "darling 0.20.3",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "base58",
  "blake2",
@@ -5762,7 +5842,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5791,9 +5871,10 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "frame-system",
+ "hex-literal 0.3.4",
  "ibc 0.15.0",
  "ibc-derive 0.1.0",
  "ibc-primitives",
@@ -5817,7 +5898,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5829,7 +5910,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5852,7 +5933,7 @@ dependencies = [
 [[package]]
 name = "ics08-wasm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "hex",
  "ibc 0.15.0",
@@ -5865,7 +5946,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5891,7 +5972,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -6269,6 +6350,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6591,6 +6681,7 @@ dependencies = [
  "elliptic-curve 0.13.5",
  "once_cell",
  "sha2 0.10.7",
+ "signature 2.0.0",
 ]
 
 [[package]]
@@ -6611,6 +6702,33 @@ dependencies = [
  "winapi 0.2.8",
  "winapi-build",
 ]
+
+[[package]]
+name = "konst"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "030400e39b2dff8beaa55986a17e0014ad657f569ca92426aafcb5e8e71faee7"
+dependencies = [
+ "const_panic",
+ "konst_kernel",
+ "konst_proc_macros",
+ "typewit",
+]
+
+[[package]]
+name = "konst_kernel"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3376133edc39f027d551eb77b077c2865a0ef252b2e7d0dd6b6dc303db95d8b5"
+dependencies = [
+ "typewit",
+]
+
+[[package]]
+name = "konst_proc_macros"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e28ab1dc35e09d60c2b8c90d12a9a8d9666c876c10a3739a3196db0103b6043"
 
 [[package]]
 name = "kusama-runtime"
@@ -7332,7 +7450,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8306,7 +8424,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -8351,7 +8469,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2871aadd82a2c216ee68a69837a526dfe788ecbe74c4c5038a6acdbff6653066"
 dependencies = [
  "expander 0.0.6",
- "itertools",
+ "itertools 0.10.5",
  "petgraph",
  "proc-macro-crate 1.3.1",
  "proc-macro2",
@@ -8924,7 +9042,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "frame-benchmarking",
@@ -9152,7 +9270,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -9205,7 +9323,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9716,7 +9834,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -10300,7 +10418,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -10333,7 +10451,7 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "cosmwasm-runtime-api",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "crowdloan-rewards-runtime-api",
@@ -10408,7 +10526,7 @@ dependencies = [
  "reward",
  "reward-rpc-runtime-api",
  "scale-info",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "smallvec 1.11.0",
  "sp-api",
  "sp-block-builder",
@@ -10451,7 +10569,7 @@ checksum = "ec2e072ecce94ec471b13398d5402c188e76ac03cf74dd1a975161b23a3f6d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -11251,7 +11369,7 @@ dependencies = [
  "fatality",
  "futures 0.3.28",
  "futures-channel",
- "itertools",
+ "itertools 0.10.5",
  "kvdb",
  "lru 0.9.0",
  "parity-db",
@@ -11825,7 +11943,7 @@ checksum = "59230a63c37f3e18569bdb90e4a89cbf5bf8b06fea0b84e65ea10cc4df47addd"
 dependencies = [
  "difflib",
  "float-cmp",
- "itertools",
+ "itertools 0.10.5",
  "normalize-line-endings",
  "predicates-core",
  "regex",
@@ -11864,7 +11982,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c64d9ba0963cdcea2e1b2230fbae2bab30eb25a174be395c41e764bfb65dd62"
 dependencies = [
  "proc-macro2",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -11935,13 +12053,13 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "frame-support",
  "ibc 0.43.1",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -12021,7 +12139,7 @@ checksum = "0e99670bafb56b9a106419397343bdbc8b8742c3cc449fec6345f86173f47cd4"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -12067,7 +12185,7 @@ checksum = "440f724eba9f6996b75d63681b0a92b06947f1457076d503a4d2e2c8f56442b8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -12108,7 +12226,7 @@ checksum = "119533552c9a7ffacc21e099c24a0ac8bb19c2a2a3f363de84cd9b844feab270"
 dependencies = [
  "bytes 1.4.0",
  "heck 0.4.1",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "log 0.4.19",
  "multimap",
@@ -12129,7 +12247,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5d2d8d10f3c6ded6da8b05b5fb3b8a5082514344d56c9f871412d29b4e075b4"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -12545,7 +12663,7 @@ checksum = "3bd8f48b2066e9f69ab192797d66da804d1935bf22763204ed3675740cb0f221"
 dependencies = [
  "derive_more 0.99.17",
  "fs-err",
- "itertools",
+ "itertools 0.10.5",
  "static_init 0.5.2",
  "thiserror",
 ]
@@ -12567,7 +12685,7 @@ checksum = "68bf53dad9b6086826722cdc99140793afd9f62faa14a1ad07eb4f955e7a7216"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -13394,7 +13512,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -14362,7 +14480,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -14736,11 +14854,20 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.173"
+version = "1.0.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e91f70896d6720bc714a4a57d22fc91f1db634680e65c8efe13323f1fa38d53f"
+checksum = "8e422a44e74ad4001bdc8eede9a4570ab52f71190e9c076d14369f38b9200537"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-cw-value"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -14749,6 +14876,15 @@ version = "0.7.0"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595#b91ac6d797fd24c00758ad3995a55dc820279595"
 dependencies = [
  "schemars",
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16a62a1fad1e1828b24acac8f2b468971dade7b8c3c2e672bcadefefb1f8c137"
+dependencies = [
  "serde",
 ]
 
@@ -14771,13 +14907,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.173"
+version = "1.0.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6250dde8342e0232232be9ca3db7aa40aceb5a3e5dd9bddbc00d99a007cde49"
+checksum = "1e48d1f918009ce3145511378cf68d613e3b3d9137d67272562080d68a2b32d5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -14840,7 +14976,7 @@ checksum = "1d89a8107374290037607734c0b73a85db7ed80cae314b3c5791f192a496e731"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -15043,7 +15179,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/centauri?branch=upgrade-polkadot-0.9.43#6a9bac4adb4b35ca99ada3b13128a91582213bb1"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.10.0",
@@ -15226,7 +15362,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -15483,7 +15619,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sp-core-hashing 5.0.0",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -15513,7 +15649,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -15724,7 +15860,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -15936,7 +16072,7 @@ dependencies = [
  "parity-scale-codec",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -16226,7 +16362,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -16520,6 +16656,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "sylvia"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f33388920659b494dab887f3bb40ebb071c602750597575034bea7c63ab12800"
+dependencies = [
+ "cosmwasm-schema 1.4.1",
+ "cosmwasm-std 1.4.1",
+ "konst",
+ "schemars",
+ "serde",
+ "serde-cw-value 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sylvia-derive",
+]
+
+[[package]]
+name = "sylvia-derive"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8031f53dbfda341acd7bd321e10d0d684b673324145026e23705da4b6d5c4919"
+dependencies = [
+ "convert_case 0.6.0",
+ "proc-macro-crate 1.3.1",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16532,9 +16698,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.26"
+version = "2.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45c3457aacde3c65315de5031ec191ce46604304d2446e803d71ade03308d970"
+checksum = "239814284fd6f1a4ffe4ca893952cdd93c224b6a1571c9a9eadd670295c0c9e2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -16787,7 +16953,7 @@ checksum = "463fe12d7993d3b327787537ce8dd4dfa058de32fc2b195ef3cde03dc4771e8f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -17052,7 +17218,7 @@ checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -17290,7 +17456,7 @@ checksum = "5f4f31f56159e98206da9efd823404b79b6ef3143b4a7ab76e67b1751b25a4ab"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -17333,7 +17499,7 @@ dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -17584,6 +17750,21 @@ name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
+
+[[package]]
+name = "typewit"
+version = "1.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6779a69cc5f9a7388274a0a8a353eb1c9e45195f9ae74a26690b055a7cf9592a"
+dependencies = [
+ "typewit_proc_macros",
+]
+
+[[package]]
+name = "typewit_proc_macros"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e36a83ea2b3c704935a01b4642946aadd445cea40b10935e3f8bd8052b8193d6"
 
 [[package]]
 name = "ucd-trie"
@@ -17983,7 +18164,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
  "wasm-bindgen-shared",
 ]
 
@@ -18017,7 +18198,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -19199,8 +19380,8 @@ version = "0.1.0"
 dependencies = [
  "bech32",
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
  "cw20",
  "derive_more 1.0.0-beta.2",
  "fixed",
@@ -19215,8 +19396,8 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-cw-value",
- "serde-json-wasm",
+ "serde-cw-value 0.7.0 (git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595)",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "sha2 0.10.7",
  "strum 0.25.0",
  "thiserror-core",
@@ -19228,7 +19409,7 @@ name = "xc-tests"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-orchestrate",
- "cosmwasm-std",
+ "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "cw-xc-interpreter",
@@ -19313,7 +19494,7 @@ dependencies = [
  "Inflector",
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -19374,7 +19555,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.26",
+ "syn 2.0.32",
 ]
 
 [[package]]
