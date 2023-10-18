@@ -29,25 +29,25 @@ export async function waitForSeconds(seconds: number) {
 }
 
 export async function queryTotalIssuanceOfTokenOnOsmosis(denom: string) {
-  const {stdout} = await exec(`binaries/osmosisd query bank total --denom ${denom} --output json`);
+  const {stdout} = await exec(`~/go/osmosisd query bank total --denom ${denom} --output json`);
   const formattedBalance = JSON.parse(stdout);
   return formattedBalance.amount;
 }
 
 export async function queryTotalIssuanceOfTokenOnCentauri(denom: string){
-  const {stdout} = await exec(`binaries/centaurid query bank total --denom ${denom} --output json`);
+  const {stdout} = await exec(`~/go/centaurid query bank total --denom ${denom} --output json`);
   const formattedBalance = JSON.parse(stdout);
   return formattedBalance.amount;
 }
 
 export async function queryBalanceOnOsmosis(address: string, denom: string) {
-  const {stdout} = await exec(`binaries/osmosisd query bank balances ${address} --denom ${denom} --output json`);
+  const {stdout} = await exec(`~/go/osmosisd query bank balances ${address} --denom ${denom} --output json`);
   const formattedBalance = JSON.parse(stdout);
   return formattedBalance.amount;
 }
 
 export async function queryBalanceOnCentauri(address: string, denom: string){
-  const {stdout} = await exec(`binaries/centaurid query bank balances ${address} --denom ${denom} --output json`);
+  const {stdout} = await exec(`~/go/centaurid query bank balances ${address} --denom ${denom} --output json`);
   const formattedBalance = JSON.parse(stdout);
   return formattedBalance.amount;
 }
