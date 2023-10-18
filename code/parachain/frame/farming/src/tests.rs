@@ -231,3 +231,107 @@ fn should_deposit_stake_and_claim_reward() {
 		);
 	})
 }
+
+#[test]
+fn should_deposit_stake_and_claim_reward_update_schedule_on_the_fly() {
+	run_test(|| {
+		let pool_tokens = 1000;
+		let account_id = 0;
+
+		let second_schedule_update_amount = 9000000u128;
+
+		// setup basic reward schedule
+		let reward_schedule = RewardSchedule { period_count: 100, per_period: 1000 };
+		let total_amount = reward_schedule.total().unwrap();
+
+		assert_ok!(Tokens::set_balance(
+			RuntimeOrigin::root(),
+			TreasuryAccountId::get(),
+			REWARD_CURRENCY_ID,
+			total_amount,
+			0
+		));
+
+		assert_ok!(Farming::update_reward_schedule(
+			RuntimeOrigin::root(),
+			POOL_CURRENCY_ID,
+			REWARD_CURRENCY_ID,
+			reward_schedule.period_count,
+			reward_schedule.total().unwrap(),
+		));
+
+		// mint and deposit stake
+		mint_and_deposit(account_id, pool_tokens);
+
+		// check that we distribute per period
+		Farming::on_initialize(10);
+		assert_emitted!(Event::RewardDistributed {
+			pool_currency_id: POOL_CURRENCY_ID,
+			reward_currency_id: REWARD_CURRENCY_ID,
+			amount: reward_schedule.per_period,
+		});
+		assert_eq!(
+			RewardSchedules::<Test>::get(POOL_CURRENCY_ID, REWARD_CURRENCY_ID).period_count,
+			reward_schedule.period_count - 1
+		);
+
+		// withdraw reward
+		assert_ok!(Farming::claim(
+			RuntimeOrigin::signed(account_id),
+			POOL_CURRENCY_ID,
+			REWARD_CURRENCY_ID,
+		));
+		// only one account with stake so they get all rewards
+		assert_eq!(
+			Tokens::free_balance(REWARD_CURRENCY_ID, &account_id),
+			reward_schedule.per_period
+		);
+
+		assert_ok!(Tokens::set_balance(
+			RuntimeOrigin::root(),
+			TreasuryAccountId::get(),
+			REWARD_CURRENCY_ID,
+			total_amount * 100,
+			0
+		));
+
+		assert_ok!(Farming::update_reward_schedule(
+			RuntimeOrigin::root(),
+			POOL_CURRENCY_ID,
+			REWARD_CURRENCY_ID,
+			100,
+			second_schedule_update_amount,
+		));
+
+		let reward_schedule_on_chain =
+			RewardSchedules::<Test>::get(POOL_CURRENCY_ID, REWARD_CURRENCY_ID);
+		assert_eq!(
+			reward_schedule_on_chain.period_count,
+			reward_schedule.period_count - 1 + reward_schedule.period_count
+		);
+
+		let prev = reward_schedule.period_count as u128 * reward_schedule.per_period -
+			reward_schedule.per_period;
+		let new = prev + second_schedule_update_amount;
+		let new_per_period = new / ((reward_schedule.period_count * 2 - 1) as u128);
+		assert!(reward_schedule_on_chain.per_period == new_per_period);
+
+		// check that we distribute per period
+
+		assert_emitted!(Event::RewardScheduleUpdated {
+			pool_currency_id: POOL_CURRENCY_ID,
+			reward_currency_id: REWARD_CURRENCY_ID,
+			period_count: reward_schedule.period_count * 2 - 1,
+			per_period: new_per_period,
+		});
+
+		Farming::on_initialize(10);
+
+		//check that distribute the same amount that calculated on update_reward_schedule
+		assert_emitted!(Event::RewardDistributed {
+			pool_currency_id: POOL_CURRENCY_ID,
+			reward_currency_id: REWARD_CURRENCY_ID,
+			amount: new_per_period,
+		});
+	})
+}
