@@ -382,15 +382,17 @@
           PORT=26657
           FEE=ppica
           BINARY=centaurid
+          BLOCK_SECONDS=5
           ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
 
+          sleep $BLOCK_SECONDS
           "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
 
+          sleep $BLOCK_SECONDS
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace 
 
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace          
-
-
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          sleep $BLOCK_SECONDS
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"0","cow_amount":"100000","given":"100000"},{"order_id":"1","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
         '';
       };
 
@@ -535,7 +537,7 @@
       };
 
       centaurid-gen-fresh = pkgs.writeShellApplication {
-        name = "centaurid-gen-fresh";f
+        name = "centaurid-gen-fresh";
         runtimeInputs = [ centaurid-gen ];
         text = ''
           centaurid-gen fresh
