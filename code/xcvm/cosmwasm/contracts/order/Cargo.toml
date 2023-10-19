@@ -18,7 +18,7 @@ cw-storage-plus = { version = "1.1.0", features = [
     "iterator",
 ], default-features = false }
 itertools = { version = "0.11.0", features = [
-    "use_alloc",
+    "use_std",
 ], default-features = false }
 num-rational = { version = "0.4.1", default-features = false, features = [
     "num-bigint-std",

@@ -1,7 +1,9 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Uint128, Uint64};
+use cosmwasm_std::{
+	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
+};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use itertools::Itertools;
 use sylvia::{
@@ -183,13 +185,19 @@ pub struct Exchange {
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
-	pub solutions: IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>>,
+	pub solutions:
+		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
 }
 
+pub type Denom = String;
+pub type Pair = (Denom, Denom);
+pub type SolverAddress = String;
+
 /// so we need to have several solution per pair to pick one best
 pub struct SolutionIndexes<'a> {
-	pub pair: MultiIndex<'a, (String, String), SolutionItem, (String, String, Addr)>,
+	/// (token pair secondary index), (stored item), (stored item full key)
+	pub pair: MultiIndex<'a, Pair, SolutionItem, (Denom, Denom, SolverAddress)>,
 }
 
 impl<'a> IndexList<SolutionItem> for SolutionIndexes<'a> {
@@ -199,10 +207,14 @@ impl<'a> IndexList<SolutionItem> for SolutionIndexes<'a> {
 	}
 }
 
-pub fn solution<'a>(
-) -> IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>> {
+pub fn solutions<'a>(
+) -> IndexedMap<'a, &'a (String, String, String), SolutionItem, SolutionIndexes<'a>> {
 	let indexes = SolutionIndexes {
-		pair: MultiIndex::new(|_pk: &[u8], d: &SolutionItem| d.pair.clone(), "pair_solver", "pair"),
+		pair: MultiIndex::new(
+			|_pk: &[u8], d: &SolutionItem| d.pair.clone(),
+			"pair_solver_address",
+			"pair",
+		),
 	};
 	IndexedMap::new("solutions", indexes)
 }
@@ -212,7 +224,7 @@ impl Default for OrderContract<'_> {
 		Self {
 			orders: Map::new("orders"),
 			next_order_id: Item::new("next_order_id"),
-			solutions: solution(),
+			solutions: solutions(),
 		}
 	}
 }
@@ -279,7 +291,7 @@ impl OrderContract<'_> {
 
 		self.solutions.save(
 			ctx.deps.storage,
-			&(a.clone(), b.clone(), ctx.info.sender.clone()),
+			&(a.clone(), b.clone(), ctx.info.sender.clone().to_string()),
 			&possible_solution,
 		)?;
 		let solution_upserted = Event::new("mantis-solution-upserted")
@@ -292,8 +304,6 @@ impl OrderContract<'_> {
 		// get all solution for pair
 		let all_solutions: Result<Vec<SolutionItem>, _> = self
 			.solutions
-			.idx
-			.pair
 			.prefix((a.clone(), b.clone()))
 			.range(ctx.deps.storage, None, None, Order::Ascending)
 			.map(|r| r.map(|(_, solution)| solution))
@@ -386,10 +396,14 @@ impl OrderContract<'_> {
 
 	#[msg(query)]
 	pub fn get_all_solutions(&self, ctx: QueryCtx) -> StdResult<Vec<SolutionItem>> {
+		self.get_solutions(ctx.deps.storage)
+	}
+
+	fn get_solutions(&self, storage: &dyn Storage) -> Result<Vec<SolutionItem>, StdError> {
 		self.solutions
 			.idx
 			.pair
-			.range_raw(ctx.deps.storage, None, None, Order::Ascending)
+			.range(storage, None, None, Order::Ascending)
 			.map(|r| r.map(|(_, x)| x))
 			.collect()
 	}
