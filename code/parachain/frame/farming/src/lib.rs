@@ -253,7 +253,7 @@ pub mod pallet {
 				reward_currency_id,
 				&treasury_account_id,
 				&pool_account_id,
-				amount.clone(),
+				amount,
 			)?;
 
 			RewardSchedules::<T>::try_mutate(
