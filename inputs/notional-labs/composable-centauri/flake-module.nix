@@ -371,7 +371,30 @@
         '';
       };
 
-      xc-swap-pica-to-osmo = pkgs.writeShellApplication {
+    mantis-order-solve = pkgs.writeShellApplication {
+        name = "xc-swap-pica-to-osmo";
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq ];
+        text = ''
+          CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+          CHAIN_ID="centauri-dev"
+          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          PORT=26657
+          FEE=ppica
+          BINARY=centaurid
+          ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
+
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
+
+
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace          
+
+
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+        '';
+      };
+
+    xc-swap-pica-to-osmo = pkgs.writeShellApplication {
         name = "xc-swap-pica-to-osmo";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
@@ -512,7 +535,7 @@
       };
 
       centaurid-gen-fresh = pkgs.writeShellApplication {
-        name = "centaurid-gen-fresh";
+        name = "centaurid-gen-fresh";f
         runtimeInputs = [ centaurid-gen ];
         text = ''
           centaurid-gen fresh

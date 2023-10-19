@@ -30,6 +30,7 @@ pub const MIN_SOLUTION_COUNT: u32 = 1;
 /// parts of a whole, numerator / denominator
 pub type Ratio = (Uint64, Uint64);
 
+
 #[cw_serde]
 pub struct OrderSubMsg {
 	/// Amount is minimum amount to get for given amount (sure user wants more than `wants` and we
