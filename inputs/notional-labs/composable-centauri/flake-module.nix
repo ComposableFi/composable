@@ -371,8 +371,8 @@
         '';
       };
 
-    mantis-order-solve = pkgs.writeShellApplication {
-        name = "xc-swap-pica-to-osmo";
+      mantis-order-solve = pkgs.writeShellApplication {
+        name = "mantis-order-solve";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
         text = ''
@@ -389,14 +389,15 @@
           "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace 
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" --log_level info --from cvm-admin  --trace --log_level trace 
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"0","cow_amount":"100000","given":"100000"},{"order_id":"1","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"2","cow_amount":"100000","given":"100000"},{"order_id":"3","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
+
         '';
       };
 
-    xc-swap-pica-to-osmo = pkgs.writeShellApplication {
+      xc-swap-pica-to-osmo = pkgs.writeShellApplication {
         name = "xc-swap-pica-to-osmo";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
@@ -585,8 +586,8 @@
            function dasel-genesis() {
              dasel put --type string --file "$CHAIN_DATA/config/genesis.json" --value "$2" "$1"   
            }             
- 
- 
+
+
            register_asset () {
              dasel  put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
              dasel-genesis '.app_state.bank.denom_metadata.[0].description' "$2"
@@ -672,7 +673,7 @@
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
           ics10-grandpa-cw-proposal xc-swap-pica-to-osmo centaurid-cvm-init
-          centaurid-xcvm-config;
+          centaurid-xcvm-config mantis-order-solve;
 
         centauri-exec = pkgs.writeShellApplication {
           name = "centaurid-xcvm-config";

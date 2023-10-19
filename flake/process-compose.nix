@@ -461,8 +461,7 @@
               centauri-cvm-init = {
                 command = self'.packages.centaurid-cvm-init;
                 depends_on."centauri".condition = "process_healthy";
-                log_location =
-                  "${devnet-root-directory}/centauri-cvm-init.log";
+                log_location = "${devnet-root-directory}/centauri-cvm-init.log";
                 availability = { restart = chain-restart; };
               };
 
@@ -517,10 +516,10 @@
                   "centauri-init".condition = "process_completed_successfully";
                   "osmosis".condition = "process_healthy";
                 };
-                  namespace = "ibc";
+                namespace = "ibc";
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
-                availability = { restart = relay; };                
+                availability = { restart = relay; };
               };
 
               osmosis-centauri-hermes-relay = {

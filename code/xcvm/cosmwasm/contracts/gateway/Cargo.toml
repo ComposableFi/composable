@@ -18,7 +18,7 @@ std = ["cw-xc-interpreter/std", "xc-core/std"]
 default = ["std"]
 
 [dependencies]
-enumn ={ version = "0.1.12"}
+enumn = { version = "0.1.12" }
 bech32-no_std = { workspace = true, features = ["strict"] }
 cosmwasm-std = { workspace = true, features = ["ibc3", "stargate"] }
 cw-storage-plus = { workspace = true }
@@ -37,4 +37,4 @@ cw-xc-interpreter = { path = "../interpreter", features = [
 xc-core = { path = "../../../lib/core", features = [
   "cosmwasm",
 ], default-features = false }
-prost = { workspace = true, default-features = false}
+prost = { workspace = true, default-features = false }

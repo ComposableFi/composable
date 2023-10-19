@@ -5,7 +5,6 @@ use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
-use itertools::Itertools;
 use sylvia::{
 	contract,
 	cw_std::{ensure, Response, StdResult},
@@ -20,7 +19,7 @@ use num_rational::BigRational;
 // use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
 pub type ExchangeId = Uint128;
 pub type Amount = u128;
-pub type OrderId = u128;
+pub type OrderId = Uint128;
 pub type NetworkId = u32;
 pub type Blocks = u32;
 
@@ -238,7 +237,7 @@ impl OrderContract<'_> {
 	#[msg(instantiate)]
 	pub fn instantiate(
 		&self,
-		_ctx: InstantiateCtx, /*	i think we would need admin, gateway, scoring/fee parameters */
+		_ctx: InstantiateCtx, /* i think we would need admin, gateway, scoring/fee parameters */
 	) -> StdResult<Response> {
 		Ok(Response::default())
 	}
@@ -252,7 +251,12 @@ impl OrderContract<'_> {
 
 		// just save order under incremented id
 		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
-		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
+		let order = OrderItem {
+			msg,
+			given: funds.clone(),
+			order_id: order_id.into(),
+			owner: ctx.info.sender,
+		};
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
 		let order_created =
@@ -267,9 +271,10 @@ impl OrderContract<'_> {
 			ctx.info.sender == ctx.env.contract.address,
 			StdError::GenericErr { msg: "only self can call this".to_string() }
 		);
-		unimplemented!(
-			"so here we add route execution tracking to storage and map route to CVM program"
-		)
+		ctx.deps.api.debug(
+			"so here we add route execution tracking to storage and map route to CVM program",
+		);
+		Ok(Response::default())
 	}
 
 	/// Provides solution for set of orders.
@@ -433,7 +438,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
 	}
 	Ok(transfers)
 }
