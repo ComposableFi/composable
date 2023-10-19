@@ -1,8 +1,9 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Uint64};
+use cosmwasm_std::{wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Uint128, Uint64};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
+use itertools::Itertools;
 use sylvia::{
 	contract,
 	cw_std::{ensure, Response, StdResult},
@@ -15,7 +16,7 @@ use num_rational::BigRational;
 
 // fix core in std in contract
 // use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
-pub type ExchangeId = u128;
+pub type ExchangeId = Uint128;
 pub type Amount = u128;
 pub type OrderId = u128;
 pub type NetworkId = u32;
@@ -64,7 +65,7 @@ pub struct OrderItem {
 	pub owner: Addr,
 	pub msg: OrderSubMsg,
 	pub given: Coin,
-	pub order_id: Amount,
+	pub order_id: OrderId,
 }
 
 #[cw_serde]
@@ -81,9 +82,11 @@ pub struct SolutionItem {
 /// on chain cares each user gets what it wants and largest volume solution selected.
 #[cw_serde]
 pub struct SolutionSubMsg {
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub cows: Vec<Cow>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub routes: Vec<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
@@ -102,13 +105,13 @@ pub struct RouteSubMsg {
 /// aggregate pool of all orders in solution is used to give user amount he wants.
 #[cw_serde]
 pub struct Cow {
-	pub order_id: OrderId,
+	pub order_id: Uint128,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub cow_amount: Amount,
+	pub cow_amount: Uint128,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: Option<Amount>,
+	pub taken: Option<Uint128>,
 	/// amount user should get after order executed
-	pub given: Amount,
+	pub given: Uint128,
 }
 
 #[cw_serde]
@@ -120,15 +123,18 @@ pub struct SolvedOrder {
 impl SolvedOrder {
 	pub fn new(order: OrderItem, solution: Cow) -> StdResult<Self> {
 		ensure!(
-			order.msg.wants.amount.u128() >= solution.given,
-			StdError::GenericErr { msg: "user limit was not satisfied".to_string() }
+			order.msg.wants.amount.u128() <= solution.given.u128(),
+			StdError::generic_err(format!(
+				"user limit was not satisfied {:?} {:?} ",
+				&order, &solution
+			))
 		);
 
 		Ok(Self { order, solution })
 	}
 
 	pub fn cross_chain(&self) -> u128 {
-		self.order.msg.wants.amount.u128() - self.solution.cow_amount
+		self.order.msg.wants.amount.u128() - self.solution.cow_amount.u128()
 	}
 
 	pub fn given(&self) -> &Coin {
@@ -163,15 +169,15 @@ pub struct TransferRoute {
 #[cw_serde]
 pub struct Spawn<Route> {
 	pub to_chain: NetworkId,
-	pub carry: Vec<Amount>,
+	pub carry: Vec<Uint128>,
 	pub execute: Option<Route>,
 }
 
 #[cw_serde]
 pub struct Exchange {
 	pub pool_id: ExchangeId,
-	pub give: Amount,
-	pub want_min: Amount,
+	pub give: Uint128,
+	pub want_min: Uint128,
 }
 
 pub struct OrderContract<'a> {
@@ -319,6 +325,9 @@ impl OrderContract<'_> {
 				a_total_in,
 				b_total_in,
 			);
+			ctx.deps
+				.api
+				.debug(&format!("mantis::solutions::alternative {:?}", &alternative_transfers));
 			if let Ok(alternative_transfers) = alternative_transfers {
 				if a_total_in * b_total_in > a_in * b_in {
 					a_in = a_total_in;
@@ -358,7 +367,7 @@ impl OrderContract<'_> {
 			.iter()
 			.map(|x| {
 				self.orders
-					.load(ctx.deps.storage, x.order_id)
+					.load(ctx.deps.storage, x.order_id.u128())
 					.map_err(|_| StdError::not_found("order"))
 					.and_then(|order| SolvedOrder::new(order, x.clone()))
 			})
@@ -373,6 +382,16 @@ impl OrderContract<'_> {
 			.range_raw(ctx.deps.storage, None, None, Order::Ascending)
 			.map(|r| r.map(|(_, order)| order))
 			.collect::<StdResult<Vec<OrderItem>>>()
+	}
+
+	#[msg(query)]
+	pub fn get_all_solutions(&self, ctx: QueryCtx) -> StdResult<Vec<SolutionItem>> {
+		self.solutions
+			.idx
+			.pair
+			.range_raw(ctx.deps.storage, None, None, Order::Ascending)
+			.map(|r| r.map(|(_, x)| x))
+			.collect()
 	}
 }
 
@@ -392,9 +411,9 @@ fn solves_cows_via_bank(
 		// so if not enough was deposited as was taken from original orders, it will fails - so
 		// solver cannot rob the bank
 		if amount.denom == a {
-			a_total_in -= BigRational::from_integer(cowed.into());
+			a_total_in -= BigRational::from_integer(cowed.u128().into());
 		} else {
-			b_total_in -= BigRational::from_integer(cowed.into());
+			b_total_in -= BigRational::from_integer(cowed.u128().into());
 		};
 		transfers
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
