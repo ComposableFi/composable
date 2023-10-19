@@ -47,7 +47,7 @@ use reward::RewardsApi;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
-		AccountIdConversion, AtLeast32Bit, CheckedAdd, CheckedDiv, CheckedMul, Saturating, Zero,
+		AccountIdConversion, AtLeast32Bit, CheckedAdd, CheckedDiv, Saturating, Zero,
 	},
 	ArithmeticError, DispatchError,
 };
