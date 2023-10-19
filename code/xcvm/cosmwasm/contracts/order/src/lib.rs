@@ -30,7 +30,6 @@ pub const MIN_SOLUTION_COUNT: u32 = 1;
 /// parts of a whole, numerator / denominator
 pub type Ratio = (Uint64, Uint64);
 
-
 #[cw_serde]
 pub struct OrderSubMsg {
 	/// Amount is minimum amount to get for given amount (sure user wants more than `wants` and we
@@ -239,7 +238,8 @@ impl OrderContract<'_> {
 		self.orders.save(ctx.deps.storage, order_id, &order)?;
 		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
 		let order_created =
-			Event::new("mantis::order::created").add_attribute("order_id", order_id.to_string());
+			Event::new("mantis-order-created").add_attribute("order_id", order_id.to_string());
+		ctx.deps.api.debug(&format!("mantis::order::created: {:?}", order));
 		Ok(Response::default().add_event(order_created))
 	}
 
@@ -276,9 +276,12 @@ impl OrderContract<'_> {
 			&(a.clone(), b.clone(), ctx.info.sender.clone()),
 			&possible_solution,
 		)?;
-		let solution_upserted = Event::new("mantis::solution::upserted")
+		let solution_upserted = Event::new("mantis-solution-upserted")
 			.add_attribute("pair", &format!("{}{}", a, b))
 			.add_attribute("solver", &ctx.info.sender.to_string());
+		ctx.deps
+			.api
+			.debug(&format!("mantis::solution::upserted {:?}", &solution_upserted));
 
 		// get all solution for pair
 		let all_solutions: Result<Vec<SolutionItem>, _> = self
@@ -290,6 +293,7 @@ impl OrderContract<'_> {
 			.map(|r| r.map(|(_, solution)| solution))
 			.collect();
 		let all_solutions = all_solutions?;
+		ctx.deps.api.debug(&format!("mantis::solutions::current {:?}", all_solutions));
 
 		// pick up optimal solution with solves with bank
 		let mut a_in = 0;
@@ -333,10 +337,10 @@ impl OrderContract<'_> {
 			vec![],
 		)?;
 
-		let solution_chosen = Event::new("mantis::solution::chosen")
+		let solution_chosen = Event::new("mantis-solution-chosen")
 			.add_attribute("pair", format!("{}{}", a, b))
 			.add_attribute("solver", ctx.info.sender.to_string());
-
+		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
 		Ok(Response::default()
 			.add_messages(transfers)
 			.add_message(route)
