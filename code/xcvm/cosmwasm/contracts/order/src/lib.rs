@@ -18,7 +18,7 @@ use num_rational::BigRational;
 // fix core in std in contract
 // use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
 pub type ExchangeId = Uint128;
-pub type Amount = u128;
+pub type Amount = Uint128;
 pub type OrderId = Uint128;
 pub type NetworkId = u32;
 pub type Blocks = u32;
@@ -106,13 +106,13 @@ pub struct RouteSubMsg {
 /// aggregate pool of all orders in solution is used to give user amount he wants.
 #[cw_serde]
 pub struct Cow {
-	pub order_id: Uint128,
+	pub order_id: OrderId,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub cow_amount: Uint128,
+	pub cow_amount: Amount,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: Option<Uint128>,
+	pub taken: Option<Amount>,
 	/// amount user should get after order executed
-	pub given: Uint128,
+	pub given: Amount,
 }
 
 #[cw_serde]
@@ -124,11 +124,8 @@ pub struct SolvedOrder {
 impl SolvedOrder {
 	pub fn new(order: OrderItem, solution: Cow) -> StdResult<Self> {
 		ensure!(
-			order.msg.wants.amount.u128() <= solution.given.u128(),
-			StdError::generic_err(format!(
-				"user limit was not satisfied {:?} {:?} ",
-				&order, &solution
-			))
+			order.msg.wants.amount <= solution.given,
+			StdError::generic_err(format!("user limit was not satisfied {order:?} {solution:?}"))
 		);
 
 		Ok(Self { order, solution })
@@ -438,7 +435,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
