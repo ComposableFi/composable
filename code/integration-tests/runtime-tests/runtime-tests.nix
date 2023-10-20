@@ -45,6 +45,7 @@
             sleep 4
           done
           cd code/integration-tests/runtime-tests
+          export PATH=$PATH:$(pwd)
           npm install
           npm run generate-types
           npm run test:cosmos
