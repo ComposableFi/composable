@@ -36,7 +36,7 @@
               curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
               START_RESULT=$?
             fi
-            set -o errexit            
+            set -o errexit
             if test $START_RESULT -eq 0; then
               process-compose-stop
               break
@@ -44,8 +44,9 @@
             ((TRIES=TRIES+1))
             sleep 4
           done
+          PATH=$PATH:$(pwd)
+          export PATH
           cd code/integration-tests/runtime-tests
-          export PATH=$PATH:$(pwd)
           npm install
           npm run generate-types
           npm run test:cosmos
