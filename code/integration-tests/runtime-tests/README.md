@@ -1,7 +1,18 @@
-# Priorities
+# Runtime Tests
+Tests for runtime.
+## Prerequisites
 
-1. No false negatives. Such tests to be deleted (see rfc about brittle and flaky tests)
-2. Time to merge into main. Should be fast.
-3. Super low maintainance. 20% of tests for critical paths cover 80% of failures. Easy to find why in the internet why. Use same tools as ops and devs.
-4. No bugs into main merged.
-5. Readability of tests output. Easy to reproduce tests locally and doing smoke tests in repeatable way so can just eyeball what wrong.
+In order to run the tests, centauri and osmosis binaries should be executable.
+To run tests, on runtime-tests folder: 
+
+``npm install`` 
+
+``npm run test``
+
+This will run the tests. Multihop tests cover two routes: 
+1 - Kusama => Picasso => Composable => Picasso 
+2 - Kusama => Picasso => Centauri => Osmosis
+
+Tests validate the total issuance changes, next sequence assignment of ibc, escrow and fee balances, and user balances.
+The current runtime is around ~30 mins as it is mainly waiting for channel openings between centauri - osmosis and picasso - composable.
+
