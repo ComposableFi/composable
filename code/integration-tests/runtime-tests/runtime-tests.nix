@@ -44,9 +44,9 @@
             ((TRIES=TRIES+1))
             sleep 4
           done
-
-          # here nodes are up and running, binaries in path, npm is here too
-
+          npm install
+          npm run generate-types
+          npm run test:cosmos
           process-compose-stop
           exit $START_RESULT              
         '';
