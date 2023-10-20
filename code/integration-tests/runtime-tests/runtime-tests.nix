@@ -44,6 +44,7 @@
             ((TRIES=TRIES+1))
             sleep 4
           done
+          cd code/integration-tests/runtime-tests
           npm install
           npm run generate-types
           npm run test:cosmos
