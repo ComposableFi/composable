@@ -1,7 +1,6 @@
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 
-pub type Amount = Decimal;
+pub type Amount = Amount;
 
 pub struct BuyToken(Amount);
 pub struct SellToken(Amount);
@@ -81,14 +80,15 @@ impl Order {
         amount_in: Amount,
         limit_price: Amount,
         order_type: OrderType,
-        id: u128,
+        id: Option<Uuid>,
     ) -> Self {
+        let id = id.unwrap_or_else(Uuid::new_v4);
         Order {
             amount_in,
-            filled_price: dec!(0.0),
+            filled_price: 0.0,
             order_type,
-            amount_out: dec!(0.0),
-            amount_filled: dec!(0.0),
+            amount_out: 0.0,
+            amount_filled: 0.0,
             status: OrderStatus::PENDING,
             id,
             limit_price,
@@ -97,7 +97,7 @@ impl Order {
 
     fn filled_price(&self) -> Amount {
         match self.order_type {
-            OrderType::BUY => dec!(1.0) / self.filled_price,
+            OrderType::BUY => 1.0 / self.filled_price,
             _ => self.filled_price,
         }
     }
@@ -106,7 +106,7 @@ impl Order {
         if self.status == OrderStatus::PARTIALLY_FILLED {
             self.amount_in - self.amount_out / self.filled_price()
         } else {
-            dec!(0.0)
+            0.0
         }
     }
 
@@ -123,9 +123,9 @@ impl Order {
     }
 
     fn fill(&mut self, volume: Amount, price: Amount) {
-        if volume == dec!(0.0) {
+        if volume == 0.0 {
             return;
-        } else if volume < dec!(0.0) {
+        } else if volume < 0.0 {
             panic!("Negative volume {}", volume);
         }
 
@@ -175,7 +175,7 @@ impl Order {
                         "Constraint check failed"
                     );
                 } else {
-                    assert_eq!(self.amount_out, dec!(0.0), "Constraint check failed");
+                    assert_eq!(self.amount_out, 0.0, "Constraint check failed");
                 }
             }
         }
