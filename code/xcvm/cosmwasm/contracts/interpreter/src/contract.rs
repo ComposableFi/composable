@@ -24,7 +24,7 @@ use xc_core::{
 	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
-const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
+const CONTRACT_NAME: &str = "cvm-executor";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CALL_ID: u64 = 1;

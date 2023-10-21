@@ -40,26 +40,24 @@ let_unit_value = "allow"
 [workspace]
 exclude = [
   "utils/submetrics",
-  "xcvm/cosmwasm/contracts/order",
   "integration-tests",
   "parachain/frame/vesting/cli",
   "parachain/frame/cosmwasm/cli",
 ]
 members = [
-  "services/cmc-api",
   "parachain/frame/*",
   "parachain/node",
   "parachain/runtime/*",
-  "utils/common",
+  "services/cmc-api",
   "utils/collator-sidecar",
+  "utils/common",
   "utils/price-feed",
-  "xcvm/lib/core/",
-  "xcvm/cosmwasm/contracts/accounts",
-  "xcvm/cosmwasm/contracts/escrow",
   "xcvm/cosmwasm/contracts/gateway",
   "xcvm/cosmwasm/contracts/interpreter",
+  "xcvm/cosmwasm/contracts/order",
   "xcvm/cosmwasm/contracts/pingpong",
   "xcvm/cosmwasm/tests",
+  "xcvm/lib/core/",
 ]
 resolver = "2"
 
@@ -126,11 +124,11 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "e66a104bf826e669ae4421e842265f58be1dac6a", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "e66a104bf826e669ae4421e842265f58be1dac6a", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "e66a104bf826e669ae4421e842265f58be1dac6a", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "e66a104bf826e669ae4421e842265f58be1dac6a", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "e66a104bf826e669ae4421e842265f58be1dac6a", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }

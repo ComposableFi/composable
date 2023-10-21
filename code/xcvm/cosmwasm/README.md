@@ -103,3 +103,22 @@ $BINARY tx wasm execute osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrc
 `xc-master` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `xc-account`. 
 
 Approach is needed because there is no `amount` information can be securely transferred in `memo`.
+
+### How to make Cosmos(CosmWasm) chain CVM enabled
+
+#### CW enabled chain
+
+If chain has `hook`s, there should be adapter in core library. There are Neutron, Osmosis and ICF hooks.
+
+If chain has custom protocol `adapter` should be coded for it. For example, order book or liquid staking.
+
+#### Non CW enabled
+
+`Shortcut`s for remote call should be developed. For example for native IBC protocol to do staking.
+
+
+### Both
+
+For `hook` and `shortcut` build `outpost` tracking to handle packet failures
+
+Make CVM Executor to handle `instruction` via `adapter+hook` or `shortcut`.

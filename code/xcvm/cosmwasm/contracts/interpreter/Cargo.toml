@@ -1,10 +1,10 @@
 [package]
 authors = ["Composable Developers"]
-description = "CVM Interpreter contract"
+description = "CVM Executor contract"
 edition = "2021"
 name = "cw-xc-interpreter"
 repository = "https://github.com/ComposableFi/composable"
-version = "0.1.0"
+version = "0.2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

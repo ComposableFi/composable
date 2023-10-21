@@ -56,14 +56,14 @@
     centauri-old-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/e66a104bf826e669ae4421e842265f58be1dac6a";
+        "github:ComposableFi/composable-ibc/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
     # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/e66a104bf826e669ae4421e842265f58be1dac6a";
+        "github:ComposableFi/composable-ibc/629eb0da075350ae514bacfde70e15a1c93debd7";
     };
 
     eth-pos-devnet-src = {
@@ -75,6 +75,11 @@
     ethereum = {
       url =
         "github:dzmitry-lahoda-forks/ethereum.nix/9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4";
+    };
+
+    polkadot = {
+      url = "github:andresilva/polkadot.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -129,14 +134,12 @@
         ./flake/live.nix
         ./flake/osmosis.nix
         ./flake/cosmos.nix
-        ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/chevdor/subwasm.nix
         ./inputs/ComposableFi/centauri/flake-module.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/flake-module.nix
