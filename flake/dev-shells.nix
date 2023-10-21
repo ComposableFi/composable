@@ -109,7 +109,8 @@
               echo 'keyring-backend = "test"' >> ~/.centauri/config/client.toml
               echo 'output = "json"' >> ~/.centauri/config/client.toml
               echo 'node = "${env.NODE}"' >> ~/.centauri/config/client.toml
-              echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml
+              echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml               
+              echo "apart ahead month tennis merge canvas possible cannon lady reward traffic city hamster monitor lesson nasty midnight sniff enough spatial rare multiply keep task" | "$BINARY" keys add cvm-admin --recover --keyring-backend test --output json            
             '';
           }];
         };
