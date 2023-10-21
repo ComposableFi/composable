@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 rust_decimal = "1.32"
 rust_decimal_macros = "1.32"
+rand = "0.8.5"
+rand_distr = "0.4.3"
+
+
