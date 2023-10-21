@@ -15,7 +15,6 @@ use orml_xcm_support::IsNativeConcrete;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::{IsSystem, Sibling};
 use cumulus_primitives_core::{ParaId};
-// use primitives::{tokens::*, Balance, ParaId};
 use sp_core::H256;
 use sp_runtime::{
     generic,
@@ -81,7 +80,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 impl parachain_info::Config for Test {}
 
 const DOT: CurrencyId = 0;
-const HKO: CurrencyId = 1;
+const NATIVE: CurrencyId = 1;
 const SDOT: CurrencyId = 2;
 
 
@@ -112,7 +111,7 @@ parameter_types! {
 }
 
 parameter_types! {
-    pub const NativeCurrencyId: CurrencyId = HKO;
+    pub const NativeCurrencyId: CurrencyId = NATIVE;
     pub GiftAccount: AccountId = PalletId(*b"par/gift").into_account_truncating();
 }
 
