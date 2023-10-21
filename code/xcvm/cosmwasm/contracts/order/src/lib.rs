@@ -435,7 +435,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
 	}
 	Ok(transfers)
 }
