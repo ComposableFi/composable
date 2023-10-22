@@ -26,6 +26,44 @@ cumulus-primitives-core = { workspace = true }
 pallet-xcm-helper = { path = '../pallet-xcm-helper', default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
+
+[dev-dependencies]
+pallet-babe      = { workspace = true, features = ['std'] }
+pallet-balances  = { workspace = true, features = ['std'] }
+pallet-session   = { workspace = true, features = ['std'] }
+pallet-staking   = { workspace = true, features = ['std'] }
+pallet-timestamp = { workspace = true, features = ['std'] }
+serde            = { workspace = true }
+sp-core          = { workspace = true, features = ['std'] }
+sp-io            = { workspace = true, features = ['std'] }
+sp-state-machine = { workspace = true }
+
+kusama-runtime              = { workspace = true, features = ['std'] }
+polkadot-core-primitives    = { workspace = true }
+polkadot-parachain          = { workspace = true, features = ['std'] }
+polkadot-runtime-parachains = { workspace = true }
+xcm-builder                 = { workspace = true, features = ['std'] }
+xcm-executor                = { workspace = true, features = ['std'] }
+xcm-simulator               = { workspace = true }
+
+cumulus-pallet-dmp-queue        = { workspace = true, features = ['std'] }
+cumulus-pallet-parachain-system = { workspace = true, features = ['std'] }
+cumulus-pallet-xcm              = { workspace = true, features = ['std'] }
+cumulus-pallet-xcmp-queue       = { workspace = true, features = ['std'] }
+parachain-info                  = { workspace = true, features = ['std'] }
+
+hex              = '0.4.3'
+orml-traits      = { workspace = true, features = ['std'] }
+orml-xcm-support = { workspace = true, features = ['std'] }
+orml-xtokens     = { workspace = true, features = ['std'] }
+orml-unknown-tokens = { workspace = true, default-features = false }
+
+pallet-assets = { path = "../assets" }
+orml-tokens = { workspace = true }
+composable-support = { path = "../composable-support", default-features = false }
+
+# pallet-currency-adapter = { workspace = true, features = ['std'] }
+
 [features]
 default = ["std"]
 std                = [
