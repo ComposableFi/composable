@@ -10,12 +10,11 @@ prost-build = { workspace = true }
 default = ["std"]
 xcm = []
 cosmsos = []
-cosmwasm = ["serde"]
+cosmwasm = []
 substrate = []
 scale = []
 protobuf = []
 json-schema = []
 ibc = []
 evm = []
-serde = []
 
