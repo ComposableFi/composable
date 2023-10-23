@@ -4,12 +4,12 @@ use crate::prelude::*;
 pub type Amount = Decimal;
 
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
-pub struct BuyToken(Amount);
+pub struct BuyToken(pub Amount);
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
-pub struct SellToken(Amount);
+pub struct SellToken(pub  Amount);
 
 #[derive(Debug, Clone, Copy)]
-pub struct Price(Amount);
+pub struct Price(pub  Amount);
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OrderType {
