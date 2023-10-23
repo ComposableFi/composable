@@ -177,7 +177,6 @@ pub struct Exchange {
 	pub give: Uint128,
 	pub want_min: Uint128,
 }
-
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
