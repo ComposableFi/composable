@@ -1,0 +1,20 @@
+[package]
+edition = "2021"
+name = "cvm"
+version = "0.1.0"
+
+[build-dependencies]
+prost-build = { workspace = true }
+
+[features]
+default = ["std"]
+xcm = []
+cosmsos = []
+cosmwasm = []
+substrate = []
+scale = []
+protobuf = []
+json-schema = []
+ibc = []
+evm = []
+
