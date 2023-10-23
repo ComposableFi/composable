@@ -1,27 +1,26 @@
-#![feature(result_flattening)]
-mod error;
+#![allow(clippy::disallowed_methods)] // does unwrap inside
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-	wasm_execute, Addr, BankMsg, BlockInfo, Coin, Order, StdError, Uint128, Uint64,
+	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
-use itertools::*;
 use sylvia::{
 	contract,
 	cw_std::{ensure, Response, StdResult},
 	entry_points,
 	types::{ExecCtx, InstantiateCtx, QueryCtx},
 };
-use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
 
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
-use crate::error::ContractError;
-
-pub type Amount = Displayed<u128>;
-pub type OrderId = Displayed<u128>;
+// fix core in std in contract
+// use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
+pub type ExchangeId = Uint128;
+pub type Amount = Uint128;
+pub type OrderId = Uint128;
+pub type NetworkId = u32;
 pub type Blocks = u32;
 
 /// each pair waits ate least this amount of blocks before being decided
@@ -67,7 +66,7 @@ pub struct OrderItem {
 	pub owner: Addr,
 	pub msg: OrderSubMsg,
 	pub given: Coin,
-	pub order_id: Displayed<u128>,
+	pub order_id: OrderId,
 }
 
 #[cw_serde]
@@ -77,7 +76,6 @@ pub struct SolutionItem {
 	/// at which block solution was added
 	pub block_added: u64,
 }
-
 /// price information will not be used on chain or deciding.
 /// it will fill orders on chain as instructed
 /// and check that max/min from orders respected
@@ -85,9 +83,11 @@ pub struct SolutionItem {
 /// on chain cares each user gets what it wants and largest volume solution selected.
 #[cw_serde]
 pub struct SolutionSubMsg {
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub cows: Vec<Cow>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub routes: Vec<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
@@ -108,11 +108,11 @@ pub struct RouteSubMsg {
 pub struct Cow {
 	pub order_id: OrderId,
 	/// how much of order to be solved by from bank for all aggregated cows
-	pub cow_amount: Displayed<u128>,
+	pub cow_amount: Amount,
 	/// amount of order to be taken (100% in case of full fill, can be less in case of partial)
-	pub taken: Option<Displayed<u128>>,
+	pub taken: Option<Amount>,
 	/// amount user should get after order executed
-	pub given: Displayed<u128>,
+	pub given: Amount,
 }
 
 #[cw_serde]
@@ -124,15 +124,15 @@ pub struct SolvedOrder {
 impl SolvedOrder {
 	pub fn new(order: OrderItem, solution: Cow) -> StdResult<Self> {
 		ensure!(
-			order.msg.wants.amount.u128() >= solution.given.0,
-			StdError::GenericErr { msg: "user limit was not satisfied".to_string() }
+			order.msg.wants.amount <= solution.given,
+			StdError::generic_err(format!("user limit was not satisfied {order:?} {solution:?}"))
 		);
 
 		Ok(Self { order, solution })
 	}
 
 	pub fn cross_chain(&self) -> u128 {
-		self.order.msg.wants.amount.u128() - self.solution.cow_amount.0
+		self.order.msg.wants.amount.u128() - self.solution.cow_amount.u128()
 	}
 
 	pub fn given(&self) -> &Coin {
@@ -167,27 +167,33 @@ pub struct TransferRoute {
 #[cw_serde]
 pub struct Spawn<Route> {
 	pub to_chain: NetworkId,
-	pub carry: Vec<Amount>,
+	pub carry: Vec<Uint128>,
 	pub execute: Option<Route>,
 }
 
 #[cw_serde]
 pub struct Exchange {
 	pub pool_id: ExchangeId,
-	pub give: Amount,
-	pub want_min: Amount,
+	pub give: Uint128,
+	pub want_min: Uint128,
 }
 
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
-	pub solutions: IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>>,
+	pub solutions:
+		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
 }
 
+pub type Denom = String;
+pub type Pair = (Denom, Denom);
+pub type SolverAddress = String;
+
 /// so we need to have several solution per pair to pick one best
 pub struct SolutionIndexes<'a> {
-	pub pair: MultiIndex<'a, (String, String), SolutionItem, (String, String, Addr)>,
+	/// (token pair secondary index), (stored item), (stored item full key)
+	pub pair: MultiIndex<'a, Pair, SolutionItem, (Denom, Denom, SolverAddress)>,
 }
 
 impl<'a> IndexList<SolutionItem> for SolutionIndexes<'a> {
@@ -197,27 +203,39 @@ impl<'a> IndexList<SolutionItem> for SolutionIndexes<'a> {
 	}
 }
 
-pub fn solution<'a>(
-) -> IndexedMap<'a, &'a (String, String, Addr), SolutionItem, SolutionIndexes<'a>> {
+pub fn solutions<'a>(
+) -> IndexedMap<'a, &'a (String, String, String), SolutionItem, SolutionIndexes<'a>> {
 	let indexes = SolutionIndexes {
-		pair: MultiIndex::new(|_pk: &[u8], d: &SolutionItem| d.pair.clone(), "pair_solver", "pair"),
+		pair: MultiIndex::new(
+			|_pk: &[u8], d: &SolutionItem| d.pair.clone(),
+			"pair_solver_address",
+			"pair",
+		),
 	};
 	IndexedMap::new("solutions", indexes)
+}
+
+impl Default for OrderContract<'_> {
+	fn default() -> Self {
+		Self {
+			orders: Map::new("orders"),
+			next_order_id: Item::new("next_order_id"),
+			solutions: solutions(),
+		}
+	}
 }
 
 #[entry_points]
 #[contract]
 impl OrderContract<'_> {
 	pub fn new() -> Self {
-		Self {
-			orders: Map::new("orders"),
-			next_order_id: Item::new("next_order_id"),
-			solutions: solution(),
-		}
+		Self::default()
 	}
-
 	#[msg(instantiate)]
-	pub fn instantiate(&self, _ctx: InstantiateCtx) -> StdResult<Response> {
+	pub fn instantiate(
+		&self,
+		_ctx: InstantiateCtx, /* i think we would need admin, gateway, scoring/fee parameters */
+	) -> StdResult<Response> {
 		Ok(Response::default())
 	}
 
@@ -225,105 +243,130 @@ impl OrderContract<'_> {
 	/// spamming), and stores order for searchers.
 	#[msg(exec)]
 	pub fn order(&self, ctx: ExecCtx, msg: OrderSubMsg) -> StdResult<Response> {
-		/// for now we just use bank for ics20 tokens
+		// for now we just use bank for ics20 tokens
 		let funds = ctx.info.funds.get(0).expect("there are some funds in order");
 
-		/// just save order under incremented id
-		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default().into();
-		let order = OrderItem { msg, given: funds.clone(), order_id, owner: ctx.info.sender };
-		self.orders.save(ctx.deps.storage, order_id.0, &order)?;
-		self.next_order_id.save(ctx.deps.storage, &(order_id.0 + 1))?;
-		Ok(Response::default())
+		// just save order under incremented id
+		let order_id = self.next_order_id.load(ctx.deps.storage).unwrap_or_default();
+		let order = OrderItem {
+			msg,
+			given: funds.clone(),
+			order_id: order_id.into(),
+			owner: ctx.info.sender,
+		};
+		self.orders.save(ctx.deps.storage, order_id, &order)?;
+		self.next_order_id.save(ctx.deps.storage, &(order_id + 1))?;
+		let order_created =
+			Event::new("mantis-order-created").add_attribute("order_id", order_id.to_string());
+		ctx.deps.api.debug(&format!("mantis::order::created: {:?}", order));
+		Ok(Response::default().add_event(order_created))
 	}
 
 	#[msg(exec)]
-	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
+	pub fn route(&self, ctx: ExecCtx, _msg: RouteSubMsg) -> StdResult<Response> {
 		ensure!(
 			ctx.info.sender == ctx.env.contract.address,
 			StdError::GenericErr { msg: "only self can call this".to_string() }
 		);
-		unimplemented!(
-			"so here we add route execution tracking to storage and map route to CVM program"
-		)
+		ctx.deps.api.debug(
+			"so here we add route execution tracking to storage and map route to CVM program",
+		);
+		Ok(Response::default())
 	}
 
 	/// Provides solution for set of orders.
 	/// All fully
 	#[msg(exec)]
 	pub fn solve(&self, ctx: ExecCtx, msg: SolutionSubMsg) -> StdResult<Response> {
-		/// read all orders as solver provided
+		// read all orders as solver provided
 		let mut all_orders = self.merge_solution_with_orders(&msg, &ctx)?;
 		let at_least_one = all_orders.first().expect("at least one");
 
-		/// normalize pair
+		// normalize pair
 		let mut ab = [at_least_one.given().denom.clone(), at_least_one.wants().denom.clone()];
 		ab.sort();
 		let [a, b] = ab;
 
 		// add solution to total solutions
-		let possible_solution = SolutionItem {
-			pair: (a.clone(), b.clone()),
-			msg: msg.clone(),
-			block_added: ctx.env.block.height,
-		};
+		let possible_solution =
+			SolutionItem { pair: (a.clone(), b.clone()), msg, block_added: ctx.env.block.height };
+
 		self.solutions.save(
 			ctx.deps.storage,
-			&(a.clone(), b.clone(), ctx.info.sender.clone()),
+			&(a.clone(), b.clone(), ctx.info.sender.clone().to_string()),
 			&possible_solution,
 		)?;
+		let solution_upserted = Event::new("mantis-solution-upserted")
+			.add_attribute("pair", &format!("{}{}", a, b))
+			.add_attribute("solver", &ctx.info.sender.to_string());
+		ctx.deps
+			.api
+			.debug(&format!("mantis::solution::upserted {:?}", &solution_upserted));
 
-		/// get all solution for pair
+		// get all solution for pair
 		let all_solutions: Result<Vec<SolutionItem>, _> = self
 			.solutions
-			.idx
-			.pair
 			.prefix((a.clone(), b.clone()))
 			.range(ctx.deps.storage, None, None, Order::Ascending)
 			.map(|r| r.map(|(_, solution)| solution))
 			.collect();
 		let all_solutions = all_solutions?;
+		ctx.deps.api.debug(&format!("mantis::solutions::current {:?}", all_solutions));
 
-		/// pick up optimal solution with solves with bank
+		// pick up optimal solution with solves with bank
 		let mut a_in = 0;
 		let mut b_in = 0;
 		let mut transfers = vec![];
 		let mut solution_item = possible_solution;
 		for solution in all_solutions {
 			let alternative_all_orders = self.merge_solution_with_orders(&solution.msg, &ctx)?;
-			let mut a_total_in: u128 = alternative_all_orders
+			let a_total_in: u128 = alternative_all_orders
 				.iter()
 				.filter(|x| x.given().denom == a)
 				.map(|x: &SolvedOrder| x.given().amount.u128())
 				.sum();
-			let mut b_total_in: u128 = alternative_all_orders
+			let b_total_in: u128 = alternative_all_orders
 				.iter()
 				.filter(|x| x.given().denom == b)
 				.map(|x| x.given().amount.u128())
 				.sum();
-			/// so do all cows up to bank
+			// so do all cows up to bank
 			let alternative_transfers = solves_cows_via_bank(
 				alternative_all_orders.clone(),
 				a.clone(),
 				a_total_in,
 				b_total_in,
 			);
-			if a_total_in * b_total_in > a_in * b_in {
-				a_in = a_total_in;
-				b_in = b_total_in;
-				all_orders = alternative_all_orders;
-				transfers = alternative_transfers;
-				solution_item = solution;
+			ctx.deps
+				.api
+				.debug(&format!("mantis::solutions::alternative {:?}", &alternative_transfers));
+			if let Ok(alternative_transfers) = alternative_transfers {
+				if a_total_in * b_total_in > a_in * b_in {
+					a_in = a_total_in;
+					b_in = b_total_in;
+					all_orders = alternative_all_orders;
+					transfers = alternative_transfers;
+					solution_item = solution;
+				}
 			}
 		}
 
-		/// send remaining for settlement
+		// send remaining for settlement
 		let route = wasm_execute(
 			ctx.env.contract.address,
 			&ExecMsg::route(RouteSubMsg { all_orders, routes: solution_item.msg.routes }),
 			vec![],
 		)?;
 
-		Ok(Response::default().add_messages(transfers).add_message(route))
+		let solution_chosen = Event::new("mantis-solution-chosen")
+			.add_attribute("pair", format!("{}{}", a, b))
+			.add_attribute("solver", ctx.info.sender.to_string());
+		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
+		Ok(Response::default()
+			.add_messages(transfers)
+			.add_message(route)
+			.add_event(solution_upserted)
+			.add_event(solution_chosen))
 	}
 
 	fn merge_solution_with_orders(
@@ -331,15 +374,14 @@ impl OrderContract<'_> {
 		msg: &SolutionSubMsg,
 		ctx: &ExecCtx<'_>,
 	) -> Result<Vec<SolvedOrder>, StdError> {
-		let mut all_orders = msg
+		let all_orders = msg
 			.cows
 			.iter()
 			.map(|x| {
 				self.orders
-					.load(ctx.deps.storage, x.order_id.0)
+					.load(ctx.deps.storage, x.order_id.u128())
 					.map_err(|_| StdError::not_found("order"))
-					.map(|order| SolvedOrder::new(order, x.clone()))
-					.flatten()
+					.and_then(|order| SolvedOrder::new(order, x.clone()))
 			})
 			.collect::<Result<Vec<SolvedOrder>, _>>()?;
 		Ok(all_orders)
@@ -353,28 +395,47 @@ impl OrderContract<'_> {
 			.map(|r| r.map(|(_, order)| order))
 			.collect::<StdResult<Vec<OrderItem>>>()
 	}
+
+	#[msg(query)]
+	pub fn get_all_solutions(&self, ctx: QueryCtx) -> StdResult<Vec<SolutionItem>> {
+		self.get_solutions(ctx.deps.storage)
+	}
+
+	fn get_solutions(&self, storage: &dyn Storage) -> Result<Vec<SolutionItem>, StdError> {
+		self.solutions
+			.idx
+			.pair
+			.range(storage, None, None, Order::Ascending)
+			.map(|r| r.map(|(_, x)| x))
+			.collect()
+	}
 }
 
 fn solves_cows_via_bank(
 	mut all_orders: Vec<SolvedOrder>,
 	a: String,
-	mut a_total_in: u128,
-	mut b_total_in: u128,
-) -> Vec<BankMsg> {
+	a_total_in: u128,
+	b_total_in: u128,
+) -> Result<Vec<BankMsg>, StdError> {
+	let mut a_total_in = BigRational::from_integer(a_total_in.into());
+	let mut b_total_in = BigRational::from_integer(b_total_in.into());
 	let mut transfers = vec![];
 	for order in all_orders.iter_mut() {
 		let cowed = order.solution.cow_amount;
-		let amount = Coin { amount: cowed.0.into(), ..order.given().clone() };
+		let amount = Coin { amount: cowed.into(), ..order.given().clone() };
 
 		// so if not enough was deposited as was taken from original orders, it will fails - so
 		// solver cannot rob the bank
 		if amount.denom == a {
-			a_total_in -= cowed.0;
+			a_total_in -= BigRational::from_integer(cowed.u128().into());
 		} else {
-			b_total_in -= cowed.0;
+			b_total_in -= BigRational::from_integer(cowed.u128().into());
 		};
 		transfers
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
-	transfers
+	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+	}
+	Ok(transfers)
 }

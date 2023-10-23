@@ -11,6 +11,8 @@ Theirs tokens were transferred via well known bridges to here.
 
 User sends transactions containing order, describing amounts of assets they have(give) and want(take).
 Additionally they describe if they allow partial fill and timeout.
+Both assets must be local and registered in CVM.
+If target wanted out asset is just bridged, transfer path must be provided. 
 
 Solvers read all user orders on chain, and propose solutions to do CoW amid orders (including order from solver which may come with solution),
 and cross chain CFMM for the rest. 

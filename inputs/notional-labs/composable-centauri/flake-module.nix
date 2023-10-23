@@ -74,8 +74,8 @@
         '';
       };
 
-      centaurid-xcvm-init = pkgs.writeShellApplication {
-        name = "centaurid-xcvm-init";
+      centaurid-cvm-init = pkgs.writeShellApplication {
+        name = "centaurid-cvm-init";
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq self'.packages.xc-cw-contracts ];
 
@@ -103,13 +103,24 @@
               "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
-             
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+              "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_mantis_order.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              ORDER_CODE_ID=4
 
+              sleep $BLOCK_SECONDS             
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+                            
+
+              sleep $BLOCK_SECONDS             
+              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{}" "1234" --label "mantis-order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+                                          
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
               echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"        
-              echo "2" > "$CHAIN_DATA/interpreter_code_id"  
+
+              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
+              echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"        
+              
+              echo "2" > "$CHAIN_DATA/interpreter_code_id"                
           }
 
           INSTANTIATE=$(cat << EOF
@@ -360,6 +371,32 @@
         '';
       };
 
+      mantis-order-solve = pkgs.writeShellApplication {
+        name = "mantis-order-solve";
+        runtimeInputs = devnetTools.withBaseContainerTools
+          ++ [ centaurid pkgs.jq ];
+        text = ''
+          CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+          CHAIN_ID="centauri-dev"
+          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          PORT=26657
+          FEE=ppica
+          BINARY=centaurid
+          BLOCK_SECONDS=5
+          ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
+
+          sleep $BLOCK_SECONDS
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
+
+          sleep $BLOCK_SECONDS
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" --log_level info --from cvm-admin  --trace --log_level trace 
+
+          sleep $BLOCK_SECONDS
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"2","cow_amount":"100000","given":"100000"},{"order_id":"3","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
+
+        '';
+      };
+
       xc-swap-pica-to-osmo = pkgs.writeShellApplication {
         name = "xc-swap-pica-to-osmo";
         runtimeInputs = devnetTools.withBaseContainerTools
@@ -511,7 +548,7 @@
       centaurid-gen = pkgs.writeShellApplication {
         name = "centaurid-gen";
         runtimeInputs = devnetTools.withBaseContainerTools
-          ++ [ centaurid pkgs.jq ];
+          ++ [ centaurid pkgs.jq pkgs.dasel ];
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
           CHAIN_ID="centauri-dev"
@@ -546,6 +583,25 @@
            }
            pica_setup
 
+           function dasel-genesis() {
+             dasel put --type string --file "$CHAIN_DATA/config/genesis.json" --value "$2" "$1"   
+           }             
+
+
+           register_asset () {
+             dasel  put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
+             dasel-genesis '.app_state.bank.denom_metadata.[0].description' "$2"
+             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].denom' "$2"
+             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].exponent' 0
+             dasel-genesis '.app_state.bank.denom_metadata.[0].base' "$2"
+             dasel-genesis '.app_state.bank.denom_metadata.[0].display' "$2"
+             dasel-genesis '.app_state.bank.denom_metadata.[0].name' "$2"
+             dasel-genesis '.app_state.bank.denom_metadata.[0].symbol' "$2"
+           }
+           dasel put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" 'app_state.bank.denom_metadata'
+           register_asset 0 "ptest"
+            
+
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"            
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
@@ -569,7 +625,7 @@
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica" --keyring-backend test --home "$CHAIN_DATA"                              
+              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest" --keyring-backend test --home "$CHAIN_DATA"                              
             }
 
             # relayer
@@ -616,8 +672,8 @@
 
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
-          ics10-grandpa-cw-proposal xc-swap-pica-to-osmo centaurid-xcvm-init
-          centaurid-xcvm-config;
+          ics10-grandpa-cw-proposal xc-swap-pica-to-osmo centaurid-cvm-init
+          centaurid-xcvm-config mantis-order-solve;
 
         centauri-exec = pkgs.writeShellApplication {
           name = "centaurid-xcvm-config";

@@ -2,13 +2,16 @@
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = rec {
       devnet-integration-tests = pkgs.writeShellApplication {
-        runtimeInputs = with pkgs; [
-          curl
-          dasel
-          nodejs
-          coreutils
-          process-compose
-        ];
+        runtimeInputs = with pkgs;
+          with self'.packages; [
+            curl
+            dasel
+            nodejs
+            coreutils
+            process-compose
+            centaurid
+            osmosisd
+          ];
         name = "devnet-integration-tests";
         text = ''
           # shellcheck disable=SC2069
@@ -41,6 +44,9 @@
             ((TRIES=TRIES+1))
             sleep 4
           done
+
+          # here nodes are up and running, binaries in path, npm is here too
+
           process-compose-stop
           exit $START_RESULT              
         '';
