@@ -4,53 +4,57 @@ use crate::prelude::*;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-struct OrderList<Id: Copy> {
-    value: Vec<Order<Id>>,
+pub struct OrderList<Id: Copy + PartialEq> {
+    pub value: Vec<Order<Id>>,
 }
 
-impl<Id: Copy> OrderList<Id> {
+impl<Id: Copy + PartialEq> OrderList<Id> {
+
+    pub fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
     fn apply_filter<P>(&self, expr: P) -> Self
     where
-        P: FnMut(&Order) -> bool,
+        P: FnMut(&Order<Id>) -> bool,
     {
         OrderList {
             value: self.value.iter().cloned().filter(expr).collect(),
         }
     }
 
-    fn buy(&self) -> Self {
+    pub fn buy(&self) -> Self {
         self.apply_filter(|order| order.order_type == OrderType::BUY)
     }
 
-    fn sell(&self) -> Self {
+    pub fn sell(&self) -> Self {
         self.apply_filter(|order| order.order_type == OrderType::SELL)
     }
 
-    fn pending(&self) -> Self {
+    pub fn pending(&self) -> Self {
         self.apply_filter(|order| order.status == OrderStatus::PENDING)
     }
 
-    fn filled(&self) -> Self {
+    pub fn filled(&self) -> Self {
         self.apply_filter(|order| order.status != OrderStatus::PENDING)
     }
 
-    fn is_acceptable_price(&self, price: Price) -> Self {
+    pub fn is_acceptable_price(&self, price: Price) -> Self {
         self.apply_filter(|order| order.is_acceptable_price(price))
     }
 
-    fn amount_in(&self) -> BuyToken {
+    pub fn amount_in(&self) -> BuyToken {
         BuyToken(self.value.iter().map(|order| order.amount_in).sum())
     }
 
-    fn amount_out(&self) -> SellToken {
+    pub fn amount_out(&self) -> SellToken {
         SellToken(self.value.iter().map(|order| order.amount_out).sum())
     }
 
-    fn amount_filled(&self) -> BuyToken {
+    pub fn amount_filled(&self) -> BuyToken {
         BuyToken(self.value.iter().map(|order| order.amount_filled).sum())
     }
 
-    fn token1_sum(&self, price: Price) -> BuyToken {
+    pub fn token1_sum(&self, price: Price) -> BuyToken {
         BuyToken(
             self.value
                 .iter()
@@ -59,11 +63,11 @@ impl<Id: Copy> OrderList<Id> {
         )
     }
 
-    fn id(&self, id: u128) -> Self {
+    fn id(&self, id: Id) -> Self {
         self.apply_filter(|order| order.id == id)
     }
 
-    fn all(&self) -> &Vec<Order> {
+    fn all(&self) -> &Vec<Order<Id>> {
         &self.value
     }
 
@@ -120,10 +124,10 @@ impl<Id: Copy> OrderList<Id> {
         )
     }
 
-    fn _resolve_predominant(
+    pub fn resolve_predominant(
         &mut self,
-        predominant_orders: &mut OrderList,
-        other_orders: &mut OrderList,
+        predominant_orders: &mut OrderList<Id>,
+        other_orders: &mut OrderList<Id>,
         price: Price,
     ) {
         let mut filled = BuyToken(Decimal::new(0, 0));

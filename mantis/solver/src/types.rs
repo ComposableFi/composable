@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 pub type Amount = Decimal;
 
-#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, Display)]
 pub struct BuyToken(pub Amount);
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
 pub struct SellToken(pub  Amount);
@@ -108,12 +108,12 @@ impl<Id: Copy + PartialEq> Order<Id> {
         }
     }
 
-    fn is_acceptable_price(&self, price: Price) -> bool {
+    pub fn is_acceptable_price(&self, price: Price) -> bool {
         self.order_type
             .is_acceptable_price(price.0, self.limit_price)
     }
 
-    fn token1_at_price(&self, price: Amount) -> Amount {
+    pub fn token1_at_price(&self, price: Amount) -> Amount {
         if self.order_type == OrderType::SELL {
             self.amount_in * price
         } else {
@@ -121,7 +121,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
         }
     }
 
-    fn fill(&mut self, volume: Amount, price: Price) {
+    pub fn fill(&mut self, volume: Amount, price: Price) {
         if volume == dec!(0.0) {
             return;
         } else if volume < dec!(0.0) {
