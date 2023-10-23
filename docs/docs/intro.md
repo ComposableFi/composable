@@ -23,30 +23,17 @@ slug: /
       <a href="/technology/composable-ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Composable IBC" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Architecture" />
           </div>
           <div class="card__body">
-            <h3>Composable IBC</h3>
-              Composable's extension of the Inter-blockchain communication (IBC) protocol.
+            <h3>Architecture</h3>
+              Read about the extension of the Inter-blockchain communication (IBC) protocol beyond Cosmos and the Composable Virtual Machine (CVM).
           </div>
         </div>
       </a>
     </div>
     <div class="col col--4">
-      <a href="/technology/cvm">
-        <div class="card">
-          <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-3_cb5rl0.png" alt="Networks" alt="Composable VM" />
-          </div>
-          <div class="card__body">
-            <h3>Composable VM</h3>
-              Cross-ecosystem communication enabled through cross-chain smart contracts.
-          </div>
-        </div>
-      </a>
-    </div>
-    <div class="col col--4">
-      <a href="/nix">
+      <a href="/developer-guides/build-on-composable">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206944/Frame_4_gepwoe.png" alt="Networks" alt="Develop" />

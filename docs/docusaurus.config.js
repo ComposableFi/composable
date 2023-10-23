@@ -84,15 +84,10 @@ const config = {
 					{
 						to: '/technology/composable-ibc',
 						position: 'left',
-						label: 'Composable IBC',
+						label: 'Architecture',
 					},
 					{
-						to: '/technology/cvm',
-						position: 'left',
-						label: 'Composable VM',
-					},
-					{
-						to: '/nix',
+						to: '/developer-guides/build-on-composable',
 						position: 'left',
 						label: 'Develop',
 					},
