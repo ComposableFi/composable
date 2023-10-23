@@ -1,17 +1,17 @@
-# Composable Cosmos Chain Testnet 4 
+# Composable Cosmos Testnet 4 
 
 ## Information
 - Network information: https://github.com/notional-labs/composable-networks/tree/main/banksy-testnet-4
 - Chain ID: banksy-testnet-4
 - Genesis: https://raw.githubusercontent.com/notional-labs/composable-networks/main/banksy-testnet-4/genesis.json
-- Binary: https://github.com/notional-labs/composable-centauri/releases/tag/v5.2.4-testnet4
-- Current version: v5.2.4-testnet4
+- Binary: https://github.com/notional-labs/composable-centauri/releases/tag/v5.2.5-testnet4
+- Current version: v5.2.5-testnet4
 - Peers: a89d3d9fc0465615aa1100dcf53172814aa2b8cf@168.119.91.22:2260
 - Public Notional endpoints:
   - RPC: https://rpc-banksy4.notional.ventures:443
   - API: https://api-banksy4.notional.ventures:443
   - gRPC: http://168.119.91.22:2263
-- Block Explorer: Coming soon
+- Block Explorer: https://explorer.stavr.tech/Composable-Testnet4
 
 ## Setup Instruction
 
@@ -27,9 +27,9 @@ export PATH=$PATH:$HOME/go/bin
 cd $HOME
 git clone https://github.com/notional-labs/composable-centauri
 cd composable-centauri
-git checkout v5.2.4-testnet4 # Using v5.2.4-testnet4
+git checkout v5.2.5-testnet4 # Using v5.2.5-testnet4
 make install
-centaurid version # v5.2.4-testnet4
+centaurid version # v5.2.5-testnet4
 ```
 
 **2. Joining testnet**
@@ -43,6 +43,9 @@ wget https://raw.githubusercontent.com/notional-labs/composable-networks/main/ba
 
 
 # state sync
+## downloading wasm snapshot first
+curl -o - -L https://composable.wasmt4.stavr.tech/wasm-composable.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.banksy --strip-components 2
+
 SNAP_RPC="https://rpc-banksy4.notional.ventures:443"
 LATEST_HEIGHT=$(curl -s $SNAP_RPC/block | jq -r .result.block.header.height); \
 BLOCK_HEIGHT=$((LATEST_HEIGHT - 2000)); \

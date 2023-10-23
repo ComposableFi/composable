@@ -189,29 +189,9 @@
    
    develop: [
     {
-      type: "category",
-      label: "Nix",
-      link: {
-        type: "doc",
-        id: "nix"
-      },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        "nix/install",
-        "nix/run-packages",
-        "nix/development-environments",
-        "nix/running-checks",
-        "nix/reading-logs",
-        "nix/defining-your-own-packages",
-        "nix/editing-docs",
-        "nix/troubleshooting",
-      ],
-    },
-    {
       type: "doc",
-      id: "codespaces",
-    },
+      id: "developer-guides/build-on-composable",
+    },  
     {
       type: "category",
       label: "Cosmwasm Orchestrate",
@@ -255,8 +235,32 @@
     "developer-guides/collator-guide",
     "developer-guides/local-picasso-guide",
     "developer-guides/composable-cosmos-mainnet",
-    "developer-guides/testnet-3",
     "developer-guides/testnet-4",
+
+    {
+      type: "category",
+      label: "Nix",
+      link: {
+        type: "doc",
+        id: "nix"
+      },
+      collapsible: true,
+      collapsed: true,
+      items: [
+        "nix/install",
+        "nix/run-packages",
+        "nix/development-environments",
+        "nix/running-checks",
+        "nix/reading-logs",
+        "nix/defining-your-own-packages",
+        "nix/editing-docs",
+        "nix/troubleshooting",
+      ],
+    },
+    {
+      type: "doc",
+      id: "codespaces",
+    },
 
   ],
    ecosystem: [

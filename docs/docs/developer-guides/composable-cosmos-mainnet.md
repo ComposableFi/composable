@@ -1,4 +1,4 @@
-# Composable Cosmos chain mainnet: centauri-1
+# Composable Cosmos mainnet: centauri-1
 
 ## Hardware recommendation
 ```

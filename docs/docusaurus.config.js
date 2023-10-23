@@ -87,7 +87,7 @@ const config = {
 						label: 'Architecture',
 					},
 					{
-						to: '/nix',
+						to: '/developer-guides/build-on-composable',
 						position: 'left',
 						label: 'Develop',
 					},
