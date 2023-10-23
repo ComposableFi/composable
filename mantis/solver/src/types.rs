@@ -3,13 +3,13 @@ use crate::prelude::*;
 
 pub type Amount = Decimal;
 
-#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, Display)]
+#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
 pub struct BuyToken(pub Amount);
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
-pub struct SellToken(pub  Amount);
+pub struct SellToken(pub Amount);
 
 #[derive(Debug, Clone, Copy)]
-pub struct Price(pub  Amount);
+pub struct Price(pub Amount);
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OrderType {
@@ -68,7 +68,7 @@ impl OrderType {
 }
 
 #[derive(Debug, Clone)]
-pub struct Order<Id : Copy + PartialEq> {
+pub struct Order<Id: Copy + PartialEq> {
     pub amount_in: Amount,
     pub filled_price: Amount,
     pub order_type: OrderType,
@@ -181,8 +181,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
     }
 }
 
-impl<Id : Copy + PartialEq> Order<Id> {
-
+impl<Id: Copy + PartialEq> Order<Id> {
     pub fn new_random(mean: f64, std: f64, volume_range: (u64, u64), id: Id) -> Self {
         let amount_in = rand::thread_rng().gen_range(volume_range.0..volume_range.1 + 1) as f64;
         let normal = rand_distr::Normal::new(mean, std).unwrap();

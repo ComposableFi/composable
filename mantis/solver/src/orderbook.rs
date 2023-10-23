@@ -1,15 +1,17 @@
 //! Solving just order book without cross chain routing.
 
+use std::fmt::format;
+use std::fmt::Debug;
+
 use crate::prelude::*;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-pub struct OrderList<Id: Copy + PartialEq> {
+pub struct OrderList<Id: Copy + PartialEq + Debug> {
     pub value: Vec<Order<Id>>,
 }
 
-impl<Id: Copy + PartialEq> OrderList<Id> {
-
+impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
     pub fn is_empty(&self) -> bool {
         self.is_empty()
     }
@@ -77,7 +79,6 @@ impl<Id: Copy + PartialEq> OrderList<Id> {
         }
     }
 
-
     fn compute_optimal_price(&self, num_range: i32) -> Price {
         let mut optimal_price = Price(Decimal::new(-1, 0));
         let mut max_volume = BuyToken(Decimal::new(-1, 0));
@@ -122,6 +123,10 @@ impl<Id: Copy + PartialEq> OrderList<Id> {
             matched.buy().token1_sum(price),
             matched.sell().token1_sum(price),
         )
+    }
+
+    pub fn print(&self) -> String {
+        format!("{:?}", self.value)
     }
 
     pub fn resolve_predominant(
