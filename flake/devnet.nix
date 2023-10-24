@@ -25,6 +25,7 @@
             self'.packages.devnet-xc-fresh
             self'.packages.osmosisd
             self'.packages.zombienet-rococo-local-picasso-dev
+            self'.packages.zombienet-composable-westend-b
           ];
           devNet = self'.packages.devnet-xc-background;
         };
