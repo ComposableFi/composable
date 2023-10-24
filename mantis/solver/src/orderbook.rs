@@ -65,11 +65,11 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         )
     }
 
-    fn id(&self, id: Id) -> Self {
+    pub fn id(&self, id: Id) -> Self {
         self.apply_filter(|order| order.id == id)
     }
 
-    fn all(&self) -> &Vec<Order<Id>> {
+    pub fn all(&self) -> &Vec<Order<Id>> {
         &self.value
     }
 

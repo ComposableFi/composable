@@ -14,7 +14,7 @@ pub struct Solver<Id> {
 
 impl<Id: Copy + PartialEq + Debug> Solver<Id> {
     /// solver_order_id - allows to provide own liquidity
-    pub fn new(orders: OrderList<Id>, target_price: f64, buy_token: f64, sell_token: f64, solver_order_id: Id) -> Self {
+    pub fn new(orders: OrderList<Id>, target_price: Price, buy_token: BuyToken, sell_token: f64, solver_order_id: Id) -> Self {
         Self {
             orders,
             target_price,
@@ -70,16 +70,16 @@ impl<Id: Copy + PartialEq + Debug> Solver<Id> {
         max_solution.ok_or("No max solution found")
     }
 
-    fn match_ob_with_order(&self, order: &Order<Id>) -> Result<Solution<Id>, &'static str> {
-        let mut orderbook = self.orders.clone();
-        orderbook.value.push(order.clone());
-        orderbook.value.sort_by(|a, b| a.limit_price.partial_cmp(&b.limit_price).unwrap());
+    // fn match_ob_with_order(&self, order: &Order<Id>) -> Result<Solution<Id>, &'static str> {
+    //     let mut orderbook = self.orders.clone();
+    //     orderbook.value.push(order.clone());
+    //     orderbook.value.sort_by(|a, b| a.limit_price.partial_cmp(&b.limit_price).unwrap());
 
-        let optimal_price = orderbook.compute_optimal_price(50);
-        Ok(Solution::match_orders(orderbook, optimal_price))
-    }
+    //     let optimal_price = orderbook.compute_optimal_price(50);
+    //     Ok(Solution(orderbook, optimal_price))
+    // }
 
-    fn order_for(&self, amount: f64, order_type: OrderType) -> Order<Id> {
-            Order::new(amount, self.limit_price(), order_type, 0)
-    }
+    // fn order_for(&self, amount: f64, order_type: OrderType) -> Order<Id> {
+    //         Order::new(amount, self.limit_price(), order_type, 0)
+    // }
 }
