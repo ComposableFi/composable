@@ -1,20 +1,26 @@
+use crate::orderbook::*;
+use crate::prelude::*;
+use crate::solution::Solution;
+use crate::types::*;
 
-pub struct Solver {
-    orders: OrderList,
-    target_price: f64,
-    buy_token: f64,
-    sell_token: f64,
-    order: Order,
+#[derive(Clone, Debug)]
+pub struct Solver<Id> {
+    orders: OrderList<Id>,
+    target_price: Price,
+    buy_token: BuyToken,
+    sell_token: SellToken,
+    order: Order<Id>,
 }
 
-impl Solver {
-    pub fn new(orders: OrderList, target_price: f64, buy_token: f64, sell_token: f64) -> Self {
+impl<Id: Copy + PartialEq + Debug> Solver<Id> {
+    /// solver_order_id - allows to provide own liquidity
+    pub fn new(orders: OrderList<Id>, target_price: f64, buy_token: f64, sell_token: f64, solver_order_id: Id) -> Self {
         Self {
             orders,
             target_price,
             buy_token,
             sell_token,
-            order: Order::new(0.0, 0.0, OrderType::Buy, "fake-order".to_string()),
+            order: Order::new(dec!(0.0), dec!(0.0), OrderType::Buy, solver_order_id),
         }
     }
 
@@ -22,7 +28,7 @@ impl Solver {
         self.target_price
     }
 
-    fn f_maximize(&self, order: &Order) -> f64 {
+    fn f_maximize(&self, order: &Order<Id>) -> f64 {
         match order.order_type {
             OrderType::Buy => {
                 self.buy_token
@@ -35,8 +41,8 @@ impl Solver {
         }
     }
 
-    pub fn solve(&mut self, num_orders: usize) -> Result<Solution, &'static str> {
-        let original_price = self.orders.compute_optimal_price();
+    pub fn solve(&mut self, num_orders: usize) -> Result<Solution<Id>, &'static str> {
+        let original_price = self.orders.compute_optimal_price(50);
         let is_buy = original_price > self.target_price;
         let original_token_amount = if is_buy { self.buy_token } else { self.sell_token };
 
@@ -64,20 +70,16 @@ impl Solver {
         max_solution.ok_or("No max solution found")
     }
 
-    fn match_ob_with_order(&self, order: &Order) -> Result<Solution, &'static str> {
+    fn match_ob_with_order(&self, order: &Order<Id>) -> Result<Solution<Id>, &'static str> {
         let mut orderbook = self.orders.clone();
         orderbook.value.push(order.clone());
         orderbook.value.sort_by(|a, b| a.limit_price.partial_cmp(&b.limit_price).unwrap());
 
-        let optimal_price = orderbook.compute_optimal_price();
-        orderbook.match_orders(optimal_price)
+        let optimal_price = orderbook.compute_optimal_price(50);
+        Ok(Solution::match_orders(orderbook, optimal_price))
     }
 
-    fn order_for(&self, amount: f64, is_buy: bool) -> Order {
-        if is_buy {
-            Order::new(amount, self.limit_price(), OrderType::Buy, "solver".to_string())
-        } else {
-            Order::new(amount, self.limit_price(), OrderType::Sell, "solver".to_string())
-        }
+    fn order_for(&self, amount: f64, order_type: OrderType) -> Order<Id> {
+            Order::new(amount, self.limit_price(), order_type, 0)
     }
 }

@@ -3,7 +3,7 @@ use crate::prelude::*;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-pub struct Solution<Id: Copy + PartialEq + Debug> {
+pub struct Solution<Id> {
     pub orders: OrderList<Id>,
     pub matched_price: Price,
     pub buy_volume: BuyToken,

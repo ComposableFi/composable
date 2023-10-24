@@ -1,74 +1,50 @@
 //! Basic types with simple checks and domain, no heavy math or solving.
+use strum_macros::AsRefStr;
+use derive_more::From; 
 use crate::prelude::*;
 
 pub type Amount = Decimal;
 
-#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, From)]
 pub struct BuyToken(pub Amount);
-#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, From)]
 pub struct SellToken(pub Amount);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, From)]
 pub struct Price(pub Amount);
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+/// this is buy sell in terms of token1/token2 or A/B. just 2 sides of the orderbook.
+/// not Buy and Sell orders which differ in limit definition(in limit vs out limit).
+#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr)]
 pub enum OrderType {
-    BUY,
-    SELL,
-}
-
-impl OrderType {
-    fn as_str(&self) -> &'static str {
-        match self {
-            OrderType::BUY => "Buy",
-            OrderType::SELL => "Sell",
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum OrderStatus {
-    PENDING,
-    PARTIALLY_FILLED,
-    FILLED,
-}
-
-impl OrderStatus {
-    fn as_str(&self) -> &'static str {
-        match self {
-            OrderStatus::PENDING => "Pending",
-            OrderStatus::PARTIALLY_FILLED => "Partial",
-            OrderStatus::FILLED => "Filled",
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum OrderBookStatus {
-    PENDING,
-    MATCHED,
-}
-
-impl OrderBookStatus {
-    fn as_str(&self) -> &'static str {
-        match self {
-            OrderBookStatus::PENDING => "Pending",
-            OrderBookStatus::MATCHED => "Matched",
-        }
-    }
+    Buy,
+    Sell,
 }
 
 impl OrderType {
     fn is_acceptable_price(&self, price: Amount, limit_price: Amount) -> bool {
         match self {
-            OrderType::SELL => price >= limit_price,
-            OrderType::BUY => price <= limit_price,
+            OrderType::Sell => price >= limit_price,
+            OrderType::Buy => price <= limit_price,
         }
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr)]
+pub enum OrderStatus {
+    Pending,
+    PartiallyFilled,
+    Filled,
+}
+
+#[derive(Debug, PartialEq, Eq, AsRefStr)]
+pub enum OrderBookStatus {
+    Pending,
+    Matched,
+}
+
 #[derive(Debug, Clone)]
-pub struct Order<Id: Copy + PartialEq> {
+pub struct Order<Id> {
     pub amount_in: Amount,
     pub filled_price: Amount,
     pub order_type: OrderType,
@@ -87,7 +63,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
             order_type,
             amount_out: dec!(0.0),
             amount_filled: dec!(0.0),
-            status: OrderStatus::PENDING,
+            status: OrderStatus::Pending,
             id,
             limit_price,
         }
@@ -95,13 +71,13 @@ impl<Id: Copy + PartialEq> Order<Id> {
 
     fn filled_price(&self) -> Amount {
         match self.order_type {
-            OrderType::BUY => dec!(1.0) / self.filled_price,
+            OrderType::Buy => dec!(1.0) / self.filled_price,
             _ => self.filled_price,
         }
     }
 
     fn to_be_filled(&self) -> Amount {
-        if self.status == OrderStatus::PARTIALLY_FILLED {
+        if self.status == OrderStatus::PartiallyFilled {
             self.amount_in - self.amount_out / self.filled_price()
         } else {
             dec!(0.0)
@@ -114,7 +90,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
     }
 
     pub fn token1_at_price(&self, price: Amount) -> Amount {
-        if self.order_type == OrderType::SELL {
+        if self.order_type == OrderType::Sell {
             self.amount_in * price
         } else {
             self.amount_in
@@ -143,9 +119,9 @@ impl<Id: Copy + PartialEq> Order<Id> {
         self.amount_filled = volume;
 
         if volume < self.amount_in {
-            self.status = OrderStatus::PARTIALLY_FILLED;
+            self.status = OrderStatus::PartiallyFilled;
         } else {
-            self.status = OrderStatus::FILLED;
+            self.status = OrderStatus::Filled;
         }
 
         self.check_constraints();
@@ -153,21 +129,21 @@ impl<Id: Copy + PartialEq> Order<Id> {
 
     fn check_constraints(&self) {
         match self.status {
-            OrderStatus::FILLED => {
+            OrderStatus::Filled => {
                 assert_eq!(
                     self.amount_out,
                     self.amount_in * self.filled_price(),
                     "Constraint check failed"
                 );
             }
-            OrderStatus::PARTIALLY_FILLED => {
+            OrderStatus::PartiallyFilled => {
                 assert!(
                     self.amount_out < self.amount_in * self.filled_price(),
                     "Constraint check failed"
                 );
             }
             _ => {
-                if self.status != OrderStatus::PENDING {
+                if self.status != OrderStatus::Pending {
                     assert_eq!(
                         self.amount_out,
                         self.amount_filled * self.filled_price(),
@@ -188,9 +164,9 @@ impl<Id: Copy + PartialEq> Order<Id> {
         let limit_price = normal.sample(&mut rand::thread_rng());
 
         let order_type = if rand::thread_rng().gen::<bool>() {
-            OrderType::BUY
+            OrderType::Buy
         } else {
-            OrderType::SELL
+            OrderType::Sell
         };
 
         Order::new(

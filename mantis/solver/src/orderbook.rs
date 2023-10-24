@@ -7,7 +7,7 @@ use crate::prelude::*;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-pub struct OrderList<Id: Copy + PartialEq + Debug> {
+pub struct OrderList<Id> {
     pub value: Vec<Order<Id>>,
 }
 
@@ -25,19 +25,19 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
     }
 
     pub fn buy(&self) -> Self {
-        self.apply_filter(|order| order.order_type == OrderType::BUY)
+        self.apply_filter(|order| order.order_type == OrderType::Buy)
     }
 
     pub fn sell(&self) -> Self {
-        self.apply_filter(|order| order.order_type == OrderType::SELL)
+        self.apply_filter(|order| order.order_type == OrderType::Sell)
     }
 
     pub fn pending(&self) -> Self {
-        self.apply_filter(|order| order.status == OrderStatus::PENDING)
+        self.apply_filter(|order| order.status == OrderStatus::Pending)
     }
 
     pub fn filled(&self) -> Self {
-        self.apply_filter(|order| order.status != OrderStatus::PENDING)
+        self.apply_filter(|order| order.status != OrderStatus::Pending)
     }
 
     pub fn is_acceptable_price(&self, price: Price) -> Self {
@@ -73,13 +73,9 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         &self.value
     }
 
-    fn clone(&self) -> Self {
-        OrderList {
-            value: self.value.iter().cloned().collect(),
-        }
-    }
 
-    fn compute_optimal_price(&self, num_range: i32) -> Price {
+    /// finds the price in which $max(x*y)$ is satisfied according limit
+    pub fn compute_optimal_price(&self, num_range: i32) -> Price {
         let mut optimal_price = Price(Decimal::new(-1, 0));
         let mut max_volume = BuyToken(Decimal::new(-1, 0));
         let min_price = self
