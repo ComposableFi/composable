@@ -24,7 +24,7 @@ impl<Id: Copy + PartialEq + Debug> Solver<Id> {
         }
     }
 
-    pub fn limit_price(&self) -> f64 {
+    pub fn limit_price(&self) -> Price {
         self.target_price
     }
 

@@ -56,7 +56,7 @@ pub struct Order<Id> {
 }
 
 impl<Id: Copy + PartialEq> Order<Id> {
-    fn new(amount_in: Amount, limit_price: Amount, order_type: OrderType, id: Id) -> Self {
+    pub fn new(amount_in: Amount, limit_price: Amount, order_type: OrderType, id: Id) -> Self {
         Order {
             amount_in,
             filled_price: dec!(0.0),
@@ -69,14 +69,14 @@ impl<Id: Copy + PartialEq> Order<Id> {
         }
     }
 
-    fn filled_price(&self) -> Amount {
+    pub fn filled_price(&self) -> Amount {
         match self.order_type {
             OrderType::Buy => dec!(1.0) / self.filled_price,
             _ => self.filled_price,
         }
     }
 
-    fn to_be_filled(&self) -> Amount {
+    pub fn to_be_filled(&self) -> Amount {
         if self.status == OrderStatus::PartiallyFilled {
             self.amount_in - self.amount_out / self.filled_price()
         } else {
