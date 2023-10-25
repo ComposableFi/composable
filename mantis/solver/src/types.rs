@@ -10,7 +10,7 @@ pub struct BuyToken(pub Amount);
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, From)]
 pub struct SellToken(pub Amount);
 
-#[derive(Debug, Clone, Copy, From)]
+#[derive(Debug, Clone, Copy, From, PartialEq, PartialOrd, Default)]
 pub struct Price(pub Amount);
 
 /// this is buy sell in terms of token1/token2 or A/B. just 2 sides of the orderbook.
@@ -52,11 +52,11 @@ pub struct Order<Id> {
     pub amount_filled: Amount,
     pub status: OrderStatus,
     pub id: Id,
-    pub limit_price: Amount,
+    pub limit_price: Price,
 }
 
 impl<Id: Copy + PartialEq> Order<Id> {
-    pub fn new(amount_in: Amount, limit_price: Amount, order_type: OrderType, id: Id) -> Self {
+    pub fn new(amount_in: Amount, limit_price: Price, order_type: OrderType, id: Id) -> Self {
         Order {
             amount_in,
             filled_price: dec!(0.0),
@@ -86,7 +86,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
 
     pub fn is_acceptable_price(&self, price: Price) -> bool {
         self.order_type
-            .is_acceptable_price(price.0, self.limit_price)
+            .is_acceptable_price(price.0, self.limit_price.0)
     }
 
     pub fn token1_at_price(&self, price: Amount) -> Amount {
@@ -171,7 +171,7 @@ impl<Id: Copy + PartialEq> Order<Id> {
 
         Order::new(
             Decimal::from_f64_retain(amount_in).unwrap(),
-            Decimal::from_f64_retain(limit_price).unwrap(),
+            Price(Decimal::from_f64_retain(limit_price).unwrap()),
             order_type,
             id,
         )

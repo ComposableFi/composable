@@ -71,7 +71,7 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         println!("{} End Solution {}", "#".repeat(20), "#".repeat(20));
     }
 
-    fn match_orders(&mut self, price: Price) -> Solution<Id> {
+    pub fn match_orders(&mut self, price: Price) -> Solution<Id> {
         let mut orders = self.orders.clone();
         orders.value.sort_by(|a, b| {
             a.limit_price
@@ -80,8 +80,8 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         });
 
         let matched = orders.is_acceptable_price(price);
-        let buy_orders = matched.buy();
-        let sell_orders = matched.sell();
+        let mut buy_orders = matched.buy();
+        let mut sell_orders = matched.sell();
 
         let buy_volume = buy_orders.token1_sum(price);
         let sell_volume = sell_orders.token1_sum(price);
@@ -89,13 +89,14 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         let is_buy_predominant = buy_volume > sell_volume;
 
         if is_buy_predominant {
-            orders.resolve_predominant(&mut buy_orders.clone(), &mut sell_orders.clone(), price);
+            orders.resolve_predominant(&mut buy_orders, &mut sell_orders, price);
         } else {
-            orders.resolve_predominant(&mut sell_orders.clone(), &mut buy_orders.clone(), price);
+            orders.resolve_predominant(&mut sell_orders, &mut buy_orders, price);
         }
 
+        /// for now retaining "bad" design when solution has no price, there should no be solution without, will fix after testing correctness
         let mut solution = Solution {
-            orders: matched.filled().clone(),
+            orders: matched.filled(),
             matched_price: Price(Decimal::new(0, 0)),
             buy_volume: BuyToken(Decimal::new(0, 0)),
             sell_volume: SellToken(Decimal::new(0, 0)),
