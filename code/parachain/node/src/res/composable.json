@@ -3,7 +3,7 @@
   "id": "composable",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/rpc-01.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWQFY9WtsNWxmD7HXKXj76yk7JVm6UJhGmJE4kUftBBCii",
+    "/dns/rpc-01.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWL93x4t8c6SRBwRBwTU2nvjDuLv2uXn1zbgmPSSebGNeC",
     "/dns/rpc-02.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWMt2Vgq3SsjDEoyWEmEdSLmKf3FmMeUtb2vHvRkETDRSJ"
   ],
   "telemetryEndpoints": [
