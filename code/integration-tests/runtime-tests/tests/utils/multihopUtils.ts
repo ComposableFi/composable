@@ -384,12 +384,13 @@ export async function waitForChannelsOnCentauri(expectedChannelCount: number) {
   let parsed = JSON.parse(stdout);
   let channelsLength = parsed.channels.length;
   let index = 0;
-  while (channelsLength < expectedChannelCount && index < 100) {
+  while (channelsLength < expectedChannelCount && index < 150) {
     ({stdout} = await exec(`centaurid query ibc channel channels --output json`));
     parsed = JSON.parse(stdout);
     channelsLength = parsed.channels.length;
     index++;
     console.log('waiting for channels on osmosis to open');
+    console.log('channels length is', channelsLength);
     await waitForSeconds(8);
   }
 }
