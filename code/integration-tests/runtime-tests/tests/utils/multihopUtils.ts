@@ -384,7 +384,7 @@ export async function waitForChannelsOnCentauri(expectedChannelCount: number) {
   let parsed = JSON.parse(stdout);
   let channelsLength = parsed.channels.length;
   let index = 0;
-  while (channelsLength < expectedChannelCount && index < 150) {
+  while (channelsLength < expectedChannelCount && index < 300) {
     ({stdout} = await exec(`centaurid query ibc channel channels --output json`));
     console.log(stdout);
     parsed = JSON.parse(stdout);
