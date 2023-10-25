@@ -1,7 +1,7 @@
 //! Basic types with simple checks and domain, no heavy math or solving.
-use strum_macros::AsRefStr;
-use derive_more::From; 
 use crate::prelude::*;
+use derive_more::From;
+use strum_macros::AsRefStr;
 
 pub type Amount = Decimal;
 

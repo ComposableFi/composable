@@ -106,7 +106,7 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         )
     }
 
-    pub fn print(&self)  {
+    pub fn print(&self) {
         for order in self.buy().value.iter() {
             println!("{:?}", order);
         }

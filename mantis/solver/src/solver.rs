@@ -72,7 +72,8 @@ impl<Id: Copy + PartialEq + Debug> Solver<Id> {
         let orders: Vec<Order<_>> = (0..=num_orders)
             .map(|i| {
                 self.order_for(
-                    Amount::from_usize(i).expect("works") * original_token_amount / Amount::from_usize(num_orders).expect("works"),
+                    Amount::from_usize(i).expect("works") * original_token_amount
+                        / Amount::from_usize(num_orders).expect("works"),
                     side,
                     next_id(),
                 )

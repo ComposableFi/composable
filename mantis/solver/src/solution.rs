@@ -11,16 +11,14 @@ pub struct Solution<Id> {
 }
 
 impl<Id: Copy + PartialEq + Debug> Solution<Id> {
-    pub fn new(orders: Vec<Order<Id>>) -> Self {
-        let mut order_list = OrderList {
-            value: orders.clone(),
-        };
-        order_list.value.sort_by(|a, b| {
+    /// ensures orders are sorted
+    pub fn new(mut orders: Vec<Order<Id>>) -> Self {
+        orders.sort_by(|a, b| {
             a.limit_price
                 .partial_cmp(&b.limit_price)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-
+        let order_list = OrderList { value: orders };
         let matched_price = if !order_list.is_empty() {
             order_list.value[0].filled_price
         } else {
