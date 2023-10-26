@@ -33,7 +33,7 @@ pub enum RewardDestination<AccountId> {
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingBondCall<T: Config> {
     /// Controller account
-    pub controller: <T::Lookup as StaticLookup>::Source,
+    // pub controller: <T::Lookup as StaticLookup>::Source, //BUG. this field does not exist anymore on relay chain staking pallet
     /// Bond amount
     #[codec(compact)]
     pub value: u128,

@@ -23,6 +23,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(deprecated)]
 
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;

@@ -562,7 +562,7 @@ parameter_types! {
     // pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
     // pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 
-	pub const RelayCurrency: CurrencyId = CurrencyId::DOT;
+	pub const RelayCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 }
 
 impl pallet_xcm_helper::Config for Runtime {
@@ -585,8 +585,9 @@ parameter_types! {
 	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
 	pub const XcmFees: Balance = 500_000_000; // 0.05DOT
 	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
-	pub const StakingCurrency: CurrencyId = CurrencyId::DOT;
-	pub const LiquidCurrency: CurrencyId = CurrencyId::stDOT;
+	pub const StakingCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
+	//TODO rust.dev warning!!!!!! important todo. replace to new registred currency as lsDOT instead of vKSM. this is just for testing
+	pub const LiquidCurrency: CurrencyId = CurrencyId::BIFTOST_DOT; 
 	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;
 	pub const MinStakeLSD: Balance = 10_000_000_000; // 1DOT
 	pub const MinUnstake: Balance = 5_000_000_000; // 0.5sDOT
