@@ -47,6 +47,34 @@
             src = systemCommonRust.rustSrc;
           });
 
+        build-cvm-json-schema-ts = pkgs.writeShellApplication {
+          name = "build-ts-schema";
+          runtimeInputs = with pkgs; [
+            self'.packages.rust-nightly
+            nodejs
+            nodePackages.npm
+          ];
+          text = ''
+            echo "generating TypeScript types definitions from JSON schema of CosmWasm contracts"
+            cd code/xcvm
+            npm install
+            rm --recursive --force dist
+
+            rm --recursive --force schema
+            cargo run --bin order --package cw-mantis-order
+            npm run build-cw-mantis-order
+
+
+            rm --recursive --force schema
+            cargo run --bin gateway --package xc-core
+            npm run build-xc-core
+
+            rm --recursive --force schema 
+            cargo run --bin interpreter --package cw-xc-interpreter
+            npm run build-cw-xc-interpreter
+          '';
+        };
+
         xcvm-mount = pkgs.stdenv.mkDerivation rec {
           name = "xcvm-mount";
           pname = "${name}";
