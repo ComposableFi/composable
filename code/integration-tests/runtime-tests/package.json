@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test:cosmos": "tsc; ts-mocha --grep 'centauri' --parallel ./tests/*Tests.ts",
+    "test:cosmos": "tsc; ts-mocha --grep 'centauri' ./tests/*Tests.ts",
     "test": "tsc; ts-mocha --parallel ./tests/*Tests.ts",
     "generate-defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package sample-polkadotjs-typegen/interfaces --input ./src/interfaces --endpoint ws://localhost:9988",
     "generate-meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package sample-polkadotjs-typegen/interfaces --endpoint ws://localhost:9988 --output ./src/interfaces",

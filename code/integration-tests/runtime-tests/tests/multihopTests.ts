@@ -110,7 +110,7 @@ describe('MultiHop Tests', function () {
         feeAddress,
         cosmosEscrowAddress,
         picassoApi);
-    const feeCharged = new BigNumber((ibcSentAmount.multipliedBy(0.004)).toFixed(0));
+    const feeCharged = new BigNumber((ibcSentAmount.multipliedBy(0.005)).toFixed(0));
     ibcSentAmount = ibcSentAmount.minus(feeCharged);
     const diffInTotalIssuance = afterTotalIssuance.minus(preTotalIssuance);
     expect(diffInTotalIssuance.toString()).to.be.eq(ksmTransferAmount.toString());
@@ -132,7 +132,7 @@ describe('MultiHop Tests', function () {
     }
     await getBalance(ksmOnCent, [centauriAddress], 'cosmos');
     const ksmAfterBal = ksmOnCent.balance.get(centauriAddress);
-    //validate that user balance remains the same
+    //validate that user balance increases
     expect(ksmAfterBal).to.be.bignumber.eq(ksmPreBal.plus(ibcSentAmount));
     //validate that total issuance increases
     expect(afterTotalIssuance).to.be.bignumber.eq(preTotalIssuance.plus(ibcSentAmount));
