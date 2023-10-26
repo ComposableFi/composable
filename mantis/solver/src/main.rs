@@ -1,6 +1,7 @@
 mod orderbook;
 mod prelude;
 mod solution;
+mod solver;
 mod types;
 
 fn main() {
