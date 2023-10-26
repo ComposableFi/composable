@@ -45,7 +45,7 @@ The total supply of 100 million LAYR tokens are intended to be distributed and r
 
 **Team**: 25% (25,000,000 LAYR) of the total token supply will be distributed to founders and the core Composable team as a reward as well as incentives for their continued actions in the best interest in the Composable ecosystem. The distribution of these tokens will have a six-month cliff with linear vesting of the remaining tokens over the subsequent two and a half years.
 
-**Token purchasers**: 2~23.7% (23,710,772 LAYR) of the total token supply will be distributed to token purchasers as a reward for their essential early support and strategic backing of the ecosystem. 20% (4,742,154.34) of these tokens will be unlocked at the token generation event (TGE), with linear vesting of the remaining tokens over the subsequent two years.
+**Token purchasers**: ~23.7% (23,710,772 LAYR) of the total token supply will be distributed to token purchasers as a reward for their essential early support and strategic backing of the ecosystem. 20% (4,742,154.34) of these tokens will be unlocked at the token generation event (TGE), with linear vesting of the remaining tokens over the subsequent two years.
 
 **Emissions**: 10% (10,000,000 LAYR) of the total token supply will be released from the protocol as rewards and incentives for a number of actions involved in the protocol. These are programmatic incentives to bootstrap network growth (block validators, decentralized application builders and token holders from other networks) on Composable as well as token liquidity (liquidity mining programs). The full amount will be allocated upon TGE *
 

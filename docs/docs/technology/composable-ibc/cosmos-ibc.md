@@ -1,4 +1,4 @@
-# Cosmos ⬌ Polkadot Bridge
+# Cosmos ⬌ Polkadot IBC
 
 IBC is the native communication protocol of the Cosmos ecosystem, it allows for trustless communication to occur between any blockchains built using the Cosmos SDK which have the IBC module enabled. For the IBC connection between Polkadot and Cosmos, the Tendermint and Grandpa light clients are utlised alongside `ibc-rs` and the Hyperspace relayer on Picasso and Cosmos chains.
 

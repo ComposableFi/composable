@@ -9,4 +9,4 @@ clap = { version = "4.4.6", features = ["derive"] }
 cosmrs = { version = "0.15.0", features = ["cosmwasm", "rpc", "grpc"] }
 tokio = { version = "1.12.0", features = ["full"] }
 cosmos-sdk-proto = { version = "0.20.0", features = ["grpc-transport"] }
-tonic = { version = "0.10.2"}
+tonic = { version = "0.10.2" }

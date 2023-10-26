@@ -161,47 +161,37 @@
  
      "networks/centauri-chain",
    ],
- 
-   centauri: [
-     "technology/composable-ibc",
-     "technology/composable-ibc/cosmos-ibc",
-     "technology/composable-ibc/polkadot-kusama-ibc",
-     "technology/composable-ibc/ethereum-ibc",
-     "technology/composable-ibc/near-ibc-bridge",
-     "technology/composable-ibc/hyperspace-relayer",
-     "technology/composable-ibc/light-clients",
-     "technology/composable-ibc/merkle-mountain-ranges",
-     "technology/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
-   ],
 
-   technology: [
-     "technology/cvm",
+   architecture: [
+    {
+    type: "category",
+       label: "Composable IBC",
+       link: {
+         type: "doc",
+         id: "technology/composable-ibc",
+       },
+       collapsible: false,
+       collapsed: false,
+       items: [
+        "technology/composable-ibc/cosmos-ibc",
+        "technology/composable-ibc/polkadot-kusama-ibc",
+        "technology/composable-ibc/ethereum-ibc",
+        "technology/composable-ibc/near-ibc-bridge",
+        "technology/composable-ibc/hyperspace-relayer",
+        "technology/composable-ibc/light-clients",
+        "technology/composable-ibc/merkle-mountain-ranges",
+        "technology/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
+       ],
+      },
+
+      "technology/cvm",
    ],
+   
    develop: [
     {
-      type: "category",
-      label: "Nix",
-      link: {
-        type: "doc",
-        id: "nix"
-      },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        "nix/install",
-        "nix/run-packages",
-        "nix/development-environments",
-        "nix/running-checks",
-        "nix/reading-logs",
-        "nix/defining-your-own-packages",
-        "nix/editing-docs",
-        "nix/troubleshooting",
-      ],
-    },
-    {
       type: "doc",
-      id: "codespaces",
-    },
+      id: "developer-guides/build-on-composable",
+    },  
     {
       type: "category",
       label: "Cosmwasm Orchestrate",
@@ -245,8 +235,32 @@
     "developer-guides/collator-guide",
     "developer-guides/local-picasso-guide",
     "developer-guides/composable-cosmos-mainnet",
-    "developer-guides/testnet-3",
     "developer-guides/testnet-4",
+
+    {
+      type: "category",
+      label: "Nix",
+      link: {
+        type: "doc",
+        id: "nix"
+      },
+      collapsible: true,
+      collapsed: true,
+      items: [
+        "nix/install",
+        "nix/run-packages",
+        "nix/development-environments",
+        "nix/running-checks",
+        "nix/reading-logs",
+        "nix/defining-your-own-packages",
+        "nix/editing-docs",
+        "nix/troubleshooting",
+      ],
+    },
+    {
+      type: "doc",
+      id: "codespaces",
+    },
 
   ],
    ecosystem: [

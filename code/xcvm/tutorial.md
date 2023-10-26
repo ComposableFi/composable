@@ -201,7 +201,7 @@ If you think something not working. Remove `Exchange` and `Spawn`. Do only `Tran
 
 I use `nix run "composable#xc-swap-pica-to-osmo"` the way to above program on devnet.
 
-On mainet, after enter shell, I do this `$BINARY tx wasm execute centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g "$(cat swap-pica-to-osmosis.json)" --from=dz -y --gas=5000000 --amount=123456789000ppica`
+On `mainet`, after entering `centauri-mainnet` shell, I do this `$BINARY tx wasm execute centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g "$(cat swap-pica-to-osmosis.json)" --from=dz -y --gas=5000000 --amount=123456789000ppica`
 
 #### Tracing
 
