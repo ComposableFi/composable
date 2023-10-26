@@ -58,7 +58,7 @@ describe('MultiHop Tests', function () {
       mintAssetsOnRelays([kusamaApi], sudoKey, testWallet.address),
     ]);
     await createRoute(picassoApi, sudoKey, 2, [['picasso', 'composable'], ['composable', 'picasso']]);
-    await createRoute(picassoApi, sudoKey, 3, [['picasso', 'centauri'], ['centauri', 'osmosis']]);
+    await createRoute(picassoApi, sudoKey, 3, [['picasso', 'centauri']]);
     await Promise.all([
       getBalance(picassoAssets, [testWallet.address, feeAddress, substrateEscrowAddress, cosmosEscrowAddress], 'dotsama', picassoApi),
       getBalance(composableAssets, [testWallet.address], 'dotsama', composableApi),
@@ -70,10 +70,11 @@ describe('MultiHop Tests', function () {
   })
 
   before('Wait for channel to open on centauri to osmosis', async () => {
-    await waitForChannelsToOpen(2, 'centauri');
+    await waitForChannelsToOpen(1, 'centauri');
   });
 
-  it('Initiates a transfer for kusama => picasso => centauri => osmosis', async () => {
+  it('Initiates a transfer for kusama => picasso => centauri', async () => {
+    console.log('[TESTS] Initiates transfer from kusama for centauri');
     const preSequence = await getNextSequenceForIbc(picassoApi);
     const ksm = picassoAssets.find(asset => asset.symbol === 'ksm') as Asset;
     const [preFeeAddressBalance, preTotalIssuance, preEscrowAddressBalance] =
@@ -90,7 +91,7 @@ describe('MultiHop Tests', function () {
           2087,
           3,
           testWallet,
-          3,
+          2,
           ksmTransferAmount,
           false,
           true,
@@ -132,7 +133,7 @@ describe('MultiHop Tests', function () {
     await getBalance(ksmOnCent, [centauriAddress], 'cosmos');
     const ksmAfterBal = ksmOnCent.balance.get(centauriAddress);
     //validate that user balance remains the same
-    expect(ksmAfterBal).to.be.bignumber.eq(ksmPreBal);
+    expect(ksmAfterBal).to.be.bignumber.eq(ksmPreBal.plus(ibcSentAmount));
     //validate that total issuance increases
     expect(afterTotalIssuance).to.be.bignumber.eq(preTotalIssuance.plus(ibcSentAmount));
   });

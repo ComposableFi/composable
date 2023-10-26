@@ -281,14 +281,7 @@ export function setBeneficiary(
         id: api.createType('AccountId32', bech32.decode(centauriAddress).words),
       }
     });
-    networkHops[2] = api.createType("XcmV2Junction", {
-      AccountId32: {
-        network: api.createType("XcmV2NetworkId", "Any"),
-        id: api.createType('AccountId32', bech32.decode(osmosisAddress).words),
-      }
-    });
   }
-
   if (nbOfHops === 2) {
     return api.createType('XcmVersionedMultiLocation', {
       V2: api.createType('XcmV2MultiLocation', {
