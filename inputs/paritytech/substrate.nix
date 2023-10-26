@@ -28,7 +28,7 @@
         buildInputs = with pkgs; [ openssl zstd protobuf ];
         nativeBuildInputs = with pkgs;
         # yes, all these are in general needed, git not alwasy, but substrate checks git revision
-          [ clang pkg-config self'.packages.rust-nightly git ]
+          [ clang pkg-config self'.packages.rust-nightly-latest git ]
           ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
