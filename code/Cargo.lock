@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "beefy-light-client-primitives",
  "ckb-merkle-mountain-range 0.3.2",
@@ -885,7 +885,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "ckb-merkle-mountain-range 0.3.2",
  "derive_more 0.99.17",
@@ -5215,7 +5215,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5237,7 +5237,7 @@ dependencies = [
 [[package]]
 name = "grandpa-light-client-verifier"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "anyhow",
  "finality-grandpa",
@@ -5692,7 +5692,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "derive_more 0.99.17",
  "flex-error",
@@ -5753,7 +5753,7 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
@@ -5777,7 +5777,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "base58",
  "blake2",
@@ -5801,7 +5801,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "base64 0.13.1",
  "bytes 1.4.0",
@@ -5830,7 +5830,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "frame-system",
  "ibc 0.15.0",
@@ -5856,7 +5856,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -5868,7 +5868,7 @@ dependencies = [
 [[package]]
 name = "ics07-tendermint"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "bytes 1.4.0",
  "flex-error",
@@ -5891,7 +5891,7 @@ dependencies = [
 [[package]]
 name = "ics08-wasm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "hex",
  "ibc 0.15.0",
@@ -5904,7 +5904,7 @@ dependencies = [
 [[package]]
 name = "ics10-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "anyhow",
  "derive_more 0.99.17",
@@ -5930,7 +5930,7 @@ dependencies = [
 [[package]]
 name = "ics11-beefy"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "anyhow",
  "beefy-light-client",
@@ -7371,7 +7371,7 @@ dependencies = [
 [[package]]
 name = "light-client-common"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9191,7 +9191,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "beefy-light-client-primitives",
  "cumulus-primitives-core",
@@ -9244,7 +9244,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9316,21 +9316,49 @@ dependencies = [
 name = "pallet-liquid-staking"
 version = "1.0.0"
 dependencies = [
+ "composable-support",
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
+ "hex",
+ "kusama-runtime",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xcm-support",
+ "orml-xtokens",
+ "pallet-assets 1.0.0",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
  "pallet-utility",
  "pallet-xcm",
  "pallet-xcm-helper",
+ "parachain-info",
  "parity-scale-codec",
+ "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
+ "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
+ "sp-state-machine",
  "sp-std 5.0.0",
  "sp-trie",
  "xcm",
+ "xcm-builder",
+ "xcm-executor",
+ "xcm-simulator",
 ]
 
 [[package]]
@@ -15143,7 +15171,7 @@ checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc?rev=e66a104bf826e669ae4421e842265f58be1dac6a#e66a104bf826e669ae4421e842265f58be1dac6a"
+source = "git+https://github.com/ComposableFi/composable-ibc?rev=1448ca566eac8590933705b1ff523a9f50fb1bf3#1448ca566eac8590933705b1ff523a9f50fb1bf3"
 dependencies = [
  "bytes 1.4.0",
  "ics23 0.10.0",

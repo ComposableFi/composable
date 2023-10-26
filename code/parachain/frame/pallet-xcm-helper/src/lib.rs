@@ -44,8 +44,8 @@ use frame_support::traits::tokens::{Preservation, Fortitude, Precision};
 
 // mod benchmarking;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 // #[cfg(test)]
 // mod tests;
 
@@ -167,6 +167,47 @@ pub mod pallet {
 
             XcmWeightFee::<T>::mutate(xcm_call, |v| *v = xcm_weight_fee_misc);
             Self::deposit_event(Event::<T>::XcmWeightFeeUpdated(xcm_weight_fee_misc));
+            Ok(())
+        }
+
+
+        /// Update xcm fees amount to be used in xcm.Withdraw message
+        #[pallet::call_index(1)]
+        #[pallet::weight(10000000)]
+        #[transactional]
+        pub fn do_xcm_to_polkadot(origin: OriginFor<T>, 
+            value: BalanceOf<T>,
+            payee: RewardDestination<AccountIdOf<T>>,
+            stash: AccountIdOf<T>,
+            index: u16,
+            w: XcmWeightFeeMisc<Weight, BalanceOf<T>>
+        )  -> DispatchResult {
+            let who = frame_system::ensure_root(origin)?;
+
+            
+            // Self::do_bond(value, payee, stash, index, notify);
+            Self::do_do(value, payee, stash, index, w)?;
+
+            Ok(())
+        }
+
+        /// Update xcm fees amount to be used in xcm.Withdraw message
+        #[pallet::call_index(2)]
+        #[pallet::weight(10000000)]
+        #[transactional]
+        pub fn do_xcm_bond_to_polkadot(origin: OriginFor<T>, 
+            value: BalanceOf<T>,
+            payee: RewardDestination<AccountIdOf<T>>,
+            stash: AccountIdOf<T>,
+            index: u16,
+            w: XcmWeightFeeMisc<Weight, BalanceOf<T>>
+        )  -> DispatchResult {
+            let who = frame_system::ensure_root(origin)?;
+
+            
+            // Self::do_bond(value, payee, stash, index, notify);
+            Self::do_do_bond(value, payee, stash, index, w)?;
+
             Ok(())
         }
     }
@@ -314,6 +355,145 @@ impl<T: Config> Pallet<T> {
     }
 }
 
+impl<T: Config> Pallet<T>{
+    fn do_do(
+        value: BalanceOf<T>,
+        payee: RewardDestination<AccountIdOf<T>>,
+        stash: AccountIdOf<T>,
+        index: u16,
+        w: XcmWeightFeeMisc<Weight, BalanceOf<T>>
+        // notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
+    ) -> Result<(), DispatchError> {
+        let controller = stash.clone();
+        use crate::ump::PolkadotCall as RelaychainCall;
+        let xcm_weight_fee_misc = w;
+        Ok({
+
+            // let call = RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
+            //     controller: T::Lookup::unlookup(controller.clone()),
+            //     value,
+            //     payee: payee.clone(),
+            // }));
+
+            // let msg_new = Self::do_ump_transact(
+            //     call.encode().into(),
+            //     xcm_weight_fee_misc.weight,
+            //     Self::refund_location(),
+            //     xcm_weight_fee_misc.fee,
+            // )?;
+
+            let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
+                BalancesTransferKeepAliveCall {
+                    dest: T::Lookup::unlookup(stash),
+                    value,
+                },
+            ));
+            let mut msg = Self::do_ump_transact(
+                call.encode().into(),
+                xcm_weight_fee_misc.weight,
+                Self::refund_location(),
+                xcm_weight_fee_misc.fee,
+            )?;
+            // let msg_new = msg.clone();
+            // let call = RelaychainCall::<T>::Utility(Box::new(UtilityCall::AsDerivative(
+            //     UtilityAsDerivativeCall {
+            //         index,
+            //         call: RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
+            //             controller: T::Lookup::unlookup(controller),
+            //             value,
+            //             payee,
+            //         })),
+            //     },
+            // )));
+
+            // Self::append_transact(&mut msg, call.encode().into(), xcm_weight_fee_misc.weight);
+
+            // let query_id = Self::report_outcome_notify(
+            //     &mut msg,
+            //     MultiLocation::parent(),
+            //     notify,
+            //     T::NotifyTimeout::get(),
+            // )?;
+
+            if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
+                return Err(Error::<T>::SendFailure.into());
+            }
+
+            ()
+            // query_id
+        })
+    }
+
+    fn do_do_bond(
+        value: BalanceOf<T>,
+        payee: RewardDestination<AccountIdOf<T>>,
+        stash: AccountIdOf<T>,
+        index: u16,
+        w: XcmWeightFeeMisc<Weight, BalanceOf<T>>
+        // notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
+    ) -> Result<(), DispatchError> {
+        let controller = stash.clone();
+        use crate::ump::PolkadotCall as RelaychainCall;
+        let xcm_weight_fee_misc = w;
+        Ok({
+
+            let call = RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
+                // controller: T::Lookup::unlookup(controller.clone()),
+                value,
+                payee: payee.clone(),
+            }));
+
+            let msg = Self::do_ump_transact(
+                call.encode().into(),
+                xcm_weight_fee_misc.weight,
+                Self::refund_location(),
+                xcm_weight_fee_misc.fee,
+            )?;
+
+            // let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
+            //     BalancesTransferKeepAliveCall {
+            //         dest: T::Lookup::unlookup(stash),
+            //         value,
+            //     },
+            // ));
+            // let mut msg = Self::do_ump_transact(
+            //     call.encode().into(),
+            //     xcm_weight_fee_misc.weight,
+            //     Self::refund_location(),
+            //     xcm_weight_fee_misc.fee,
+            // )?;
+            // let msg_new = msg.clone();
+            // let call = RelaychainCall::<T>::Utility(Box::new(UtilityCall::AsDerivative(
+            //     UtilityAsDerivativeCall {
+            //         index,
+            //         call: RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
+            //             controller: T::Lookup::unlookup(controller),
+            //             value,
+            //             payee,
+            //         })),
+            //     },
+            // )));
+
+            // Self::append_transact(&mut msg, call.encode().into(), xcm_weight_fee_misc.weight);
+
+            // let query_id = Self::report_outcome_notify(
+            //     &mut msg,
+            //     MultiLocation::parent(),
+            //     notify,
+            //     T::NotifyTimeout::get(),
+            // )?;
+
+            if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
+                return Err(Error::<T>::SendFailure.into());
+            }
+
+            ()
+            // query_id
+        })
+    }
+
+}
+
 impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
     fn add_xcm_fees(payer: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
         use frame_support::traits::tokens::{Preservation};
@@ -336,6 +516,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
         fees: BalanceOf<T>,
     ) -> Result<Xcm<()>, DispatchError> {
         let asset: MultiAsset = (MultiLocation::here(), fees).into();
+        //TODO rust.dev need to uncomment this line to burn the fee. now we do not exact fee for each xcm call.
         T::Assets::burn_from(T::RelayCurrency::get(), &Self::account_id(), fees, Precision::BestEffort, Fortitude::Polite)
             .map_err(|_| Error::<T>::InsufficientXcmFees)?;
 
@@ -566,8 +747,9 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
         notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
     ) -> Result<QueryId, DispatchError> {
         let controller = stash.clone();
+        use crate::ump::PolkadotCall as RelaychainCall;
         let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Bond);
-        Ok(switch_relay!({
+        Ok({
             let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
                 BalancesTransferKeepAliveCall {
                     dest: T::Lookup::unlookup(stash),
@@ -584,7 +766,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
                 UtilityAsDerivativeCall {
                     index,
                     call: RelaychainCall::Staking::<T>(StakingCall::Bond(StakingBondCall {
-                        controller: T::Lookup::unlookup(controller),
+                        // controller: T::Lookup::unlookup(controller),
                         value,
                         payee,
                     })),
@@ -605,7 +787,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
             }
 
             query_id
-        }))
+        })
     }
 
     fn do_bond_extra(

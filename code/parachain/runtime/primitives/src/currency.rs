@@ -155,6 +155,8 @@ impl CurrencyId {
 		pub const stDOT: CurrencyId = CurrencyId(7, None);
 		pub const COMPOSABLE_DOT: CurrencyId = CurrencyId(79228162514264337593543950342);
 
+		pub const BIFTOST_DOT: CurrencyId = CurrencyId(79228162514264337593543950369);
+
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);
 		pub const PICA_KSM_LPT: CurrencyId = CurrencyId(107, None);

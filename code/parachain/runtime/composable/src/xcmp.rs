@@ -4,7 +4,7 @@ use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing, OriginTrait},
+	traits::{Everything, Nothing, OriginTrait, ProcessMessageError},
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
@@ -24,7 +24,7 @@ use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	RelayChainAsNative, SiblingParachainAsNative, ParentAsSuperuser, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
 	TakeWeightCredit,
 };
@@ -72,12 +72,25 @@ impl orml_unknown_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
-pub type Barrier = (
-	AllowKnownQueryResponses<PolkadotXcm>,
-	AllowSubscriptionsFrom<ParentOrSiblings>,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	TakeWeightCredit,
-);
+pub struct AllowAll;
+impl xcm_executor::traits::ShouldExecute for AllowAll{
+	fn should_execute<RuntimeCall>(
+		origin: &MultiLocation,
+		instructions: &mut [Instruction<RuntimeCall>],
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ProcessMessageError>{
+		Ok(())
+	}
+}
+
+// pub type Barrier = (
+// 	AllowAll
+// 	// TakeWeightCredit,
+// 	// AllowKnownQueryResponses<PolkadotXcm>,
+// 	// AllowSubscriptionsFrom<ParentOrSiblings>,
+// 	// AllowTopLevelPaidExecutionFrom<Everything>,
+// );
 
 pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 
@@ -196,6 +209,9 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
+	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
+    // transaction from the Root origin.
+    ParentAsSuperuser<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
@@ -422,9 +438,9 @@ impl xcm_executor::Config for XcmConfig {
 	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
-	type Barrier = Barrier;
+	type Barrier = AllowAll;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	type Trader = Trader;
+	type Trader = Trader; //?
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -437,7 +453,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
-	type AssetTrap = CaptureAssetTrap;
+	type AssetTrap = PolkadotXcm;
 }
 
 parameter_type_with_key! {
@@ -465,7 +481,7 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ()>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
