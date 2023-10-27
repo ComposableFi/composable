@@ -8643,6 +8643,7 @@ version = "1.0.0"
 dependencies = [
  "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/composable-ibc)",
  "grandpa-prover",
+ "hex",
  "hyperspace-core",
  "jsonrpsee 0.16.3",
  "subxt 0.29.0",
