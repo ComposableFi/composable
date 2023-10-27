@@ -7,9 +7,7 @@ use scale_info::TypeInfo;
 
 /// The interpreter origin, composite of a user origin and a salt.
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 pub struct InterpreterOrigin {
 	pub user_origin: UserOrigin,
 	#[serde(with = "hex")]
@@ -27,9 +25,7 @@ impl Display for InterpreterOrigin {
 
 /// The origin of a user, which consist of the composite, origin network and origin network user id.
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 pub struct UserOrigin {
 	pub network_id: NetworkId,
@@ -46,9 +42,7 @@ impl Display for UserOrigin {
 /// Arbitrary `User` type that represent the identity of a user on a given network, usually a public
 /// key.
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct UserId(
 	#[serde(with = "hex")]
@@ -85,17 +79,7 @@ impl AsRef<[u8]> for UserId {
 /// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
 /// how it is computed.
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(
-	Copy,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Debug,
-	Serialize,
-	Deserialize,
-)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[repr(transparent)]
 pub struct NetworkId(pub u32);

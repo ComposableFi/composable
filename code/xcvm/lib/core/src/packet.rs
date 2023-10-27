@@ -58,22 +58,3 @@ impl TryFrom<&[u8]> for XCVMAck {
 	}
 }
 
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct Packet<Program> {
-	/// The interpreter that was the origin of this packet.
-	#[serde(with = "hex")]
-	#[cfg_attr(feature = "std", schemars(with = "String"))]
-	pub interpreter: Vec<u8>,
-	/// The user that originated the first XCVM call.
-	pub user_origin: UserOrigin,
-	/// The salt associated with the program.
-	#[serde(with = "hex")]
-	#[cfg_attr(feature = "std", schemars(with = "String"))]
-	pub salt: Vec<u8>,
-	/// The protobuf encoded program.
-	pub program: Program,
-	/// The assets that were attached to the program.
-	pub assets: Funds<crate::shared::Displayed<u128>>,
-}

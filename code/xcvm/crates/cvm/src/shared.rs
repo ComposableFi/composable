@@ -1,4 +1,4 @@
-use crate::{prelude::*};
+use crate::{asset::*, prelude::*};
 
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
@@ -7,6 +7,14 @@ use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub type Salt = Vec<u8>;
+/// absolute amounts
+pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
+// like `XcFunds`, but allow relative(percentages) amounts. Similar to assets filters in XCM
+pub type XcBalanceFilter = crate::asset::Balance;
+pub type XcFundsFilter = Funds<XcBalanceFilter>;
+pub type XcInstruction = crate::instruction::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
+pub type XcPacket = crate::packet::Packet<XcProgram>;
+pub type XcProgram = crate::program::Program<VecDeque<XcInstruction>>;
 
 #[cfg(feature = "cosmwasm")]
 pub fn encode_base64<T: Serialize>(x: &T) -> StdResult<String> {
@@ -19,7 +27,7 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 }
 
 /// A wrapper around CanonicalAddr which implements SCALE encoding.
-#[cfg(feature="cosmwasm")]
+#[cfg(feature = "cosmwasm")]
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
 	Clone,
@@ -78,7 +86,7 @@ impl From<Binary> for XcAddr {
 	}
 }
 
-#[cfg(all(feature = "cosmwasm", feature="scale"))]
+#[cfg(all(feature = "cosmwasm", feature = "scale"))]
 impl parity_scale_codec::Encode for XcAddr {
 	fn size_hint(&self) -> usize {
 		self.as_slice().size_hint()
@@ -89,7 +97,7 @@ impl parity_scale_codec::Encode for XcAddr {
 	}
 }
 
-#[cfg(all(feature = "cosmwasm", feature="scale"))]
+#[cfg(all(feature = "cosmwasm", feature = "scale"))]
 impl parity_scale_codec::Decode for XcAddr {
 	fn decode<I: parity_scale_codec::Input>(
 		input: &mut I,
@@ -98,7 +106,7 @@ impl parity_scale_codec::Decode for XcAddr {
 	}
 }
 
-#[cfg(all(feature = "cosmwasm", feature="scale"))]
+#[cfg(all(feature = "cosmwasm", feature = "scale"))]
 impl scale_info::TypeInfo for XcAddr {
 	type Identity = <[u8] as scale_info::TypeInfo>::Identity;
 	fn type_info() -> scale_info::Type {
@@ -142,7 +150,6 @@ impl scale_info::TypeInfo for XcAddr {
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);
 
-
 impl<T: FromStr> FromStr for Displayed<T> {
 	type Err = <T as FromStr>::Err;
 
@@ -151,9 +158,9 @@ impl<T: FromStr> FromStr for Displayed<T> {
 	}
 }
 
-#[cfg(feature="scale")]
+#[cfg(feature = "scale")]
 impl<T> parity_scale_codec::WrapperTypeEncode for Displayed<T> {}
-#[cfg(feature="scale")]
+#[cfg(feature = "scale")]
 impl<T> parity_scale_codec::WrapperTypeDecode for Displayed<T> {
 	type Wrapped = T;
 }
@@ -238,31 +245,33 @@ macro_rules! impl_conversions {
 
 #[cfg(feature = "proto")]
 impl prost::Message for Displayed<u64> {
-    fn encoded_len(&self) -> usize {
-        self.0.encoded_len()
-    }
+	fn encoded_len(&self) -> usize {
+		self.0.encoded_len()
+	}
 
-    fn clear(&mut self) {
-        self.0.clear()
-    }
+	fn clear(&mut self) {
+		self.0.clear()
+	}
 
 	fn encode_raw<B>(&self, buf: &mut B)
-		where
-			B: prost::bytes::BufMut,
-			Self: Sized {
+	where
+		B: prost::bytes::BufMut,
+		Self: Sized,
+	{
 		self.0.encode_raw(buf)
 	}
 
 	fn merge_field<B>(
-			&mut self,
-			tag: u32,
-			wire_type: prost::encoding::WireType,
-			buf: &mut B,
-			ctx: prost::encoding::DecodeContext,
-		) -> Result<(), prost::DecodeError>
-		where
-			B: prost::bytes::Buf,
-			Self: Sized {
+		&mut self,
+		tag: u32,
+		wire_type: prost::encoding::WireType,
+		buf: &mut B,
+		ctx: prost::encoding::DecodeContext,
+	) -> Result<(), prost::DecodeError>
+	where
+		B: prost::bytes::Buf,
+		Self: Sized,
+	{
 		self.0.merge_field(tag, wire_type, buf, ctx)
 	}
 }
@@ -275,7 +284,7 @@ impl_conversions!(Displayed<u128> => u128, Displayed<u64> => u64);
 impl_conversions!(cosmwasm_std::Uint128 = Displayed<u128>,
                   cosmwasm_std::Uint64 = Displayed<u64>);
 
-#[cfg(feature="proto")]		
+#[cfg(feature = "proto")]
 impl_conversions!(crate::proto::pb::common::Uint128 = Displayed<u128>);
 
 impl<T: core::cmp::PartialEq> core::cmp::PartialEq<T> for Displayed<T> {
