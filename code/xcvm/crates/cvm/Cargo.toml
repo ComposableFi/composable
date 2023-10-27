@@ -6,11 +6,16 @@ version = "0.1.0"
 [build-dependencies]
 prost-build = { workspace = true }
 
+[dependencies]
+serde = { workspace = true, default-features = false }
+derive_more = { workspace = true, default-features = false }
+cosmwasm-std = { workspace = true, default-features = false, optional = true }
+
 [features]
 default = ["std"]
 xcm = []
-cosmsos = []
-cosmwasm = ["serde"]
+cosmos = []
+cosmwasm = ["serde", "dep:cosmwasm-std"]
 substrate = []
 scale = []
 protobuf = []
@@ -18,4 +23,4 @@ json-schema = []
 ibc = []
 evm = []
 serde = []
-
+std = []

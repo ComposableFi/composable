@@ -1,4 +1,4 @@
-use crate::{prelude::*, AssetId};
+use crate::{prelude::*};
 
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
@@ -19,7 +19,8 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 }
 
 /// A wrapper around CanonicalAddr which implements SCALE encoding.
-#[cfg_attr(and(feature = "json-schema" feature="cosmwasm"), derive(schemars::JsonSchema))]
+#[cfg(feature="cosmwasm")]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
 	Clone,
 	PartialEq,
@@ -273,6 +274,8 @@ impl_conversions!(Displayed<u128> => u128, Displayed<u64> => u64);
 #[cfg(feature = "cosmwasm")]
 impl_conversions!(cosmwasm_std::Uint128 = Displayed<u128>,
                   cosmwasm_std::Uint64 = Displayed<u64>);
+
+#[cfg(feature="proto")]		
 impl_conversions!(crate::proto::pb::common::Uint128 = Displayed<u128>);
 
 impl<T: core::cmp::PartialEq> core::cmp::PartialEq<T> for Displayed<T> {
