@@ -300,6 +300,9 @@ pub mod pallet {
         IncentiveUpdated(BalanceOf<T>),
         /// Not the ideal staking ledger
         NonIdealStakingLedger(DerivativeIndex),
+
+
+        RelaychainStorageProofKey(DerivativeIndex, Vec<u8>),
     }
 
     #[pallet::error]
@@ -1269,6 +1272,21 @@ pub mod pallet {
                 ExchangeRate::<T>::put(Rate::one());
                 Self::deposit_event(Event::<T>::ExchangeRateUpdated(Rate::one()));
             }
+            Ok(())
+        }
+
+
+        #[pallet::call_index(25)]
+        
+        #[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
+        #[transactional]
+        pub fn relaychain_storage_proof_key(
+            origin: OriginFor<T>,
+            derivative_index: DerivativeIndex,
+        ) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            let key = Self::get_staking_ledger_key(derivative_index);
+            Self::deposit_event(Event::<T>::RelaychainStorageProofKey(derivative_index, key));
             Ok(())
         }
     }
