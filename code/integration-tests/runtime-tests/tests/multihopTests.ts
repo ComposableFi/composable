@@ -99,6 +99,7 @@ describe('MultiHop Tests', function () {
           osmosisAddress),
       ]
     ));
+    console.log('[TESTS] Event received');
     await waitForBlocks(picassoApi, 1);
     const {data: [_origin, _to, amount, _assetId, _memo]} = ibcEvent;
     ibcSentAmount = new BigNumber((amount.toString().replaceAll(',', '')));
@@ -117,6 +118,7 @@ describe('MultiHop Tests', function () {
     expect(afterEscrowAddressBalance.minus(preEscrowAddressBalance)).to.be.bignumber.eq(ibcSentAmount);
     expect(afterFeeAddressBalance).to.be.bignumber.eq(preFeeAddressBalance.plus(feeCharged));
     expect(nextsequence).to.be.eq(preSequence + 1);
+    console.log('[TESTS] first test passed');
   });
 
   it('Waits for funds on centauri', async () => {
