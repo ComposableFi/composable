@@ -61,14 +61,14 @@
     centauri-old-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/229d28f819e70df7b82baf399980410bbaf9b0cc";
+        "github:ComposableFi/composable-ibc/14f81a7143c9f51bc39e907f03a16e55bb538b09";
     };
 
     # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/229d28f819e70df7b82baf399980410bbaf9b0cc";
+        "github:ComposableFi/composable-ibc/14f81a7143c9f51bc39e907f03a16e55bb538b09";
     };
 
     eth-pos-devnet-src = {
