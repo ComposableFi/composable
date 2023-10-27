@@ -182,21 +182,34 @@ fn interpret_exchange(
 	};
 	ensure_eq!(give.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
 	ensure_eq!(want.0.len(), 1, ContractError::OnlySingleAssetExchangeIsSupportedByPool);
+
+	let give = give.0[0].clone();
+	let want = want.0[0].clone();
+
 	let asset = gateway_address
-		.get_asset_by_id(deps.querier, give.0[0].0)
+		.get_asset_by_id(deps.querier, give.0)
 		.map_err(ContractError::AssetNotFound)?;
-	let give: xc_core::cosmos::Coin = xc_core::cosmos::Coin {
-		denom: asset.denom(),
-		amount: give.0[0].1.amount.intercept.to_string(),
-	};
+
+	let amount = deps.querier.query_balance(&sender, asset.denom())?;
+	let amount = give.1.amount.apply(amount.amount.u128())?;
+	let give: xc_core::cosmos::Coin =
+		xc_core::cosmos::Coin { denom: asset.denom(), amount: amount.to_string() };
+
 	let asset = gateway_address
-		.get_asset_by_id(deps.querier, want.0[0].0)
+		.get_asset_by_id(deps.querier, want.0)
 		.map_err(ContractError::AssetNotFound)?;
-	
-	let want = xc_core::cosmos::Coin {
-		denom: asset.denom(),
-		amount: want.0[0].1.amount.intercept.to_string(),
-	};
+
+	if want.1.amount.is_both() {
+		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime)
+	}
+
+	if want.1.amount.is_ratio() {
+		return Err(ContractError::ExchangeDoesNotSupportSlippage)
+	}
+
+	let want =
+		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.amount.intercept.to_string() };
+
 	let response = match exchange.exchange {
 		OsmosisCrossChainSwap(routes) => {
 			let msg = MsgSwapExactAmountIn {
