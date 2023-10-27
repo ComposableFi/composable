@@ -3333,6 +3333,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.4.1",
  "cosmwasm-std 1.4.1",
+ "cvm",
  "cw-storage-plus 1.1.0",
  "itertools 0.11.0",
  "num-integer",

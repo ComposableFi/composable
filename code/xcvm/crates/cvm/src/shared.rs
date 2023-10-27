@@ -27,7 +27,6 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 }
 
 /// A wrapper around CanonicalAddr which implements SCALE encoding.
-#[cfg(feature = "cosmwasm")]
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
 	Clone,
@@ -42,7 +41,7 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 )]
 #[into(owned, ref, ref_mut)]
 #[repr(transparent)]
-pub struct XcAddr(CanonicalAddr);
+pub struct XcAddr(Vec<u8>);
 
 #[cfg(feature = "cosmwasm")]
 impl core::fmt::Display for XcAddr {
@@ -146,6 +145,7 @@ impl scale_info::TypeInfo for XcAddr {
 	Hash,
 	derive_more::Deref,
 	derive_more::From,
+	Deserialize,
 )]
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);

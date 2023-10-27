@@ -176,16 +176,18 @@ impl Amount {
 		} else if self.slope.0 == Self::MAX_PARTS {
 			value
 		} else {
-			let value = Uint256::from(value)
-				.checked_sub(self.intercept.0.into())
-				.map_err(|_| ArithmeticError::Underflow)?;
 			let value = value
-				.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
-				.map_err(|_| ArithmeticError::Overflow)?;
+				.checked_sub(self.intercept.0.into())
+				.ok_or( ArithmeticError::Underflow)?;
+			let value = value
+				.checked_mul(self.slope.0.into())
+				.ok_or(ArithmeticError::Underflow)?
+				.checked_div(Self::MAX_PARTS.into())
+				.ok_or( ArithmeticError::Overflow)?;
 			let value = value
 				.checked_add(self.intercept.0.into())
-				.map_err(|_| ArithmeticError::Overflow)?;
-			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
+				.ok_or(ArithmeticError::Overflow)?;
+			value
 		};
 		Ok(u128::min(value, amount))
 	}
@@ -201,18 +203,20 @@ impl Amount {
 		} else if self.slope.0 == Self::MAX_PARTS {
 			value
 		} else {
-			let value = Uint256::from(self.intercept.0);
+			let value = self.intercept.0;
 			let value = value
 				.checked_add(
-					Uint256::one()
-						.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
-						.map_err(|_| ArithmeticError::Overflow)?,
+					u128::one()
+						.checked_mul(self.slope.0.into())
+						.ok_or(ArithmeticError::Overflow)?
+						.checked_div(Self::MAX_PARTS.into())
+						.ok_or( ArithmeticError::Overflow)?,
 				)
-				.map_err(|_| ArithmeticError::Overflow)?;
+				.ok_or( ArithmeticError::Overflow)?;
 			let value = value
-				.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
-				.map_err(|_| ArithmeticError::Overflow)?;
-			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
+				.checked_mul(10_u128.pow(decimals as u32))
+				.ok_or( ArithmeticError::Overflow)?;
+			value
 		};
 		Ok(u128::min(value, amount))
 	}
