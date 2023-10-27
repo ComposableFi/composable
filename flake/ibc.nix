@@ -47,25 +47,25 @@
         composable-picasso-ibc-connection-init = pkgs.writeShellApplication {
           name = "composable-picasso-ibc-connection-init";
           runtimeInputs = devnetTools.withBaseContainerTools;
-          text  = ''
-                  HOME="${devnet-root-directory}/composable-picasso-ibc"
-                  export HOME                
-                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
-                  export RUST_LOG      
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10
-                '';
+          text = ''
+            HOME="${devnet-root-directory}/composable-picasso-ibc"
+            export HOME                
+            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            export RUST_LOG      
+            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10
+          '';
         };
 
         composable-picasso-ibc-channels-init = pkgs.writeShellApplication {
           name = "composable-picasso-ibc-channels-init";
           runtimeInputs = devnetTools.withBaseContainerTools;
-          text  = ''
-                  HOME="${devnet-root-directory}/composable-picasso-ibc"
-                  export HOME       
-                  RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
-                  export RUST_LOG
-                  ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
-                '';
+          text = ''
+            HOME="${devnet-root-directory}/composable-picasso-ibc"
+            export HOME       
+            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            export RUST_LOG
+            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
+          '';
         };
 
         picasso-centauri-ibc-channels-init = pkgs.writeShellApplication {

@@ -65,7 +65,6 @@ impl CFMM {
     }
 }
 
-
 struct Mechanism {
     orderbooks: Vec<Solution>,
 }
@@ -82,7 +81,6 @@ impl Mechanism {
         self.orderbooks.push(orderbook);
     }
 }
-
 
 pub struct CFMMSolver {
     cfmm: CFMM,
@@ -139,4 +137,3 @@ impl CFMMProfitSolver {
 pub struct CFMMVolumeSolver {
     inner: CFMMSolver,
 }
-
