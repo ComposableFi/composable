@@ -1,6 +1,5 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
@@ -183,7 +182,7 @@ pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
 	pub solutions:
-	IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
+		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
 	pub cvm_addr: Item<String>,
@@ -223,7 +222,7 @@ impl Default for OrderContract<'_> {
 		Self {
 			orders: Map::new("orders"),
 			next_order_id: Item::new("next_order_id"),
-			cvm_address : Item::new("cvm_address"),
+			cvm_address: Item::new("cvm_address"),
 			solutions: solutions(),
 		}
 	}
@@ -411,7 +410,7 @@ impl OrderContract<'_> {
 		let mut response = Response::default();
 
 		if let Some(route) = solution_item.msg.route {
-			// send remaining for settlement		
+			// send remaining for settlement
 			let route = wasm_execute(
 				ctx.env.contract.address,
 				&ExecMsg::route(RouteSubMsg { all_orders, route }),
@@ -496,7 +495,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
 	}
 	Ok(transfers)
 }

@@ -28,25 +28,16 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 
 /// A wrapper around any address in canonical form
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(
-	Clone,
-	PartialEq,
-	Eq,
-	Hash,
-	derive_more::Deref,
-	serde::Deserialize,
-	serde::Serialize,
-)]
+#[derive(Clone, PartialEq, Eq, Hash, derive_more::Deref, serde::Deserialize, serde::Serialize)]
 #[repr(transparent)]
 pub struct XcAddr(Vec<u8>);
 
 #[cfg(feature = "cosmwasm")]
 impl core::fmt::Debug for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Debug::fmt(&self.0 , fmtr)
+		core::fmt::Debug::fmt(&self.0, fmtr)
 	}
 }
-
 
 #[cfg(feature = "cosmwasm")]
 impl From<XcAddr> for Vec<u8> {

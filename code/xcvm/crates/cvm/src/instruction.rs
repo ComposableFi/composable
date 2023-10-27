@@ -2,11 +2,7 @@ use crate::{
 	asset::{AssetId, Balance},
 	program::Program,
 };
-use alloc::{
-	borrow::Cow,
-	collections::{BTreeMap},
-	vec::Vec,
-};
+use alloc::{borrow::Cow, collections::BTreeMap, vec::Vec};
 #[cfg(feature = "scale")]
 use parity_scale_codec::{Decode, Encode};
 #[cfg(feature = "scale")]
