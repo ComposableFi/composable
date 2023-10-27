@@ -339,6 +339,14 @@ pub fn generate_network_prefixed_id(network_id: NetworkId, protocol_id: u32, non
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn amounts() {
+		let amount = Amount::new(0, 100);
+		let result = amount.apply(100);
+		assert!(amount, 100);
+	}
+
 	#[test]
 	fn devnet() {
 		let pica_on_picasso = generate_asset_id(0.into(), 0, 1);

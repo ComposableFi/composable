@@ -192,6 +192,7 @@ fn interpret_exchange(
 	let asset = gateway_address
 		.get_asset_by_id(deps.querier, want.0[0].0)
 		.map_err(ContractError::AssetNotFound)?;
+	
 	let want = xc_core::cosmos::Coin {
 		denom: asset.denom(),
 		amount: want.0[0].1.amount.intercept.to_string(),
