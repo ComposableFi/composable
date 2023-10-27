@@ -3321,6 +3321,7 @@ dependencies = [
  "cosmwasm-std 1.2.5",
  "derive_more 1.0.0-beta.2",
  "hex",
+ "num",
  "prost-build",
  "schemars",
  "serde",

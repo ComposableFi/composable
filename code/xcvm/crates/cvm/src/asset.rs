@@ -1,14 +1,21 @@
 use crate::{prelude::*};
+use crate::network::NetworkId;
 
 #[cfg(feature = "cw-storage-plus")]
 use cw_storage_plus::{Key, Prefixer};
 
 use crate::shared::Displayed;
 use core::ops::Add;
+#[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
+
+
+#[cfg(feature = "scale")]
 use parity_scale_codec::{Decode, Encode};
+#[cfg(feature = "scale")]
 use scale_info::TypeInfo;
+
 use serde::{Deserialize, Serialize};
 
 /// Newtype for CVM assets ID. Must be unique for each asset and must never change.
@@ -24,12 +31,10 @@ use serde::{Deserialize, Serialize};
 	Ord,
 	Debug,
 	Hash,
-	Encode,
-	Decode,
-	TypeInfo,
 	Serialize,
 	Deserialize,
 )]
+#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
 #[repr(transparent)]
 pub struct AssetId(pub Displayed<u128>);
 
@@ -89,8 +94,9 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
 #[serde(rename_all = "snake_case")]
 pub struct Balance {
 	pub amount: Amount,
@@ -117,8 +123,9 @@ impl From<u128> for Balance {
 
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
 #[serde(rename_all = "snake_case")]
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 pub struct Amount {
@@ -127,7 +134,8 @@ pub struct Amount {
 }
 
 /// Arithmetic errors.
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, Debug, TypeInfo, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug,  Serialize, Deserialize)]
+#[cfg_attr(feature="scale", derive(Encode, Decode, TypeInfo))]
 pub enum ArithmeticError {
 	/// Underflow.
 	Underflow,
@@ -258,8 +266,9 @@ impl From<u128> for Amount {
 /// a set of assets with non zero balances
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
 #[repr(transparent)]
 pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
 

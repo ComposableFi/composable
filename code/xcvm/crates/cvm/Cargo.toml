@@ -13,6 +13,7 @@ cosmwasm-std = { workspace = true, default-features = false, optional = true }
 schemars = { workspace = true, default-features = false, optional = true }
 cosmwasm-schema = { workspace = true, default-features = false, optional = true }
 hex ={ workspace = true, default-features = false}
+num ={ workspace = true, default-features = false}
 
 [features]
 default = ["std"]

@@ -3,3 +3,4 @@ extern crate alloc;
 mod prelude;
 pub mod network;
 pub mod shared;
+pub mod asset;
