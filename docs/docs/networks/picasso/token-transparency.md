@@ -46,6 +46,7 @@ This is governed by the Picasso General Council, which is intended to later be g
 75% of spent network fees will automatically flow into the treasury pallet, 
 with the remaining 25% of spent fees intended to be distributed to collators. 
 Here, the token holders have the ability to identify and submit for approval improvement proposals relating to the Picasso network.
+
 Improvement proposals may include but are not limited to implementing additional security audits, 
 grants for development on the Picasso network, core protocol updates or additions, 
 new integrations of other ecosystems and protocols into Picasso and the broader Composable ecosystem, 
@@ -81,15 +82,15 @@ The following multisigs are controlled by the governance council and are activat
 These multisigs are considered non-circulating, 
 and can only be considered “circulating” if voted upon by protocol governance to become circulating.
 
-Treasury Multisig: 5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm 
+Treasury Multisig: `5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm` 
 
-Team Tokens Multisig: 5zBQWEzVJuF7BPkgi8hxRW4T3c4RkfhMuArgXekwHyLck4hT
+Team Tokens Multisig: `5zBQWEzVJuF7BPkgi8hxRW4T3c4RkfhMuArgXekwHyLck4hT`
 
-Ecosystem Incentives Multisig : 5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK
+Ecosystem Incentives Multisig : `5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK`
 
-Liquidity Programs Multisig : 5ys4cFxQBDs8qhkXbs9smn7yVMSmJ3QdLeqNTHfhk5QmX5Pj
+Liquidity Programs Multisig : `5ys4cFxQBDs8qhkXbs9smn7yVMSmJ3QdLeqNTHfhk5QmX5Pj`
 
-Centauri Fees Multisig: 5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa
+Centauri Fees Multisig: `5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa`
 
 Treasury Pallet for accruing fees: https://polkadot.js.org/apps/#/treasury
 
@@ -106,10 +107,14 @@ Pursuant to [Council motion #19](https://picasso.polkassembly.io/motion/19), the
 
 #### Crowdloan Pallet Funds
 
-Are located at the crowdloan pallet: 5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u
+Are located at the crowdloan pallet: `5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u`
 
 A detailed list of the crowdloan contributions and rewards can be found [on our GitHub](https://github.com/ComposableFi/composable/blob/main/docs/docs/networks/picasso/crowdloan-contributors/crowdloan-logs.csv).
 
+#### IBC Escrow Address
+
+
+The IBC escrow address is an intermediary protocol owned address on Picasso that temporarily holds assets during cross-chain transfers to ensure secure and trust-minimised communication. It is following account: `5z7QRVsBvf7BiS4Erw74GzmJU1BNiJ1dwKoJ9Z7t6b6hDrBA`
 #### Token Purchasers' Funds
 
 Token purchasers’ funds have been loaded into a vesting pallet and
@@ -117,8 +122,14 @@ will unlock based on the vesting schedule specified on the PICA token distributi
 For more on how the vesting pallet works, 
 please read: [https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs.](https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs)
 
+### Composable Cosmos Allocation
 
-#### State of PICA Supply as of December 28th, 2022
+The multisig address `centauri12k2pyuylm9t7ugdvz67h9pg4gmmvhn5vmvgw48` holds 1,066,669,217.2 PICA for validator delegations to secure the Composable Cosmos chain. 
+
+### Hyperspace Relayer allocation
+
+The current Hyperspace account on Picasso has the following address: `5wcgm3bbotHBcSjpgN6uGV338XhxDGuB22BETxsbgaMwqhzT`.
+### State of PICA Supply as of October 26th, 2022
 
 - Circulating Supply: At most currently ~15% of Total supply. 
 - Total Supply: 10 Billion
@@ -138,11 +149,11 @@ As per the tokeneconomics, half of the crowdloan rewards are now available, and 
 
 The treasury has seeded QA, testing stages, and operational wallets: 
 
-5wiDStfPBJDhzJmkNqnjsbAmunqbSb8h1JobZV7FiMzgEmZu
+`5wiDStfPBJDhzJmkNqnjsbAmunqbSb8h1JobZV7FiMzgEmZu`
 
-HCMDYY3ittCoNQEtZV9XAxMQkC6YYKgC6cxZuJkAdikhuqQ
+`HCMDYY3ittCoNQEtZV9XAxMQkC6YYKgC6cxZuJkAdikhuqQ`
 
-5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ
+`5w53mgBc2w2kNQZgFBaYT5h79cQQNfv8vUuoa85zUe5VxBvQ`
 
 No other tokens will be considered circulating unless approved by governance. 
 
