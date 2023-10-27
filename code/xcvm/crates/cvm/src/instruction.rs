@@ -4,7 +4,7 @@ use crate::{
 };
 use alloc::{
 	borrow::Cow,
-	collections::{BTreeMap, VecDeque},
+	collections::{BTreeMap},
 	vec::Vec,
 };
 #[cfg(feature = "scale")]
@@ -91,10 +91,10 @@ pub enum Instruction<Payload, Account, Assets> {
 		network_id: crate::network::NetworkId,
 		/// If JSON, than hex encoded non prefixed lower case string.
 		#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
-		#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+		#[cfg_attr(feature = "json-schema", schemars(schema_with = "String::json_schema"))]
 		salt: Vec<u8>,
 		assets: Assets,
-		program: Program<VecDeque<Self>>,
+		program: Program<Vec<Self>>,
 	},
 	Exchange {
 		exchange_id: ExchangeId,

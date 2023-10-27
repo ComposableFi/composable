@@ -1,6 +1,5 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
-use std::collections::VecDeque;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
@@ -90,8 +89,8 @@ pub struct SolutionSubMsg {
 	pub cows: Vec<Cow>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
-	#[serde(skip_serializing_if = "Vec::is_empty", default)]
-	pub routes: Vec<ExchangeRoute>,
+	#[serde(skip_serializing_if = "Option::is_none", default)]
+	pub route: Option<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
 	pub timeout: Blocks,
@@ -101,7 +100,7 @@ pub struct SolutionSubMsg {
 #[cw_serde]
 pub struct RouteSubMsg {
 	pub all_orders: Vec<SolvedOrder>,
-	pub routes: Vec<ExchangeRoute>,
+	pub route: ExchangeRoute,
 }
 
 /// how much of order to be solved by CoW.
@@ -184,8 +183,10 @@ pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
 	pub solutions:
-		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
+	IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
+	/// address for CVM contact to send routes to
+	pub cvm_addr: Item<String>,
 }
 
 pub type Denom = String;
@@ -222,6 +223,7 @@ impl Default for OrderContract<'_> {
 		Self {
 			orders: Map::new("orders"),
 			next_order_id: Item::new("next_order_id"),
+			cvm_address : Item::new("cvm_address"),
 			solutions: solutions(),
 		}
 	}
@@ -275,40 +277,57 @@ impl OrderContract<'_> {
 			"so here we add route execution tracking to storage and map route to CVM program",
 		);
 
-		let _cvm = Self::traverse_routes(msg.routes);
+		let _cvm = Self::traverse_route(msg.route);
 
 		Ok(Response::default())
 	}
 
 	/// converts high level route to CVM program
-	fn traverse_routes(routes: Vec<ExchangeRoute>) -> cvm::shared::XcProgram {
+	fn traverse_route(route: ExchangeRoute) -> cvm::shared::XcProgram {
 		let mut program = XcProgram {
-			tag: b"may be use solution id and some chain for tracking",
-			instructions: VecDeque::new(),
+			tag: b"may be use solution id and some chain for tracking".to_vec(),
+			instructions: vec![],
 		};
-		for route in routes {
-			let spawns = Self::traverse_spawns(route.spawns);
-			program.instructions.append(spawns);
-		}
+
+		let mut exchanges = Self::traverse_exchanges(route.exchanges);
+		program.instructions.append(&mut exchanges);
+
+		let mut spawns = Self::traverse_spawns(route.spawns);
+		program.instructions.append(&mut spawns);
+
 		program
 	}
 
 	fn traverse_spawns(spawns: Vec<Spawn<ExchangeRoute>>) -> Vec<cvm::shared::XcInstruction> {
-		/// here map each exchange to CVM instruction
-		/// for each pool get its denom, and do swaps
+		let mut result = vec![];
 		for spawn in spawns {
-			let programs = Self::traverse_routes(spawn.execute); 
-
-			let sub = spawn.map(|x| x.)
-			let spawn =
-				XcInstruction::Spawn { network_id: spawn.to_chain.into(), salt: b"42", assets: <_>::default(), program: () };
+			let spawn = if let Some(execute) = spawn.execute {
+				let program = Self::traverse_route(execute);
+				XcInstruction::Spawn {
+					network_id: spawn.to_chain.into(),
+					salt: b"solution".to_vec(),
+					assets: <_>::default(), // map spawn.carry to CVM assets
+					program,
+				}
+			} else {
+				XcInstruction::Spawn {
+					network_id: spawn.to_chain.into(),
+					salt: b"solution".to_vec(),
+					assets: <_>::default(), // map spawn.carry to CVM assets
+					program: XcProgram {
+						tag: b"solution".to_vec(),
+						instructions: vec![], // we really just do final transfer
+					},
+				}
+			};
+			result.push(spawn);
 		}
-		vec![]
+		result
 	}
 
-	fn traverse_exchanges(exchanges: Vec<Exchange>) -> Vec<cvm::shared::XcInstruction> {
-		/// here map each exchange to CVM instruction
-		/// for each pool get its denom, and do swaps
+	fn traverse_exchanges(_exchanges: Vec<Exchange>) -> Vec<cvm::shared::XcInstruction> {
+		// here map each exchange to CVM instruction
+		// for each pool get its denom, and do swaps
 		vec![]
 	}
 
@@ -389,20 +408,24 @@ impl OrderContract<'_> {
 			}
 		}
 
-		// send remaining for settlement
-		let route = wasm_execute(
-			ctx.env.contract.address,
-			&ExecMsg::route(RouteSubMsg { all_orders, routes: solution_item.msg.routes }),
-			vec![],
-		)?;
+		let mut response = Response::default();
+
+		if let Some(route) = solution_item.msg.route {
+			// send remaining for settlement		
+			let route = wasm_execute(
+				ctx.env.contract.address,
+				&ExecMsg::route(RouteSubMsg { all_orders, route }),
+				vec![],
+			)?;
+			response = response.add_message(route);
+		};
 
 		let solution_chosen = Event::new("mantis-solution-chosen")
 			.add_attribute("pair", format!("{}{}", a, b))
 			.add_attribute("solver", ctx.info.sender.to_string());
 		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
-		Ok(Response::default()
+		Ok(response
 			.add_messages(transfers)
-			.add_message(route)
 			.add_event(solution_upserted)
 			.add_event(solution_chosen))
 	}

@@ -1,7 +1,7 @@
 use crate::{asset::*, prelude::*};
 
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
+use cosmwasm_std::{from_binary, to_binary, Binary, StdResult};
 
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Serialize};
@@ -14,7 +14,7 @@ pub type XcBalanceFilter = crate::asset::Balance;
 pub type XcFundsFilter = Funds<XcBalanceFilter>;
 pub type XcInstruction = crate::instruction::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
 pub type XcPacket = crate::packet::Packet<XcProgram>;
-pub type XcProgram = crate::program::Program<VecDeque<XcInstruction>>;
+pub type XcProgram = crate::program::Program<Vec<XcInstruction>>;
 
 #[cfg(feature = "cosmwasm")]
 pub fn encode_base64<T: Serialize>(x: &T) -> StdResult<String> {
@@ -26,7 +26,7 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 	from_binary::<T>(&Binary::from_base64(encoded.as_ref())?)
 }
 
-/// A wrapper around CanonicalAddr which implements SCALE encoding.
+/// A wrapper around any address in canonical form
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
 #[derive(
 	Clone,
@@ -34,54 +34,38 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 	Eq,
 	Hash,
 	derive_more::Deref,
-	derive_more::From,
-	derive_more::Into,
 	serde::Deserialize,
 	serde::Serialize,
 )]
-#[into(owned, ref, ref_mut)]
 #[repr(transparent)]
 pub struct XcAddr(Vec<u8>);
 
 #[cfg(feature = "cosmwasm")]
-impl core::fmt::Display for XcAddr {
-	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Display::fmt(&self.0 .0, fmtr)
-	}
-}
-
-#[cfg(feature = "cosmwasm")]
 impl core::fmt::Debug for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Debug::fmt(&self.0 .0, fmtr)
+		core::fmt::Debug::fmt(&self.0 , fmtr)
 	}
 }
 
-#[cfg(feature = "cosmwasm")]
-impl From<&[u8]> for XcAddr {
-	fn from(bytes: &[u8]) -> Self {
-		Self(CanonicalAddr(Binary(bytes.to_vec())))
-	}
-}
 
 #[cfg(feature = "cosmwasm")]
 impl From<XcAddr> for Vec<u8> {
 	fn from(addr: XcAddr) -> Self {
-		addr.0 .0 .0
+		addr.0
 	}
 }
 
 #[cfg(feature = "cosmwasm")]
 impl From<Vec<u8>> for XcAddr {
 	fn from(bytes: Vec<u8>) -> Self {
-		Self(CanonicalAddr(Binary(bytes)))
+		Self(bytes)
 	}
 }
 
 #[cfg(feature = "cosmwasm")]
 impl From<Binary> for XcAddr {
 	fn from(bytes: Binary) -> Self {
-		Self(CanonicalAddr(bytes))
+		Self(bytes.0)
 	}
 }
 
@@ -145,7 +129,6 @@ impl scale_info::TypeInfo for XcAddr {
 	Hash,
 	derive_more::Deref,
 	derive_more::From,
-	Deserialize,
 )]
 #[repr(transparent)]
 pub struct Displayed<T>(pub T);

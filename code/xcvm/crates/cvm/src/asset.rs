@@ -5,8 +5,6 @@ use cw_storage_plus::{Key, Prefixer};
 
 use crate::shared::Displayed;
 use core::ops::Add;
-#[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
 
 #[cfg(feature = "scale")]
