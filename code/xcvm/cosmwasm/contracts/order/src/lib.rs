@@ -1,9 +1,11 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
+use cvm::shared::{XcInstruction, XcProgram};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use sylvia::{
 	contract,
@@ -87,8 +89,8 @@ pub struct SolutionSubMsg {
 	pub cows: Vec<Cow>,
 	/// must adhere Connection.fork_join_supported, for now it is always false (it restrict set of
 	/// routes possible)
-	#[serde(skip_serializing_if = "Vec::is_empty", default)]
-	pub routes: Vec<ExchangeRoute>,
+	#[serde(skip_serializing_if = "Option::is_none", default)]
+	pub route: Option<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
 	pub timeout: Blocks,
@@ -98,7 +100,7 @@ pub struct SolutionSubMsg {
 #[cw_serde]
 pub struct RouteSubMsg {
 	pub all_orders: Vec<SolvedOrder>,
-	pub routes: Vec<ExchangeRoute>,
+	pub route: ExchangeRoute,
 }
 
 /// how much of order to be solved by CoW.
@@ -152,8 +154,8 @@ impl SolvedOrder {
 #[cw_serde]
 pub struct ExchangeRoute {
 	// on this chain
-	pub exchange: Vec<Exchange>,
-	pub spawn: Vec<Spawn<ExchangeRoute>>,
+	pub exchanges: Vec<Exchange>,
+	pub spawns: Vec<Spawn<ExchangeRoute>>,
 }
 
 /// Purely transfer route.
@@ -177,13 +179,14 @@ pub struct Exchange {
 	pub give: Uint128,
 	pub want_min: Uint128,
 }
-
 pub struct OrderContract<'a> {
 	pub orders: Map<'a, u128, OrderItem>,
 	/// (a,b,solver)
 	pub solutions:
-		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
+	IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
+	/// address for CVM contact to send routes to
+	pub cvm_addr: Item<String>,
 }
 
 pub type Denom = String;
@@ -220,6 +223,7 @@ impl Default for OrderContract<'_> {
 		Self {
 			orders: Map::new("orders"),
 			next_order_id: Item::new("next_order_id"),
+			cvm_address : Item::new("cvm_address"),
 			solutions: solutions(),
 		}
 	}
@@ -263,15 +267,68 @@ impl OrderContract<'_> {
 	}
 
 	#[msg(exec)]
-	pub fn route(&self, ctx: ExecCtx, _msg: RouteSubMsg) -> StdResult<Response> {
+	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
 		ensure!(
 			ctx.info.sender == ctx.env.contract.address,
 			StdError::GenericErr { msg: "only self can call this".to_string() }
 		);
+
 		ctx.deps.api.debug(
 			"so here we add route execution tracking to storage and map route to CVM program",
 		);
+
+		let _cvm = Self::traverse_route(msg.route);
+
 		Ok(Response::default())
+	}
+
+	/// converts high level route to CVM program
+	fn traverse_route(route: ExchangeRoute) -> cvm::shared::XcProgram {
+		let mut program = XcProgram {
+			tag: b"may be use solution id and some chain for tracking".to_vec(),
+			instructions: vec![],
+		};
+
+		let mut exchanges = Self::traverse_exchanges(route.exchanges);
+		program.instructions.append(&mut exchanges);
+
+		let mut spawns = Self::traverse_spawns(route.spawns);
+		program.instructions.append(&mut spawns);
+
+		program
+	}
+
+	fn traverse_spawns(spawns: Vec<Spawn<ExchangeRoute>>) -> Vec<cvm::shared::XcInstruction> {
+		let mut result = vec![];
+		for spawn in spawns {
+			let spawn = if let Some(execute) = spawn.execute {
+				let program = Self::traverse_route(execute);
+				XcInstruction::Spawn {
+					network_id: spawn.to_chain.into(),
+					salt: b"solution".to_vec(),
+					assets: <_>::default(), // map spawn.carry to CVM assets
+					program,
+				}
+			} else {
+				XcInstruction::Spawn {
+					network_id: spawn.to_chain.into(),
+					salt: b"solution".to_vec(),
+					assets: <_>::default(), // map spawn.carry to CVM assets
+					program: XcProgram {
+						tag: b"solution".to_vec(),
+						instructions: vec![], // we really just do final transfer
+					},
+				}
+			};
+			result.push(spawn);
+		}
+		result
+	}
+
+	fn traverse_exchanges(_exchanges: Vec<Exchange>) -> Vec<cvm::shared::XcInstruction> {
+		// here map each exchange to CVM instruction
+		// for each pool get its denom, and do swaps
+		vec![]
 	}
 
 	/// Provides solution for set of orders.
@@ -351,20 +408,24 @@ impl OrderContract<'_> {
 			}
 		}
 
-		// send remaining for settlement
-		let route = wasm_execute(
-			ctx.env.contract.address,
-			&ExecMsg::route(RouteSubMsg { all_orders, routes: solution_item.msg.routes }),
-			vec![],
-		)?;
+		let mut response = Response::default();
+
+		if let Some(route) = solution_item.msg.route {
+			// send remaining for settlement		
+			let route = wasm_execute(
+				ctx.env.contract.address,
+				&ExecMsg::route(RouteSubMsg { all_orders, route }),
+				vec![],
+			)?;
+			response = response.add_message(route);
+		};
 
 		let solution_chosen = Event::new("mantis-solution-chosen")
 			.add_attribute("pair", format!("{}{}", a, b))
 			.add_attribute("solver", ctx.info.sender.to_string());
 		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
-		Ok(Response::default()
+		Ok(response
 			.add_messages(transfers)
-			.add_message(route)
 			.add_event(solution_upserted)
 			.add_event(solution_chosen))
 	}
@@ -435,7 +496,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
