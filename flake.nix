@@ -8,11 +8,6 @@
       url = "github:Platonic-Systems/process-compose-flake";
     };
 
-    process-compose = {
-      url = "github:F1bonacc1/process-compose";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
@@ -119,31 +114,28 @@
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/evm/flake-module.nix
         ./code/xcvm/flake-module.nix
+        ./code/xcvm/evm/flake-module.nix
         ./docs/flake-module.nix
         ./flake/all.nix
-        ./flake/bash.nix
+        ./flake/nixos-configuration.nix
         ./flake/cargo-tools.nix
         ./flake/check.nix
-        ./flake/cosmos.nix
         ./flake/darwin-configurations.nix
+        ./flake/bash.nix
         ./flake/dev-shells.nix
-        ./flake/devnet-tools.nix
         ./flake/devnet.nix
         ./flake/docker.nix
-        ./flake/ethereum.nix
         ./flake/fmt.nix
         ./flake/hermes.nix
+        ./flake/ethereum.nix
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
-        ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
-        ./flake/overlays.nix
+        ./flake/cosmos.nix
         ./flake/process-compose.nix
         ./flake/release.nix
-        ./flake/rust.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
@@ -159,6 +151,9 @@
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./inputs/wynddao/flake-module.nix
+        ./tools/devnet-tools.nix
+        ./tools/pkgs.nix
+        ./tools/rust.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

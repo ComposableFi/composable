@@ -7,7 +7,6 @@
         polkadot.overlays.default
         rust-overlay.overlays.default
         zombienet.overlays.default
-        process-compose.overlays.default
       ];
     };
   };
