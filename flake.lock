@@ -121,34 +121,34 @@
     "centauri-old-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1698420985,
+        "lastModified": 1698427447,
         "narHash": "sha256-4ANGCiPMTtzOJ6ai30XnBcDa3yujZfbkYTTb/JHqMY0=",
         "owner": "ComposableFi",
         "repo": "composable-ibc",
-        "rev": "7ecf48066c80568fe06e38fdedc814addd4ec31f",
+        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
         "type": "github"
       },
       "original": {
         "owner": "ComposableFi",
         "repo": "composable-ibc",
-        "rev": "7ecf48066c80568fe06e38fdedc814addd4ec31f",
+        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
         "type": "github"
       }
     },
     "centauri-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1698420985,
+        "lastModified": 1698427447,
         "narHash": "sha256-4ANGCiPMTtzOJ6ai30XnBcDa3yujZfbkYTTb/JHqMY0=",
         "owner": "ComposableFi",
         "repo": "composable-ibc",
-        "rev": "7ecf48066c80568fe06e38fdedc814addd4ec31f",
+        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
         "type": "github"
       },
       "original": {
         "owner": "ComposableFi",
         "repo": "composable-ibc",
-        "rev": "7ecf48066c80568fe06e38fdedc814addd4ec31f",
+        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
         "type": "github"
       }
     },
