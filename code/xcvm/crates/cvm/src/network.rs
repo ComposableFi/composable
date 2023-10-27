@@ -1,19 +1,17 @@
 use crate::prelude::*;
-
-use crate::abstraction::IndexOf;
 use alloc::vec::Vec;
+#[cfg(feature = "scale")]
 use parity_scale_codec::{Decode, Encode};
+#[cfg(feature = "scale")]
 use scale_info::TypeInfo;
 
 /// The interpreter origin, composite of a user origin and a salt.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 pub struct InterpreterOrigin {
 	pub user_origin: UserOrigin,
 	#[serde(with = "hex")]
-	#[cfg_attr(feature = "std", schemars(with = "String"))]
+	#[cfg_attr(feature = "json-schema", schemars(with = "String"))]
 	pub salt: Vec<u8>,
 }
 
@@ -26,10 +24,9 @@ impl Display for InterpreterOrigin {
 }
 
 /// The origin of a user, which consist of the composite, origin network and origin network user id.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 pub struct UserOrigin {
 	pub network_id: NetworkId,
 	pub user_id: UserId,
@@ -44,14 +41,12 @@ impl Display for UserOrigin {
 
 /// Arbitrary `User` type that represent the identity of a user on a given network, usually a public
 /// key.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct UserId(
 	#[serde(with = "hex")]
-	#[cfg_attr(feature = "std", schemars(with = "String"))]
+	#[cfg_attr(feature = "json-schema", schemars(with = "String"))]
 	pub Vec<u8>,
 );
 
@@ -83,21 +78,9 @@ impl AsRef<[u8]> for UserId {
 /// Newtype for XCVM networks ID. Must be unique for each network and must never change.
 /// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
 /// how it is computed.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Copy,
-	Clone,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Debug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
-)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[repr(transparent)]
 pub struct NetworkId(pub u32);
 
@@ -150,10 +133,6 @@ pub struct CosmosHub;
 pub struct Osmosis;
 pub struct Composable;
 
-/// List of networks supported by XCVM.
-// /!\ The order matters and must not be changed, adding a network on the right is safe.
-pub type Networks = (InvalidNetwork, (Picasso, (Centauri, (Ethereum, ()))));
-
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Network {
 	const ID: NetworkId;
@@ -161,17 +140,17 @@ pub trait Network {
 }
 
 impl Network for Picasso {
-	const ID: NetworkId = NetworkId(<Networks as IndexOf<Self, _>>::INDEX);
+	const ID: NetworkId = NetworkId(1);
 	type EncodedCall = Vec<u8>;
 }
 
 impl Network for Ethereum {
-	const ID: NetworkId = NetworkId(<Networks as IndexOf<Self, _>>::INDEX);
+	const ID: NetworkId = NetworkId(2);
 	type EncodedCall = Vec<u8>;
 }
 
 impl Network for Centauri {
-	const ID: NetworkId = NetworkId(<Networks as IndexOf<Self, _>>::INDEX);
+	const ID: NetworkId = NetworkId(3);
 	type EncodedCall = Vec<u8>;
 }
 

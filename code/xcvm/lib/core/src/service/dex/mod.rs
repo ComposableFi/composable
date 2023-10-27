@@ -4,7 +4,6 @@ use self::osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
 
 pub mod osmosis_std;
 
-pub type ExchangeId = crate::shared::Displayed<u128>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

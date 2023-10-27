@@ -1,6 +1,6 @@
 extern crate prost_build;
 
-const PROTOS_DIR: &str = "protos";
+const PROTOS_DIR: &str = "proto";
 
 fn main() -> std::io::Result<()> {
 	let mut files = Vec::new();

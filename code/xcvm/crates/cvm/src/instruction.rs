@@ -1,15 +1,23 @@
-use crate::{service::dex::ExchangeId, AssetId, Balance, Program};
+use crate::{
+	asset::{AssetId, Balance},
+	program::Program,
+};
 use alloc::{
 	borrow::Cow,
-	collections::{BTreeMap, VecDeque},
+	collections::{BTreeMap},
 	vec::Vec,
 };
+#[cfg(feature = "scale")]
 use parity_scale_codec::{Decode, Encode};
+#[cfg(feature = "scale")]
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+pub type ExchangeId = crate::shared::Displayed<u128>;
+
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[serde(rename_all = "snake_case")]
 pub enum BindingValue {
 	Register(Register),
@@ -18,8 +26,9 @@ pub enum BindingValue {
 	AssetAmount(AssetId, Balance),
 }
 
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[serde(rename_all = "snake_case")]
 pub enum Register {
 	/// Instruction pointer
@@ -39,8 +48,9 @@ pub type Bindings = Vec<(u32, BindingValue)>;
 /// Ordered Bindings: (Index, Binding)
 pub type OrderedBindings = BTreeMap<u32, BindingValue>;
 
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[serde(rename_all = "snake_case")]
 pub enum Destination<Account> {
 	Account(Account),
@@ -50,8 +60,9 @@ pub enum Destination<Account> {
 /// Base XCVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base
 /// instructions.
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "scale", derive(TypeInfo, Encode, Decode))]
 #[serde(rename_all = "snake_case")]
 pub enum Instruction<Payload, Account, Assets> {
 	/// Transfer some [`Assets`] from the current program to the [`to`] account.
@@ -80,10 +91,10 @@ pub enum Instruction<Payload, Account, Assets> {
 		network_id: crate::network::NetworkId,
 		/// If JSON, than hex encoded non prefixed lower case string.
 		#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
-		#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+		#[cfg_attr(feature = "json-schema", schemars(schema_with = "String::json_schema"))]
 		salt: Vec<u8>,
 		assets: Assets,
-		program: Program<VecDeque<Self>>,
+		program: Program<Vec<Self>>,
 	},
 	Exchange {
 		exchange_id: ExchangeId,
