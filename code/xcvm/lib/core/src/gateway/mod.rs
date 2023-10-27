@@ -66,7 +66,22 @@ pub enum ShortcutSubMsg {
 	},
 }
 
-
+/// Definition of a program to be executed including its context.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct ExecuteProgramMsg {
+	/// The program salt.
+	/// If JSON, than hex encoded non prefixed lower case string.
+	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
+	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+	pub salt: Vec<u8>,
+	/// The program.
+	pub program: crate::shared::XcProgram,
+	/// Assets to fund the XCVM interpreter instance
+	/// The interpreter is funded prior to execution
+	pub assets: Funds<crate::shared::Displayed<u128>>,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
