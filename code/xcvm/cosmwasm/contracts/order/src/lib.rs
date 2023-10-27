@@ -1,9 +1,12 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
+use std::collections::VecDeque;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
+use cvm::shared::{XcInstruction, XcProgram};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use sylvia::{
 	contract,
@@ -152,8 +155,8 @@ impl SolvedOrder {
 #[cw_serde]
 pub struct ExchangeRoute {
 	// on this chain
-	pub exchange: Vec<Exchange>,
-	pub spawn: Vec<Spawn<ExchangeRoute>>,
+	pub exchanges: Vec<Exchange>,
+	pub spawns: Vec<Spawn<ExchangeRoute>>,
 }
 
 /// Purely transfer route.
@@ -262,15 +265,51 @@ impl OrderContract<'_> {
 	}
 
 	#[msg(exec)]
-	pub fn route(&self, ctx: ExecCtx, _msg: RouteSubMsg) -> StdResult<Response> {
+	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
 		ensure!(
 			ctx.info.sender == ctx.env.contract.address,
 			StdError::GenericErr { msg: "only self can call this".to_string() }
 		);
+
 		ctx.deps.api.debug(
 			"so here we add route execution tracking to storage and map route to CVM program",
 		);
+
+		let _cvm = Self::traverse_routes(msg.routes);
+
 		Ok(Response::default())
+	}
+
+	/// converts high level route to CVM program
+	fn traverse_routes(routes: Vec<ExchangeRoute>) -> cvm::shared::XcProgram {
+		let mut program = XcProgram {
+			tag: b"may be use solution id and some chain for tracking",
+			instructions: VecDeque::new(),
+		};
+		for route in routes {
+			let spawns = Self::traverse_spawns(route.spawns);
+			program.instructions.append(spawns);
+		}
+		program
+	}
+
+	fn traverse_spawns(spawns: Vec<Spawn<ExchangeRoute>>) -> Vec<cvm::shared::XcInstruction> {
+		/// here map each exchange to CVM instruction
+		/// for each pool get its denom, and do swaps
+		for spawn in spawns {
+			let programs = Self::traverse_routes(spawn.execute); 
+
+			let sub = spawn.map(|x| x.)
+			let spawn =
+				XcInstruction::Spawn { network_id: spawn.to_chain.into(), salt: b"42", assets: <_>::default(), program: () };
+		}
+		vec![]
+	}
+
+	fn traverse_exchanges(exchanges: Vec<Exchange>) -> Vec<cvm::shared::XcInstruction> {
+		/// here map each exchange to CVM instruction
+		/// for each pool get its denom, and do swaps
+		vec![]
 	}
 
 	/// Provides solution for set of orders.
@@ -434,7 +473,7 @@ fn solves_cows_via_bank(
 			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
