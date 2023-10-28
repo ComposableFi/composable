@@ -199,7 +199,7 @@ fn interpret_exchange(
 		.get_asset_by_id(deps.querier, want.0)
 		.map_err(ContractError::AssetNotFound)?;
 
-	if want.1.amount.is_both() {
+	if want.1.amount.is_absolute() && want.1.amount.is_ratio() {
 		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime)
 	}
 

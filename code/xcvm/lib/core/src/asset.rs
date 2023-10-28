@@ -1,25 +1,35 @@
-use crate::{network::NetworkId, prelude::*};
+use crate::{prelude::*, NetworkId};
 
 #[cfg(feature = "cw-storage-plus")]
 use cw_storage_plus::{Key, Prefixer};
 
 use crate::shared::Displayed;
 use core::ops::Add;
+use cosmwasm_std::{Uint128, Uint256};
 use num::Zero;
-
-#[cfg(feature = "scale")]
 use parity_scale_codec::{Decode, Encode};
-#[cfg(feature = "scale")]
 use scale_info::TypeInfo;
-
 use serde::{Deserialize, Serialize};
 
-/// Newtype for CVM assets ID. Must be unique for each asset and must never change.
-/// This ID is an opaque, arbitrary type from the CVM protocol and no assumption must be made on
+/// Newtype for XCVM assets ID. Must be unique for each asset and must never change.
+/// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
 /// how it is computed.
-#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Hash,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 #[repr(transparent)]
 pub struct AssetId(pub Displayed<u128>);
 
@@ -77,9 +87,10 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 	}
 }
 
-#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub struct Balance {
 	pub amount: Amount,
@@ -104,9 +115,10 @@ impl From<u128> for Balance {
 	}
 }
 
-#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 pub struct Amount {
@@ -115,8 +127,7 @@ pub struct Amount {
 }
 
 /// Arithmetic errors.
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, Debug, TypeInfo, Serialize, Deserialize)]
 pub enum ArithmeticError {
 	/// Underflow.
 	Underflow,
@@ -174,16 +185,16 @@ impl Amount {
 		} else if self.slope.0 == Self::MAX_PARTS {
 			value
 		} else {
-			let value =
-				value.checked_sub(self.intercept.0.into()).ok_or(ArithmeticError::Underflow)?;
+			let value = Uint256::from(value)
+				.checked_sub(self.intercept.0.into())
+				.map_err(|_| ArithmeticError::Underflow)?;
 			let value = value
-				.checked_mul(self.slope.0.into())
-				.ok_or(ArithmeticError::Underflow)?
-				.checked_div(Self::MAX_PARTS.into())
-				.ok_or(ArithmeticError::Overflow)?;
-			let value =
-				value.checked_add(self.intercept.0.into()).ok_or(ArithmeticError::Overflow)?;
-			value
+				.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+				.map_err(|_| ArithmeticError::Overflow)?;
+			let value = value
+				.checked_add(self.intercept.0.into())
+				.map_err(|_| ArithmeticError::Overflow)?;
+			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
 		};
 		Ok(u128::min(value, amount))
 	}
@@ -199,20 +210,18 @@ impl Amount {
 		} else if self.slope.0 == Self::MAX_PARTS {
 			value
 		} else {
-			let value = self.intercept.0;
+			let value = Uint256::from(self.intercept.0);
 			let value = value
 				.checked_add(
-					u128::one()
-						.checked_mul(self.slope.0.into())
-						.ok_or(ArithmeticError::Overflow)?
-						.checked_div(Self::MAX_PARTS.into())
-						.ok_or(ArithmeticError::Overflow)?,
+					Uint256::one()
+						.checked_multiply_ratio(self.slope.0, Self::MAX_PARTS)
+						.map_err(|_| ArithmeticError::Overflow)?,
 				)
-				.ok_or(ArithmeticError::Overflow)?;
+				.map_err(|_| ArithmeticError::Overflow)?;
 			let value = value
-				.checked_mul(10_u128.pow(decimals as u32))
-				.ok_or(ArithmeticError::Overflow)?;
-			value
+				.checked_mul(Uint256::from(10_u128.pow(decimals as u32)))
+				.map_err(|_| ArithmeticError::Overflow)?;
+			Uint128::try_from(value).map_err(|_| ArithmeticError::Overflow)?.u128()
 		};
 		Ok(u128::min(value, amount))
 	}
@@ -247,9 +256,10 @@ impl From<u128> for Amount {
 }
 
 /// a set of assets with non zero balances
-#[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "scale", derive(Encode, Decode, TypeInfo))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
 #[repr(transparent)]
 pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
 
