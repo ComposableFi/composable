@@ -4,7 +4,10 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
-use cvm::shared::{XcInstruction, XcProgram};
+use cvm::{
+	instruction::ExchangeId,
+	shared::{XcInstruction, XcProgram},
+};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 use sylvia::{
 	contract,
@@ -16,9 +19,6 @@ use sylvia::{
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
-// fix core in std in contract
-// use xc_core::{service::dex::ExchangeId, shared::Displayed, NetworkId};
-pub type ExchangeId = Uint128;
 pub type Amount = Uint128;
 pub type OrderId = Uint128;
 pub type NetworkId = u32;
@@ -185,7 +185,7 @@ pub struct OrderContract<'a> {
 		IndexedMap<'a, &'a (Denom, Denom, SolverAddress), SolutionItem, SolutionIndexes<'a>>,
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
-	pub cvm_addr: Item<String>,
+	pub cvm_address: Item<'a, String>,
 }
 
 pub type Denom = String;

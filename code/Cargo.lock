@@ -3318,7 +3318,7 @@ name = "cvm"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std 1.4.1",
  "derive_more 1.0.0-beta.2",
  "hex",
  "num",
@@ -16644,9 +16644,9 @@ dependencies = [
 
 [[package]]
 name = "sylvia"
-version = "0.8.1"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f33388920659b494dab887f3bb40ebb071c602750597575034bea7c63ab12800"
+checksum = "244466d32c81f9421db755e437924126233815cd0f17fca0dd7472d1045eb4c1"
 dependencies = [
  "cosmwasm-schema 1.4.1",
  "cosmwasm-std 1.4.1",
@@ -16660,9 +16660,9 @@ dependencies = [
 
 [[package]]
 name = "sylvia-derive"
-version = "0.8.1"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8031f53dbfda341acd7bd321e10d0d684b673324145026e23705da4b6d5c4919"
+checksum = "5b9a418ce96b68c6cf770edea4bb6049a7d2ed20f85e03560bfe375494ccfcd3"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",

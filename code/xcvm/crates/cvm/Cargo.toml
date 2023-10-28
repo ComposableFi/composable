@@ -9,11 +9,11 @@ prost-build = { workspace = true }
 [dependencies]
 serde = { workspace = true, default-features = false }
 derive_more = { workspace = true, default-features = false }
-cosmwasm-std = { workspace = true, default-features = false, optional = true }
+cosmwasm-std = { version = "^1.2.5", default-features = false, optional = true }
 schemars = { workspace = true, default-features = false, optional = true }
 cosmwasm-schema = { workspace = true, default-features = false, optional = true }
-hex ={ workspace = true, default-features = false}
-num ={ workspace = true, default-features = false}
+hex = { workspace = true, default-features = false }
+num = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -27,6 +27,4 @@ json-schema = ["dep:schemars", "cosmwasm-schema"]
 ibc = []
 evm = []
 serde = []
-std = [
-  "cosmwasm-std/std",
-]
+std = ["derive_more/std"]
