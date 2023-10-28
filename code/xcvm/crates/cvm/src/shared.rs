@@ -94,7 +94,7 @@ impl scale_info::TypeInfo for XcAddr {
 /// `Display` and `FromStr` traits.
 ///
 /// ```
-/// # use xc_core::shared::Displayed;
+/// # use cvm::shared::Displayed;
 ///
 /// #[derive(serde::Serialize, serde::Deserialize)]
 /// struct Foo {

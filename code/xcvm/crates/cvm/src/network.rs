@@ -145,12 +145,12 @@ impl Network for Picasso {
 }
 
 impl Network for Ethereum {
-	const ID: NetworkId = NetworkId(2);
+	const ID: NetworkId = NetworkId(3);
 	type EncodedCall = Vec<u8>;
 }
 
 impl Network for Centauri {
-	const ID: NetworkId = NetworkId(3);
+	const ID: NetworkId = NetworkId(2);
 	type EncodedCall = Vec<u8>;
 }
 
