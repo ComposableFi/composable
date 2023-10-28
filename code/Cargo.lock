@@ -8645,7 +8645,10 @@ dependencies = [
  "grandpa-prover",
  "hex",
  "hyperspace-core",
+ "hyperspace-parachain",
  "jsonrpsee 0.16.3",
+ "sp-core 7.0.0",
+ "sp-keyring 24.0.0",
  "subxt 0.29.0",
  "tokio",
 ]
@@ -10509,7 +10512,7 @@ dependencies = [
  "scale-info",
  "sp-core 7.0.0",
  "sp-io 7.0.0",
- "sp-keyring",
+ "sp-keyring 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
 ]
@@ -12034,7 +12037,7 @@ dependencies = [
  "sc-tracing",
  "sp-core 7.0.0",
  "sp-io 7.0.0",
- "sp-keyring",
+ "sp-keyring 7.0.0",
  "sp-maybe-compressed-blob 4.1.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43)",
  "substrate-build-script-utils",
  "thiserror",
@@ -12074,7 +12077,7 @@ dependencies = [
  "sp-consensus-grandpa",
  "sp-core 7.0.0",
  "sp-inherents",
- "sp-keyring",
+ "sp-keyring 7.0.0",
  "sp-mmr-primitives",
  "sp-offchain",
  "sp-runtime 7.0.0",
@@ -14853,7 +14856,7 @@ dependencies = [
  "serde_json",
  "sp-blockchain",
  "sp-core 7.0.0",
- "sp-keyring",
+ "sp-keyring 7.0.0",
  "sp-keystore 0.13.0",
  "sp-panic-handler 5.0.0",
  "sp-runtime 7.0.0",
@@ -17487,6 +17490,18 @@ dependencies = [
  "lazy_static",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
+ "strum 0.24.1",
+]
+
+[[package]]
+name = "sp-keyring"
+version = "24.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4673405248580504a8bc4e09615ab25ccb182dfaccd27e000fda9dcb2ca1dab1"
+dependencies = [
+ "lazy_static",
+ "sp-core 21.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime 24.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "strum 0.24.1",
 ]
 
