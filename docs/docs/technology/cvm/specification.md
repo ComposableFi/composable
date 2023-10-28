@@ -461,11 +461,14 @@ The instruction pointer register contains the instruction pointer of the last ex
 
 #### Tip Register
 
-The Tip register contains the `Account` of the account triggering the initial execution. This can be the IBC relayer or any other entity. By definition, the tip is the account paying the fees for the Executor's execution.
+The `Tip`` register contains the `Account` of the account which incentives relayers pay gas fees for program propagation from chain to chain and execution. 
+This can be the IBC relayer or incentive protocol. 
+
 
 #### Self Register
 
-The self register contains the `Account` of the Executor. Most implementations will not need to use storage but have access to special keywords, such as `this` in Solidity.
+The self register contains the `Account` of the `Executor`. 
+Most implementations will not need to use storage, but have access to special keywords, such as `this` in Solidity.
 
 ####  Version Register
 
@@ -517,18 +520,18 @@ A possible usage is to allow one program execution to act on the state of anothe
 
 In the CVM program above, the parent program salt `0x01` is not a prefix of the sub-program salt `0x02`. The user is able to make its Executor origin using a fine grained mode. The following program is an example on how we can spread a salt:
 ```kdl
-Spawn A 0x01 [             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
-    Call 0x1337,                                        // Call instruction executed on A
-    Spawn B 0x0102 [] {}, // Sub-program spawned on B, with 0x0102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
-] {}
+spawn A 0x01 {             // Parent program spawned on A, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01)
+    call 0x1337                                        // Call instruction executed on A
+    spawn B 0x0102 {}, // Sub-program spawned on B, with 0x0102 as salt, the origin for the instructions is (A, AccountOnA, 0x0102)
+}
 ```
 
 In next program, all spawned instances on all chains share state (including assets):
 ```kdl
-Spawn A 0x01 [
-    Call 0x1337,
-    Spawn B 0x01 [] {}, // Sub-program spawned on B, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01) allows to share 
-] {}
+spawn A 0x01 {
+    call 0x1337
+    spawn B 0x01 {}, // Sub-program spawned on B, with 0x01 as salt, the origin for the instructions is (A, AccountOnA, 0x01) allows to share 
+}
 ```
 
 ### Ownership
