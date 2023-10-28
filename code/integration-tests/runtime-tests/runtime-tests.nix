@@ -32,9 +32,11 @@
             set +o errexit
             curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:9988
             START_RESULT=$?
+            echo "picasso $START_RESULT"
             if test $START_RESULT -eq 0; then
               curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
               START_RESULT=$?
+              echo "composable $START_RESULT"
             fi
             set -o errexit            
             if test $START_RESULT -eq 0; then
@@ -42,7 +44,7 @@
               break
             fi
             ((TRIES=TRIES+1))
-            sleep 4
+            sleep 8
           done
 
           # here nodes are up and running, binaries in path, npm is here too
