@@ -3325,6 +3325,7 @@ dependencies = [
  "prost-build",
  "schemars",
  "serde",
+ "serde-json-wasm 1.0.0",
 ]
 
 [[package]]
@@ -14879,6 +14880,15 @@ dependencies = [
 name = "serde-json-wasm"
 version = "0.5.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83c37d03f3b0f6b5f77c11af1e7c772de1c9af83e50bef7bb6069601900ba67b"
 dependencies = [
  "serde",
 ]

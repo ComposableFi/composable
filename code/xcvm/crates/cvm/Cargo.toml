@@ -15,8 +15,13 @@ cosmwasm-schema = { workspace = true, default-features = false, optional = true 
 hex = { workspace = true, default-features = false }
 num = { workspace = true, default-features = false }
 
+[dev-dependencies]
+serde-json-wasm = { version = "1.0.0", default-features = false, features = [
+  "std",
+] }
+
 [features]
-default = ["std"]
+default = ["std", "serde", "cosmwasm"]
 xcm = []
 cosmos = []
 cosmwasm = ["serde", "cosmwasm-std"]
