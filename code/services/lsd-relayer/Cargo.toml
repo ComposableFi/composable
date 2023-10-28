@@ -12,8 +12,11 @@ grandpa-prover = { git = "https://github.com/ComposableFi/composable-ibc", branc
 tokio = { version = "1.22.0", features = ["full"] }
 jsonrpsee = { version = "0.16.2", features = ["async-client", "jsonrpsee-ws-client"] }
 subxt = { git = "https://github.com/paritytech/subxt", tag = "v0.29.0", features = ["substrate-compat"] }
+sp-keyring = "24.0.0"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 hyperspace-core = { git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", features = ["testing"] }
 # subxt-signer = { git = "https://github.com/paritytech/subxt", tag = "v0.29.0" }
+hyperspace-parachain = { git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", default-features = false  }
 hex = "0.4.3"
 [features]
 default = ["std"]

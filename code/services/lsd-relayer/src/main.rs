@@ -1,5 +1,7 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::{GrandpaProver};
+use hyperspace_parachain::finality_protocol::FinalityProtocol;
+use std::io::Bytes;
 use std::str::FromStr;
 use std::time::Duration;
 use jsonrpsee::{async_client::Client, tracing::log, ws_client::WsClientBuilder};
@@ -10,6 +12,9 @@ use hyperspace_core::substrate::ComposableConfig;
 use hyperspace_core::substrate::composable::relaychain;
 use hyperspace_core::substrate::composable::parachain_subxt;
 // use subxt_signer::sr25519::dev::{self};
+use sp_keyring::AccountKeyring;
+use subxt::tx::PairSigner;
+use hyperspace_parachain::ParachainClientConfig;
 
 
 
@@ -110,11 +115,37 @@ async fn main() {
     let x = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
 
 
-    use subxt::config::extrinsic_params::{BaseExtrinsicParamsBuilder, Era};
-    let other_params = BaseExtrinsicParamsBuilder::new()
-				.era(Era::Immortal, para_client.genesis_hash());
-    para_client.tx().create_signed(&x, signer, other_params);
+    let config = ParachainClientConfig {
+		name: "9188".to_string(),
+		para_id: 2019,
+		parachain_rpc_url: "ws://127.0.0.1:8000".to_owned(),
+		relay_chain_rpc_url: "ws://127.0.0.1:8001".to_owned(),
+		client_id: None,
+		connection_id: None,
+		commitment_prefix: sp_core::Bytes(vec![]),
+		private_key: "//Alice".to_string(),
+		ss58_version: 42,
+		channel_whitelist: vec![],
+		finality_protocol: FinalityProtocol::Grandpa,
+		key_type: "sr25519".to_string(),
+		wasm_code_id: None,
+	};
+    // get parachain client from config and then use it to sign tx
+    //call submit call
 
+    use subxt::config::extrinsic_params::{BaseExtrinsicParamsBuilder, Era};
+    // let other_params = BaseExtrinsicParamsBuilder::new()
+	// 			.era(Era::Immortal, para_client.genesis_hash());
+    let x = AccountKeyring::Alice.pair();    
+    // let from = PairSigner::<_, _>::new(x.into());
+    // para_client.tx().create_signed(&x, &from, other_params);
+    // relay_client.tx().sign_and_submit_then_watch_default(&balance_transfer_tx, &from)
+    //     .await.unwrap()
+    //     .wait_for_finalized_success()
+    //     .await.unwrap();
+
+
+    // type l = Keypair;
 
     // println!("ledger: {:?}", ledger);
 }
