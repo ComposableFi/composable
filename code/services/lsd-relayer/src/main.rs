@@ -1,6 +1,9 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::{GrandpaProver};
 use hyperspace_parachain::finality_protocol::FinalityProtocol;
+use subxt::SubstrateConfig;
+use subxt::dynamic::Value;
+use subxt::ext::scale_value::Composite;
 use std::io::Bytes;
 use std::str::FromStr;
 use std::time::Duration;
@@ -15,6 +18,9 @@ use hyperspace_core::substrate::composable::parachain_subxt;
 use sp_keyring::AccountKeyring;
 use subxt::tx::PairSigner;
 use hyperspace_parachain::ParachainClientConfig;
+use hyperspace_parachain::ParachainClient;
+use subxt::utils::AccountId32;
+use sp_core::Pair;
 
 
 
@@ -112,7 +118,8 @@ async fn main() {
         unlocking: vec![],  //TODO
         claimed_rewards: vec![], //TODO
     };
-    let x = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
+    // let x = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
+    let x = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
 
     let config = ParachainClientConfig {
@@ -130,8 +137,44 @@ async fn main() {
 		key_type: "sr25519".to_string(),
 		wasm_code_id: None,
 	};
+
+    let para_client= ParachainClient::<ComposableConfig>::new(config).await.unwrap();
     // get parachain client from config and then use it to sign tx
     //call submit call
+    // let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
+    // let signer = PairSigner::new(key.clone());
+    let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
+    let v : Vec::<Value<()>> = vec![];
+    let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
+    // let signer = PairSigner::new(AccountKeyring::Alice.pair());
+
+    use subxt::ext::sp_core::Pair;
+    let key = sp_keyring::sr25519::sr25519::Pair::from_string(&"//Bob", None).expect("secret");
+    let signer: PairSigner<SubstrateConfig, sp_keyring::sr25519::sr25519::Pair> = PairSigner::new(key.clone());
+
+    let mut i = 10;
+    while i > 0 {
+        let signed =
+            api.tx().sign_and_submit_then_watch(&tx_value, &signer, <_>::default()).await;
+        println!("signed: {:?}", signed);
+        i -= 1;
+        match signed {
+            Ok(progress) => {},
+            Err(e) => {
+                println!("Error: {:?}", e);
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            },
+        } 
+    }
+    
+
+
+    todo!();
+    
+
+    
+    let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
+    let r = para_client.submit_call(tx_value).await.unwrap();
 
     use subxt::config::extrinsic_params::{BaseExtrinsicParamsBuilder, Era};
     // let other_params = BaseExtrinsicParamsBuilder::new()
