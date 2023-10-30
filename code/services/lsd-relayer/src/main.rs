@@ -28,6 +28,8 @@ use sp_core::Pair;
 #[tokio::main]
 async fn main() {
     
+    let sovereign_account_id = "13YMK2ecbyxtm4cmFs31PqzWmQ7gWVboJSmXbcA56DB94xB9";
+    let sovereign_account_id_index_0 = "0x";
 
     let para_storage_key = parachain_header_storage_key(2019);
     println!("Hello, world!");
@@ -42,6 +44,7 @@ async fn main() {
 	let para = std::env::var("PARA_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
 
 	let relay_ws_url = format!("wss://{relay}:443");
+	let relay_ws_url = format!("ws://127.0.0.1:8001");
 	let para_ws_url = format!("ws://127.0.0.1:8000");
 
     let relay_ws_client = Arc::new(WsClientBuilder::default().build(relay_ws_url).await.unwrap());
@@ -59,16 +62,17 @@ async fn main() {
 	// .unwrap();
 	let keys = vec![para_storage_key.as_ref()];
 
-	let state_proof: Vec<Vec<u8>> = relay_client
-						.rpc()
-						.read_proof(keys.iter().map(AsRef::as_ref), None)
-						.await.unwrap()
-						.proof
-						.into_iter()
-						.map(|p| p.0)
-						.collect();
+	let state_proof: Vec<Vec<u8>> = vec![];
+                        // relay_client
+						// .rpc()
+						// .read_proof(keys.iter().map(AsRef::as_ref), None)
+						// .await.unwrap()
+						// .proof
+						// .into_iter()
+						// .map(|p| p.0)
+						// .collect();
 	println!("state_proof: {:?}", state_proof);
-	assert!(state_proof.len() > 0);
+	// assert!(state_proof.len() > 0);
 
     let block_hash =
 				relay_client.rpc().block_hash(None).await.unwrap().unwrap();
@@ -84,16 +88,9 @@ async fn main() {
     let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
     println!("timestamp_nanos: {:?}", timestamp_nanos);
 
-    let input_str = "0x";
-
-    let bytes = input_str.as_bytes();
-
-    for byte in bytes {
-        print!("{:02X} ", byte);
-    }
     println!("timestamp_nanos: {:?}", timestamp_nanos);
     use subxt::utils::AccountId32;
-    let account_id = AccountId32::from_str(input_str).unwrap();
+    let account_id = AccountId32::from_str(sovereign_account_id_index_0).unwrap();
     println!("{}", bytes.len()); // Add a newline at the end for readability
     let staking = relaychain::api::storage().staking().ledger(account_id);
 
@@ -112,7 +109,7 @@ async fn main() {
     // StakingLedger::<AccountId32, u128>::try_from(ledger).unwrap();
     use crate::parachain_subxt::api::runtime_types::pallet_liquid_staking::types::StakingLedger;
     let xxx = StakingLedger::<AccountId32, u128> {
-        stash: AccountId32::from_str("0x").unwrap(),
+        stash: AccountId32::from_str(sovereign_account_id_index_0).unwrap(),
         total: sl.total,
         active: sl.active,
         unlocking: vec![],  //TODO
@@ -149,13 +146,31 @@ async fn main() {
     // let signer = PairSigner::new(AccountKeyring::Alice.pair());
 
     use subxt::ext::sp_core::Pair;
-    let key = sp_keyring::sr25519::sr25519::Pair::from_string(&"//Bob", None).expect("secret");
+    //test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
+    let key = sp_keyring::sr25519::sr25519::Pair::from_string(&"private sentence hip meadow place say issue winner express edge royal aerobic", None).expect("secret");
     let signer: PairSigner<SubstrateConfig, sp_keyring::sr25519::sr25519::Pair> = PairSigner::new(key.clone());
+
+    let mut i = 10;
+    // while i > 0 {
+    //     let signed =
+    //         api.tx().sign_and_submit_then_watch(&tx_value, &signer, <_>::default()).await;
+    //     println!("signed: {:?}", signed);
+    //     i -= 1;
+    //     match signed {
+    //         Ok(progress) => {
+    //             i = 0;
+    //         },
+    //         Err(e) => {
+    //             println!("Error: {:?}", e);
+    //             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+    //         },
+    //     } 
+    // }
 
     let mut i = 10;
     while i > 0 {
         let signed =
-            api.tx().sign_and_submit_then_watch(&tx_value, &signer, <_>::default()).await;
+            api.tx().sign_and_submit_then_watch(&tx_set_staking_ledger, &signer, <_>::default()).await;
         println!("signed: {:?}", signed);
         i -= 1;
         match signed {
@@ -175,8 +190,8 @@ async fn main() {
     
 
     
-    let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
-    let r = para_client.submit_call(tx_value).await.unwrap();
+    // let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
+    // let r = para_client.submit_call(tx_value).await.unwrap();
 
     use subxt::config::extrinsic_params::{BaseExtrinsicParamsBuilder, Era};
     // let other_params = BaseExtrinsicParamsBuilder::new()
