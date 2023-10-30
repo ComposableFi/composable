@@ -19,13 +19,6 @@
             pkgs.lib.meta.getExe self'.packages.devnet-xc-fresh-background
           } 2>&1 & ) | tee devnet-xc.log &
 
-          process-compose-stop() {
-            for i in $(process-compose process list)
-            do
-              process-compose process stop "$i"
-            done
-          }
-
           TRIES=0
           START_RESULT=1
           while test $TRIES -le 64; do
@@ -36,9 +29,11 @@
               curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
               START_RESULT=$?
             fi
-            set -o errexit
+            set -o errexit            
             if test $START_RESULT -eq 0; then
-              process-compose-stop
+              set +o errexit
+              pkill -SIGTERM process-compose
+              set -o errexit
               break
             fi
             ((TRIES=TRIES+1))
@@ -51,7 +46,11 @@
           npm run generate-types
           npm run test:cosmos
           process-compose-stop
-          exit $START_RESULT              
+          sleep 8
+          set +o errexit
+          pkill -SIGKILL process-compose
+          set -o errexit
+          exit $START_RESULT
         '';
       };
     };

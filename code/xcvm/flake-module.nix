@@ -64,14 +64,15 @@
             cargo run --bin order --package cw-mantis-order
             npm run build-cw-mantis-order
 
-
             rm --recursive --force schema
             cargo run --bin gateway --package xc-core
             npm run build-xc-core
 
-            rm --recursive --force schema 
+            rm --recursive --force schema s
             cargo run --bin interpreter --package cw-xc-interpreter
             npm run build-cw-xc-interpreter
+
+            npm publish
           '';
         };
 

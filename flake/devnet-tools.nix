@@ -26,7 +26,8 @@
         curl
       ];
       withDevNetContainerTools = with pkgs;
-        [ bottom gawk gnugrep less nettools nix self'.packages.bech32cli ]
+        with self'.packages;
+        [ bottom gawk gnugrep less nettools nix bech32cli process-compose ]
         ++ withBaseContainerTools ++ withUserContainerTools;
       withBuildTools = with pkgs; [ binutils ] ++ withBaseContainerTools;
 

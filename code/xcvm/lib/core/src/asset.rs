@@ -165,6 +165,10 @@ impl Amount {
 		self.slope.0 == 0
 	}
 
+	pub const fn is_both(&self) -> bool {
+		self.is_absolute() && self.is_ratio()
+	}
+
 	/// Helper function to see if the amount is ratio
 	pub const fn is_ratio(&self) -> bool {
 		self.intercept.0 == 0
@@ -339,6 +343,30 @@ pub fn generate_network_prefixed_id(network_id: NetworkId, protocol_id: u32, non
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn amounts() {
+		let amount = Amount::new(0, Amount::MAX_PARTS);
+		let result = amount.apply(100).unwrap();
+		assert_eq!(result, 100);
+
+		let amount = Amount::new(42, Amount::MAX_PARTS);
+		let result = amount.apply(100).unwrap();
+		assert_eq!(result, 100);
+
+		let amount = Amount::new(123, 0);
+		let result = amount.apply(100).unwrap();
+		assert_eq!(result, 100, "seems this is feature to ask more but return what is here");
+
+		let amount = Amount::new(42, 0);
+		let result = amount.apply(100).unwrap();
+		assert_eq!(result, 42);
+
+		let amount = Amount::new(50, Amount::MAX_PARTS / 10);
+		let result = amount.apply(100).unwrap();
+		assert_eq!(result, 50 + 5, "percentage of remaining");
+	}
+
 	#[test]
 	fn devnet() {
 		let pica_on_picasso = generate_asset_id(0.into(), 0, 1);

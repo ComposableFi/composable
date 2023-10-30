@@ -69,6 +69,12 @@ pub enum ContractError {
 	#[error("Only single asset exchange is supported by pool")]
 	OnlySingleAssetExchangeIsSupportedByPool,
 
+	#[error("Exchange does not support slippage")]
+	ExchangeDoesNotSupportSlippage,
+
+	#[error("Cannot define both slippage and limit at same time")]
+	CannotDefineBothSlippageAndLimitAtSameTime,
+
 	#[error("Asset not found: {0}")]
 	AssetNotFound(StdError),
 	#[error("Exchange not found: {0}")]
