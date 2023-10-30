@@ -124,7 +124,7 @@ please read: [https://github.com/paritytech/substrate/blob/master/frame/vesting/
 
 ### Composable Cosmos Allocation
 
-The multisig address `centauri12k2pyuylm9t7ugdvz67h9pg4gmmvhn5vmvgw48` holds 1,066,669,217.2 PICA for validator delegations to secure the Composable Cosmos chain. 
+The multisig address `centauri12k2pyuylm9t7ugdvz67h9pg4gmmvhn5vmvgw48` holds 1,066,669,217.2 PICA. This was transferred from the Picasso treasury for the purpose of validator delegations during genesis to secure the Composable Cosmos chain. 
 
 ### Hyperspace Relayer allocation
 

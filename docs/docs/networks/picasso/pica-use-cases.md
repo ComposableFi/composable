@@ -12,7 +12,8 @@ A summary of PICA use cases is as follows:
 - Collator staking on Picasso 
 - Apollo staking
 - Validator Staking
-- Liquid staking (coming soon)
+- Liquid staking revenue (coming soon)
+- Bridging revenue (coming soon)
 
 ## Tri-staking token model
 
@@ -80,6 +81,8 @@ New use cases will continue to be established as we move forward with HRMP chann
 ## Governance
 
 Picasso is waging war on centralization with a vision of a seamlessly interoperable, trustless future for DeFi. As such the PICA token will play an important role in helping to realize this vision, as governance will soon be powered by phase 2 of Picasso's [OpenGov](./governance.md).
+
+As PICA also serves as the native token of Composable Cosmos, it is required for governance of the chain aswell.
 
 ## Where is PICA available?
 
