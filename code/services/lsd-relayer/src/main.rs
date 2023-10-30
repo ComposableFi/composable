@@ -118,8 +118,8 @@ async fn main() {
         unlocking: vec![],  //TODO
         claimed_rewards: vec![], //TODO
     };
-    // let x = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
-    let x = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
+    let tx_set_staking_ledger = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
+    let tx_value = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
 
     let config = ParachainClientConfig {
@@ -145,7 +145,7 @@ async fn main() {
     // let signer = PairSigner::new(key.clone());
     let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
     let v : Vec::<Value<()>> = vec![];
-    let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
+    // let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
     // let signer = PairSigner::new(AccountKeyring::Alice.pair());
 
     use subxt::ext::sp_core::Pair;
@@ -159,7 +159,9 @@ async fn main() {
         println!("signed: {:?}", signed);
         i -= 1;
         match signed {
-            Ok(progress) => {},
+            Ok(progress) => {
+                i = 0;
+            },
             Err(e) => {
                 println!("Error: {:?}", e);
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
