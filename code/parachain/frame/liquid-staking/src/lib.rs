@@ -303,6 +303,12 @@ pub mod pallet {
 
 
         RelaychainStorageProofKey(DerivativeIndex, Vec<u8>),
+        SetStakingLedgerTry{
+            origin: T::AccountId,
+            derivative_index: DerivativeIndex,
+            staking_ledger: StakingLedger<T::AccountId, BalanceOf<T>>,
+            proof: Vec<Vec<u8>>,
+        },
     }
 
     #[pallet::error]
@@ -1079,6 +1085,15 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
 
+            Self::deposit_event(Event::<T>::SetStakingLedgerTry{
+                origin: who.clone(),
+                derivative_index: derivative_index,
+                staking_ledger: staking_ledger.clone(),
+                proof: proof.clone(),
+            });
+
+            return Ok(().into());
+
             Self::do_update_ledger(derivative_index, |ledger| {
                 ensure!(
                     !Self::is_updated(derivative_index),
@@ -1267,7 +1282,8 @@ pub mod pallet {
         pub fn initiate_exchange_rate(
             origin: OriginFor<T>,
         ) -> DispatchResult {
-            T::UpdateOrigin::ensure_origin(origin)?;
+            // T::UpdateOrigin::ensure_origin(origin)?;
+            let _ = ensure_signed(origin)?;
             if Self::exchange_rate() != Rate::one() {
                 ExchangeRate::<T>::put(Rate::one());
                 Self::deposit_event(Event::<T>::ExchangeRateUpdated(Rate::one()));
