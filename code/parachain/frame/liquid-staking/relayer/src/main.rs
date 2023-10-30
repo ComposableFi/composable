@@ -1,6 +1,5 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::{GrandpaProver};
-use hyperspace_parachain::finality_protocol::FinalityProtocol;
 use subxt::SubstrateConfig;
 use subxt::dynamic::Value;
 use subxt::ext::scale_value::Composite;
@@ -17,8 +16,6 @@ use hyperspace_core::substrate::composable::parachain_subxt;
 // use subxt_signer::sr25519::dev::{self};
 use sp_keyring::AccountKeyring;
 use subxt::tx::PairSigner;
-use hyperspace_parachain::ParachainClientConfig;
-use hyperspace_parachain::ParachainClient;
 use subxt::utils::AccountId32;
 use sp_core::Pair;
 
@@ -52,14 +49,6 @@ async fn main() {
     let para_ws_client = Arc::new(WsClientBuilder::default().build(para_ws_url).await.unwrap());
     let para_client = OnlineClient::<ComposableConfig>::from_rpc_client(para_ws_client.clone()).await.unwrap();
 
-    // let prover = GrandpaProver::<PolkadotConfig>::new(
-	// 	&relay_ws_url,
-	// 	&para_ws_url,
-	// 	2000,
-	// 	Duration::from_millis(100),
-	// )
-	// .await
-	// .unwrap();
 	let keys = vec![para_storage_key.as_ref()];
 
 	let state_proof: Vec<Vec<u8>> = vec![]; //TODO uncomment when rpc method is available
@@ -118,28 +107,6 @@ async fn main() {
     let tx_set_staking_ledger = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
     let tx_value = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
-
-    let config = ParachainClientConfig {
-		name: "9188".to_string(),
-		para_id: 2019,
-		parachain_rpc_url: "ws://127.0.0.1:8000".to_owned(),
-		relay_chain_rpc_url: "ws://127.0.0.1:8001".to_owned(),
-		client_id: None,
-		connection_id: None,
-		commitment_prefix: sp_core::Bytes(vec![]),
-		private_key: "//Alice".to_string(),
-		ss58_version: 42,
-		channel_whitelist: vec![],
-		finality_protocol: FinalityProtocol::Grandpa,
-		key_type: "sr25519".to_string(),
-		wasm_code_id: None,
-	};
-
-    let para_client= ParachainClient::<ComposableConfig>::new(config).await.unwrap();
-    // get parachain client from config and then use it to sign tx
-    //call submit call
-    // let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
-    // let signer = PairSigner::new(key.clone());
     let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
     let v : Vec::<Value<()>> = vec![];
     // let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
@@ -187,25 +154,4 @@ async fn main() {
 
 
     todo!();
-    
-
-    
-    // let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
-    // let r = para_client.submit_call(tx_value).await.unwrap();
-
-    use subxt::config::extrinsic_params::{BaseExtrinsicParamsBuilder, Era};
-    // let other_params = BaseExtrinsicParamsBuilder::new()
-	// 			.era(Era::Immortal, para_client.genesis_hash());
-    let x = AccountKeyring::Alice.pair();    
-    // let from = PairSigner::<_, _>::new(x.into());
-    // para_client.tx().create_signed(&x, &from, other_params);
-    // relay_client.tx().sign_and_submit_then_watch_default(&balance_transfer_tx, &from)
-    //     .await.unwrap()
-    //     .wait_for_finalized_success()
-    //     .await.unwrap();
-
-
-    // type l = Keypair;
-
-    // println!("ledger: {:?}", ledger);
 }

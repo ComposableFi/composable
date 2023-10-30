@@ -8611,7 +8611,6 @@ dependencies = [
  "grandpa-prover",
  "hex",
  "hyperspace-core",
- "hyperspace-parachain",
  "jsonrpsee 0.16.2",
  "sp-core 7.0.0",
  "sp-keyring 24.0.0",
