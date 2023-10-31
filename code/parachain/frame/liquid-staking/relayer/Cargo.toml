@@ -15,6 +15,7 @@ subxt = { git = "https://github.com/paritytech/subxt", tag = "v0.29.0", features
 sp-keyring = "24.0.0"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 hyperspace-core = { git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", features = ["testing"] }
+futures-util = { version = "0.3.19", default-features = false, features = ["io"] }
 hex = "0.4.3"
 [features]
 default = ["std"]
