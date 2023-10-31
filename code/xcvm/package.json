@@ -1,20 +1,20 @@
 {
     "name": "cvm-cw-types",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Composable VM CosmWasm types and client", 
     "files": [
         "dist/**/*"
     ],
     "scripts": {
-        "build-xc-core": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-core/ --name cw-xc-core && cp schema/raw/* dist/cw-xc-core/ ",
-        "build-cw-xc-interpreter": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-interpreter/ --name cw-xc-interpreter && cp schema/raw/* dist/cw-xc-interpreter/",
+        "build-xc-core": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-core/ --name cw-xc-core && cp --recursive schema/* dist/cw-xc-core/ ",
+        "build-cw-xc-interpreter": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-interpreter/ --name cw-xc-interpreter && cp --recursive schema/* dist/cw-xc-interpreter/",
         "examples": "ts-node ./index.ts",
-        "build-cw-mantis-order": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out ./dist/cw-mantis-order --name cw-mantis-order && cp schema/raw/* dist/cw-mantis-order/"
+        "build-cw-mantis-order": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out ./dist/cw-mantis-order --name cw-mantis-order && cp --recursive schema/* dist/cw-mantis-order/"
         
     },
     "license": "MIT",
     "dependencies": {
-
+        "@cosmjs/cosmwasm-stargate": "0.31.3"
     },
     "devDependencies": {
      "@cosmwasm/ts-codegen": "0.35.3",
