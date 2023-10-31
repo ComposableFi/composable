@@ -21,7 +21,7 @@ use sp_keyring::AccountKeyring;
 use subxt::tx::PairSigner;
 use subxt::utils::AccountId32;
 use sp_core::Pair;
-use crate::parachain_subxt::api::runtime_types::pallet_liquid_staking::types::StakingLedger;
+use crate::parachain_subxt::api::runtime_types::pallet_liquid_staking::types::{StakingLedger, UnlockChunk};
 use futures_util::stream::StreamExt;
 
 
@@ -77,7 +77,7 @@ async fn main() {
     
     while true{
 
-        for i in tuple{
+        for i in &tuple{
 
             let keys = vec![i.1.as_ref()];
 
@@ -114,18 +114,31 @@ async fn main() {
             let sl = hyperspace_core::substrate::composable::relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger).unwrap();
             println!("sl: {:?}", sl);
 
+            
+            let mut unlocking = vec![];
+            for chunk in sl.unlocking.0.iter(){
+                let e = UnlockChunk { value: chunk.value, era: chunk.era, };
+                unlocking.push(e);
+            }
+
+            let mut claimed_rewards = vec![];
+
+            for claimed_reward in sl.claimed_rewards.0.iter(){
+                let e = claimed_reward.clone();
+                claimed_rewards.push(e);
+            }
+
             let xxx = StakingLedger::<AccountId32, u128> {
                 stash: AccountId32::from_str(i.0).unwrap(),
                 total: sl.total,
                 active: sl.active,
-                unlocking: vec![],  //TODO
-                claimed_rewards: vec![], //TODO
+                unlocking: unlocking,
+                claimed_rewards: claimed_rewards
             };
             let tx_set_staking_ledger = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(i.2, xxx, state_proof);
             let tx_value = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
             let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
-            let v : Vec::<Value<()>> = vec![];
 
             use subxt::ext::sp_core::Pair;
             //test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
