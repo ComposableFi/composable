@@ -134,7 +134,7 @@ type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | A
 /// So it is super set of what usually called swap over CFMM(AMMs). 
 /// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
-    in: AssetAmount[]
+    in: (AssetAmount | BindedAmount)[]
     min_out: AssetAmount[]
 }
 
@@ -181,8 +181,8 @@ type RegisterValue = RegisterValue[]
 
 type RegisterValue = ResultRegister | IPRegister | TipRegister | SelfRegister | VersionRegister | Carry
 
-/// amount which was transferred into this Spawn (may be less then sent from original chain because if fee) 
-type Carry = {AssetId, AbsoluteAmount}[]
+/// id sorted coints which was transferred into this `Spawn` (may be less then sent from original chain because if fee) 
+type Carry = AssetId[]
 
 type IPRegister = Uint8
 
@@ -205,6 +205,9 @@ interface AssetAmount {
     asset_id: AssetId
     balance : Balance
 } 
+
+/// amount from Carry register or part of it
+type BindedAmount = {Carry , Ratio? }
 
 type Account = Uint8Array
 
@@ -245,6 +248,7 @@ type Unit     = Uint128 Ratio
 /// parts of whole
 type Ratio    = { numerator : Uint64, denominator: Uint64}
 
+/// deterministic encoding of user wallet on each chain (virtual wallet)
 interface UserOrigin = {
     account : Account
     network: Network

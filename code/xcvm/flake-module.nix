@@ -52,7 +52,7 @@
           runtimeInputs = with pkgs; [
             self'.packages.rust-nightly
             nodejs
-            nodePackages.npm            
+            nodePackages.npm
           ];
           text = ''
             echo "generating TypeScript types and client definitions from JSON schema of CosmWasm contracts"
@@ -67,7 +67,7 @@
             rm --recursive --force schema
             cargo run --bin gateway --package xc-core
             npm run build-xc-core
-            
+
             npm publish
           '';
         };

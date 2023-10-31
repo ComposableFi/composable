@@ -25,6 +25,7 @@
           nodejs
           nodePackages.npm
           nodePackages.ts-node
+          typescript
           openssl
           process-compose
           protobuf
