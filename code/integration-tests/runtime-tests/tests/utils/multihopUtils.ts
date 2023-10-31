@@ -330,7 +330,7 @@ export async function waitForEvent<T extends AnyTuple>(api: ApiPromise, filterCa
         if (filterCall(event)) {
           unsubscribe();
           resolve(event);
-        } else if (index > 70) {
+        } else if (index > 10) {
           unsubscribe();
           reject('waited for 70 blocks');
         }
@@ -373,12 +373,12 @@ export async function waitForChannelsToOpen(expectedChannelCount: number, target
 }
 
 export async function waitForChannelsOnCentauri(expectedChannelCount: number) {
-  let {stdout} = await exec(`centaurid query ibc channel channels --output json`);
+  let {stdout} = await exec(`~/go/bin/centaurid query ibc channel channels --output json`);
   let parsed = JSON.parse(stdout);
   let channelsLength = parsed.channels.length;
   let index = 0;
   while (channelsLength < expectedChannelCount && index < 300) {
-    ({stdout} = await exec(`centaurid query ibc channel channels --output json`));
+    ({stdout} = await exec(`~/go/bin/centaurid query ibc channel channels --output json`));
     parsed = JSON.parse(stdout);
     channelsLength = parsed.channels.length;
     index++;
