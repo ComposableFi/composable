@@ -15,7 +15,8 @@
     "type": "module",
     "license": "MIT",
     "dependencies": {
-        "@cosmjs/cosmwasm-stargate": "0.31.3"
+        "@cosmjs/cosmwasm-stargate": "0.31.3",
+        "cosmjs-types": "0.9.0"
     },
     "devDependencies": {
      "@cosmwasm/ts-codegen": "0.35.3",
