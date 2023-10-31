@@ -1,9 +1,11 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::{GrandpaProver};
+use hyperspace_core::substrate::composable::parachain_subxt::api::pallet_liquid_staking::calls::types::SetStakingLedger;
 use sp_core::storage::StorageKey;
 use subxt::SubstrateConfig;
 use subxt::dynamic::Value;
 use subxt::ext::scale_value::Composite;
+use subxt::tx::Payload;
 use std::io::Bytes;
 use std::str::FromStr;
 use std::time::Duration;
@@ -19,6 +21,8 @@ use sp_keyring::AccountKeyring;
 use subxt::tx::PairSigner;
 use subxt::utils::AccountId32;
 use sp_core::Pair;
+use crate::parachain_subxt::api::runtime_types::pallet_liquid_staking::types::StakingLedger;
+use futures_util::stream::StreamExt;
 
 
 
@@ -29,10 +33,10 @@ async fn main() {
     let sovereign_account_id = "13YMK2ecbyxtm4cmFs31PqzWmQ7gWVboJSmXbcA56DB94xB9";
     let sovereign_account_id_index_0 = "12x6QU4c9eRPxJMATFsRNFiZTMK5QgZkdZFFeu2QDKn4TR82";
     let sovereign_account_id_index_1 = "1461Z7Bm1bwQpz1PuYMQ8phj9bRpxNU7ZYsb7aXQRAUuNecG";
-    let x2 = "15ySsNFkAhswdn9hSKkzoK7LhmJrj8bgyUZQAiM7Df9JpBUH";
-    let x3 = "15s3DuzMeftBH7YdHykwPDUd2DBxdNbiyqgDfZDA3i5eRwUW";
-    let x4 = "12uNvUSK39SDbHbqWuMhFdw2hHySrkbenVrHdS678fkj9BBb";
-    let x5 = "14tDkT3U93Pc1wLrHEjfYuhPPnFpMwDr7o8phPCTwTRj5wfE";
+    let sovereign_account_id_index_2 = "15ySsNFkAhswdn9hSKkzoK7LhmJrj8bgyUZQAiM7Df9JpBUH";
+    let sovereign_account_id_index_3 = "15s3DuzMeftBH7YdHykwPDUd2DBxdNbiyqgDfZDA3i5eRwUW";
+    let sovereign_account_id_index_4 = "12uNvUSK39SDbHbqWuMhFdw2hHySrkbenVrHdS678fkj9BBb";
+    let sovereign_account_id_index_5 = "14tDkT3U93Pc1wLrHEjfYuhPPnFpMwDr7o8phPCTwTRj5wfE";
 
     let para_storage_key = parachain_header_storage_key(2019);
     println!("Hello, world!");
@@ -51,9 +55,14 @@ async fn main() {
     let s4 = StorageKey(hex::decode(p4).expect("Failed to decode hex string"));
     let s5 = StorageKey(hex::decode(p5).expect("Failed to decode hex string"));
 
-
-    let bytes = hex::decode(p0).expect("Failed to decode hex string");
-
+    let tuple = vec![
+        (sovereign_account_id_index_0, s0, 0), 
+        (sovereign_account_id_index_1, s1, 1), 
+        (sovereign_account_id_index_2, s2, 2), 
+        (sovereign_account_id_index_3, s3, 3), 
+        (sovereign_account_id_index_4, s4, 4), 
+        (sovereign_account_id_index_5, s5, 5)
+    ];
     let relay = std::env::var("RELAY_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
 	let para = std::env::var("PARA_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
 
@@ -66,9 +75,14 @@ async fn main() {
     let para_ws_client = Arc::new(WsClientBuilder::default().build(para_ws_url).await.unwrap());
     let para_client = OnlineClient::<ComposableConfig>::from_rpc_client(para_ws_client.clone()).await.unwrap();
 
-	let keys = vec![para_storage_key.as_ref()];
+    
 
-	let state_proof: Vec<Vec<u8>> = vec![]; //TODO uncomment when rpc method is available
+
+    for i in tuple{
+
+        let keys = vec![i.1.as_ref()];
+
+        let state_proof: Vec<Vec<u8>> = vec![]; //TODO uncomment when rpc method is available
                         // relay_client
 						// .rpc()
 						// .read_proof(keys.iter().map(AsRef::as_ref), None)
@@ -77,84 +91,64 @@ async fn main() {
 						// .into_iter()
 						// .map(|p| p.0)
 						// .collect();
-	println!("state_proof: {:?}", state_proof);
-	// assert!(state_proof.len() > 0);
+        // assert!(state_proof.len() > 0);
 
-    let block_hash =
-				relay_client.rpc().block_hash(None).await.unwrap().unwrap();
-    println!("block_hash: {:?}", block_hash);
+        let block_hash =
+                    relay_client.rpc().block_hash(None).await.unwrap().unwrap();
+        println!("block_hash: {:?}", block_hash);
 
-    let timestamp_addr = relaychain::api::storage().timestamp().now();
-    let unix_timestamp_millis = relay_client
-        .storage()
-        .at(block_hash)
-        .fetch(&timestamp_addr)
-        .await.unwrap()
-        .expect("Timestamp should exist");
-    let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-    println!("timestamp_nanos: {:?}", timestamp_nanos);
+        use subxt::utils::AccountId32;
+        let account_id = AccountId32::from_str(i.0).unwrap();
+        let staking = relaychain::api::storage().staking().ledger(account_id);
 
-    println!("timestamp_nanos: {:?}", timestamp_nanos);
-    use subxt::utils::AccountId32;
-    let account_id = AccountId32::from_str(sovereign_account_id_index_0).unwrap();
-    println!("{}", bytes.len()); // Add a newline at the end for readability
-    let staking = relaychain::api::storage().staking().ledger(account_id);
-
-    let ledger = relay_client
-        .storage()
-        .at(block_hash)
-        .fetch(&staking)
-        .await.unwrap()
-        .expect("Ledger should exist");
+        let Some(ledger) = relay_client
+            .storage()
+            .at(block_hash)
+            .fetch(&staking)
+            .await.unwrap() else {
+                println!("ledger not found");
+                continue;
+            };
+            
 
 
-    let sl = hyperspace_core::substrate::composable::relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger).unwrap();
-    println!("sl: {:?}", sl);
+        let sl = hyperspace_core::substrate::composable::relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger).unwrap();
+        println!("sl: {:?}", sl);
 
-    // type t = hyperspace_core::substrate::composable::relaychain::api::runtime_types::pallet_liquid_staking::types::StakingLedger<::subxt::utils::AccountId32, ::core::primitive::u128>;
-    // StakingLedger::<AccountId32, u128>::try_from(ledger).unwrap();
-    use crate::parachain_subxt::api::runtime_types::pallet_liquid_staking::types::StakingLedger;
-    let xxx = StakingLedger::<AccountId32, u128> {
-        stash: AccountId32::from_str(sovereign_account_id_index_0).unwrap(),
-        total: sl.total,
-        active: sl.active,
-        unlocking: vec![],  //TODO
-        claimed_rewards: vec![], //TODO
-    };
-    let tx_set_staking_ledger = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(0, xxx, state_proof);
-    let tx_value = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
+        let xxx = StakingLedger::<AccountId32, u128> {
+            stash: AccountId32::from_str(i.0).unwrap(),
+            total: sl.total,
+            active: sl.active,
+            unlocking: vec![],  //TODO
+            claimed_rewards: vec![], //TODO
+        };
+        let tx_set_staking_ledger = parachain_subxt::api::tx().pallet_liquid_staking().set_staking_ledger(i.2, xxx, state_proof);
+        let tx_value = parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
-    let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
-    let v : Vec::<Value<()>> = vec![];
-    // let tx_value = subxt::dynamic::tx("PalletLiquidStaking", "initiate_exchange_rate", v);
-    // let signer = PairSigner::new(AccountKeyring::Alice.pair());
+        let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
+        let v : Vec::<Value<()>> = vec![];
 
-    use subxt::ext::sp_core::Pair;
-    //test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
-    let key = sp_keyring::sr25519::sr25519::Pair::from_string(&"private sentence hip meadow place say issue winner express edge royal aerobic", None).expect("secret");
-    let signer: PairSigner<SubstrateConfig, sp_keyring::sr25519::sr25519::Pair> = PairSigner::new(key.clone());
+        use subxt::ext::sp_core::Pair;
+        //test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
+        let key = sp_keyring::sr25519::sr25519::Pair::from_string(&"private sentence hip meadow place say issue winner express edge royal aerobic", None).expect("secret");
+        let signer: PairSigner<SubstrateConfig, sp_keyring::sr25519::sr25519::Pair> = PairSigner::new(key.clone());
 
-    let mut i = 10;
-    // while i > 0 {
-    //     let signed =
-    //         api.tx().sign_and_submit_then_watch(&tx_value, &signer, <_>::default()).await;
-    //     println!("signed: {:?}", signed);
-    //     i -= 1;
-    //     match signed {
-    //         Ok(progress) => {
-    //             i = 0;
-    //         },
-    //         Err(e) => {
-    //             println!("Error: {:?}", e);
-    //             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-    //         },
-    //     } 
-    // }
+        sign_and_submit_staking_ledger_update(&api, tx_set_staking_ledger, signer).await;
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 
+
+
+
+    }
+
+    todo!();
+}
+
+async fn sign_and_submit_staking_ledger_update(api: &OnlineClient<SubstrateConfig>, p: Payload<SetStakingLedger>, s: PairSigner<SubstrateConfig, sp_keyring::sr25519::sr25519::Pair>){
     let mut i = 10;
     while i > 0 {
         let signed =
-            api.tx().sign_and_submit_then_watch(&tx_set_staking_ledger, &signer, <_>::default()).await;
+            api.tx().sign_and_submit_then_watch(&p, &s, <_>::default()).await;
         println!("signed: {:?}", signed);
         i -= 1;
         match signed {
@@ -167,8 +161,14 @@ async fn main() {
             },
         } 
     }
-    
-
-
-    todo!();
 }
+
+
+// let event = relay_client.events();
+    // let stream = relay_client.blocks().subscribe_finalized().await.unwrap()
+    // .filter_map(|block| async {
+    //     let block = block.ok().unwrap();
+    //     let hash = block.hash();
+    //     let events = event.at(hash).await.ok().unwrap();
+    //     Some(events)
+    // });

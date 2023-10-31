@@ -8607,6 +8607,7 @@ dependencies = [
 name = "lsd-relayer"
 version = "1.0.0"
 dependencies = [
+ "futures-util",
  "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "grandpa-prover",
  "hex",
