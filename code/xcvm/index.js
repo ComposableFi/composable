@@ -1,3 +1,4 @@
+import { CwXcCoreClient } from "./dist/cw-xc-core/CwXcCore.client.js";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 const print = console.info;
@@ -15,7 +16,12 @@ async function main() {
     print("creating RPC client");
     // replace with RPC use really use, this RPC may not work at point you call it"
     const rawClient = await SigningCosmWasmClient.connectWithSigner("https://rpc.composable.nodestake.top:443", wallet);
-    print(rawClient);
+    print("checking CVM contract deployed");
+    /// update sender according you wallet and contract address in official public CVM docs
+    const client = new CwXcCoreClient(rawClient, "xcvm", "centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g");
+    /// check official docs about PICA asset id 
+    const PICA = await client.getAssetById({ assetId: "158456325028528675187087900673" });
+    print(PICA);
 }
 // In a module, once the top-level `await` proposal lands
 try {
