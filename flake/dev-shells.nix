@@ -23,6 +23,8 @@
           nix-tree
           nixfmt
           nodejs
+          nodePackages.npm
+          nodePackages.ts-node
           openssl
           process-compose
           protobuf
