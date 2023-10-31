@@ -3,11 +3,13 @@
 use std::fmt::format;
 use std::fmt::Debug;
 
+use itertools::Itertools;
+
 use crate::prelude::*;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-pub struct OrderList<Id: Copy + PartialEq + Debug> {
+pub struct OrderList<Id> {
     pub value: Vec<Order<Id>>,
 }
 
@@ -25,19 +27,19 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
     }
 
     pub fn buy(&self) -> Self {
-        self.apply_filter(|order| order.order_type == OrderType::BUY)
+        self.apply_filter(|order| order.order_type == OrderType::Buy)
     }
 
     pub fn sell(&self) -> Self {
-        self.apply_filter(|order| order.order_type == OrderType::SELL)
+        self.apply_filter(|order| order.order_type == OrderType::Sell)
     }
 
     pub fn pending(&self) -> Self {
-        self.apply_filter(|order| order.status == OrderStatus::PENDING)
+        self.apply_filter(|order| order.status == OrderStatus::Pending)
     }
 
     pub fn filled(&self) -> Self {
-        self.apply_filter(|order| order.status != OrderStatus::PENDING)
+        self.apply_filter(|order| order.status != OrderStatus::Pending)
     }
 
     pub fn is_acceptable_price(&self, price: Price) -> Self {
@@ -65,51 +67,30 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         )
     }
 
-    fn id(&self, id: Id) -> Self {
+    pub fn id(&self, id: Id) -> Self {
         self.apply_filter(|order| order.id == id)
     }
 
-    fn all(&self) -> &Vec<Order<Id>> {
+    pub fn all(&self) -> &Vec<Order<Id>> {
         &self.value
     }
 
-    fn clone(&self) -> Self {
-        OrderList {
-            value: self.value.iter().cloned().collect(),
-        }
-    }
-
-    fn compute_optimal_price(&self, num_range: i32) -> Price {
+    /// finds the price in which $max(x*y)$ is satisfied according limit
+    pub fn compute_optimal_price(&self, num_range: i32) -> Price {
         let mut optimal_price = Price(Decimal::new(-1, 0));
         let mut max_volume = BuyToken(Decimal::new(-1, 0));
-        let min_price = self
-            .value
-            .iter()
-            .min_by(|a, b| {
-                a.limit_price
-                    .partial_cmp(&b.limit_price)
-                    .unwrap_or(Ordering::Equal)
-            })
-            .map(|order| order.limit_price)
-            .unwrap_or(Decimal::new(0, 0));
-        let max_price = self
-            .value
-            .iter()
-            .max_by(|a, b| {
-                a.limit_price
-                    .partial_cmp(&b.limit_price)
-                    .unwrap_or(Ordering::Equal)
-            })
-            .map(|order| order.limit_price)
-            .unwrap_or(Decimal::new(0, 0));
-
+        let (min_price, max_price) = match self.value.iter().map(|x| x.limit_price).minmax() {
+            itertools::MinMaxResult::NoElements => <_>::default(),
+            itertools::MinMaxResult::OneElement(x) => (x, x),
+            itertools::MinMaxResult::MinMax(min, max) => (min, max),
+        };
         for i in 0..=num_range {
-            let price = min_price
-                + (max_price - min_price) * Decimal::new(i as i64, 0)
-                    / Decimal::new(num_range as i64, 0);
+            let price = min_price.0
+                + (max_price.0 - min_price.0) * Decimal::new(i.into(), 0)
+                    / Decimal::new(num_range.into(), 0);
             let volume = self.volume_by_price(Price(price));
             if volume.0 > max_volume.0 {
-                optimal_price.0 = price;
+                optimal_price = Price(price);
                 max_volume = volume;
             }
         }
@@ -125,8 +106,15 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         )
     }
 
-    pub fn print(&self) -> String {
-        format!("{:?}", self.value)
+    pub fn print(&self) {
+        for order in self.buy().value.iter() {
+            println!("{:?}", order);
+        }
+        println!("----------");
+        for order in self.sell().value.iter() {
+            println!("{:?}", order);
+        }
+        println!("----------");
     }
 
     pub fn resolve_predominant(
