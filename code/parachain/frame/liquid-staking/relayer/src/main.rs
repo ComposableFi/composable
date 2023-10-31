@@ -1,5 +1,6 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::{GrandpaProver};
+use sp_core::storage::StorageKey;
 use subxt::SubstrateConfig;
 use subxt::dynamic::Value;
 use subxt::ext::scale_value::Composite;
@@ -28,15 +29,30 @@ async fn main() {
     let sovereign_account_id = "13YMK2ecbyxtm4cmFs31PqzWmQ7gWVboJSmXbcA56DB94xB9";
     let sovereign_account_id_index_0 = "12x6QU4c9eRPxJMATFsRNFiZTMK5QgZkdZFFeu2QDKn4TR82";
     let sovereign_account_id_index_1 = "1461Z7Bm1bwQpz1PuYMQ8phj9bRpxNU7ZYsb7aXQRAUuNecG";
+    let x2 = "15ySsNFkAhswdn9hSKkzoK7LhmJrj8bgyUZQAiM7Df9JpBUH";
+    let x3 = "15s3DuzMeftBH7YdHykwPDUd2DBxdNbiyqgDfZDA3i5eRwUW";
+    let x4 = "12uNvUSK39SDbHbqWuMhFdw2hHySrkbenVrHdS678fkj9BBb";
+    let x5 = "14tDkT3U93Pc1wLrHEjfYuhPPnFpMwDr7o8phPCTwTRj5wfE";
 
     let para_storage_key = parachain_header_storage_key(2019);
     println!("Hello, world!");
 
-    //0x5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc456d08aea5b028f73699523ae21709a815640ec97748f5b5da9a2298e830e8971df7908861e1710b957fe06f0703bca7d
-    //convert to bytes this 0x5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc456d08aea5b028f73699523ae21709a815640ec97748f5b5da9a2298e830e8971df7908861e1710b957fe06f0703bca7d
-    let hex_string = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc456d08aea5b028f73699523ae21709a815640ec97748f5b5da9a2298e830e8971df7908861e1710b957fe06f0703bca7d";
+    let p0 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc456d08aea5b028f73699523ae21709a815640ec97748f5b5da9a2298e830e8971df7908861e1710b957fe06f0703bca7d";
+    let p1 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc491af1d8906a21795a98d84506b4216828886ca7474c66c027a9dc5d73901481568d551d01f13d0eb3bd36dd20ed2f13e";
+    let p2 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc4bc407118eef848de28bad224cc60c8fedbfdc1d87d5f65f94602d8e31d7426de7b7d0bb4a8e9223b72bb39231737377c";
+    let p3 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc43802b39b0fa95ce7e37486987631cef3d71aafa64aa8d5d9164071a14106cdba71fe4b8fc08de39a7606c8d16f5b20f8";
+    let p4 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc4b8ac2e6f27924e06455d8e5c75b6a775542eca539ca4e92c4b4e0496bef934595597645e21eb29b5ce94bc38b7e45181";
+    let p5 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc4232647f67d6923193db6aedafe0d5ea3abc522231610ec74f6391785db08c68f3c07c1bb45e2193b413f66926dec5072";
 
-    let bytes = hex::decode(hex_string).expect("Failed to decode hex string");
+    let s0 = StorageKey(hex::decode(p0).expect("Failed to decode hex string"));
+    let s1 = StorageKey(hex::decode(p1).expect("Failed to decode hex string"));
+    let s2 = StorageKey(hex::decode(p2).expect("Failed to decode hex string"));
+    let s3 = StorageKey(hex::decode(p3).expect("Failed to decode hex string"));
+    let s4 = StorageKey(hex::decode(p4).expect("Failed to decode hex string"));
+    let s5 = StorageKey(hex::decode(p5).expect("Failed to decode hex string"));
+
+
+    let bytes = hex::decode(p0).expect("Failed to decode hex string");
 
     let relay = std::env::var("RELAY_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
 	let para = std::env::var("PARA_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
