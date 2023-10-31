@@ -8,10 +8,12 @@
     "scripts": {
         "build-xc-core": "json2ts --input 'schema/raw' --output dist/cw-xc-core/ --style.singleQuote --no-style.semi --unreachableDefinitions && cp schema/raw/* dist/cw-xc-core/ ",
         "build-cw-xc-interpreter": "json2ts --input 'schema/raw' --output dist/cw-xc-interpreter/ --style.singleQuote --no-style.semi --unreachableDefinitions && cp schema/raw/* dist/cw-xc-interpreter/",
-        "build-cw-mantis-order": "json2ts --input 'schema/raw' --output dist/cw-mantis-order/ --style.singleQuote --no-style.semi --unreachableDefinitions && cp schema/raw/* dist/cw-mantis-order/"
+        "build-cw-mantis-order": "json2ts --input 'schema/raw' --output dist/cw-mantis-order/ --style.singleQuote --no-style.semi --unreachableDefinitions && cp schema/raw/* dist/cw-mantis-order/",
+        "examples": "ts-node ./index.ts"
     },
     "license": "MIT",
     "devDependencies": {
-     "json-schema-to-typescript": "13.1.1"   
+     "json-schema-to-typescript": "13.1.1",
+     "ts-node": "10.9.1"
     }
 }

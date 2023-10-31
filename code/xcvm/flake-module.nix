@@ -52,7 +52,7 @@
           runtimeInputs = with pkgs; [
             self'.packages.rust-nightly
             nodejs
-            nodePackages.npm
+            nodePackages.npm            
           ];
           text = ''
             echo "generating TypeScript types definitions from JSON schema of CosmWasm contracts"
