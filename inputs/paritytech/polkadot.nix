@@ -141,7 +141,7 @@
             "fflonk-0.1.0" =
               "sha256-MNvlePHQdY8DiOq6w7Hc1pgn7G58GDTeghCKHJdUy7E=";
             "binary-merkle-tree-4.0.0-dev" =
-              "sha256-GvhgZhOIX35zF+TbQWtTCgahDec1lQjH+NqamLFLUxM=";
+              "sha256-GJGCvJnJr6ZsLkEgi62zAJyMkGITj1/mW0/BjJQXe8U=";
             "sub-tokens-0.1.0" =
               "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
           };
