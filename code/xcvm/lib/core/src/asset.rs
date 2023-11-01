@@ -121,7 +121,7 @@ impl From<u128> for Balance {
 )]
 #[serde(rename_all = "snake_case")]
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
-pub struct Amount {	
+pub struct Amount {
 	#[serde(skip_serializing_if = "Option::is_none", default)]
 	pub intercept: Displayed<u128>,
 	#[serde(skip_serializing_if = "Option::is_none", default)]
