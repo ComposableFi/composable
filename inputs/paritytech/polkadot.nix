@@ -1,12 +1,8 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, lib, system, subnix, ... }:
     let
-      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-        (pkgs.rust-bin.stable."1.73.0".default.override {
-          targets = [ "wasm32-unknown-unknown" ];
-        });
       buildPolkadotNode = { name, repo, owner, rev, hash, outputHashes, }:
-        rust.buildPackage (subnix.subenv // rec {
+        pkgs.rustPlatform.buildRustPackage (subnix.subenv // rec {
           inherit name;
           cargoLock = {
             lockFile = "${src}/Cargo.lock";
