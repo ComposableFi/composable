@@ -13,37 +13,36 @@
       tools = with pkgs;
         with self'.packages;
         [
+          bech32cli
           binaryen
+          bun
           clang
           dasel
+          forge
+          gex
           git
           git-lfs
           grpcurl
           jq
           nix-tree
           nixfmt
+          nixos-rebuild
           nodejs
           nodePackages.npm
-          nodePackages.ts-node
-          typescript
           openssl
           process-compose
           protobuf
           python3
           rnix-lsp
           sad
-          gex
-          bech32cli
-          bun
+          self'.packages.bech32cli
           subwasm
           terraform
           terraform-ls
+          typescript
           websocat
           yarn
           zombienet
-          self'.packages.bech32cli
-          nixos-rebuild
-          forge
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
