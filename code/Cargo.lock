@@ -10504,6 +10504,7 @@ dependencies = [
  "pallet-assets 1.0.0",
  "pallet-babe",
  "pallet-balances",
+ "pallet-message-queue",
  "pallet-session",
  "pallet-staking",
  "pallet-timestamp",

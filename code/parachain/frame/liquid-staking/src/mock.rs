@@ -742,68 +742,68 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| {
-        Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            KSM.into(),
-            b"Kusama".to_vec(),
-            b"KSM".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
-        Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            SKSM.into(),
-            b"Parallel Kusama".to_vec(),
-            b"sKSM".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
-        Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            KSM_U.into(),
-            b"Kusama Ubonding".to_vec(),
-            b"KSM_U".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     KSM.into(),
+        //     b"Kusama".to_vec(),
+        //     b"KSM".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     SKSM.into(),
+        //     b"Parallel Kusama".to_vec(),
+        //     b"sKSM".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     KSM_U.into(),
+        //     b"Kusama Ubonding".to_vec(),
+        //     b"KSM_U".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
 
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(ALICE),
-            ksm(100f64),
-        )
-        .unwrap();
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            SKSM.into(),
-            Id(ALICE),
-            ksm(100f64),
-        )
-        .unwrap();
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(BOB),
-            ksm(20000f64),
-        )
-        .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(ALICE),
+        //     ksm(100f64),
+        // )
+        // .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     SKSM.into(),
+        //     Id(ALICE),
+        //     ksm(100f64),
+        // )
+        // .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(BOB),
+        //     ksm(20000f64),
+        // )
+        // .unwrap();
         LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::signed(BOB), ksm(10000f64))
             .unwrap();
 
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(XcmHelper::account_id()),
-            ksm(100f64),
-        )
-        .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(XcmHelper::account_id()),
+        //     ksm(100f64),
+        // )
+        // .unwrap();
 
         // Loans::add_market(RuntimeOrigin::root(), KSM, market_mock(PKSM)).unwrap();
         // Loans::activate_market(RuntimeOrigin::root(), KSM).unwrap();
@@ -827,10 +827,17 @@ decl_test_parachain! {
     }
 }
 
+use pallet_message_queue;
+use xcm_simulator::TestExt;
+
 decl_test_relay_chain! {
     pub struct Relay {
         Runtime = kusama_runtime::Runtime,
-        XcmConfig = kusama_runtime::xcm_config::XcmConfig,
+		RuntimeCall = kusama_runtime::RuntimeCall,
+		RuntimeEvent = kusama_runtime::RuntimeEvent,
+		XcmConfig = kusama_runtime::xcm_config::XcmConfig,
+		MessageQueue = kusama_runtime::MessageQueue,
+		System = kusama_runtime::System,
         new_ext = relay_ext(),
     }
 }
@@ -881,58 +888,58 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 
     let mut ext = sp_io::TestExternalities::new(t);
     ext.execute_with(|| {
-        Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            KSM.into(),
-            b"Kusama".to_vec(),
-            b"KSM".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
-        Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            SKSM.into(),
-            b"Parallel Kusama".to_vec(),
-            b"sKSM".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
-        Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
-        Assets::force_set_metadata(
-            RuntimeOrigin::root(),
-            KSM_U.into(),
-            b"Kusama Ubonding".to_vec(),
-            b"KSM_U".to_vec(),
-            12,
-            false,
-        )
-        .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     KSM.into(),
+        //     b"Kusama".to_vec(),
+        //     b"KSM".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     SKSM.into(),
+        //     b"Parallel Kusama".to_vec(),
+        //     b"sKSM".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
+        // Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
+        // Assets::force_set_metadata(
+        //     RuntimeOrigin::root(),
+        //     KSM_U.into(),
+        //     b"Kusama Ubonding".to_vec(),
+        //     b"KSM_U".to_vec(),
+        //     12,
+        //     false,
+        // )
+        // .unwrap();
 
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(ALICE),
-            ksm(10000f64),
-        )
-        .unwrap();
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(BOB),
-            ksm(20000f64),
-        )
-        .unwrap();
-        Assets::mint(
-            RuntimeOrigin::signed(ALICE),
-            KSM.into(),
-            Id(XcmHelper::account_id()),
-            ksm(30f64),
-        )
-        .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(ALICE),
+        //     ksm(10000f64),
+        // )
+        // .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(BOB),
+        //     ksm(20000f64),
+        // )
+        // .unwrap();
+        // Assets::mint(
+        //     RuntimeOrigin::signed(ALICE),
+        //     KSM.into(),
+        //     Id(XcmHelper::account_id()),
+        //     ksm(30f64),
+        // )
+        // .unwrap();
 
         // Loans::add_market(RuntimeOrigin::root(), KSM, market_mock(PKSM)).unwrap();
         // Loans::activate_market(RuntimeOrigin::root(), KSM).unwrap();
