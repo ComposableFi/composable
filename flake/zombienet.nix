@@ -128,7 +128,7 @@
               default_command =
                 # version of polkadot
                 pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
-                #pkgs.lib.meta.getExe pkgs.polkadot;
+              #pkgs.lib.meta.getExe pkgs.polkadot;
               count = 3;
               genesis = {
                 # whatever stakin here to add and handle PoS instead of PoA

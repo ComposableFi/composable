@@ -1,6 +1,5 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, lib, system, crane
-    , systemCommonRust, subnix, ... }:
+  perSystem = { config, self', inputs', pkgs, lib, system, subnix, ... }:
     let
       buildPolkadotNode = { name, repo, owner, rev, hash, outputHashes, }:
         pkgs.rustPlatform.buildRustPackage (subnix.subenv // rec {
