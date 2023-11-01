@@ -25,6 +25,14 @@ pub enum QueryMsg {
 	GetExchangeById { exchange_id: ExchangeId },
 }
 
+/// gets all assets in CVM registry without underlying native information
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct GetAllAssetsResponse {
+	pub assets: Vec<AssetId>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

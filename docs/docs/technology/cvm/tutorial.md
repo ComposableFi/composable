@@ -1,6 +1,8 @@
 # Overview
 
-This document describes basic usage of CVM on CosmWasm.
+This document describes basic usage of CVM on CosmWasm from command line and TypeScript Node environment.
+
+It does not teaches you basics of Cosmos nor CosmWasm nor blockchain, but references some relevant information.
 
 ## Prerequisites
 
@@ -338,3 +340,11 @@ Also `interpreter` implements CW1 proxy contract allowing user to unstuck funds 
             }
 ```
 
+
+## Usage from TypeScript
+
+You can find types and simple client and CosmWasm JSON schemas in https://www.npmjs.com/package/cvm-cw-types package.
+
+Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/xcvm/example.ts 
+
+For usage with React consider generating React state and query integration using cosmwasm client generator from JSON schemas.

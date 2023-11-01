@@ -55,7 +55,7 @@
             nodePackages.npm
           ];
           text = ''
-            echo "generating TypeScript types definitions from JSON schema of CosmWasm contracts"
+            echo "generating TypeScript types and client definitions from JSON schema of CosmWasm contracts"
             cd code/xcvm
             npm install
             rm --recursive --force dist
@@ -67,10 +67,6 @@
             rm --recursive --force schema
             cargo run --bin gateway --package xc-core
             npm run build-xc-core
-
-            rm --recursive --force schema s
-            cargo run --bin interpreter --package cw-xc-interpreter
-            npm run build-cw-xc-interpreter
 
             npm publish
           '';
