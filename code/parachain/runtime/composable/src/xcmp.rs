@@ -23,8 +23,8 @@ use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, ParentAsSuperuser, SiblingParachainConvertsVia,
+	AllowTopLevelPaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser,
+	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
 	TakeWeightCredit,
 };
@@ -73,13 +73,13 @@ impl orml_unknown_tokens::Config for Runtime {
 }
 
 pub struct AllowAll;
-impl xcm_executor::traits::ShouldExecute for AllowAll{
+impl xcm_executor::traits::ShouldExecute for AllowAll {
 	fn should_execute<RuntimeCall>(
 		origin: &MultiLocation,
 		instructions: &mut [Instruction<RuntimeCall>],
 		max_weight: Weight,
 		weight_credit: &mut Weight,
-	) -> Result<(), ProcessMessageError>{
+	) -> Result<(), ProcessMessageError> {
 		Ok(())
 	}
 }
@@ -210,8 +210,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-    // transaction from the Root origin.
-    ParentAsSuperuser<RuntimeOrigin>,
+	// transaction from the Root origin.
+	ParentAsSuperuser<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
@@ -431,12 +431,12 @@ pub type CaptureAssetTrap = CaptureDropAssets<
 
 use xcm_executor::traits::OnResponse;
 pub struct XcmExecutorHandler;
-impl OnResponse for XcmExecutorHandler{
+impl OnResponse for XcmExecutorHandler {
 	fn expecting_response(
 		origin: &MultiLocation,
 		query_id: u64,
 		querier: Option<&MultiLocation>,
-	) -> bool{
+	) -> bool {
 		return PolkadotXcm::expecting_response(origin, query_id, querier);
 	}
 	/// Handler for receiving a `response` from `origin` relating to `query_id` initiated by
@@ -448,13 +448,20 @@ impl OnResponse for XcmExecutorHandler{
 		response: Response,
 		max_weight: Weight,
 		context: &XcmContext,
-	) -> Weight{
+	) -> Weight {
 		//need this line because querier is None
-		//and here is where it failed in pallet-xcm 
+		//and here is where it failed in pallet-xcm
 		//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
 		//so need to substitute it with expected querier
 		let querier = MultiLocation { parents: 0, interior: Here };
-		return PolkadotXcm::on_response(origin, query_id, Some(&querier), response, max_weight, context);
+		return PolkadotXcm::on_response(
+			origin,
+			query_id,
+			Some(&querier),
+			response,
+			max_weight,
+			context,
+		);
 	}
 }
 
