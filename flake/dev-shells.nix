@@ -34,6 +34,7 @@
           sad
           gex
           bech32cli
+          bun
           subwasm
           terraform
           terraform-ls

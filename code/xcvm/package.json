@@ -9,7 +9,7 @@
         "build-xc-core": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-core/ --name cw-xc-core && cp --recursive schema/* dist/cw-xc-core/ ",
         "build-cw-xc-interpreter": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out dist/cw-xc-interpreter/ --name cw-xc-interpreter && cp --recursive schema/* dist/cw-xc-interpreter/",
         "build-cw-mantis-order": "cosmwasm-ts-codegen generate --plugin client --schema ./schema --no-bundle --out ./dist/cw-mantis-order --name cw-mantis-order && cp --recursive schema/* dist/cw-mantis-order/",
-        "examples": "ts-node index.ts"
+        "examples": "bun index.ts"
         
     },
     "type": "module",
@@ -20,6 +20,6 @@
     },
     "devDependencies": {
      "@cosmwasm/ts-codegen": "0.35.3",
-     "ts-node": "10.9.1"
+     "bun" : "1.0.7"
     }
 }

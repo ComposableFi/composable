@@ -24,4 +24,7 @@ For example, the CVM enables the ability to move Polkadot’s DOT token to Osmos
 
 ## [Specification](./cvm/specification.md)
 
+## [Virtual Wallet](./cvm/virtual-wallet.md)
+
+
 ## [Tutorial](./cvm/tutorial.md)

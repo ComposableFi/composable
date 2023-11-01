@@ -1,9 +1,8 @@
 import { CwXcCoreClient } from "./dist/cw-xc-core/CwXcCore.client.js"
-import { AssetId, ExecuteProgramMsg, Balance } from "./dist/cw-xc-core/CwXcCore.types.js"
 import { GasPrice } from "@cosmjs/stargate"
-import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate"
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate"
 
-import { decodeTxRaw, DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin.js";
 
 const print = console.info
@@ -28,9 +27,9 @@ print(sender)
 print("creating RPC client")
 // replace with RPC use really use, this RPC may not work at point you call it"
 const rawClient = await SigningCosmWasmClient.connectWithSigner("https://rpc.composable.nodestake.top:443", wallet,
-{
-    gasPrice : GasPrice.fromString("0.025uatom")
-})
+    {
+        gasPrice: GasPrice.fromString("0.25ppica")
+    })
 
 print("checking CVM contract deployed")
 
@@ -44,36 +43,50 @@ print("let transfer PICA Centaur to Osmosis")
 const msg = {
     executeProgram: {
         assets: [
-            ["158456325028528675187087900673", "1000000000000"]
+            ["158456325028528675187087900673", "123456789000"]
         ],
-        salt: "virtual wallet drv salt",
+        salt: "737061776e5f776974685f6173736573",
         program: {
-            tag: "42656",
+            tag: "737061776e5f776974685f6173736574",
             instructions: [
                 {
-                    transfer: {
-                        to: "0x42",
+                    spawn: {
+                        network_id: 3,
+                        salt: "737061776e5f776974685f6173736574",
                         assets: [
-                            ["158456325028528675187087900673",
+                            [
+                                "158456325028528675187087900673",
                                 {
                                     amount: {
-                                        intercept: "100000000000",
-                                        slope: "0",
+                                        intercept: "123456789000",
+                                        slope: "0"
                                     },
                                     is_unit: false
-                                }]]
-
+                                }
+                            ]
+                        ],
+                        program: {
+                            tag: "737061776e5f776974685f6173736574",
+                            instructions: [
+                                // so we just transferred PICA to Osmosis virtual wallet
+                                // you can encode here transfer to account on Osmosis (from virtual wallet)
+                                // or do exchange, see swap-pica-to-osmosis.json
+                                // or do raw calls of contracts as per specification
+                                // just fill in instructions according shape
+                            ]
+                        }
                     }
                 }
             ]
         }
 
     },
-    tip: "string",
+    tip: "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k",
 }
 
-const coin = Coin.fromPartial({ denom: "ppica", amount: "1000000000000" })
-const result = await client.executeProgram(msg, "auto", null, [coin]);
+const coin = Coin.fromPartial({ denom: "ppica", amount: "123456789000" })
+const result = await client.executeProgram(msg, "auto", null, [coin])
 
 print(result)
 
+// will pair code with @bengalmozzi order contract - which is simpler
