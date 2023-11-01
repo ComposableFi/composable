@@ -15,7 +15,7 @@
         # Common env required to build the node
         common-attrs = subnix.subattrs // {
           src = rustSrc;
-          buildInputs = with pkgs; [ openssl zstd ];
+          buildInputs = with pkgs; [ openssl zstd zlib.dev ];
           nativeBuildInputs = with pkgs;
             [ clang openssl pkg-config ] ++ darwin-deps;
           doCheck = false;

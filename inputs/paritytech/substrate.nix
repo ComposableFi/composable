@@ -14,6 +14,7 @@
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
           pkgs.stdenv.cc.cc.lib
           pkgs.llvmPackages.libclang.lib
+          pkgs.zlib
         ];
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         PROTOC = "${pkgs.protobuf}/bin/protoc";
