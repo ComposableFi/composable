@@ -56,7 +56,7 @@
         (with self'.packages; [ cargo-clippy-check unit-tests ]);
 
       all-production = pkgs.linkFarmFromDrvs "all-production"
-        (with self'.packages; [ livenet-composable ]);
+        (with self'.packages; [ zombienet-polkadot-dev-composable-dev ]);
 
       all-darwin = pkgs.linkFarmFromDrvs "all-darwin"
         (with self'.packages; [ devnet-picasso ccw ]);

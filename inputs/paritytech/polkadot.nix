@@ -131,11 +131,17 @@
           name = "polkadot-live-runtime-node";
           repo = "polkadot";
           owner = "paritytech";
-          rev = "645723987cf9662244be8faf4e9b63e8b9a1b3a3";
-          hash = "sha256-TTi4cKqQT/2ZZ/acGvcilqTlh2D9t4cfAtQQyVZWdmg=";
+          rev = "52209dcfe546ff39cc031b92d64e787e7e8264d4";
+          hash = "sha256-927W8su86sPRyCF9eijm58X2uPBPnsR4KgJTIxVIcqA=";
           outputHashes = {
-            "beefy-gadget-4.0.0-dev" =
-              "sha256-MUUH5v6CKuzDBIXYlJLDFVz6WfaVllzxO9afvWeUZXY=";
+            "ark-secret-scalar-0.0.2" =
+              "sha256-Tcrz2tT561ICAJzMgarSTOnaUEPeTFKZzE7rkdL3eUQ=";
+            "common-0.1.0" =
+              "sha256-dnZKDx3Rw5cd4ejcilo3Opsn/1XK9yWGxhceuwvBE0o=";
+            "fflonk-0.1.0" =
+              "sha256-MNvlePHQdY8DiOq6w7Hc1pgn7G58GDTeghCKHJdUy7E=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-GvhgZhOIX35zF+TbQWtTCgahDec1lQjH+NqamLFLUxM=";
             "sub-tokens-0.1.0" =
               "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
           };
