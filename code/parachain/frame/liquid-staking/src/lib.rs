@@ -20,21 +20,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{traits::{tokens::Balance as BalanceT, Get}, weights::Weight};
+use frame_support::traits::{tokens::Balance as BalanceT, Get};
 use sp_runtime::{
     traits::{One, Zero},
-    FixedPointNumber, FixedPointOperand, DispatchResult, DispatchError,
+    FixedPointNumber, FixedPointOperand,
 };
 
 use pallet_xcm_helper::ump::RewardDestination;
 pub use pallet::*;
-use xcm::{DoubleEncoded, v3::{QueryId, MultiLocation, Xcm, MultiAsset}};
-// use pallet_traits::{
-//     DecimalProvider, DistributionStrategy, ExchangeRateProvider, LiquidStakingConvert,
-//     LiquidStakingCurrenciesProvider, Loans, LoansMarketDataProvider, LoansPositionDataProvider,
-//     ValidationDataProvider,
-// };
-// use primitives::{PersistedValidationData, Rate};
 
 // mod benchmarking;
 
@@ -61,14 +54,11 @@ pub mod pallet {
         require_transactional,
         storage::{storage_prefix, with_transaction},
         traits::{
-            // fungibles::{Inspect, Mutate, /*Transfer*/ },
             IsType, SortedMembers,
         },
         transactional, PalletId, StorageHasher,
     };
-    use frame_support::{
-		traits::
-			fungibles::{Inspect, Mutate}};
+    use frame_support::traits::fungibles::{Inspect, Mutate};
     use frame_system::{
         ensure_signed,
         pallet_prelude::{BlockNumberFor, OriginFor},
@@ -92,12 +82,9 @@ pub mod pallet {
     use primitives::currency::CurrencyId;
     pub type Balance = u128;
 
-    // use pallet_traits::ump::*;
     use pallet_xcm_helper::XcmHelper;
-    // use primitives::{Balance, CurrencyId, DerivativeIndex, EraIndex, ParaId, Rate, Ratio};
 
     use super::{types::*, *};
-    // use frame_support::traits::fungibles::Transfer;
 
     pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
@@ -130,15 +117,9 @@ pub mod pallet {
         type RuntimeCall: IsType<<Self as pallet_xcm::Config>::RuntimeCall> + From<Call<Self>>;
 
         /// Assets for deposit/withdraw assets to/from pallet account
-        type Assets: /* Transfer<Self::AccountId, AssetId = CurrencyId> + */
+        type Assets: 
             Mutate<Self::AccountId, AssetId = CurrencyId, Balance = Balance>
             + Inspect<Self::AccountId, AssetId = CurrencyId, Balance = Balance>;
-
-            // pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
-            // pub(crate) type BalanceOf<T> = <T as Config>::Balance;
-
-        // type Assets: Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-        // + Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
         /// The origin which can do operation on relaychain using parachain's sovereign account
         type RelayOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
@@ -152,10 +133,6 @@ pub mod pallet {
         /// The pallet id of liquid staking, keeps all the staking assets
         #[pallet::constant]
         type PalletId: Get<PalletId>;
-
-        /// The pallet id of loans used for fast unstake
-        // #[pallet::constant]
-        // type LoansPalletId: Get<PalletId>;
 
         /// Returns the parachain ID we are running with.
         #[pallet::constant]
@@ -211,11 +188,6 @@ pub mod pallet {
         /// The relay's validation data provider
         type RelayChainValidationDataProvider: ValidationDataProvider
             + BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
-
-        // /// Loans
-        // type Loans: Loans<AssetIdOf<Self>, Self::AccountId, BalanceOf<Self>>
-        //     + LoansPositionDataProvider<AssetIdOf<Self>, Self::AccountId, BalanceOf<Self>>
-        //     + LoansMarketDataProvider<AssetIdOf<Self>, BalanceOf<Self>>;
 
         /// To expose XCM helper functions
         type XCM: XcmHelper<Self, BalanceOf<Self>, Self::AccountId>;
@@ -582,11 +554,6 @@ pub mod pallet {
             let amount =
                 Self::liquid_to_staking(liquid_amount).ok_or(Error::<T>::InvalidExchangeRate)?;
             let unlockings_key = who.clone();
-            // let unlockings_key = if unstake_provider.is_loans() {
-            //     Self::loans_account_id()
-            // } else {
-            //     who.clone()
-            // };
 
             Unlockings::<T>::try_mutate(&unlockings_key, |b| -> DispatchResult {
                 let mut chunks = b.take().unwrap_or_default();
@@ -608,11 +575,6 @@ pub mod pallet {
             })?;
 
             T::Assets::burn_from(Self::liquid_currency()?, &who, liquid_amount, Precision::BestEffort, Fortitude::Polite)?;
-
-            //TODO rust.dev uncomment this line
-            // if unstake_provider.is_loans() {
-            //     Self::do_loans_instant_unstake(&who, amount)?;
-            // }
 
             MatchingPool::<T>::try_mutate(|p| p.add_unstake_amount(amount))?;
 
@@ -1990,60 +1952,13 @@ pub mod pallet {
             let module_id = Self::account_id();
             let staking_currency = Self::staking_currency()?;
 
-            //TODO rust.dev double check
-            // if who == &Self::loans_account_id() {
-            if false {
-                // let account_borrows =
-                //     T::Loans::get_current_borrow_balance(&module_id, staking_currency)?;
-                // T::Loans::do_repay_borrow(
-                //     &module_id,
-                //     staking_currency,
-                //     min(account_borrows, amount),
-                // )?;
-                // let redeem_amount = T::Loans::get_market_info(collateral_currency)?
-                //     .collateral_factor
-                //     .saturating_reciprocal_mul_ceil(amount);
-                // T::Loans::do_redeem(&module_id, collateral_currency, redeem_amount)?;
-                // T::Assets::burn_from(collateral_currency, &module_id, redeem_amount)?;
-            } else {
-                use frame_support::traits::tokens::{Preservation};
-                let keep_alive = false;
-                let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
-                T::Assets::transfer(staking_currency, &module_id, who, amount, keep_alive)?;
-            }
+            use frame_support::traits::tokens::{Preservation};
+            let keep_alive = false;
+            let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+            T::Assets::transfer(staking_currency, &module_id, who, amount, keep_alive)?;
 
             Ok(())
         }
-
-        
-
-
-        //TODO rust.dev this one does not exist because loan pallet does not exist
-        // #[require_transactional]
-        // fn do_loans_instant_unstake(who: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
-        //     let loans_instant_unstake_fee = T::LoansInstantUnstakeFee::get()
-        //         .checked_mul_int(amount)
-        //         .ok_or(ArithmeticError::Overflow)?;
-        //     let borrow_amount = amount
-        //         .checked_sub(loans_instant_unstake_fee)
-        //         .ok_or(ArithmeticError::Underflow)?;
-        //     let collateral_currency = T::CollateralCurrency::get();
-        //     let mint_amount = T::Loans::get_market_info(collateral_currency)?
-        //         .collateral_factor
-        //         .saturating_reciprocal_mul_ceil(amount);
-        //     let module_id = Self::account_id();
-        //     let staking_currency = Self::staking_currency()?;
-
-        //     T::Assets::mint_into(collateral_currency, &module_id, mint_amount)?;
-        //     T::Loans::do_mint(&module_id, collateral_currency, mint_amount)?;
-        //     let _ = T::Loans::do_collateral_asset(&module_id, collateral_currency, true);
-        //     T::Loans::do_borrow(&module_id, staking_currency, borrow_amount)?;
-        //     T::Assets::transfer(staking_currency, &module_id, who, borrow_amount, false)?;
-
-        //     Ok(())
-        // }
-
-        
 
         // liquid_amount_to_fee=TotalLiquidCurrency * (commission_rate*total_rewards/(TotalStakeCurrency+(1-commission_rate)*total_rewards))
         fn get_inflate_liquid_amount(rewards: BalanceOf<T>) -> Result<BalanceOf<T>, DispatchError> {

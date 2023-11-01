@@ -182,26 +182,6 @@ pub trait XcmHelper<T: pallet_xcm::Config, Balance, TAccountId> {
         fees: Balance,
     ) -> Result<Xcm<()>, DispatchError>;
 
-    fn do_withdraw(
-        para_id: ParaId,
-        para_account_id: TAccountId,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError>;
-
-    fn do_contribute(
-        para_id: ParaId,
-        amount: Balance,
-        who: &TAccountId,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError>;
-
-    fn do_proxy_contribute(
-        para_id: ParaId,
-        amount: Balance,
-        who: &TAccountId,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError>;
-
     fn do_bond(
         value: Balance,
         payee: RewardDestination<TAccountId>,
@@ -239,20 +219,6 @@ pub trait XcmHelper<T: pallet_xcm::Config, Balance, TAccountId> {
     fn do_nominate(
         targets: Vec<TAccountId>,
         index: u16,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError>;
-
-    fn do_add_proxy(
-        delegate: AccountId,
-        proxy_type: Option<ProxyType>,
-        delay: BlockNumber,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError>;
-
-    fn do_remove_proxy(
-        delegate: AccountId,
-        proxy_type: Option<ProxyType>,
-        delay: BlockNumber,
         notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
     ) -> Result<QueryId, DispatchError>;
 }
@@ -317,9 +283,8 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
     fn add_xcm_fees(payer: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
-        use frame_support::traits::tokens::{Preservation};
-            let keep_alive = false;
-            let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+        let keep_alive = false;
+        let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
         T::Assets::transfer(
             T::RelayCurrency::get(),
             payer,
@@ -358,206 +323,6 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
                 beneficiary,
             },
         ]))
-    }
-
-    fn do_add_proxy(
-        delegate: AccountId,
-        proxy_type: Option<ProxyType>,
-        delay: BlockNumber,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError> {
-        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::AddProxy);
-        Ok(switch_relay!({
-            let call =
-                RelaychainCall::<T>::Proxy(Box::new(ProxyCall::AddProxy(ProxyAddProxyCall {
-                    delegate,
-                    proxy_type,
-                    delay,
-                })));
-
-            let mut msg = Self::do_ump_transact(
-                call.encode().into(),
-                xcm_weight_fee_misc.weight,
-                Self::refund_location(),
-                xcm_weight_fee_misc.fee,
-            )?;
-
-            let query_id = Self::report_outcome_notify(
-                &mut msg,
-                MultiLocation::parent(),
-                notify,
-                T::NotifyTimeout::get(),
-            )?;
-
-            if let Err(_e) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-                return Err(Error::<T>::SendFailure.into());
-            }
-
-            query_id
-        }))
-    }
-
-    fn do_remove_proxy(
-        delegate: AccountId,
-        proxy_type: Option<ProxyType>,
-        delay: BlockNumber,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError> {
-        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::RemoveProxy);
-        Ok(switch_relay!({
-            let call = RelaychainCall::<T>::Proxy(Box::new(ProxyCall::RemoveProxy(
-                ProxyRemoveProxyCall {
-                    delegate,
-                    proxy_type,
-                    delay,
-                },
-            )));
-
-            let mut msg = Self::do_ump_transact(
-                call.encode().into(),
-                xcm_weight_fee_misc.weight,
-                Self::refund_location(),
-                xcm_weight_fee_misc.fee,
-            )?;
-
-            let query_id = Self::report_outcome_notify(
-                &mut msg,
-                MultiLocation::parent(),
-                notify,
-                T::NotifyTimeout::get(),
-            )?;
-
-            if let Err(_e) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-                return Err(Error::<T>::SendFailure.into());
-            }
-
-            query_id
-        }))
-    }
-
-    fn do_withdraw(
-        para_id: ParaId,
-        para_account_id: AccountIdOf<T>,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError> {
-        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Withdraw);
-        Ok(switch_relay!({
-            let call =
-                RelaychainCall::<T>::Crowdloans(CrowdloansCall::Withdraw(CrowdloansWithdrawCall {
-                    who: para_account_id,
-                    index: para_id,
-                }));
-
-            let mut msg = Self::do_ump_transact(
-                call.encode().into(),
-                xcm_weight_fee_misc.weight,
-                Self::refund_location(),
-                xcm_weight_fee_misc.fee,
-            )?;
-
-            let query_id = Self::report_outcome_notify(
-                &mut msg,
-                MultiLocation::parent(),
-                notify,
-                T::NotifyTimeout::get(),
-            )?;
-
-            if let Err(_e) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-                return Err(Error::<T>::SendFailure.into());
-            }
-
-            query_id
-        }))
-    }
-
-    fn do_contribute(
-        para_id: ParaId,
-        amount: BalanceOf<T>,
-        _who: &AccountIdOf<T>,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError> {
-        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Contribute);
-        Ok(switch_relay!({
-            let call = RelaychainCall::<T>::Crowdloans(CrowdloansCall::Contribute(
-                CrowdloansContributeCall {
-                    index: para_id,
-                    value: amount,
-                    signature: None,
-                },
-            ));
-
-            let mut msg = Self::do_ump_transact(
-                call.encode().into(),
-                xcm_weight_fee_misc.weight,
-                Self::refund_location(),
-                xcm_weight_fee_misc.fee,
-            )?;
-
-            let query_id = Self::report_outcome_notify(
-                &mut msg,
-                MultiLocation::parent(),
-                notify,
-                T::NotifyTimeout::get(),
-            )?;
-
-            if let Err(_e) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-                return Err(Error::<T>::SendFailure.into());
-            }
-
-            query_id
-        }))
-    }
-
-    fn do_proxy_contribute(
-        para_id: ParaId,
-        amount: BalanceOf<T>,
-        who: &AccountIdOf<T>,
-        notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
-    ) -> Result<QueryId, DispatchError> {
-        let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Contribute);
-        let real =
-            AccountId::try_from(&who.encode()[..]).map_err(|_| Error::<T>::ConvertAccountError)?;
-        Ok(switch_relay!({
-            let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
-                BalancesTransferKeepAliveCall {
-                    dest: T::Lookup::unlookup(who.clone()),
-                    value: amount,
-                },
-            ));
-
-            let mut msg = Self::do_ump_transact(
-                call.encode().into(),
-                xcm_weight_fee_misc.weight,
-                Self::refund_location(),
-                xcm_weight_fee_misc.fee,
-            )?;
-
-            let call = RelaychainCall::<T>::Proxy(Box::new(ProxyCall::Proxy(ProxyProxyCall {
-                real,
-                force_proxy_type: None,
-                call: RelaychainCall::Crowdloans(CrowdloansCall::Contribute(
-                    CrowdloansContributeCall {
-                        index: para_id,
-                        value: amount,
-                        signature: None,
-                    },
-                )),
-            })));
-            Self::append_transact(&mut msg, call.encode().into(), xcm_weight_fee_misc.weight);
-
-            let query_id = Self::report_outcome_notify(
-                &mut msg,
-                MultiLocation::parent(),
-                notify,
-                T::NotifyTimeout::get(),
-            )?;
-
-            if let Err(_e) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-                return Err(Error::<T>::SendFailure.into());
-            }
-
-            query_id
-        }))
     }
 
     fn do_bond(
