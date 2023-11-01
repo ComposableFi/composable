@@ -59,6 +59,7 @@
              "user-guides/composable-cosmos-staking",
              "user-guides/centauri-guide",
              "user-guides/centauri-transfers",
+             "user-guides/keplr-guide",
            ],
          },
          {
