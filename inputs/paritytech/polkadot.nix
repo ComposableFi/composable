@@ -135,7 +135,7 @@
           hash = "sha256-927W8su86sPRyCF9eijm58X2uPBPnsR4KgJTIxVIcqA=";
           outputHashes = {
             "ark-secret-scalar-0.0.2" =
-              "sha256-Tcrz2tT561ICAJzMgarSTOnaUEPeTFKZzE7rkdL3eUQ=";
+              "sha256-EUxl9ooQja1RJFBC7uxDwe/AcQSepclnXCs1U5EtDOs=";
             "common-0.1.0" =
               "sha256-3OKBPpk0exdlV0N9rJRVIncSrkwdI8bkYL2QNsJl+sY=";
             "fflonk-0.1.0" =
