@@ -35,9 +35,10 @@ mod weights;
 mod xcmp;
 use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
-	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
-	ComposableUncheckedExtrinsic, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, xcmp::AccountIdToMultiLocation,
+	xcmp::AccountIdToMultiLocation, AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber,
+	ComposableBlock, ComposableUncheckedExtrinsic, Hash, Moment, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
@@ -553,41 +554,41 @@ parameter_types! {
 }
 
 parameter_types! {
-    pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
 	pub const XcmHelperPalletId: PalletId = PalletId(*b"com/fees");
 	pub const NotifyTimeout: BlockNumber = 100;
 	// pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
-    // pub RelayCurrency: CurrencyId = DOT;
-    // pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-    // pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
+	// pub RelayCurrency: CurrencyId = DOT;
+	// pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
+	// pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 
 	pub const RelayCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 }
 
 impl pallet_xcm_helper::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type UpdateOrigin = EnsureRootOrHalfCouncil;
-    type Assets = Assets;
-    type XcmSender = crate::xcmp::XcmRouter;
-    type RelayNetwork = RelayNetwork;
-    type PalletId = XcmHelperPalletId;
-    type NotifyTimeout = NotifyTimeout;
-    type AccountIdToMultiLocation = AccountIdToMultiLocation;
-    type RefundLocation = RefundLocation;
-    type BlockNumberProvider = frame_system::Pallet<Runtime>;
-    type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
-    type RelayCurrency = RelayCurrency;
+	type RuntimeEvent = RuntimeEvent;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type Assets = Assets;
+	type XcmSender = crate::xcmp::XcmRouter;
+	type RelayNetwork = RelayNetwork;
+	type PalletId = XcmHelperPalletId;
+	type NotifyTimeout = NotifyTimeout;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type RefundLocation = RefundLocation;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
+	type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+	type RelayCurrency = RelayCurrency;
 }
 
 parameter_types! {
-    pub const StakingPalletId: PalletId = PalletId(*b"com/lqsk");
+	pub const StakingPalletId: PalletId = PalletId(*b"com/lqsk");
 	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
 	pub const XcmFees: Balance = 500_000_000; // 0.05DOT
 	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
 	pub const StakingCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 	//TODO rust.dev warning!!!!!! important todo. replace to new registred currency as lsDOT instead of vKSM. this is just for testing
-	pub const LiquidCurrency: CurrencyId = CurrencyId::BIFTOST_DOT; 
+	pub const LiquidCurrency: CurrencyId = CurrencyId::BIFTOST_DOT;
 	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;
 	pub const MinStakeLSD: Balance = 10_000_000_000; // 1DOT
 	pub const MinUnstake: Balance = 5_000_000_000; // 0.5sDOT
@@ -600,28 +601,30 @@ parameter_types! {
 pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: cumulus_pallet_parachain_system::Config> sp_runtime::traits::BlockNumberProvider
-    for RelayChainValidationDataProvider<T>
+	for RelayChainValidationDataProvider<T>
 {
-    type BlockNumber = BlockNumber;
+	type BlockNumber = BlockNumber;
 
-    fn current_block_number() -> Self::BlockNumber {
-        cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
-            .map(|d| d.relay_parent_number)
-            .unwrap_or_default()
-    }
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
 }
 
-impl<T: cumulus_pallet_parachain_system::Config> pallet_liquid_staking::types::ValidationDataProvider
-    for RelayChainValidationDataProvider<T>
+impl<T: cumulus_pallet_parachain_system::Config>
+	pallet_liquid_staking::types::ValidationDataProvider for RelayChainValidationDataProvider<T>
 {
-    fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
-        cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
-    }
+	fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+	}
 }
 
 pub struct Members<T>(sp_std::marker::PhantomData<T>);
 
-impl<AccountId : core::cmp::Ord> frame_support::traits::SortedMembers<AccountId> for Members<AccountId> {
+impl<AccountId: core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
+	for Members<AccountId>
+{
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -629,52 +632,52 @@ impl<AccountId : core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
 
 pub struct Decimal;
 impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
-    fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
+	fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
 		Some(CurrencyId::decimals())
 		// Some(asset_id.decimals())
-        // match *asset_id {
-        //     CurrencyId::COMPOSABLE_LAYR => Some(12_u8), //TODO check
-        //     _ => {
-        //         let decimal = <Assets as frame_support::traits::fungibles::Inspect<AccountId>>::decimals(asset_id);
-        //         if decimal.is_zero() {
-        //             None
-        //         } else {
-        //             Some(decimal)
-        //         }
-        //     }
-        // }
-    }
+		// match *asset_id {
+		//     CurrencyId::COMPOSABLE_LAYR => Some(12_u8), //TODO check
+		//     _ => {
+		//         let decimal = <Assets as
+		// frame_support::traits::fungibles::Inspect<AccountId>>::decimals(asset_id);         if
+		// decimal.is_zero() {             None
+		//         } else {
+		//             Some(decimal)
+		//         }
+		//     }
+		// }
+	}
 }
 
 impl pallet_liquid_staking::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeOrigin = RuntimeOrigin;
-    type RuntimeCall = RuntimeCall;
-    type PalletId = StakingPalletId;
-    type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
-    type SelfParaId = ParachainInfo;
-    type Assets = Assets;
-    type RelayOrigin = EnsureRootOrHalfCouncil;
-    type UpdateOrigin = EnsureRootOrHalfCouncil;
-    type DerivativeIndexList = DerivativeIndexList;
-    type XcmFees = XcmFees;
-    type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
-    type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
-    type StakingCurrency = StakingCurrency;
-    type LiquidCurrency = LiquidCurrency;
-    type EraLength = EraLength;
-    type MinStake = MinStakeLSD;
-    type MinUnstake = MinUnstake;
-    type XCM = PalletXcmHelper;
-    type BondingDuration = BondingDuration;
-    type MinNominatorBond = MinNominatorBond;
-    type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
-    type Members = Members::<AccountId>; // ..LiquidStakingAgentsMembership;
-    type NumSlashingSpans = NumSlashingSpans;
-    type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
-    type ProtocolFeeReceiver = TreasuryAccount;
-    type Decimal = Decimal;
-    type NativeCurrency = NativeAssetId;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type PalletId = StakingPalletId;
+	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
+	type SelfParaId = ParachainInfo;
+	type Assets = Assets;
+	type RelayOrigin = EnsureRootOrHalfCouncil;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type DerivativeIndexList = DerivativeIndexList;
+	type XcmFees = XcmFees;
+	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
+	type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
+	type StakingCurrency = StakingCurrency;
+	type LiquidCurrency = LiquidCurrency;
+	type EraLength = EraLength;
+	type MinStake = MinStakeLSD;
+	type MinUnstake = MinUnstake;
+	type XCM = PalletXcmHelper;
+	type BondingDuration = BondingDuration;
+	type MinNominatorBond = MinNominatorBond;
+	type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
+	type Members = Members<AccountId>; // ..LiquidStakingAgentsMembership;
+	type NumSlashingSpans = NumSlashingSpans;
+	type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
+	type ProtocolFeeReceiver = TreasuryAccount;
+	type Decimal = Decimal;
+	type NativeCurrency = NativeAssetId;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
