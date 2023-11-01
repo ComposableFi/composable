@@ -28,6 +28,7 @@
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand = "cargo build --release --package ${name}";
           cargoExtraArgs = "--features=builtin-wasm";
+          ZLIB_VERSION = "1.3";
           CW_XC_GATEWAY_WASM_PATH =
             "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
           CW_XC_INTERPRETER_WASM_PATH =
