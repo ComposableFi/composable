@@ -3314,11 +3314,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
+name = "cvm"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 1.2.5",
+ "cosmwasm-std 1.4.1",
+ "derive_more 1.0.0-beta.2",
+ "hex",
+ "num",
+ "prost-build",
+ "schemars",
+ "serde",
+ "serde-json-wasm 1.0.0",
+]
+
+[[package]]
 name = "cw-mantis-order"
 version = "0.1.0"
 dependencies = [
  "cosmwasm-schema 1.4.1",
  "cosmwasm-std 1.4.1",
+ "cvm",
  "cw-storage-plus 1.1.0",
  "itertools 0.11.0",
  "num-integer",
@@ -14869,6 +14885,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-json-wasm"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83c37d03f3b0f6b5f77c11af1e7c772de1c9af83e50bef7bb6069601900ba67b"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_bytes"
 version = "0.11.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16629,9 +16654,9 @@ dependencies = [
 
 [[package]]
 name = "sylvia"
-version = "0.8.1"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f33388920659b494dab887f3bb40ebb071c602750597575034bea7c63ab12800"
+checksum = "244466d32c81f9421db755e437924126233815cd0f17fca0dd7472d1045eb4c1"
 dependencies = [
  "cosmwasm-schema 1.4.1",
  "cosmwasm-std 1.4.1",
@@ -16645,9 +16670,9 @@ dependencies = [
 
 [[package]]
 name = "sylvia-derive"
-version = "0.8.1"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8031f53dbfda341acd7bd321e10d0d684b673324145026e23705da4b6d5c4919"
+checksum = "5b9a418ce96b68c6cf770edea4bb6049a7d2ed20f85e03560bfe375494ccfcd3"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",

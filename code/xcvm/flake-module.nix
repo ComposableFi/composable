@@ -31,7 +31,7 @@
       mkCvmContract = name:
         makeCosmwasmContract name crane.nightly "--no-default-features";
       mkMantisContract = name:
-        makeCosmwasmContract name rust "--no-default-features";
+        makeCosmwasmContract name crane.nightly "--no-default-features";
     in {
       packages = rec {
         cw-xc-executor = mkCvmContract "cw-xc-interpreter";
