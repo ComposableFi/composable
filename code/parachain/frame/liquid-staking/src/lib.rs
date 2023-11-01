@@ -545,99 +545,6 @@ pub mod pallet {
             Ok(().into())
         }
 
-
-        // #[pallet::call_index(24)]
-        // #[pallet::weight(<T as Config>::WeightInfo::stake())]
-        // #[transactional]
-        // pub fn stake_test(
-        //     origin: OriginFor<T>,
-        //     #[pallet::compact] amount: BalanceOf<T>,
-        //     flow: u32
-        // ) -> DispatchResultWithPostInfo {
-        //     let who = ensure_signed(origin)?;
-
-        //     ensure!(amount >= T::MinStake::get(), Error::<T>::StakeTooSmall);
-
-        //     let reserves = Self::reserve_factor().mul_floor(amount);
-        //     if flow == 1{
-        //         return Ok(().into())
-        //     }
-
-        //     let xcm_fees = T::XcmFees::get();
-        //     let amount = amount
-        //         .checked_sub(xcm_fees)
-        //         .ok_or(ArithmeticError::Underflow)?;
-        //     if flow == 2{
-        //         return Ok(().into())
-        //     }
-
-        //     use frame_support::traits::tokens::{Preservation};
-        //     let keep_alive = false;
-        //     let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
-        //     //fails here because not enough balance of DOT for Alice. fails with arefmetic underflow and not inficient balance
-        //     T::Assets::transfer(
-        //         Self::staking_currency()?,
-        //         &who,
-        //         &Self::account_id(),
-        //         amount,
-        //         keep_alive,
-        //     )?;
-        //     if flow == 3{
-        //         return Ok(().into())
-        //     }
-        //     T::XCM::add_xcm_fees(&who, xcm_fees)?;
-        //     if flow == 4{
-        //         return Ok(().into())
-        //     }
-
-        //     let amount = amount
-        //         .checked_sub(reserves)
-        //         .ok_or(ArithmeticError::Underflow)?;
-        //     let liquid_amount =
-        //         Self::staking_to_liquid(amount).ok_or(Error::<T>::InvalidExchangeRate)?;
-            
-        //     if flow == 5{
-        //         return Ok(().into())
-        //     }
-        //     let liquid_currency = Self::liquid_currency()?;
-        //     if flow == 6{
-        //         return Ok(().into())
-        //     }
-        //     Self::ensure_market_cap(amount)?;
-        //     if flow == 7{
-        //         return Ok(().into())
-        //     }
-
-        //     T::Assets::mint_into(liquid_currency, &who, liquid_amount)?;
-        //     if flow == 8{
-        //         return Ok(().into())
-        //     }
-
-        //     log::trace!(
-        //         target: "liquidStaking::stake",
-        //         "stake_amount: {:?}, liquid_amount: {:?}, reserved: {:?}",
-        //         &amount,
-        //         &liquid_amount,
-        //         &reserves
-        //     );
-
-        //     MatchingPool::<T>::try_mutate(|p| -> DispatchResult { p.add_stake_amount(amount) })?;
-        //     if flow == 9{
-        //         return Ok(().into())
-        //     }
-        //     TotalReserves::<T>::try_mutate(|b| -> DispatchResult {
-        //         *b = b.checked_add(reserves).ok_or(ArithmeticError::Overflow)?;
-        //         Ok(())
-        //     })?;
-        //     if flow == 10{
-        //         return Ok(().into())
-        //     }
-
-        //     Self::deposit_event(Event::<T>::Staked(who, amount));
-        //     Ok(().into())
-        // }
-
-
         /// Unstake by exchange derivative for assets, the assets will not be available immediately.
         /// Instead, the request is recorded and pending for the nomination accounts on relaychain
         /// chain to do the `unbond` operation.
@@ -1282,9 +1189,8 @@ pub mod pallet {
         pub fn initiate_exchange_rate(
             origin: OriginFor<T>,
         ) -> DispatchResult {
-            // T::UpdateOrigin::ensure_origin(origin)?;
-            let _ = ensure_signed(origin)?;
-            if Self::exchange_rate() != Rate::one() {
+            T::UpdateOrigin::ensure_origin(origin)?;
+            if Self::exchange_rate() == Rate::zero() {
                 ExchangeRate::<T>::put(Rate::one());
                 Self::deposit_event(Event::<T>::ExchangeRateUpdated(Rate::one()));
             }
@@ -1352,15 +1258,6 @@ pub mod pallet {
         pub fn account_id() -> T::AccountId {
             T::PalletId::get().into_account_truncating()
         }
-
-        
-
-        // /// Loans pool account
-        // pub fn loans_account_id() -> T::AccountId {
-        //     T::LoansPalletId::get().into_account_truncating()
-        // }
-
-        
 
         /// Parachain's sovereign account
         pub fn sovereign_account_id() -> T::AccountId {
