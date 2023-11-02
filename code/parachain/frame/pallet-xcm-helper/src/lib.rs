@@ -325,9 +325,8 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 		index: u16,
 		notify: impl Into<<T as pallet_xcm::Config>::RuntimeCall>,
 	) -> Result<QueryId, DispatchError> {
-		use crate::ump::PolkadotCall as RelaychainCall;
 		let xcm_weight_fee_misc = Self::xcm_weight_fee(XcmCall::Bond);
-		Ok({
+		Ok(switch_relay!({
 			let call = RelaychainCall::<T>::Balances(BalancesCall::TransferKeepAlive(
 				BalancesTransferKeepAliveCall { dest: T::Lookup::unlookup(stash), value },
 			));
@@ -362,7 +361,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			}
 
 			query_id
-		})
+		}))
 	}
 
 	fn do_bond_extra(

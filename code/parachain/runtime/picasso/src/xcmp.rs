@@ -401,6 +401,38 @@ pub type CaptureAssetTrap = CaptureDropAssets<
 	AssetsIdConverter,
 >;
 
+use xcm_executor::traits::OnResponse;
+pub struct XcmExecutorHandler;
+impl OnResponse for XcmExecutorHandler {
+	fn expecting_response(
+		origin: &MultiLocation,
+		query_id: u64,
+		querier: Option<&MultiLocation>,
+	) -> bool {
+		return PolkadotXcm::expecting_response(origin, query_id, querier);
+	}
+	/// Handler for receiving a `response` from `origin` relating to `query_id` initiated by
+	/// `querier`.
+	fn on_response(
+		origin: &MultiLocation,
+		query_id: u64,
+		querier: Option<&MultiLocation>,
+		response: Response,
+		max_weight: Weight,
+		context: &XcmContext,
+	) -> Weight {
+		//need this line because querier is None
+		//and here is where it failed in pallet-xcm
+		//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+		//so need to substitute it with expected querier
+		let mut querier = querier;
+		if querier.is_none() {
+			querier = Some(&MultiLocation { parents: 0, interior: Here });
+		}
+		return PolkadotXcm::on_response(origin, query_id, querier, response, max_weight, context);
+	}
+}
+
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
@@ -414,8 +446,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type Trader = Trader;
 	type AssetTrap = CaptureAssetTrap;
-
-	type ResponseHandler = PolkadotXcm;
+	type ResponseHandler = XcmExecutorHandler;
 	type SubscriptionService = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type AssetLocker = ();
