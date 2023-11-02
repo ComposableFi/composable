@@ -22,14 +22,16 @@
         # forces Rust to use exact same git as CI runner/Nix fetcher/other tools
         CARGO_NET_GIT_FETCH_WITH_CLI = "true";
         CARGO_NET_RETRY = 3; # +1 on top of defaultw
+        # rust asks for this dependng on version
+        ZLIB_VERSION = "1.3";
       } // debug;
 
       subenv = {
         doCheck = false;
-        buildInputs = with pkgs; [ openssl zstd protobuf ];
+        buildInputs = with pkgs; [ openssl zstd protobuf zlib.dev zlib ];
         nativeBuildInputs = with pkgs;
-        # yes, all these are in general needed, git not alwasy, but substrate checks git revision
-          [ clang pkg-config self'.packages.rust-nightly-latest git ]
+        # yes, all these are in general needed, git not always, but substrate checks git revision
+          [ clang openssl pkg-config self'.packages.rust-nightly git ]
           ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
