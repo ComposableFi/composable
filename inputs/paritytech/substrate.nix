@@ -10,6 +10,7 @@
         # CARGO_HTTP_DEBUG = "true";
         # RUST_LOG = "debug";
       };
+      # evn for deep isolation of building polkadot-sdk nodes and shellss
       subattrs = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
           pkgs.stdenv.cc.cc.lib
@@ -21,11 +22,14 @@
         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
         # forces Rust to use exact same git as CI runner/Nix fetcher/other tools
         CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-        CARGO_NET_RETRY = 3; # +1 on top of defaultw
-        # rust asks for this dependng on version
+        CARGO_NET_RETRY = 3; # +1 on top of default
+        # https://github.com/rust-lang/libz-sys/blob/main/build.rs
+        # rust asks for this dependings on version
         ZLIB_VERSION = "1.3";
+        LIBZ_SYS_STATIC = 1;
       } // debug;
 
+      # for packages
       subenv = {
         doCheck = false;
         buildInputs = with pkgs; [ openssl zstd protobuf zlib.dev zlib ];
