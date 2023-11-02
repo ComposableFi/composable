@@ -9,14 +9,14 @@
           self.inputs.bundlers.bundlers."${system}"."${type}" package;
         subwasm-version = runtime:
           builtins.readFile (pkgs.runCommand "subwasm-version" { } ''
-            ${packages.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
+            ${pkgs.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
           '');
 
       in rec {
         generated-release-body = let
           subwasm-call = runtime:
             builtins.readFile (pkgs.runCommand "subwasm-info" { } ''
-              ${packages.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
+              ${pkgs.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
             '');
           flake-url =
             "github:ComposableFi/composable/release-v${packages.composable-node.version}";
