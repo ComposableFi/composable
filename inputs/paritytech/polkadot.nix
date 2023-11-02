@@ -3,7 +3,7 @@
     , systemCommonRust, ... }:
     let
       rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-        (pkgs.rust-bin.stable."1.73.0".default.override {
+        (pkgs.rust-bin.nightly."2023-05-23".default.override {
           targets = [ "wasm32-unknown-unknown" ];
         });
 
