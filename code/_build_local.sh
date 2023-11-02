@@ -6,9 +6,9 @@ wasm-optimizer() {
 }
 
 cargo build -p composable-runtime-wasm --target wasm32-unknown-unknown --features testnet -r || exit 1
-# cargo build -p picasso-runtime-wasm    --target wasm32-unknown-unknown --features testnet -r || exit 1
+cargo build -p picasso-runtime-wasm    --target wasm32-unknown-unknown --features testnet -r || exit 1
 
-# wasm-optimizer ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm    ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
+wasm-optimizer ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm    ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
 wasm-optimizer ./target/wasm32-unknown-unknown/release/composable_runtime.wasm ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
 
 # export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm)

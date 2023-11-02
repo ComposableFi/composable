@@ -727,7 +727,7 @@ parameter_types! {
 	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
 	pub const StakingCurrency: CurrencyId = CurrencyId::KSM;
 	//TODO rust.dev warning!!!!!! important todo. replace to new registred currency as lsDOT instead of vKSM. this is just for testing
-	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_COMPOSABLE_KSM; //TODO change currency id when you register new currency via asset_regestry pallet
+	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_PICASSO_KSM; //TODO change currency id when you register new currency via asset_regestry pallet
 	pub const EraLength: BlockNumber = 1 * 3 * 60 / 6;
 	pub const MinStakeLSD: Balance = 100_000_000_000; // 0.1KSM
 	pub const MinUnstake: Balance = 50_000_000_000; // 0.05sKSM
