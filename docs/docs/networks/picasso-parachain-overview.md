@@ -15,7 +15,7 @@ and its proprietary technology stack.
 
 - [Pablo] - DEX: serving as a cross-chain liquidity hub on Picasso
 - [Composable-IBC] - trustless bridging between major DeFi ecosystems
-- [Apollo] - Picasso’s native oracle pallet
+- [Apollo] - Picasso’s native oracle
 
 [Pablo]: ../technology/pablo-overview.md
 [Composable-IBC]: ../technology/composable-ibc.md

@@ -107,6 +107,11 @@ const config = {
 						position: 'right',
 					},
 					{
+						href: 'https://explorer.trustless.zone/',
+						label: 'Explorer',
+						position: 'right',
+					},
+					{
 						href: 'https://composablefi.medium.com/',
 						label: 'Medium',
 						position: 'right',
