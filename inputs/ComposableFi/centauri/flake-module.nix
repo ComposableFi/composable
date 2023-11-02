@@ -83,6 +83,9 @@
       build-wasm = name: src:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
+          # really wasms do not need a lot
+          buildInputs = with pkgs; [ protobuf ];
+          nativeBuildInputs = with pkgs; [ ];
           version = "0.1";
           src = src;
           cargoBuildCommand =
