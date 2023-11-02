@@ -53,7 +53,7 @@ use common::{
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
 	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION, xcmp::AccountIdToMultiLocation,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -697,6 +697,29 @@ impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type ChainNameVecLimit = ChainNameVecLimit;
 }
 
+parameter_types! {
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Kusama;
+	pub const XcmHelperPalletId: PalletId = PalletId(*b"pic/fees");
+	pub const NotifyTimeout: BlockNumber = 100;
+	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
+	pub const RelayCurrency: CurrencyId = CurrencyId::KSM;
+}
+
+impl pallet_xcm_helper::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type Assets = Assets;
+	type XcmSender = crate::xcmp::XcmRouter;
+	type RelayNetwork = RelayNetwork;
+	type PalletId = XcmHelperPalletId;
+	type NotifyTimeout = NotifyTimeout;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type RefundLocation = RefundLocation;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
+	type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+	type RelayCurrency = RelayCurrency;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -773,6 +796,8 @@ construct_runtime!(
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
 		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
+
+		PalletXcmHelper: pallet_xcm_helper = 194,
 	}
 );
 
