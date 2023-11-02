@@ -80,8 +80,13 @@
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
 
+      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        (pkgs.rust-bin.stable."1.70.0".default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        });
+
       build-wasm = name: src:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        rust.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
           # really wasms do not need a lot
           buildInputs = with pkgs; [ protobuf ];
