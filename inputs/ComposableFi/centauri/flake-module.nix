@@ -90,7 +90,7 @@
           pname = name;
           # really wasms do not need a lot
           buildInputs = with pkgs; [ protobuf ];
-          nativeBuildInputs = with pkgs; [ ];
+          nativeBuildInputs = [ ];
           version = "0.1";
           src = src;
           cargoBuildCommand =
