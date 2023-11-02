@@ -16,7 +16,7 @@
       all-testnet-deps = pkgs.linkFarmFromDrvs "all-testnet-deps"
         (with self'.packages; [
           polkadot-node-on-parity-rococo
-          polkadot-node-on-parity-westend
+          polkadot-live-runtime-node
           polkadot-runtime-on-parity
           rococo-runtime-on-parity
           westend-runtime-on-parity

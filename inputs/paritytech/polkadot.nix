@@ -87,20 +87,6 @@
           };
         };
 
-        polkadot-node-on-parity-westend = buildPolkadotNode rec {
-          name = "polkadot-node-on-parity-westend";
-          repo = "polkadot";
-          owner = "paritytech";
-          rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
-          outputHashes = {
-            "sub-tokens-0.1.0" =
-              "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
-            "binary-merkle-tree-4.0.0-dev" =
-              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
-          };
-        };
-
         polkadot-node-on-parity-kusama = buildPolkadotNode rec {
           name = "polkadot-node-on-parity-kusama";
           repo = "polkadot";

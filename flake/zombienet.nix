@@ -155,10 +155,25 @@
           config = (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
+              # can build with `fast-runtime`, both relay, relay as part of para, and relay runtime
               chain = "westend-local";
-              default_command = pkgs.lib.meta.getExe
-                self'.packages.polkadot-node-on-parity-westend;
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
               count = 3;
+              genesis = {
+                # whatever stakin here to add and handle PoS instead of PoA
+                runtime = {
+                  balances = {
+                    balances = {
+                      "0" = {
+                        "0" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "1" = 17476266491902;
+                      };
+                    };
+                  };
+                };
+              };
             };
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
