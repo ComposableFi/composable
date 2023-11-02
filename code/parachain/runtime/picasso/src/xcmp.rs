@@ -429,14 +429,7 @@ impl OnResponse for XcmExecutorHandler {
 		if querier.is_none() {
 			querier = Some(&MultiLocation { parents: 0, interior: Here });
 		}
-		return PolkadotXcm::on_response(
-			origin,
-			query_id,
-			querier,
-			response,
-			max_weight,
-			context,
-		);
+		return PolkadotXcm::on_response(origin, query_id, querier, response, max_weight, context);
 	}
 }
 
