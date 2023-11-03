@@ -25,7 +25,6 @@
       all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps"
         (with self'.packages; [
           kusama-runtime-on-parity
-          polkadot-node-on-parity-kusama
           polkadot-node-on-parity-polkadot
           polkadot-runtime-on-parity
         ]);

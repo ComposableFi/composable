@@ -81,7 +81,7 @@
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
 
       rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-        (pkgs.rust-bin.nightly."2023-03-09".default.override {
+        (pkgs.rust-bin.stable."1.73.0".default.override {
           targets = [ "wasm32-unknown-unknown" ];
         });
 
