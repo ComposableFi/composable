@@ -62,7 +62,7 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
-		for i in &mut *instructions {
+		for i in instructions.iter_mut() {
 			match i {
 				QueryResponse { mut querier, .. } => {
 					if querier.is_none() {
