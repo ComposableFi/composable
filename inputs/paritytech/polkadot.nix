@@ -17,6 +17,9 @@
             sha256 = hash;
             fetchSubmodules = false;
           };
+          # unfortunately any rust in nativeBuildInputs overrides rust used in buildPackage, so we fore it to be compatible with polkadot
+          nativeBuildInputs = lib.remove self'.packages.rust-nightly
+            systemCommonRust.common-attrs.nativeBuildInputs;
           meta = { mainProgram = "polkadot"; };
         });
       cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);

@@ -1,6 +1,7 @@
 [toolchain]
 # ideally as close is possible to https://github.com/paritytech/scripts/blob/master/dockerfiles/ci-unified/Dockerfile
-channel = "nightly-2023-05-23"
+# update to 1.70 requires code changes unfortunately
+channel = "nightly-2023-03-09"
 components = [
   "clippy",
   "llvm-tools-preview",
