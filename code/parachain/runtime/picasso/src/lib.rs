@@ -773,19 +773,7 @@ impl<AccountId: core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
 pub struct Decimal;
 impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
 	fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
-		Some(CurrencyId::decimals())
-		// Some(asset_id.decimals())
-		// match *asset_id {
-		//     CurrencyId::COMPOSABLE_LAYR => Some(12_u8), //TODO check
-		//     _ => {
-		//         let decimal = <Assets as
-		// frame_support::traits::fungibles::Inspect<AccountId>>::decimals(asset_id);         if
-		// decimal.is_zero() {             None
-		//         } else {
-		//             Some(decimal)
-		//         }
-		//     }
-		// }
+		assets_registry::pallet::AssetDecimals::<Runtime>::get(asset_id)
 	}
 }
 
