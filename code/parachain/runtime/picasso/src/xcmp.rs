@@ -6,7 +6,7 @@ use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing, OriginTrait},
+	traits::{Everything, Nothing, OriginTrait, ProcessMessageError},
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
@@ -30,7 +30,7 @@ use xcm_builder::{
 	TakeWeightCredit, WithComputedOrigin,
 };
 use xcm_executor::{
-	traits::{ConvertOrigin, DropAssets, MatchesFungible},
+	traits::{ConvertOrigin, DropAssets, MatchesFungible, ShouldExecute},
 	Assets, XcmExecutor,
 };
 
@@ -50,8 +50,45 @@ parameter_types! {
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 }
 
+pub struct AllowKnownQueryResponsesSubstituteQuerierIfNone<ResponseHandler>(
+	PhantomData<ResponseHandler>,
+);
+impl<ResponseHandler: OnResponse> ShouldExecute
+	for AllowKnownQueryResponsesSubstituteQuerierIfNone<ResponseHandler>
+{
+	fn should_execute<RuntimeCall>(
+		origin: &MultiLocation,
+		instructions: &mut [Instruction<RuntimeCall>],
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ProcessMessageError> {
+		for i in &mut *instructions {
+			match i {
+				QueryResponse { mut querier, .. } => {
+					if querier.is_none() {
+						//need this line because querier is None
+						//and here is where it failed in pallet-xcm
+						//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+						//so need to substitute it with expected querier
+						querier = Some(MultiLocation { parents: 0, interior: Here });
+					}
+				},
+				_ => {},
+			};
+		}
+
+		AllowKnownQueryResponses::<ResponseHandler>::should_execute(
+			origin,
+			instructions,
+			max_weight,
+			weight_credit,
+		)?;
+		Ok(())
+	}
+}
+
 pub type Barrier = (
-	AllowKnownQueryResponses<PolkadotXcm>,
+	AllowKnownQueryResponsesSubstituteQuerierIfNone<PolkadotXcm>,
 	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
