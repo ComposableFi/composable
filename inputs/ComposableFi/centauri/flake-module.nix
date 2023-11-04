@@ -80,9 +80,18 @@
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
 
+      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        # others version fail wasm validation
+        (pkgs.rust-bin.nightly."2023-03-09".default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        });
+
       build-wasm = name: src:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        rust.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
+          # really wasms do not need a lot
+          buildInputs = with pkgs; [ protobuf ];
+          nativeBuildInputs = [ ];
           version = "0.1";
           src = src;
           cargoBuildCommand =

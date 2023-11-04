@@ -5,7 +5,6 @@
       all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
         acala-node
         bifrost-node
-        polkadot-node-from-dep
         rococo-runtime-from-dep
         polkadot-parachain
         zombienet
@@ -15,18 +14,13 @@
 
       all-testnet-deps = pkgs.linkFarmFromDrvs "all-testnet-deps"
         (with self'.packages; [
-          polkadot-node-on-parity-rococo
-          polkadot-node-on-parity-westend
+          polkadot-live-runtime-node
           polkadot-runtime-on-parity
-          rococo-runtime-on-parity
-          westend-runtime-on-parity
         ]);
 
       all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps"
         (with self'.packages; [
           kusama-runtime-on-parity
-          polkadot-node-on-parity-kusama
-          polkadot-node-on-parity-polkadot
           polkadot-runtime-on-parity
         ]);
 
@@ -56,7 +50,7 @@
         (with self'.packages; [ cargo-clippy-check unit-tests ]);
 
       all-production = pkgs.linkFarmFromDrvs "all-production"
-        (with self'.packages; [ livenet-composable ]);
+        (with self'.packages; [ zombienet-polkadot-dev-composable-dev ]);
 
       all-darwin = pkgs.linkFarmFromDrvs "all-darwin"
         (with self'.packages; [ devnet-picasso ccw ]);

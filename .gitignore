@@ -3,16 +3,6 @@
 
 .devenv
 
-## no embedded chain specs
-rococo-dev-raw.json
-rococo-local-raw.json
-rococo-local.json
-rococo-dev.json
-kusama-local.json
-kusama-local-raw.json
-kusama-dev.json
-kusama-dev-raw.json
-
 ## logs
 *.log
 

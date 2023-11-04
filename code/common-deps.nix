@@ -13,46 +13,45 @@
           ]);
 
         # Common env required to build the node
-        common-attrs = subnix.subattrs // {
+        common-attrs = subnix.subenv // {
           src = rustSrc;
-          buildInputs = with pkgs; [ openssl zstd ];
-          nativeBuildInputs = with pkgs;
-            [ clang openssl pkg-config ] ++ darwin-deps;
-          doCheck = false;
           cargoCheckCommand = "true";
-          # Don't build any wasm as we do it ourselves
-          SKIP_WASM_BUILD = "1";
           NIX_BUILD_FLAKE = "true";
         };
 
-        common-test-deps-attrs = subnix.subattrs // {
+        common-test-deps-attrs = subnix.subenv // {
           src = rustSrc;
-          buildInputs = with pkgs; [ openssl zstd ];
-          nativeBuildInputs = with pkgs;
-            [ clang openssl pkg-config ] ++ darwin-deps;
           doCheck = true;
           SKIP_WASM_BUILD = "1";
         };
 
         common-std-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
+          SKIP_WASM_BUILD = "1";
         };
         common-wasm-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=runtime-benchmarks";
+          SKIP_WASM_BUILD = "1";
         };
       };
 
       packages = rec {
-        common-deps =
-          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
-        common-deps-nightly =
-          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
+        common-deps = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-attrs // { SKIP_WASM_BUILD = "1"; });
+        common-deps-nightly = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-attrs // { SKIP_WASM_BUILD = "1"; });
         common-std-bench-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-std-bench-attrs // { });
+          (systemCommonRust.common-std-bench-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
         common-wasm-bench-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-wasm-bench-attrs // { });
+          (systemCommonRust.common-wasm-bench-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
         common-test-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-test-deps-attrs // { });
+          (systemCommonRust.common-test-deps-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
       };
 
     };

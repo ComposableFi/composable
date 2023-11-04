@@ -5,7 +5,7 @@
       relaychainBase = {
         chain = "rococo-local";
         default_command =
-          pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
+          pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
         count = 2;
       };
 
@@ -119,17 +119,6 @@
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-westend-local-composable-dev;
 
-        livenet-composable = zombieTools.writeZombienetShellApplication
-          "zombienet-polkadot-local-composable-dev" (overrideZombienet {
-            chain = "composable-dev";
-            relaychain = {
-              chain = "polkadot-dev";
-              default_command =
-                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
-              count = 3;
-            };
-          });
-
         inherit zombienet-rococo-local-picasso-dev;
 
         zombienet-westend-local-composable-dev = zombieTools.writeZombienet {
@@ -138,10 +127,25 @@
           config = (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
+              # can build with `fast-runtime`, both relay, relay as part of para, and relay runtime
               chain = "westend-local";
-              default_command = pkgs.lib.meta.getExe
-                self'.packages.polkadot-node-on-parity-westend;
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
               count = 3;
+              genesis = {
+                # whatever stakin here to add and handle PoS instead of PoA
+                runtime = {
+                  balances = {
+                    balances = {
+                      "0" = {
+                        "0" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "1" = 17476266491902;
+                      };
+                    };
+                  };
+                };
+              };
             };
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
