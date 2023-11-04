@@ -119,34 +119,6 @@
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-westend-local-composable-dev;
 
-        zombienet-polkadot-dev-composable-dev =
-          zombieTools.writeZombienetShellApplication
-          "zombienet-polkadot-dev-composable-dev" (overrideZombienet {
-            chain = "composable-dev";
-            relaychain = {
-              chain = "polkadot-dev";
-              default_command =
-                # version of polkadot
-                pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
-              #pkgs.lib.meta.getExe pkgs.polkadot;
-              count = 3;
-              genesis = {
-                # whatever stakin here to add and handle PoS instead of PoA
-                runtime = {
-                  balances = {
-                    balances = {
-                      "0" = {
-                        "0" =
-                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-                        "1" = 17476266491902;
-                      };
-                    };
-                  };
-                };
-              };
-            };
-          });
-
         inherit zombienet-rococo-local-picasso-dev;
 
         zombienet-westend-local-composable-dev = zombieTools.writeZombienet {

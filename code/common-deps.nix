@@ -36,16 +36,22 @@
       };
 
       packages = rec {
-        common-deps =
-          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
-        common-deps-nightly =
-          crane.nightly.buildDepsOnly (systemCommonRust.common-attrs // { });
+        common-deps = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-attrs // { SKIP_WASM_BUILD = "1"; });
+        common-deps-nightly = crane.nightly.buildDepsOnly
+          (systemCommonRust.common-attrs // { SKIP_WASM_BUILD = "1"; });
         common-std-bench-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-std-bench-attrs // { });
+          (systemCommonRust.common-std-bench-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
         common-wasm-bench-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-wasm-bench-attrs // { });
+          (systemCommonRust.common-wasm-bench-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
         common-test-deps = crane.nightly.buildDepsOnly
-          (systemCommonRust.common-test-deps-attrs // { });
+          (systemCommonRust.common-test-deps-attrs // {
+            SKIP_WASM_BUILD = "1";
+          });
       };
 
     };
