@@ -16,8 +16,6 @@
         common-attrs = subnix.subenv // {
           src = rustSrc;
           cargoCheckCommand = "true";
-          # Don't build any wasm as we do it ourselves
-          SKIP_WASM_BUILD = "1";
           NIX_BUILD_FLAKE = "true";
         };
 
@@ -29,9 +27,11 @@
 
         common-std-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
+          SKIP_WASM_BUILD = "1";
         };
         common-wasm-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=runtime-benchmarks";
+          SKIP_WASM_BUILD = "1";
         };
       };
 

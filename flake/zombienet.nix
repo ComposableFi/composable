@@ -5,8 +5,7 @@
       relaychainBase = {
         chain = "rococo-local";
         default_command =
-          #pkgs.lib.meta.getExe pkgs.polkadot;
-          pkgs.lib.meta.getExe self'.packages.polkadot-node-on-parity-westend;
+          pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
         count = 2;
       };
 
@@ -128,7 +127,7 @@
               chain = "polkadot-dev";
               default_command =
                 # version of polkadot
-                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
+                pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
               #pkgs.lib.meta.getExe pkgs.polkadot;
               count = 3;
               genesis = {
@@ -159,7 +158,7 @@
               # can build with `fast-runtime`, both relay, relay as part of para, and relay runtime
               chain = "westend-local";
               default_command =
-                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
+                pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
               count = 3;
               genesis = {
                 # whatever stakin here to add and handle PoS instead of PoA

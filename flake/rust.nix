@@ -42,6 +42,7 @@
         cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
+            SKIP_WASM_BUILD = "1";
             cargoClippyExtraArgs =
               "--all-targets --tests -- --deny warnings --allow deprecated";
           });
@@ -58,35 +59,17 @@
         cargo-no-std-cosmwasm = cargo-no-std-check "pallet-cosmwasm";
         cargo-no-std-xcm-ibc = cargo-no-std-check "pallet-multihop-xcm-ibc";
 
-        cargo-udeps-check = crane.nightly.cargoBuild
-          (systemCommonRust.common-attrs // {
-            PICASSO_RUNTIME =
-              "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
-            COMPOSABLE_RUNTIME =
-              "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
-            buildInputs = with pkgs; [
-              cargo-udeps
-              expat
-              freetype
-              fontconfig
-              openssl
-            ];
-            cargoArtifacts = self'.packages.common-deps-nightly;
-            buildPhase = "cargo udeps";
-            installPhase = "mkdir -p $out";
-            cargoExtraArgs =
-              "--workspace --exclude local-integration-tests --all-features";
-          });
-
         benchmarks-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
             cargoBuildCommand = "cargo check";
             cargoExtraArgs = "--benches --all --features runtime-benchmarks";
+            SKIP_WASM_BUILD = "1";
           });
 
         unit-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
           // {
+            SKIP_WASM_BUILD = "1";
             pnameSuffix = "-tests";
             doInstallCargoArtifacts = false;
             cargoArtifacts = self'.packages.common-test-deps;

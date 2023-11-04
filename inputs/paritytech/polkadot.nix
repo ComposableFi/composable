@@ -3,7 +3,7 @@
     , systemCommonRust, ... }:
     let
       rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
-        (pkgs.rust-bin.stable."1.70.0".default.override {
+        (pkgs.rust-bin.nightly."2023-10-05".default.override {
           targets = [ "wasm32-unknown-unknown" ];
         });
 
@@ -17,6 +17,7 @@
             sha256 = hash;
             fetchSubmodules = false;
           };
+          cargoExtraArgs = "--features='fast-runtime'";
           # unfortunately any rust in nativeBuildInputs overrides rust used in buildPackage, so we fore it to be compatible with polkadot
           nativeBuildInputs = lib.remove self'.packages.rust-nightly
             systemCommonRust.common-attrs.nativeBuildInputs;
@@ -54,17 +55,23 @@
           "https://github.com/paritytech/polkadot/releases/download/v0.9.37/polkadot_runtime-v9370.compact.compressed.wasm"
           "sha256-n8+2GpqqU/kHderUqea4Q7yv4UmsESw25laH1/oZryE=";
 
-        polkadot-node-on-parity-westend = buildPolkadotNode rec {
-          name = "polkadot-node-on-parity-westend";
+        polkadot-fast-runtime = buildPolkadotNode rec {
+          name = "polkadot-fast-runtime";
           repo = "polkadot";
           owner = "paritytech";
-          rev = "e203bfb396ed949f102720debf32fb98166787af";
-          hash = "sha256-+rGrAyQH//m6xFiUstDiZKhvHq928rs36TajT/QxrKM=";
+          rev = "52209dcfe546ff39cc031b92d64e787e7e8264d4";
+          hash = "sha256-927W8su86sPRyCF9eijm58X2uPBPnsR4KgJTIxVIcqA=";
           outputHashes = {
+            "ark-secret-scalar-0.0.2" =
+              "sha256-EUxl9ooQja1RJFBC7uxDwe/AcQSepclnXCs1U5EtDOs=";
+            "common-0.1.0" =
+              "sha256-3OKBPpk0exdlV0N9rJRVIncSrkwdI8bkYL2QNsJl+sY=";
+            "fflonk-0.1.0" =
+              "sha256-MNvlePHQdY8DiOq6w7Hc1pgn7G58GDTeghCKHJdUy7E=";
+            "binary-merkle-tree-4.0.0-dev" =
+              "sha256-GJGCvJnJr6ZsLkEgi62zAJyMkGITj1/mW0/BjJQXe8U=";
             "sub-tokens-0.1.0" =
               "sha256-GvhgZhOIX39zF+TbQWtTCgahDec4lQjH+NqamLFLUxM=";
-            "binary-merkle-tree-4.0.0-dev" =
-              "sha256-ngtW11MGs+fcuCp9J5NH+dYJeK4YM5vWpRk0OuLYHus=";
           };
         };
       };
