@@ -86,13 +86,13 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 	) -> Result<(), ProcessMessageError> {
 		for i in instructions.iter_mut() {
 			match i {
-				QueryResponse { mut querier, .. } => {
+				QueryResponse { ref mut querier, .. } => {
 					if querier.is_none() {
 						//need this line because querier is None
 						//and here is where it failed in pallet-xcm
 						//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
 						//so need to substitute it with expected querier
-						querier = Some(MultiLocation { parents: 0, interior: Here });
+						*querier = Some(MultiLocation { parents: 0, interior: Here });
 					}
 				},
 				_ => {},
