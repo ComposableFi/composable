@@ -113,7 +113,7 @@ pub type XcmOriginToCallOrigin = (
 
 parameter_types! {
 	pub const UnitWeightCost: u64 = 1;
-	pub DotPerSecond: (AssetId, u128, u128) = (AssetId::Concrete(MultiLocation::parent()), 1, 1);
+	// pub DotPerSecond: (AssetId, u128, u128) = (AssetId::Concrete(MultiLocation::parent()), 1, 1);
 }
 
 parameter_types! {
@@ -173,7 +173,7 @@ impl Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	type Trader = FixedRateOfFungible<DotPerSecond, ()>;
+	type Trader = ();
 	type ResponseHandler = ();
 	type SubscriptionService = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
@@ -311,11 +311,12 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(a: MultiAsset) -> Option<CurrencyId> {
-		if let MultiAsset { id: AssetId::Concrete(id), fun: _ } = a {
-			Self::convert(id)
-		} else {
-			None
-		}
+		// if let MultiAsset { id: AssetId::Concrete(id), fun: _ } = a {
+		// 	Self::convert(id)
+		// } else {
+		// 	None
+		// }
+		todo!();
 	}
 }
 
@@ -684,6 +685,27 @@ impl orml_tokens::Config for Test {
 //     type LockOrigin = EnsureRoot<AccountId>;
 // }
 
+use primitives::currency::ForeignAssetId;
+
+parameter_types! {
+	pub const ComposableNetworkId: u32 = 1;
+}
+
+use sp_runtime::traits::ConvertInto;
+pub type AssetId = u128;
+
+impl pallet_assets_registry::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type LocalAssetId = u128;
+	type ForeignAssetId = ForeignAssetId;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type NetworkId = ComposableNetworkId;
+}
+
 construct_runtime!(
 	pub enum Test where
 		Block = Block,
@@ -706,6 +728,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		UnknownTokens: orml_unknown_tokens::{Pallet, Event},
+		AssetsRegistry: pallet_assets_registry,
 	}
 );
 

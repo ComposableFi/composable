@@ -27,7 +27,9 @@ pallet-xcm-helper = { path = '../pallet-xcm-helper', default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 
+
 [dev-dependencies]
+primitives = { path = "../../runtime/primitives", default-features = false }
 pallet-babe      = { workspace = true, features = ['std'] }
 pallet-balances  = { workspace = true, features = ['std'] }
 pallet-session   = { workspace = true, features = ['std'] }
@@ -37,6 +39,8 @@ serde            = { workspace = true }
 sp-core          = { workspace = true, features = ['std'] }
 sp-io            = { workspace = true, features = ['std'] }
 sp-state-machine = { workspace = true }
+
+pallet-assets-registry = { path = "../assets-registry" }
 
 kusama-runtime              = { workspace = true, features = ['std'] }
 polkadot-core-primitives    = { workspace = true }

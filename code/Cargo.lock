@@ -10502,6 +10502,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets 1.0.0",
+ "pallet-assets-registry",
  "pallet-babe",
  "pallet-balances",
  "pallet-message-queue",
