@@ -37,7 +37,7 @@
           sad
           self'.packages.bech32cli
           subwasm
-          terraform
+          opentofu
           terraform-ls
           typescript
           websocat

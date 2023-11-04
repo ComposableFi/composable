@@ -5,7 +5,8 @@
       relaychainBase = {
         chain = "rococo-local";
         default_command =
-          pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
+          #pkgs.lib.meta.getExe pkgs.polkadot;
+          pkgs.lib.meta.getExe self'.packages.polkadot-node-on-parity-westend;
         count = 2;
       };
 

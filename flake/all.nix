@@ -5,7 +5,6 @@
       all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
         acala-node
         bifrost-node
-        polkadot-node-from-dep
         rococo-runtime-from-dep
         polkadot-parachain
         zombienet
@@ -17,8 +16,6 @@
         (with self'.packages; [
           polkadot-live-runtime-node
           polkadot-runtime-on-parity
-          rococo-runtime-on-parity
-          westend-runtime-on-parity
         ]);
 
       all-production-deps = pkgs.linkFarmFromDrvs "all-production-deps"
