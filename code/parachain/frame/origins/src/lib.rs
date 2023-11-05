@@ -16,6 +16,12 @@ pub mod pallet {
 	pub enum Origin {
 		/// Origin able to dispatch a whitelisted call.
 		WhitelistedCaller,
+		/// General admin
+		GeneralAdmin,
+		/// Origin able to cancel referenda.
+		ReferendumCanceller,
+		/// Origin able to kill referenda.
+		ReferendumKiller,
 	}
 
 	macro_rules! decl_unit_ensures {
@@ -28,6 +34,7 @@ pub mod pallet {
 				fn try_origin(o: O) -> Result<Self::Success, O> {
 					o.into().and_then(|o| match o {
 						Origin::$name => Ok($success),
+						r => Err(O::from(r)),
 					})
 				}
 				#[cfg(feature = "runtime-benchmarks")]
@@ -47,5 +54,10 @@ pub mod pallet {
 		};
 		() => {}
 	}
-	decl_unit_ensures!(WhitelistedCaller,);
+	decl_unit_ensures!(
+		ReferendumCanceller,
+		ReferendumKiller,
+		WhitelistedCaller,
+		GeneralAdmin
+	);
 }

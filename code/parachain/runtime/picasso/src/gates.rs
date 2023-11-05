@@ -4,7 +4,7 @@ use crate::{
 };
 use common::{
 	governance::native::{
-		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective,
+		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective, GeneralAdminOrRoot,
 	},
 	AccountId, MaxStringSize, HOURS,
 };
@@ -23,7 +23,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
-				RuntimeCall::Democracy(..) |
 					RuntimeCall::Council(..) |
 					RuntimeCall::TechnicalCommittee(..) |
 					RuntimeCall::Treasury(..) |
@@ -105,8 +104,7 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type MaxMembers = ConstU32<100>;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin =
-		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
+	type SetMembersOrigin = GeneralAdminOrRoot;
 	type MaxProposalWeight = MaxProposalWeight;
 }
 
@@ -115,11 +113,11 @@ pub type EnsureRootOrTwoThirds<T> =
 
 impl membership::Config<membership::Instance3> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type AddOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
-	type RemoveOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
-	type SwapOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
-	type ResetOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
-	type PrimeOrigin = EnsureRootOrTwoThirds<ReleaseCollective>;
+	type AddOrigin = GeneralAdminOrRoot;
+	type RemoveOrigin = GeneralAdminOrRoot;
+	type SwapOrigin = GeneralAdminOrRoot;
+	type ResetOrigin = GeneralAdminOrRoot;
+	type PrimeOrigin = GeneralAdminOrRoot;
 	type MembershipInitialized = ReleaseCommittee;
 	type MembershipChanged = ReleaseCommittee;
 	type MaxMembers = ConstU32<100>;

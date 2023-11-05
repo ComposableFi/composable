@@ -1734,6 +1734,7 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-custom-origins",
  "pallet-ibc",
  "pallet-sudo",
  "pallet-treasury",

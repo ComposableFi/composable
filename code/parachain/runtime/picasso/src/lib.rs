@@ -705,7 +705,6 @@ construct_runtime!(
 	{
 		System: system = 0,
 		Timestamp: timestamp = 1,
-		Sudo: sudo = 2,
 		TransactionPayment: transaction_payment = 4,
 		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
@@ -728,12 +727,13 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		ReleaseCommittee: collective::<Instance3> = 74,
 		ReleaseMembership: membership::<Instance3> = 75,
+		RelayerCommittee: collective::<Instance4> = 81,
+		RelayerCommitteeMembership: membership::<Instance4> = 82,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -761,7 +761,6 @@ construct_runtime!(
 
 		Referenda: pallet_referenda = 76,
 		ConvictionVoting: pallet_conviction_voting = 77,
-		OpenGovBalances: balances::<Instance2> = 78,
 		Origins: pallet_custom_origins = 79,
 		Whitelist: pallet_whitelist = 80,
 
