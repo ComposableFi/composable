@@ -1291,13 +1291,11 @@ pub mod pallet {
 				let mut to32 = AccountId32::as_ref(&account);
 				let address: T::AccountId =
 					T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
-				log::info!("\n\n\n address {:?}", public_key.0);
+				log::info!("address {:?}", public_key.0);
 				if prices.contains(&address) {
-					println!("Tx already submitted");
 					log::info!("Tx already submitted");
 				} else {
-					println!("lets find");
-					log::info!("lets find");
+					log::info!("findind match among existing keys");
 					let mut accounts = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::RuntimeAppPublic::all().into_iter().enumerate().map(|(index, key)| {
 						let generic_public = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::GenericPublic::from(key);
 						let public: T::Public = generic_public.into();
@@ -1306,7 +1304,7 @@ pub mod pallet {
 					});
 
 					if let Some(account) = accounts.find(|x| x.id == address) {
-						log::info!("found account {:?}", account.id.clone());
+						log::info!("found account");
 						// Make an external HTTP request to fetch the current price.
 						// Note this call will block until response is received.
 						let price =
@@ -1334,7 +1332,6 @@ pub mod pallet {
 							}
 						}
 					}
-					log::info!("\n\n\n");
 				}
 			}
 
