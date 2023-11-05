@@ -1,3 +1,8 @@
+// general comment - consider using subxt generated types for calls. this will make it easier to migrate and ensure no encoding errors and support testnets
+// another alternative - use `polkadot` and `kusama` runtime crate for types.
+// another suggestion - make all bellow to be type parameters, so that can configure per runtime (in runtimes folder)
+// instead making it all in pallets
+// all is optional, suggestions only to avoid time consuming debug and serde bugs 
 use frame_support::pallet_prelude::Weight;
 use frame_system::Config;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
@@ -343,6 +348,7 @@ macro_rules! switch_relay {
 
             $( $code )*
         } else {
+			// this can be Westend/Wococo/Rococo - can brick testnets if pallet is called. so please return error.
             unreachable!()
         }
     }
