@@ -1282,7 +1282,7 @@ pub mod pallet {
 			let public_keys: Vec<sp_core::sr25519::Public> =
 				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
 
-			if public_keys.len() == 0 {
+			if public_keys.is_empty() {
 				return Err("No public keys for crypto key type `orac`")
 			}
 
