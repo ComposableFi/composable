@@ -25,7 +25,7 @@ const fn percent(x: i32) -> sp_runtime::FixedI64 {
 pub const ONE_PICA: Balance = 1_000_000_000_000;
 
 use pallet_referenda::Curve;
-const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2] = [
+const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 5] = [
 	(
 		0,
 		pallet_referenda::TrackInfo {
@@ -38,7 +38,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(feature = "fastnet")]
 			decision_deposit: 50 * ONE_PICA,
 			#[cfg(not(feature = "fastnet"))]
-			decision_deposit: 50_000 * ONE_PICA,
+			decision_deposit: 5_000_000 * ONE_PICA,
 			// Amount of time this must be submitted for before a decision can be made.
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
@@ -81,7 +81,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			#[cfg(feature = "fastnet")]
 			decision_deposit: 5 * ONE_PICA,
 			#[cfg(not(feature = "fastnet"))]
-			decision_deposit: 5_000 * ONE_PICA,
+			decision_deposit: 200_000 * ONE_PICA,
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
 			#[cfg(not(feature = "fastnet"))]
@@ -114,6 +114,48 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 2]
 			min_support: Curve::make_reciprocal(1, 28, percent(20), percent(5), percent(50)),
 		},
 	),
+	(
+		2,
+		pallet_referenda::TrackInfo {
+			name: "general_admin",
+			max_deciding: 10,
+			decision_deposit: 50_000 * ONE_PICA,
+			prepare_period: 1 * HOURS,
+			decision_period: 14 * DAYS,
+			confirm_period: 1 * DAYS,
+			min_enactment_period: 1 * DAYS,
+			min_approval: Curve::make_reciprocal(4, 14, percent(80), percent(50), percent(100)),
+			min_support: Curve::make_reciprocal(7, 14, percent(10), percent(0), percent(50)),
+		},
+	),
+	(
+		3,
+		pallet_referenda::TrackInfo {
+			name: "referendum_canceller",
+			max_deciding: 20,
+			decision_deposit: 200_000 * ONE_PICA,
+			prepare_period: 1 * HOURS,
+			decision_period: 14 * DAYS,
+			confirm_period: 3 * HOURS,
+			min_enactment_period: 10 * MINUTES,
+			min_approval: Curve::make_reciprocal(1, 14, percent(96), percent(50), percent(100)),
+			min_support: Curve::make_reciprocal(1, 14, percent(1), percent(0), percent(50)),
+		},
+	),
+	(
+		4,
+		pallet_referenda::TrackInfo {
+			name: "referendum_killer",
+			max_deciding: 100,
+			decision_deposit: 200_000 * ONE_PICA,
+			prepare_period: 1 * HOURS,
+			decision_period: 14 * DAYS,
+			confirm_period: 3 * HOURS,
+			min_enactment_period: 10 * MINUTES,
+			min_approval: Curve::make_reciprocal(1, 14, percent(96), percent(50), percent(100)),
+			min_support: Curve::make_reciprocal(1, 14, percent(1), percent(0), percent(10)),
+		},
+	),
 ];
 
 pub struct TracksInfo;
@@ -126,12 +168,29 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
 		if let Ok(system_origin) = frame_system::RawOrigin::try_from(id.clone()) {
 			match system_origin {
-				frame_system::RawOrigin::Root => Ok(0),
+				frame_system::RawOrigin::Root => {
+					if let Some((track_id, _)) = Self::tracks()
+						.into_iter()
+						.find(|(_, track)| track.name == "root")
+					{
+						Ok(*track_id)
+					} else {
+						Err(())
+					}
+				}
 				_ => Err(()),
 			}
 		} else if let Ok(custom_origin) = pallet_custom_origins::Origin::try_from(id.clone()) {
-			match custom_origin {
-				pallet_custom_origins::Origin::WhitelistedCaller => Ok(1),
+			if let Some((track_id, _)) = Self::tracks().into_iter().find(|(_, track)| {
+				if let Ok(track_custom_origin) = pallet_custom_origins::Origin::from_str(track.name) {
+					track_custom_origin == custom_origin
+				} else {
+					false
+				}
+			}) {
+				Ok(*track_id)
+			} else {
+				Err(())
 			}
 		} else {
 			Err(())

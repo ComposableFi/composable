@@ -4,6 +4,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
+	use strum_macros::EnumString;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {}
@@ -11,7 +12,7 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
+	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug, EnumString)]
 	#[pallet::origin]
 	pub enum Origin {
 		/// Origin able to dispatch a whitelisted call.

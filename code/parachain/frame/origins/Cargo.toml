@@ -27,7 +27,7 @@ sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
-
+strum_macros = "0.24"
 [features]
 default = ["std"]
 std = [

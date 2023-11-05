@@ -9114,6 +9114,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
+ "strum_macros 0.24.3",
 ]
 
 [[package]]
