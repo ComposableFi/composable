@@ -137,6 +137,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type SelfParaId: Get<ParaId>;
 
+		/// not sure if any issue, so it should be index `set`, to avoid dups? at least in documentation
 		/// Derivative index list
 		#[pallet::constant]
 		type DerivativeIndexList: Get<Vec<DerivativeIndex>>;
@@ -459,11 +460,14 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
+			// moving this check after fee could be less error prones
 			ensure!(amount >= T::MinStake::get(), Error::<T>::StakeTooSmall);
 
 			let reserves = Self::reserve_factor().mul_floor(amount);
 
 			let xcm_fees = T::XcmFees::get();
+			/// so basically tell that staking fee asset = fee asset, seems like overengineering - relay will never pay fee in other asset
+			/// error prone to config
 			let amount = amount.checked_sub(xcm_fees).ok_or(ArithmeticError::Underflow)?;
 
 			use frame_support::traits::tokens::Preservation;
