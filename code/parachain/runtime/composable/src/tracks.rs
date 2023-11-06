@@ -122,7 +122,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 			match system_origin {
 				frame_system::RawOrigin::Root => {
 					if let Some((track_id, _)) =
-						Self::tracks().into_iter().find(|(_, track)| track.name == "root")
+						Self::tracks().iter().find(|(_, track)| track.name == "root")
 					{
 						Ok(*track_id)
 					} else {
@@ -132,7 +132,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 				_ => Err(()),
 			}
 		} else if let Ok(custom_origin) = pallet_custom_origins::Origin::try_from(id.clone()) {
-			if let Some((track_id, _)) = Self::tracks().into_iter().find(|(_, track)| {
+			if let Some((track_id, _)) = Self::tracks().iter().find(|(_, track)| {
 				if let Ok(track_custom_origin) = pallet_custom_origins::Origin::from_str(track.name)
 				{
 					track_custom_origin == custom_origin

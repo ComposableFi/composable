@@ -4,12 +4,12 @@ use crate::{
 };
 use common::{
 	governance::native::{GeneralAdminOrRoot, ReleaseCollective},
-	AccountId, MaxStringSize, HOURS,
+	MaxStringSize, HOURS,
 };
 use composable_traits::account_proxy::ProxyType;
 use frame_support::{
 	parameter_types,
-	traits::{EitherOfDiverse, InstanceFilter},
+	traits::InstanceFilter,
 };
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
@@ -109,9 +109,6 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type SetMembersOrigin = GeneralAdminOrRoot;
 	type MaxProposalWeight = MaxProposalWeight;
 }
-
-pub type EnsureRootOrTwoThirds<T> =
-	EitherOfDiverse<EnsureRoot<AccountId>, collective::EnsureProportionAtLeast<AccountId, T, 2, 3>>;
 
 impl membership::Config<membership::Instance3> for Runtime {
 	type RuntimeEvent = RuntimeEvent;

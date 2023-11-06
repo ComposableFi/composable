@@ -131,7 +131,7 @@ impl pallet_referenda::Config for Runtime {
 }
 
 parameter_types! {
-	pub const VoteLockingPeriod: BlockNumber = 1 * DAYS;
+	pub const VoteLockingPeriod: BlockNumber = DAYS;
 }
 
 impl pallet_conviction_voting::Config for Runtime {
@@ -185,7 +185,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
 	#[cfg(feature = "fastnet")]
-	type SpendPeriod = ConstU32<{ 1 * HOURS }>;
+	type SpendPeriod = ConstU32<{ HOURS }>;
 	#[cfg(not(feature = "fastnet"))]
 	type SpendPeriod = ConstU32<{ 3 * DAYS }>;
 	type Burn = Burn;
