@@ -17,4 +17,6 @@ When user unstakes,
 
 Later on, user claims his staked token.
 
+If unstake did not happened yet, user can cancel his request. 
+
 ## From operation perspective

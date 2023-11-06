@@ -832,7 +832,6 @@ pub mod pallet {
 		pub fn force_set_current_era(origin: OriginFor<T>, era: EraIndex) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			IsMatched::<T>::put(false);
-			// may be some iditotic check era >= current era
 			CurrentEra::<T>::put(era);
 			Ok(())
 		}
@@ -897,6 +896,7 @@ pub mod pallet {
 			era: EraIndex,
 			proof: Vec<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
+			// may not check it signed
 			let who = ensure_signed(origin)?;
 
 			let offset = era.saturating_sub(Self::current_era());
@@ -1044,7 +1044,7 @@ pub mod pallet {
 			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-
+			// seems buggy, either users looses token on mints token
 			FastUnstakeRequests::<T>::try_mutate(&who, |b| -> DispatchResultWithPostInfo {
 				use frame_support::traits::tokens::{Fortitude, Preservation};
 				let keep_alive = false;
@@ -1063,6 +1063,7 @@ pub mod pallet {
 
 				Ok(().into())
 			})
+			
 		}
 
 		/// Update commission rate
