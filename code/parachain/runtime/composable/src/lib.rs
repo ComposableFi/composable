@@ -589,13 +589,13 @@ parameter_types! {
 	pub const StakingCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 	//TODO rust.dev warning!!!!!! important todo. replace to new registred currency as lsDOT instead of vKSM. this is just for testing
 	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_COMPOSABLE_DOT;
-	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;
+	pub const EraLength: BlockNumber = 20; 
 	pub const MinStakeLSD: Balance = 10_000_000_000; // 1DOT
 	pub const MinUnstake: Balance = 5_000_000_000; // 0.5sDOT
-	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 28; // 28Days
+	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 2; // 28Days
 	pub const MinNominatorBond: Balance = 100_000_000_000; // 10DOT
 	pub const NumSlashingSpans: u32 = 0;
-	pub const ElectionSolutionStoredOffset: BlockNumber = 12600;
+	pub const ElectionSolutionStoredOffset: BlockNumber = 3;
 }
 
 pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
