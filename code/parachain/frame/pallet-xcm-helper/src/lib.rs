@@ -17,6 +17,8 @@
 //! ## Overview
 //! This pallet should be in charge of everything XCM related including callbacks and sending XCM
 //! calls.
+//! 
+//! Partially based on https://github.com/parallel-finance/parallel/blob/master/pallets/xcm-helper/src/lib.rs
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -117,6 +119,7 @@ pub mod pallet {
 		XcmWeightFeeUpdated(XcmWeightFeeMisc<Weight, BalanceOf<T>>),
 	}
 
+	/// could have some default value fo simplicity - if not set, some upper limit
 	#[pallet::storage]
 	#[pallet::getter(fn xcm_weight_fee)]
 	pub type XcmWeightFee<T: Config> =
@@ -274,6 +277,7 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
+	// better name is transfer xcm fees or collect xcm fees
 	fn add_xcm_fees(payer: &AccountIdOf<T>, amount: BalanceOf<T>) -> DispatchResult {
 		let keep_alive = false;
 		let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
@@ -300,6 +304,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			T::RelayCurrency::get(),
 			&Self::account_id(),
 			fees,
+			// use exact to avoid minting tokens?
 			Precision::BestEffort,
 			Fortitude::Polite,
 		)
