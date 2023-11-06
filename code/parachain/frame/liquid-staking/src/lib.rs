@@ -832,6 +832,7 @@ pub mod pallet {
 		pub fn force_set_current_era(origin: OriginFor<T>, era: EraIndex) -> DispatchResult {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			IsMatched::<T>::put(false);
+			// may be some iditotic check era >= current era
 			CurrentEra::<T>::put(era);
 			Ok(())
 		}
