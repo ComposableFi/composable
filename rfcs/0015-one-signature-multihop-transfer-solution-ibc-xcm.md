@@ -7,7 +7,7 @@ It would be nice have a solution allowing to do multi chain transfers with one w
 This proposal describes the solution to do such transfers.
 
 It accepts current state of multichain transfers, and tries to expand on this, without heavy code forks and modifications, retaining some compatibility with existing indexers.
-Proposal optimizes for liquidity and initial user experience using some well know approaches, rather than target to final ultimate solution, like ICS-999, Composable XCVM and Parity XCM (none of these are multichain production ready).
+Proposal optimizes for liquidity and initial user experience using some well know approaches, rather than target to final ultimate solution, like ICS-999, Composable CVM and Parity XCM (none of these are multichain production ready).
 
 ## Prerequisites of understanding
 
@@ -174,7 +174,7 @@ See details of XCM error handling in detailed description of XCM part of protoco
 
 ## XCM
 
-XCM multi hop transfers [do not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-xcvm-architecture-ensure-the-absoluteness-principle-described). 
+XCM multi hop transfers [do not fail](https://substrate.stackexchange.com/questions/6831/how-does-the-CVM-architecture-ensure-the-absoluteness-principle-described). 
 Their `ExportMsg` has relevant interface which would be used for ultimate integration with IBC, but we are not here yet.
 
 So we hack here with 2 pallets, which we can migrate to more official ways later.
@@ -236,4 +236,4 @@ Also account encoding never discussed, but assumption that it will take some tim
 
 Assumption that Centauri `pallet-ibc` will not need (substantial) modification to use `memo` handler to route transfers. 
 
-Some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that, and also approach can be migrated to terminate memo destination with CosmWasm call (enabler for XCVM).
+Some safe limited form of [swaps](https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/crosschain-swaps/src/msg.rs) also may be supported like that, and also approach can be migrated to terminate memo destination with CosmWasm call (enabler for CVM).
