@@ -27,7 +27,7 @@ impl pallet_assets::Config for Runtime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
 	type RuntimeHoldReason = ();
 }

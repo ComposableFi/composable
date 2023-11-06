@@ -84,8 +84,8 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 
 impl call_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type EnableOrigin = EnsureRootOrHalfNativeTechnical;
-	type DisableOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type EnableOrigin = EnsureRoot<Self::AccountId>;
+	type DisableOrigin = EnsureRoot<Self::AccountId>;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;

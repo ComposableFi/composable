@@ -546,13 +546,13 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
-	type ControllerOrigin = EnsureRootOrHalfNativeTechnical;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeTechnical;
+	type ControllerOrigin = EnsureRoot<Self::AccountId>;
+	type ExecuteOverweightOrigin = EnsureRoot<Self::AccountId>;
 	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ExecuteOverweightOrigin = EnsureRoot<Self::AccountId>;
 }

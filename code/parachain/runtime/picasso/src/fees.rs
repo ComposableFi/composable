@@ -70,7 +70,7 @@ impl asset_tx_payment::Config for Runtime {
 
 	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
 
-	type ConfigurationOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ConfigurationOrigin = EnsureRoot<Self::AccountId>;
 
 	type ConfigurationExistentialDeposit = NativeExistentialDeposit;
 
