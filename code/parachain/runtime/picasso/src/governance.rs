@@ -81,7 +81,7 @@ impl membership::Config<NativeRelayerMembership> for Runtime {
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
-impl collective::Config<NativeRelayerMembership> for Runtime {
+impl collective::Config<RelayerCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
