@@ -52,13 +52,13 @@ members = [
   "utils/collator-sidecar",
   "utils/common",
   "utils/price-feed",
-  "xcvm/cosmwasm/contracts/gateway",
-  "xcvm/cosmwasm/contracts/interpreter",
-  "xcvm/cosmwasm/contracts/order",
-  "xcvm/cosmwasm/contracts/pingpong",
-  "xcvm/cosmwasm/tests",
-  "xcvm/lib/core/",
-  "xcvm/crates/cvm/"
+  "cvm/cosmwasm/contracts/gateway",
+  "cvm/cosmwasm/contracts/interpreter",
+  "cvm/cosmwasm/contracts/order",
+  "cvm/cosmwasm/contracts/pingpong",
+  "cvm/cosmwasm/tests",
+  "cvm/lib/core/",
+  "cvm/crates/cvm/"
 ]
 resolver = "2"
 

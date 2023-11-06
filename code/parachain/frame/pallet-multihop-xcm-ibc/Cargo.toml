@@ -26,7 +26,7 @@ bech32-no_std = { workspace = true, default-features = false, features = [
 composable-traits = { path = "../composable-traits", default-features = false, features = [
   "centauri",
 ] }
-xc-core = { path = "../../../xcvm/lib/core", default-features = false, features = [
+xc-core = { path = "../../../cvm/lib/core", default-features = false, features = [
   "xcm",
 ] }
 hex = { version = "0.4.3", default-features = false }
