@@ -589,17 +589,19 @@
 
 
            register_asset () {
-             dasel  put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" '.app_state.bank.denom_metadata.[0].denom_units'
-             dasel-genesis '.app_state.bank.denom_metadata.[0].description' "$2"
-             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].denom' "$2"
-             dasel-genesis '.app_state.bank.denom_metadata.[0].denom_units.[0].exponent' 0
-             dasel-genesis '.app_state.bank.denom_metadata.[0].base' "$2"
-             dasel-genesis '.app_state.bank.denom_metadata.[0].display' "$2"
-             dasel-genesis '.app_state.bank.denom_metadata.[0].name' "$2"
-             dasel-genesis '.app_state.bank.denom_metadata.[0].symbol' "$2"
+             dasel  put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" ".app_state.bank.denom_metadata.[$1].denom_units"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].description" "$2"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].denom_units.[0].denom" "$2"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].denom_units.[0].exponent" 0
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].base" "$2"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].display" "$2"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].name" "$2"
+             dasel-genesis ".app_state.bank.denom_metadata.[$1].symbol" "$2"
            }
-           dasel put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{}]" 'app_state.bank.denom_metadata'
+
+           dasel put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{},{}]" 'app_state.bank.denom_metadata'
            register_asset 0 "ptest"
+           register_asset 1 "pdemo"
             
 
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
@@ -625,7 +627,7 @@
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest" --keyring-backend test --home "$CHAIN_DATA"                              
+              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              
             }
 
             # relayer
