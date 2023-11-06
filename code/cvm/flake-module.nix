@@ -42,7 +42,7 @@
           name = "xc-cw-contracts";
           paths = [ cw-xc-executor cw-xc-gateway cw-mantis-order ];
         };
-        xcvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
+        cvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
             SKIP_WASM_BUILD = 1;
             src = systemCommonRust.rustSrc;
@@ -57,7 +57,7 @@
           ];
           text = ''
             echo "generating TypeScript types and client definitions from JSON schema of CosmWasm contracts"
-            cd code/xcvm
+            cd code/cvm
             npm install
             rm --recursive --force dist
 
@@ -73,8 +73,8 @@
           '';
         };
 
-        xcvm-mount = pkgs.stdenv.mkDerivation rec {
-          name = "xcvm-mount";
+        cvm-mount = pkgs.stdenv.mkDerivation rec {
+          name = "cvm-mount";
           pname = "${name}";
           src = systemCommonRust.rustSrc;
           patchPhase = "true";
@@ -90,23 +90,22 @@
           dontStrip = true;
         };
 
-        xcvm-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
-          // {
-            src = xcvm-mount;
-            cargoArtifacts = xcvm-deps;
-            buildPhase = ''
-              NIX_CARGO_OUT_DIR="$TEMP/out/"
-              mkdir --parents "$NIX_CARGO_OUT_DIR"
-              cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
-              export NIX_CARGO_OUT_DIR
-              # just build, will be moved to testing with host at hand
-              cargo build --release --package xc-tests --tests --features="std"
-            '';
-            installPhase = ''
-              mkdir --parents $out
-            '';
-            RUST_LOG = "info";
-          });
+        cvm-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs // {
+          src = cvm-mount;
+          cargoArtifacts = cvm-deps;
+          buildPhase = ''
+            NIX_CARGO_OUT_DIR="$TEMP/out/"
+            mkdir --parents "$NIX_CARGO_OUT_DIR"
+            cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
+            export NIX_CARGO_OUT_DIR
+            # just build, will be moved to testing with host at hand
+            cargo build --release --package xc-tests --tests --features="std"
+          '';
+          installPhase = ''
+            mkdir --parents $out
+          '';
+          RUST_LOG = "debug";
+        });
       };
     };
 }

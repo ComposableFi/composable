@@ -27,6 +27,6 @@ Onboarding other pallets onto our Kusama parachain, [Picasso](../parachains/pica
 
 Onboarding new layers, chains, and their associated validators into our ecosystem and interoperable infrastructure. 
 
-### Building modular applications with the Composable XCVM:
+### Building modular applications with the Composable CVM:
 
-Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/xcvm.md).
+Onboarding developers to use the [Composable Cross-Chain VM (CVM)](../products/cvm.md).

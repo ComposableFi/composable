@@ -1,4 +1,4 @@
-/// example usage of CVM and MANTIS contracts
+/// example usage of MANTIS contracts
 import { CwXcCoreClient } from "./dist/cw-xc-core/CwXcCore.client.js"
 import { GasPrice } from "@cosmjs/stargate"
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate"
@@ -8,9 +8,6 @@ import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin.js";
 
 const print = console.info
 
-/// NOTE: please note that for details of network prefix and RPC please contact Centauri mainnet support
-/// NOTE: this is minimal example with no error handling, syntax sugar or elaborated clients,
-/// NOTE: only raw clients and types are used, please contact FE team for React integration
 print("creating wallet")
 const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
     // replace with your key
@@ -39,6 +36,16 @@ const client = new CwXcCoreClient(rawClient, sender, "centauri1c676xpc64x9lxjfsv
 /// check official docs about PICA asset id 
 const PICA = await client.getAssetById({ assetId: "158456325028528675187087900673" });
 print(PICA)
+
+
+// this program creates random orders in loop from one of several well known assets
+
+while (true) {
+    // randomize asset 
+    // randomize limits
+        
+}
+
 
 print("let transfer PICA Centaur to Osmosis")
 const msg = {
@@ -92,3 +99,4 @@ print(result)
 
 // will pair code with @bengalmozzi order contract - which is simpler
 // i mostly used this one as example https://github.com/cosmos/cosmjs/blob/main/packages/cosmwasm-stargate/src/signingcosmwasmclient.spec.ts
+

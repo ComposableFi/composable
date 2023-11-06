@@ -16,9 +16,6 @@ This document describes various properties of currencies.
 
 We express the identity of a currency as a positive integer. Any positive integer may be a currency id, but not all integers are currency ids.
 
-The CurrencyFactory (frame/currency-factory) pallet manages all currencies created in the runtime. For clarification on the low-level basics, look into the pallet readme.
-
-
 ### Amounts
 
 Each currency has a non-negative total issuance. Given an identifier, we can ask for the total supply of the respective currency in consensus with the ledger(in this case, the parachain). A Currency is considered fungible because an amount of 10 of said currency equals another 10 of the same currency on another account.
@@ -65,7 +62,7 @@ There are several solutions to equalize currencies:
 - A risky approach is to embed direct trust to bridges via the configured ratio of transferred currencies to be 1 to 1.
 - Use trustless decentralized bridging. With this solution, there is proof of equivalence, making it the lowest risk. For example, IBC MMR or XCMP `Reserver Transfer`.
 
-For more details, read XCVM documentation regarding security and the risks of choosing bridges (relayers).
+For more details, read CVM documentation regarding security and the risks of choosing bridges (relayers).
 
 **Example**
 

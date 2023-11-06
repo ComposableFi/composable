@@ -119,8 +119,8 @@
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/evm/flake-module.nix
-        ./code/xcvm/flake-module.nix
+        ./code/cvm/evm/flake-module.nix
+        ./code/cvm/flake-module.nix
         ./docs/flake-module.nix
         ./flake/all.nix
         ./flake/bash.nix
