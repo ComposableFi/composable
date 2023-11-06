@@ -6,7 +6,6 @@ pub type Migrations = (
 	TechCollectiveRenameMigration,
 	preimage::migration::v1::Migration<Runtime>,
 	scheduler::migration::v3::MigrateToV4<Runtime>,
-	democracy::migrations::v1::Migration<Runtime>,
 	multisig::migrations::v1::MigrateToV1<Runtime>,
 	vesting::migrations::VestingV0ToV1<Runtime>,
 );

@@ -108,7 +108,6 @@ impl pallet_referenda::Config for Runtime {
 
 	// everyone can submit
 	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
-	#[cfg(not(feature = "fastnet"))]
 	type CancelOrigin = EitherOf<EnsureRoot<Self::AccountId>, ReferendumCanceller>;
 	type KillOrigin = EitherOf<EnsureRoot<Self::AccountId>, ReferendumKiller>;
 
@@ -205,4 +204,10 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	#[cfg(not(feature = "testnet"))]
 	type RejectOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
+}
+
+impl sudo::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }

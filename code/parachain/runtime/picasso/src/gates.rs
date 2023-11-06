@@ -4,7 +4,7 @@ use crate::{
 };
 use common::{
 	governance::native::{
-		EnsureRootOrHalfNativeTechnical, EnsureRootOrOneThirdNativeTechnical, ReleaseCollective, GeneralAdminOrRoot,
+		ReleaseCollective, GeneralAdminOrRoot,
 	},
 	AccountId, MaxStringSize, HOURS,
 };

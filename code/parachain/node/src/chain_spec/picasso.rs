@@ -60,7 +60,6 @@ pub fn genesis_config(
 			]
 			.concat(),
 		},
-		open_gov_balances: Default::default(),
 		aura: Default::default(),
 		sudo: picasso_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: picasso_runtime::IndicesConfig { indices: vec![] },
@@ -87,7 +86,6 @@ pub fn genesis_config(
 		},
 		council_membership: Default::default(),
 		council: Default::default(),
-		democracy: Default::default(),
 		treasury: Default::default(),
 		technical_committee: Default::default(),
 		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
@@ -101,6 +99,8 @@ pub fn genesis_config(
 				.expect("const"),
 			phantom: Default::default(),
 		},
+		relayer_committee: Default::default(),
+		relayer_committee_membership: Default::default(),
 		polkadot_xcm: Default::default(),
 		assets_registry: picasso_runtime::AssetsRegistryConfig {
 			assets: primitives::topology::Picasso::assets(),
