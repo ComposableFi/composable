@@ -28,7 +28,7 @@ sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 strum_macros = "0.24"
-strum = { version = "0.24", default-features = false, features = [ "derive" ] }
+strum = { version = "0.24", default-features = false, features = ["derive"] }
 [features]
 default = ["std"]
 std = [

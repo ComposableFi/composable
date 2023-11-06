@@ -150,8 +150,8 @@ impl pallet_conviction_voting::Config for Runtime {
 
 impl pallet_custom_origins::Config for Runtime {}
 
-use pallet_custom_origins::{ReferendumCanceller, ReferendumKiller};
 pub use pallet_custom_origins::WhitelistedCaller;
+use pallet_custom_origins::{ReferendumCanceller, ReferendumKiller};
 
 impl pallet_whitelist::Config for Runtime {
 	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Self>;

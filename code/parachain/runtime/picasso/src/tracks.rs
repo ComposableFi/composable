@@ -105,17 +105,11 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 5]
 			#[cfg(feature = "fastnet")]
 			min_approval: Curve::make_reciprocal(1, 30, percent(96), percent(50), percent(100)),
 			#[cfg(not(feature = "fastnet"))]
-			min_approval: Curve::make_reciprocal(
-				2,
-				10,
-				percent(80),
-				percent(50),
-				percent(100),
-			),
+			min_approval: Curve::make_reciprocal(2, 10, percent(80), percent(50), percent(100)),
 			#[cfg(feature = "fastnet")]
 			min_support: Curve::make_reciprocal(1, 30, percent(20), percent(5), percent(50)),
 			#[cfg(not(feature = "fastnet"))]
-			min_support: Curve::make_reciprocal(1, 10*24, percent(1), percent(0), percent(2)),
+			min_support: Curve::make_reciprocal(1, 10 * 24, percent(1), percent(0), percent(2)),
 		},
 	),
 	(
@@ -173,20 +167,20 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		if let Ok(system_origin) = frame_system::RawOrigin::try_from(id.clone()) {
 			match system_origin {
 				frame_system::RawOrigin::Root => {
-					if let Some((track_id, _)) = Self::tracks()
-						.into_iter()
-						.find(|(_, track)| track.name == "root")
+					if let Some((track_id, _)) =
+						Self::tracks().into_iter().find(|(_, track)| track.name == "root")
 					{
 						Ok(*track_id)
 					} else {
 						Err(())
 					}
-				}
+				},
 				_ => Err(()),
 			}
 		} else if let Ok(custom_origin) = pallet_custom_origins::Origin::try_from(id.clone()) {
 			if let Some((track_id, _)) = Self::tracks().into_iter().find(|(_, track)| {
-				if let Ok(track_custom_origin) = pallet_custom_origins::Origin::from_str(track.name) {
+				if let Ok(track_custom_origin) = pallet_custom_origins::Origin::from_str(track.name)
+				{
 					track_custom_origin == custom_origin
 				} else {
 					false

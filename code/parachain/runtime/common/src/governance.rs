@@ -98,5 +98,6 @@ pub mod native {
 		>,
 	>;
 
-	pub type GeneralAdminOrRoot = EitherOfDiverse<EnsureRoot<AccountId>, pallet_custom_origins::GeneralAdmin>;
+	pub type GeneralAdminOrRoot =
+		EitherOfDiverse<EnsureRoot<AccountId>, pallet_custom_origins::GeneralAdmin>;
 }

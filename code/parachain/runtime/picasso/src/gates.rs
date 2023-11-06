@@ -3,9 +3,7 @@ use crate::{
 	RuntimeOrigin,
 };
 use common::{
-	governance::native::{
-		ReleaseCollective, GeneralAdminOrRoot,
-	},
+	governance::native::{GeneralAdminOrRoot, ReleaseCollective},
 	AccountId, MaxStringSize, HOURS,
 };
 use composable_traits::account_proxy::ProxyType;
@@ -23,7 +21,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Any => true,
 			ProxyType::Governance => matches!(
 				c,
-					RuntimeCall::Council(..) |
+				RuntimeCall::Council(..) |
 					RuntimeCall::TechnicalCommittee(..) |
 					RuntimeCall::Treasury(..) |
 					RuntimeCall::Utility(..)
@@ -77,7 +75,11 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
 			matches!(
 				call,
-				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_) | RuntimeCall::Referenda(_) | RuntimeCall::Sudo(_) | RuntimeCall::Whitelist(_)
+				RuntimeCall::Tokens(_) |
+					RuntimeCall::Indices(_) |
+					RuntimeCall::Treasury(_) |
+					RuntimeCall::Referenda(_) |
+					RuntimeCall::Sudo(_) | RuntimeCall::Whitelist(_)
 			))
 	}
 }

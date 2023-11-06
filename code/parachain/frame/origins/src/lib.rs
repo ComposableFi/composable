@@ -12,7 +12,9 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug, EnumString)]
+	#[derive(
+		PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug, EnumString,
+	)]
 	#[strum(serialize_all = "snake_case")]
 	#[pallet::origin]
 	pub enum Origin {
@@ -56,10 +58,5 @@ pub mod pallet {
 		};
 		() => {}
 	}
-	decl_unit_ensures!(
-		ReferendumCanceller,
-		ReferendumKiller,
-		WhitelistedCaller,
-		GeneralAdmin
-	);
+	decl_unit_ensures!(ReferendumCanceller, ReferendumKiller, WhitelistedCaller, GeneralAdmin);
 }
