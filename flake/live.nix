@@ -13,8 +13,6 @@
           runtimeInputs = [ self'.packages.composable-node ];
 
           text = ''
-
-
             ${rust_log}
 
             # with polkadot 0.9.39 can enable warp, so it will start instantly, btw fast modes do not work because cannot restart on disconnection (and yet slow)
