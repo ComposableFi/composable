@@ -144,7 +144,7 @@
           modules = [{
             packages = [ self'.packages.centaurid ];
             env = centauri.env.mainnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
