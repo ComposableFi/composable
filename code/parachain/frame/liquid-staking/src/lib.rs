@@ -17,6 +17,7 @@
 //! ## Overview
 //!
 //! This pallet manages the NPoS operations for relay chain asset.
+//! Partially based on https://github.com/parallel-finance/parallel/blob/master/pallets/liquid-staking/src/lib.rs
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
