@@ -420,7 +420,6 @@ impl OrderContract<'_> {
 				.filter(|x: &&SolvedOrder| x.given().denom == b)
 				.map(|x| x.given().amount.u128())
 				.sum();
-
 			let alternative_transfers = solves_cows_via_bank(
 				&alternative_all_orders.clone(),
 				a.clone(),
@@ -567,7 +566,7 @@ fn solves_cows_via_bank(
 		transfers.push((amount, order.order.order_id));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
