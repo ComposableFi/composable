@@ -2,13 +2,13 @@
   perSystem =
     { config, self', inputs', pkgs, system, lib, systemCommonRust, ... }:
     let
-      debug = {
-        # CARGO_LOG = "debug";
-        # CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-        # CARGO_NET_RETRY = "true";
-        # CARGO_HTTP_MULTIPLEXING = "false";
-        # CARGO_HTTP_DEBUG = "true";
-        # RUST_LOG = "debug";
+      debug-env = {
+        CARGO_LOG = "debug";
+        CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        CARGO_NET_RETRY = "true";
+        CARGO_HTTP_MULTIPLEXING = "false";
+        CARGO_HTTP_DEBUG = "true";
+        RUST_LOG = "debug";
       };
       # evn for deep isolation of building polkadot-sdk nodes and shellss
       subattrs = {
@@ -27,7 +27,7 @@
         # rust asks for this dependings on version
         ZLIB_VERSION = "1.3";
         LIBZ_SYS_STATIC = 1;
-      } // debug;
+      };
 
       # for packages
       subenv = {
@@ -83,7 +83,7 @@
 
       check-runtime = check-pallet;
     in {
-      _module.args.subnix = rec { inherit subenv subattrs; };
+      _module.args.subnix = rec { inherit subenv subattrs debug-env; };
       packages = {
         inherit check-pallet check-runtime check-std-wasm check-no-std;
       };
