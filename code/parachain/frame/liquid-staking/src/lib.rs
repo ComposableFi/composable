@@ -483,6 +483,7 @@ pub mod pallet {
 			)?;
 			T::XCM::add_xcm_fees(&who, xcm_fees)?;
 
+			/// amount can be zero os smaller than StakeTooSmall
 			let amount = amount.checked_sub(reserves).ok_or(ArithmeticError::Underflow)?;
 			let liquid_amount =
 				Self::staking_to_liquid(amount).ok_or(Error::<T>::InvalidExchangeRate)?;
