@@ -18,11 +18,11 @@ parameter_types! {
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type AddOrigin = EnsureRoot<AccountId>;
-	type RemoveOrigin = EnsureRoot<AccountId>;
-	type SwapOrigin = EnsureRoot<AccountId>;
-	type ResetOrigin = EnsureRoot<AccountId>;
-	type PrimeOrigin = EnsureRoot<AccountId>;
+	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = CouncilMaxMembers;
@@ -38,7 +38,7 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRoot<AccountId>;
+	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	type MaxProposalWeight = MaxProposalWeight;
 }
 
