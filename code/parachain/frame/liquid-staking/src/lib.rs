@@ -566,6 +566,7 @@ pub mod pallet {
 				Self::liquid_currency()?,
 				&who,
 				liquid_amount,
+				// i guess this better to be Exact
 				Precision::BestEffort,
 				Fortitude::Polite,
 			)?;
@@ -697,6 +698,9 @@ pub mod pallet {
 			derivative_index: DerivativeIndex,
 			num_slashing_spans: u32,
 		) -> DispatchResult {
+			// 1. if some safe cases no need to check origins
+			// 2. at some cases inside need to check queue not spammed
+			// 3. in some cases, some risky op is done it should be relay origin
 			Self::ensure_origin(origin)?;
 			Self::do_withdraw_unbonded(derivative_index, num_slashing_spans)?;
 			Ok(())
@@ -710,7 +714,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			derivative_index: DerivativeIndex,
 			targets: Vec<T::AccountId>,
-		) -> DispatchResult {
+		) -> DispatchResult {			
+			// 1. if some safe cases no need to check origins
+			// 2. at some cases inside need to check queue not spammed
+			// 3. in some cases, some risky op is done it should be relay origin
 			Self::ensure_origin(origin)?;
 			Self::do_nominate(derivative_index, targets)?;
 			Ok(())
@@ -1624,7 +1631,7 @@ pub mod pallet {
 			res: Option<(u32, XcmError)>,
 		) -> DispatchResult {
 			use XcmRequest::*;
-
+			// make info, as callbacks are harder to debugs
 			log::trace!(
 				target: "liquidStaking::notification_received",
 				"query_id: {:?}, response: {:?}",
