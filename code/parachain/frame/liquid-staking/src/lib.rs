@@ -1044,7 +1044,7 @@ pub mod pallet {
 			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// seems buggy, either users looses token on mints token
+
 			FastUnstakeRequests::<T>::try_mutate(&who, |b| -> DispatchResultWithPostInfo {
 				use frame_support::traits::tokens::{Fortitude, Preservation};
 				let keep_alive = false;
@@ -1100,6 +1100,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			unstaker_list: Vec<T::AccountId>,
 		) -> DispatchResult {
+			// no need to check signed
 			Self::ensure_origin(origin)?;
 			for unstaker in unstaker_list {
 				Self::do_fast_match_unstake(&unstaker)?;
@@ -1140,6 +1141,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			derivative_index: DerivativeIndex,
 		) -> DispatchResult {
+			/// why 
 			let _ = ensure_signed(origin)?;
 			let key = Self::get_staking_ledger_key(derivative_index);
 			Self::deposit_event(Event::<T>::RelaychainStorageProofKey(derivative_index, key));
@@ -1864,6 +1866,7 @@ pub mod pallet {
 		#[require_transactional]
 		fn do_fast_match_unstake(unstaker: &T::AccountId) -> DispatchResult {
 			FastUnstakeRequests::<T>::try_mutate_exists(unstaker, |b| -> DispatchResult {
+				// it is clean to do if let Some() in rust instead of check and expect panics
 				if b.is_none() {
 					return Ok(());
 				}
