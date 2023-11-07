@@ -268,6 +268,21 @@ impl OrderContract<'_> {
 		Ok(Response::default().add_event(order_created))
 	}
 
+	/// hook/crank for cleanup
+	#[msg(exec)]
+	pub fn timeout(&self, ctx: ExecCtx, orders : Vec<OrderId>, solutions : Vec<Addr>) -> Std<Response> {
+		todo!("remove order and send even permissionlessly")
+	}
+
+	/// until order/solution in execution can cancel
+	/// cancellation of order is delayed so solvers can observe it
+	/// can remove up only my orders and solution 
+	#[msg(exec)]
+	pub fn timeout(&self, ctx: ExecCtx, orders : Vec<OrderId>, solution : Option<Addr>) -> Std<Response> {
+		todo!("remove order and send event")
+	}
+
+
 	#[msg(exec)]
 	pub fn route(&self, ctx: ExecCtx, msg: RouteSubMsg) -> StdResult<Response> {
 		ensure!(
@@ -489,13 +504,20 @@ impl OrderContract<'_> {
 		for (transfer, order) in cows.into_iter() {
 			let order: OrderItem = self.orders.load(deps.storage, order.u128())?;
 			
-			order.msg.wants.amount -= transfer;
-			order.given.amount -= transfer * order.given.amount / order.msg.wants.amount;
+			order.msg.wants.amount -= transfer.amount;
+			order.given.amount -= transfer.amount * order.given.amount / order.msg.wants.amount;
 			
-			if order.given.is_zero() {
-
-			}
-			self.orders.save(deps.storage, order.order_id.u128(), &order)?;
+			let event = if order.given.is_zero() {
+				
+				Event::new("mantis-order-filled-full")
+					.add_attribute("order_id", order.order_id.to_string())
+			} else {
+				Event::new("mantis-order-filled-parts")
+					.add_attribute("order_id", order.order_id.to_string())
+					.add_attribute("amount", transfer.amount.to_string())
+					self.orders.save(deps.storage, order.order_id.u128(), &order)?;
+			};
+			
 			// for now cross chain tracking not here yet
 		}
 		panic!()
