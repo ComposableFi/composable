@@ -1,14 +1,16 @@
-# Composable IBC
+# Inter-Blockchain Communication Protocol (IBC)
 
-Composable IBC is an extension of the IBC protocol facilitates trustless cross-ecosystem communication among various blockchains, including Polkadot, Kusama, Cosmos and coming soon to Ethereum and Solana.
+In pursuit of its core mission, Composable has made significant strides in developing trust-minimised bridges to facilitate decentralised and non-custodial cross-chain transactions. Composable's approach involves pioneering the extension of the Inter-Blockchain Communication (IBC) protocol and thus establish the framework as the industry standard for cross-ecosystem communication.
+
+While IBC was initially designed for trust-minimised bridging for Cosmos SDK chains, Composable is the first team to extend this protocol to different ecosystems, marking a significant milestone in the cross-chain communication landscape. Composable's innovation is not limited to the Cosmos ecosystem but rather actively leveraging and extending the IBC protocol beyond Cosmos, pushing its boundaries beyond its original scope. 
+
+Composable stands as a pioneer in successfully implementing IBC connectivity between Polkadot and Kusama to Cosmos, including a testnet connection to Ethereum. Future endeavors are aimed at implementing IBC across various ecosystems, ensuring that trust-free cross-chain interactions are accessible to a broader developer and user base. The roadmap includes integrating with user-intensive blockchains such as Solana and Layer 2 networks.
 
 :::tip Trustless Zone Is Live
 
-Use [Trustless Zone](https://app.trustless.zone/) now to transfer assets between Polkadot, Kusama and the Cosmos. Composable IBC is in development stages to its Ethereum and Solana connection while we are actively working on implementing IBC to other blockchains in stealth.
-
+Use [Trustless Zone](https://app.trustless.zone/) now to transfer assets between Polkadot, Kusama and the Cosmos. IBC to Ethereum is currently in Testnet stages and IBC to Solana is in active development.
 :::
 
-Composable IBC leverages and expands upon the existing Inter-Blockchain Communication Protocol (IBC) beyond Cosmos. The IBC protocol previously allowed for trust-minimised bridging between Cosmos SDK chains; however, Composable is the first team to extend IBC to a different ecosystem. 
 
 IBC supports asset transfers (fungible tokens, non-fungible tokens), generic message passing, cross-chain contract calls, cross-chain fee payments, interchain collateralization and more in a trustless manner. The trustless condition of IBC is due to the fact it is:
 
@@ -22,7 +24,7 @@ IBC supports asset transfers (fungible tokens, non-fungible tokens), generic mes
 To implement IBC on a blockchain, three essential components, collectively referred to as the IBC stack are required. First, you require an implementation of the IBC protocol in the programming language that the underlying blockchain uses. Second, a light client is essential and finally, you'll need the support of an IBC relayer.
 
 ## IBC Implementations
-This refers to the connection and packet level integration of the IBC implementation. It enables the protocol to establish handshake-based connections to securely process and interpret IBC opaque data packets between different blockchains. In production, there are only two implementations of this core IBC functionality. The first implementation is the original `ibc-go`, which is specifically designed for Cosmos SDK chains written in Golang. The second implementation is [`ibc-rs`](https://github.com/ComposableFi/centauri/tree/master/ibc/modules), an implementation of the IBC protocol for Rust based blockchains. It's worth noting that, among all the IBC-enabled chains in production, the majority use `ibc-go`, with the exceptions being Composable Polkadot, Picasso, and Composable's Cosmos chain.
+This refers to the connection and packet level integration of the IBC implementation. It enables the protocol to establish handshake-based connections to securely process and interpret IBC opaque data packets between different blockchains. In production, there are only two implementations of this core IBC functionality. The first implementation is the original `ibc-go`, which is specifically designed for Cosmos SDK chains written in Golang. The second implementation is [`ibc-rs`](https://github.com/ComposableFi/centauri/tree/master/ibc/modules), an implementation of the IBC protocol for Rust based blockchains. It's worth noting that, among all the IBC-enabled chains in production, the majority use `ibc-go`, with the exceptions being Composable Polkadot, Picasso, and Composable Cosmos.
 
 ## [Light Clients](./composable-ibc/light-clients.md) 
 

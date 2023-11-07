@@ -41,6 +41,7 @@
            items: [
              "user-guides/polkadotjs-extension-create-account",
              "user-guides/talisman-create-account",
+             "user-guides/keplr-guide",
              "user-guides/layr-guide",
            ],
          },
@@ -59,7 +60,6 @@
              "user-guides/composable-cosmos-staking",
              "user-guides/centauri-guide",
              "user-guides/centauri-transfers",
-             "user-guides/keplr-guide",
            ],
          },
          {
@@ -166,60 +166,45 @@
    architecture: [
     {
     type: "category",
-       label: "Composable IBC",
+       label: "IBC",
        link: {
          type: "doc",
-         id: "technology/composable-ibc",
+         id: "technology/ibc",
        },
        collapsible: false,
        collapsed: false,
        items: [
-        "technology/composable-ibc/cosmos-ibc",
-        "technology/composable-ibc/polkadot-kusama-ibc",
-        "technology/composable-ibc/ethereum-ibc",
-        "technology/composable-ibc/near-ibc-bridge",
-        "technology/composable-ibc/hyperspace-relayer",
-        "technology/composable-ibc/light-clients",
-        "technology/composable-ibc/merkle-mountain-ranges",
-        "technology/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
+        "technology/ibc/cosmos-ibc",
+        "technology/ibc/polkadot-kusama-ibc",
+        "technology/ibc/ethereum-ibc",
+        "technology/ibc/near-ibc-bridge",
+        "technology/ibc/hyperspace-relayer",
+        "technology/ibc/light-clients",
+        "technology/ibc/merkle-mountain-ranges",
+        "technology/ibc/beefy-light-client",
        ],
       },
 
-      "technology/cvm",
+    {
+      type: "category",
+          label: "CVM",
+          link: {
+           type: "doc",
+            id: "technology/cvm",
+         },
+        collapsible: false,
+        collapsed: false,
+        items: [
+        "technology/cvm/specification",
+        "technology/cvm/virtual-wallet",
+        "technology/cvm/tutorial",
    ],
-   
+  },
+],
    develop: [
     {
       type: "doc",
       id: "developer-guides/build-on-composable",
-    },  
-    {
-      type: "category",
-      label: "Cosmwasm Orchestrate",
-      link: {
-        type: "doc",
-        id: "developer-guides/cosmwasm-orchestrate",
-      },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        {
-          type: "category",
-          label: "Concepts",
-          link: {
-            type: "doc",
-            id: "developer-guides/cosmwasm/cw-orchestrate/concepts/concepts",
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch",
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers",
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler",
-          ],
-        },
-        "developer-guides/cosmwasm/cw-orchestrate/tutorial-dex",
-      ],
     },
     {
       type: "category",
