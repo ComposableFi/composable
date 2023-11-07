@@ -24,6 +24,9 @@ pub type OrderId = Uint128;
 pub type NetworkId = u32;
 pub type Blocks = u32;
 
+/// each CoW solver locally, is just transfer from shared pair bank with referenced order
+type CowFilledOrder = (Coin, OrderId);
+
 /// each pair waits ate least this amount of blocks before being decided
 pub const BATCH_EPOCH: u32 = 1;
 
@@ -188,6 +191,13 @@ pub struct OrderContract<'a> {
 	pub cvm_address: Item<'a, String>,
 }
 
+/// when solution is applied to order item,
+/// what to ask from host to do next
+struct CowFillResult {
+	pub bank_msg: BankMsg,
+	pub event: Event,
+}
+
 pub type Denom = String;
 pub type Pair = (Denom, Denom);
 pub type SolverAddress = String;
@@ -263,6 +273,30 @@ impl OrderContract<'_> {
 			Event::new("mantis-order-created").add_attribute("order_id", order_id.to_string());
 		ctx.deps.api.debug(&format!("mantis::order::created: {:?}", order));
 		Ok(Response::default().add_event(order_created))
+	}
+
+	/// hook/crank for cleanup
+	#[msg(exec)]
+	pub fn timeout(
+		&self,
+		_ctx: ExecCtx,
+		_orders: Vec<OrderId>,
+		_solutions: Vec<Addr>,
+	) -> StdResult<Response> {
+		todo!("remove order and send even permissionlessly")
+	}
+
+	/// until order/solution in execution can cancel
+	/// cancellation of order is delayed so solvers can observe it
+	/// can remove up only my orders and solution
+	#[msg(exec)]
+	pub fn cancel(
+		&self,
+		_ctx: ExecCtx,
+		_orders: Vec<OrderId>,
+		_solution: Option<Addr>,
+	) -> StdResult<Response> {
+		todo!("remove order and send event")
 	}
 
 	#[msg(exec)]
@@ -373,7 +407,7 @@ impl OrderContract<'_> {
 		let mut a_in = 0;
 		let mut b_in = 0;
 		let mut transfers = vec![];
-		let mut solution_item = possible_solution;
+		let mut solution_item: SolutionItem = possible_solution;
 		for solution in all_solutions {
 			let alternative_all_orders = self.merge_solution_with_orders(&solution.msg, &ctx)?;
 			let a_total_in: u128 = alternative_all_orders
@@ -383,12 +417,12 @@ impl OrderContract<'_> {
 				.sum();
 			let b_total_in: u128 = alternative_all_orders
 				.iter()
-				.filter(|x| x.given().denom == b)
+				.filter(|x: &&SolvedOrder| x.given().denom == b)
 				.map(|x| x.given().amount.u128())
 				.sum();
-			// so do all cows up to bank
+
 			let alternative_transfers = solves_cows_via_bank(
-				alternative_all_orders.clone(),
+				&alternative_all_orders.clone(),
 				a.clone(),
 				a_total_in,
 				b_total_in,
@@ -422,11 +456,13 @@ impl OrderContract<'_> {
 		let solution_chosen = Event::new("mantis-solution-chosen")
 			.add_attribute("pair", format!("{}{}", a, b))
 			.add_attribute("solver", ctx.info.sender.to_string());
+		let transfers = self.fill(ctx.deps.storage, transfers)?;
 		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
-		Ok(response
-			.add_messages(transfers)
-			.add_event(solution_upserted)
-			.add_event(solution_chosen))
+		for transfer in transfers {
+			response = response.add_message(transfer.bank_msg);
+			response = response.add_event(transfer.event);
+		}
+		Ok(response.add_event(solution_upserted).add_event(solution_chosen))
 	}
 
 	fn merge_solution_with_orders(
@@ -469,18 +505,54 @@ impl OrderContract<'_> {
 			.map(|r| r.map(|(_, x)| x))
 			.collect()
 	}
+
+	/// (partially) fills orders.
+	/// Returns relevant transfers and sets proper tracking info for remaining cross chain
+	/// execution. Orders which are in cross chain execution are "locked", users cannot cancel them
+	/// or take funds back during execution (because funds are moved).
+	fn fill(
+		&self,
+		storage: &mut dyn Storage,
+		cows: Vec<CowFilledOrder>,
+	) -> StdResult<Vec<CowFillResult>> {
+		let mut results = vec![];
+		for (transfer, order) in cows.into_iter() {
+			let mut order: OrderItem = self.orders.load(storage, order.u128())?;
+
+			order.msg.wants.amount -= transfer.amount;
+			order.given.amount -= transfer.amount * order.given.amount / order.msg.wants.amount;
+
+			let event = if order.given.amount.is_zero() {
+				self.orders.remove(storage, order.order_id.u128());
+				Event::new("mantis-order-filled-full")
+					.add_attribute("order_id", order.order_id.to_string())
+			} else {
+				self.orders.save(storage, order.order_id.u128(), &order)?;
+				Event::new("mantis-order-filled-parts")
+					.add_attribute("order_id", order.order_id.to_string())
+					.add_attribute("amount", transfer.amount.to_string())
+			};
+			let transfer =
+				BankMsg::Send { to_address: order.owner.to_string(), amount: vec![transfer] };
+			results.push(CowFillResult { bank_msg: transfer, event });
+		}
+		Ok(results)
+	}
 }
 
+/// given all orders amounts aggregated into common pool,
+/// ensure that solution does not violates this pull
+/// and return proper action to handle settling funds locally according solution
 fn solves_cows_via_bank(
-	mut all_orders: Vec<SolvedOrder>,
+	all_orders: &Vec<SolvedOrder>,
 	a: String,
 	a_total_in: u128,
 	b_total_in: u128,
-) -> Result<Vec<BankMsg>, StdError> {
+) -> Result<Vec<CowFilledOrder>, StdError> {
 	let mut a_total_in = BigRational::from_integer(a_total_in.into());
 	let mut b_total_in = BigRational::from_integer(b_total_in.into());
 	let mut transfers = vec![];
-	for order in all_orders.iter_mut() {
+	for order in all_orders.iter() {
 		let cowed = order.solution.cow_amount;
 		let amount = Coin { amount: cowed.into(), ..order.given().clone() };
 
@@ -491,8 +563,8 @@ fn solves_cows_via_bank(
 		} else {
 			b_total_in -= BigRational::from_integer(cowed.u128().into());
 		};
-		transfers
-			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
+
+		transfers.push((amount, order.order.order_id));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
 		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
