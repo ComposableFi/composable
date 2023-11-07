@@ -70,10 +70,7 @@ pub struct BaseCallFilter;
 impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(
-				call,
-				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_)
-			))
+			matches!(call, RuntimeCall::Tokens(_) | RuntimeCall::Indices(_)))
 	}
 }
 use call_filter::{CallFilterEntry, CallFilterHook};
