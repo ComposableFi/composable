@@ -1,102 +1,79 @@
-/// example usage of MANTIS contracts
-import { CwXcCoreClient } from "./dist/cw-xc-core/CwXcCore.client.js"
+/// example usage of MANTIS batch auction order contract
+/// for CosmWasm usage see
+/// - https://github.com/cosmos/cosmjs/blob/main/packages/cosmwasm-stargate/src/signingcosmwasmclient.spec.ts
+/// - https://github.com/CosmWasm/ts-codegen
+import { CwMantisOrderClient } from "./dist/cw-mantis-order/CwMantisOrder.client.js"
 import { GasPrice } from "@cosmjs/stargate"
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate"
-
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin.js";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing"
+import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin.js"
 
 const print = console.info
 
 print("creating wallet")
 const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    // replace with your key
     "apart ahead month tennis merge canvas possible cannon lady reward traffic city hamster monitor lesson nasty midnight sniff enough spatial rare multiply keep task",
     {
-        // ensure this prefix is actual
         prefix: "centauri",
     }
-);
+)
 
-/// at least one account must be created with address to use as sender
 const sender = (await wallet.getAccounts())[0].address
 print(sender)
 
-print("creating RPC client")
-// replace with RPC use really use, this RPC may not work at point you call it"
 const rawClient = await SigningCosmWasmClient.connectWithSigner("https://rpc.composable.nodestake.top:443", wallet,
     {
         gasPrice: GasPrice.fromString("0.25ppica")
     })
 
-print("checking CVM contract deployed")
+const client = new CwMantisOrderClient(rawClient, sender, "centauri1c676xpc64x1lxjfsvpn7ajw2agutthe75553ws45k3ld26vy8pts0w203g")
 
-/// update sender according you wallet and contract address in official public CVM docs
-const client = new CwXcCoreClient(rawClient, sender, "centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g")
-/// check official docs about PICA asset id 
-const PICA = await client.getAssetById({ assetId: "158456325028528675187087900673" });
-print(PICA)
+const give = "1100000000"
+const wants = "1000000000"
+
+print("one side of want")
+const ppica = Coin.fromPartial({ denom: "ppica", amount: give })
+print(await client.order({
+    msg: {
+        timeout: 100,
+        wants: {
+            denom: "pdemo",
+            amount: wants,
+        },
+    }
+},
+    "auto",
+    null,
+    [ppica]
+))
 
 
-// this program creates random orders in loop from one of several well known assets
+print("other side of want")
+const pdemo = Coin.fromPartial({ denom: "pdemo", amount: give })
+print(await client.order({
+    msg: {
+        timeout: 100,
+        wants: {
+            denom: "ppica",
+            amount: wants,
+        },
+    }
+},
+    "auto",
+    null,
+    [pdemo]
+))
 
-while (true) {
-    // randomize asset 
-    // randomize limits
-        
+print("observer that give and want of one is more than want and less than give of other")
+const orders = await client.getAllOrders()
+print(orders)
+
+if (
+    orders[0].given.amount > orders[1].msg.wants.amount &&
+    orders[1].given.amount > orders[0].msg.wants.amount) {
+    print("solver run in background and finds all such matches by limits and coins and sends solutions to contract as COWs")
+} else {
+    print("solver will send cross chain swaps")
 }
 
-
-print("let transfer PICA Centaur to Osmosis")
-const msg = {
-    executeProgram: {
-        assets: [
-            ["158456325028528675187087900673", "123456789000"]
-        ],
-        salt: "737061776e5f776974685f6173736573",
-        program: {
-            tag: "737061776e5f776974685f6173736574",
-            instructions: [
-                {
-                    spawn: {
-                        network_id: 3,
-                        salt: "737061776e5f776974685f6173736574",
-                        assets: [
-                            [
-                                "158456325028528675187087900673",
-                                {
-                                    amount: {
-                                        intercept: "123456789000",
-                                        slope: "0"
-                                    },
-                                    is_unit: false
-                                }
-                            ]
-                        ],
-                        program: {
-                            tag: "737061776e5f776974685f6173736574",
-                            instructions: [
-                                // so we just transferred PICA to Osmosis virtual wallet
-                                // you can encode here transfer to account on Osmosis (from virtual wallet)
-                                // or do exchange, see swap-pica-to-osmosis.json
-                                // or do raw calls of contracts as per specification
-                                // just fill in instructions according shape
-                            ]
-                        }
-                    }
-                }
-            ]
-        }
-
-    },
-    tip: "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k",
-}
-
-const coin = Coin.fromPartial({ denom: "ppica", amount: "123456789000" })
-const result = await client.executeProgram(msg, "auto", null, [coin])
-
-print(result)
-
-// will pair code with @bengalmozzi order contract - which is simpler
-// i mostly used this one as example https://github.com/cosmos/cosmjs/blob/main/packages/cosmwasm-stargate/src/signingcosmwasmclient.spec.ts
-
+print("...observe events or query order with you order until it solved or timeouts")
