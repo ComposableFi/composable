@@ -118,7 +118,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 5]
 			min_approval: Curve::make_reciprocal(2, 10, percent(80), percent(50), percent(100)),
 			min_support: Curve::make_reciprocal(5, 10, percent(10), percent(0), percent(50)),
 			#[cfg(feature = "fastnet")]
-			decision_deposit:  5 * ONE_PICA,
+			decision_deposit: 5 * ONE_PICA,
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
 			#[cfg(feature = "fastnet")]
@@ -147,7 +147,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 5]
 			min_approval: Curve::make_reciprocal(2, 10, percent(80), percent(50), percent(100)),
 			min_support: Curve::make_reciprocal(1, 10, percent(1), percent(0), percent(10)),
 			#[cfg(feature = "fastnet")]
-			decision_deposit:  10 * ONE_PICA,
+			decision_deposit: 10 * ONE_PICA,
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
 			#[cfg(feature = "fastnet")]
@@ -176,7 +176,7 @@ const TRACKS_DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 5]
 			min_approval: Curve::make_reciprocal(2, 10, percent(80), percent(50), percent(100)),
 			min_support: Curve::make_reciprocal(1, 10, percent(1), percent(0), percent(10)),
 			#[cfg(feature = "fastnet")]
-			decision_deposit:  20 * ONE_PICA,
+			decision_deposit: 20 * ONE_PICA,
 			#[cfg(feature = "fastnet")]
 			prepare_period: 2 * MINUTES,
 			#[cfg(feature = "fastnet")]

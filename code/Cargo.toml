@@ -58,7 +58,7 @@ members = [
   "cvm/cosmwasm/contracts/pingpong",
   "cvm/cosmwasm/tests",
   "cvm/lib/core/",
-  "cvm/crates/cvm/"
+  "cvm/crates/cvm/",
 ]
 resolver = "2"
 
