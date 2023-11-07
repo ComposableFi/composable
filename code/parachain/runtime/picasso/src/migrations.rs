@@ -95,6 +95,7 @@ pub mod migrate_gov {
 			relayer_address,
 		);
 		let accounts = balances::pallet::Locks::<Runtime>::iter()
+			.filter(|(key, locks)| locks.iter().find(|a| a.id == DEMOCRACY_ID).is_some())
 			.map(|(key, locks)| key)
 			.collect::<Vec<_>>();
 
