@@ -196,7 +196,8 @@
         collapsed: false,
         items: [
         "technology/cvm/specification",
-        "technology/ibc/tutorial",
+        "technology/cvm/virtual-wallet",
+        "technology/cvm/tutorial",
    ],
   },
    
