@@ -1140,8 +1140,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_block_number: T::BlockNumber) -> frame_support::weights::Weight {
 			let mut weight = <T as Config>::WeightInfo::on_initialize();
-			let relaychain_block_number =
-				T::RelayChainValidationDataProvider::current_block_number();
+			// let relaychain_block_number =
+			// 	T::RelayChainValidationDataProvider::current_block_number();
+
+			let relaychain_block_number = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			let mut do_on_initialize = || -> DispatchResult {
 				if !Self::is_matched() &&
 					T::ElectionSolutionStoredOffset::get()
