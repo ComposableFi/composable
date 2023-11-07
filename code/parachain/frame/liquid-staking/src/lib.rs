@@ -274,6 +274,11 @@ pub mod pallet {
 			staking_ledger: StakingLedger<T::AccountId, BalanceOf<T>>,
 			proof: Vec<Vec<u8>>,
 		},
+
+		OnInitializeHook{
+			relay_block_number : BlockNumberFor<T>,
+			era : u32,
+		}
 	}
 
 	#[pallet::error]
@@ -1135,8 +1140,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_block_number: T::BlockNumber) -> frame_support::weights::Weight {
 			let mut weight = <T as Config>::WeightInfo::on_initialize();
-			let relaychain_block_number =
-				T::RelayChainValidationDataProvider::current_block_number();
+			// let relaychain_block_number =
+			// 	T::RelayChainValidationDataProvider::current_block_number();
+
+			let relaychain_block_number = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			let mut do_on_initialize = || -> DispatchResult {
 				if !Self::is_matched() &&
 					T::ElectionSolutionStoredOffset::get()
@@ -1148,6 +1155,7 @@ pub mod pallet {
 				}
 
 				let offset = Self::offset(relaychain_block_number);
+				Self::deposit_event(Event::<T>::OnInitializeHook { relay_block_number: relaychain_block_number, era : offset });
 				if offset.is_zero() {
 					return Ok(());
 				}
@@ -1789,6 +1797,7 @@ pub mod pallet {
 				&offset,
 			);
 
+			let relay_block_number: BlockNumberFor<T> = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			EraStartBlock::<T>::put(T::RelayChainValidationDataProvider::current_block_number());
 			CurrentEra::<T>::mutate(|e| *e = e.saturating_add(offset));
 
