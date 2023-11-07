@@ -83,10 +83,10 @@ impl<S: Get<u32>> CallFilterHook<S> for FilterCustomHook {
 	}
 	#[inline(always)]
 	fn disable_hook(entry: &CallFilterEntry<S>) -> DispatchResult {
-		if (entry.pallet_name.clone().into_inner() != b"Referenda".to_vec() &&
+		if entry.pallet_name.clone().into_inner() != b"Referenda".to_vec() &&
 			entry.pallet_name.clone().into_inner() != b"Sudo".to_vec() &&
 			entry.pallet_name.clone().into_inner() != b"Whitelist".to_vec() &&
-			entry.pallet_name.clone().into_inner() != b"ConvictionVoting".to_vec())
+			entry.pallet_name.clone().into_inner() != b"ConvictionVoting".to_vec()
 		{
 			Ok(())
 		} else {
