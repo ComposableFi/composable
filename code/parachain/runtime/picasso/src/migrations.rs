@@ -15,8 +15,14 @@ pub type Migrations = (
 	scheduler::migration::v3::MigrateToV4<Runtime>,
 	multisig::migrations::v1::MigrateToV1<Runtime>,
 	vesting::migrations::VestingV0ToV1<Runtime>,
-	frame_support::migrations::RemovePallet<DemocracyPalletName, <Runtime as frame_system::Config>::DbWeight>,
-	frame_support::migrations::RemovePallet<OpenGovPalletName, <Runtime as frame_system::Config>::DbWeight>,
+	frame_support::migrations::RemovePallet<
+		DemocracyPalletName,
+		<Runtime as frame_system::Config>::DbWeight,
+	>,
+	frame_support::migrations::RemovePallet<
+		OpenGovPalletName,
+		<Runtime as frame_system::Config>::DbWeight,
+	>,
 );
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
@@ -67,18 +73,34 @@ pub mod migrate_gov {
 	use super::*;
 	use frame_support::traits::{GetStorageVersion, StorageVersion};
 
+	use frame_support::traits::LockableCurrency;
 	use hex_literal::hex;
 	use sp_runtime::AccountId32;
-
 	pub struct MigrateGov;
 
 	const REFERENDA_V2: StorageVersion = StorageVersion::new(2);
+	const DEMOCRACY_ID: LockIdentifier = *b"democrac";
 
 	fn migrate() -> Weight {
 		// set key for relayer committee
-		let relayer_address = sp_runtime::MultiAddress::Id(AccountId32::from(hex!("868232e15789eaae263d655db7d222fcf5ffa5f6f8da4e46d32609312fcf6e60")));
-		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(frame_system::RawOrigin::Root.into(), relayer_address.clone());
-		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(frame_system::RawOrigin::Root.into(), relayer_address);
+		let relayer_address = sp_runtime::MultiAddress::Id(AccountId32::from(hex!(
+			"868232e15789eaae263d655db7d222fcf5ffa5f6f8da4e46d32609312fcf6e60"
+		)));
+		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(
+			frame_system::RawOrigin::Root.into(),
+			relayer_address.clone(),
+		);
+		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(
+			frame_system::RawOrigin::Root.into(),
+			relayer_address,
+		);
+		let accounts = balances::pallet::Locks::<Runtime>::iter()
+			.map(|(key, locks)| key)
+			.collect::<Vec<_>>();
+
+		for account in accounts {
+			<Balances as LockableCurrency<AccountId>>::remove_lock(DEMOCRACY_ID, &account);
+		}
 		Weight::from_parts(100_000, 0)
 	}
 

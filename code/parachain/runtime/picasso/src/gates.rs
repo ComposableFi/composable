@@ -7,10 +7,7 @@ use common::{
 	MaxStringSize, HOURS,
 };
 use composable_traits::account_proxy::ProxyType;
-use frame_support::{
-	parameter_types,
-	traits::InstanceFilter, pallet_prelude::DispatchResult,
-};
+use frame_support::{pallet_prelude::DispatchResult, parameter_types, traits::InstanceFilter};
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
 use sp_runtime::Perbill;
@@ -79,8 +76,8 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 			))
 	}
 }
-use call_filter::{CallFilterHook, CallFilterEntry};
-pub struct FilterCustomHook; 
+use call_filter::{CallFilterEntry, CallFilterHook};
+pub struct FilterCustomHook;
 
 impl<S: Get<u32>> CallFilterHook<S> for FilterCustomHook {
 	#[inline(always)]
@@ -89,12 +86,15 @@ impl<S: Get<u32>> CallFilterHook<S> for FilterCustomHook {
 	}
 	#[inline(always)]
 	fn disable_hook(entry: &CallFilterEntry<S>) -> DispatchResult {
-		if (entry.pallet_name.clone().into_inner() != b"Referenda".to_vec() && entry.pallet_name.clone().into_inner() != b"Sudo".to_vec() && entry.pallet_name.clone().into_inner() != b"Whitelist".to_vec() && entry.pallet_name.clone().into_inner() != b"ConvictionVoting".to_vec()) {
+		if (entry.pallet_name.clone().into_inner() != b"Referenda".to_vec() &&
+			entry.pallet_name.clone().into_inner() != b"Sudo".to_vec() &&
+			entry.pallet_name.clone().into_inner() != b"Whitelist".to_vec() &&
+			entry.pallet_name.clone().into_inner() != b"ConvictionVoting".to_vec())
+		{
 			Ok(())
 		} else {
 			Err(sp_runtime::DispatchError::Other("Can't filter"))
 		}
-		
 	}
 }
 

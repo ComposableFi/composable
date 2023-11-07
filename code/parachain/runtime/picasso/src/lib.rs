@@ -829,7 +829,6 @@ mod benches {
 		[proxy, Proxy]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
-		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
 	);
