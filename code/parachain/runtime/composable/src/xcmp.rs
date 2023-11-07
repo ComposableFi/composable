@@ -109,12 +109,26 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 	}
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowKnownQueryResponsesSubstituteQuerierIfNone<PolkadotXcm>,
-	AllowSubscriptionsFrom<ParentOrSiblings>,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-);
+pub struct AllowAll;
+impl ShouldExecute for AllowAll {
+	fn should_execute<RuntimeCall>(
+		_origin: &MultiLocation,
+		_instructions: &mut [Instruction<RuntimeCall>],
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ProcessMessageError> {
+		Ok(())
+	}
+
+}
+
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowKnownQueryResponsesSubstituteQuerierIfNone<PolkadotXcm>,
+// 	AllowSubscriptionsFrom<ParentOrSiblings>,
+// 	AllowTopLevelPaidExecutionFrom<Everything>,
+// );
+pub type Barrier = AllowAll;
 
 pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 

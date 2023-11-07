@@ -165,6 +165,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::XcmWeightFeeUpdated(xcm_weight_fee_misc));
 			Ok(())
 		}
+		
 	}
 }
 
@@ -337,7 +338,6 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 				Self::refund_location(),
 				xcm_weight_fee_misc.fee,
 			)?;
-			let msg_new = msg.clone();
 			let call = RelaychainCall::<T>::Utility(Box::new(UtilityCall::AsDerivative(
 				UtilityAsDerivativeCall {
 					index,
@@ -358,7 +358,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 				T::NotifyTimeout::get(),
 			)?;
 
-			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg_new) {
+			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
 				return Err(Error::<T>::SendFailure.into());
 			}
 
@@ -385,8 +385,6 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 				xcm_weight_fee_misc.fee,
 			)?;
 
-			let msg_new = msg.clone();
-
 			let call = RelaychainCall::<T>::Utility(Box::new(UtilityCall::AsDerivative(
 				UtilityAsDerivativeCall {
 					index,
@@ -404,7 +402,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 				T::NotifyTimeout::get(),
 			)?;
 
-			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg_new) {
+			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
 				return Err(Error::<T>::SendFailure.into());
 			}
 
