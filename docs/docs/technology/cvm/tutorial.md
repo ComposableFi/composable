@@ -1,80 +1,87 @@
-# Overview
+# CVM Tutorial
 
-This document describes basic usage of CVM on CosmWasm from command line and TypeScript Node environment.
+This document provides an introductory tutorial on the fundamental utilisation of the Composable Virtual Machine (CVM), both from the Command Line Interface (CLI) and the TypeScript Node environment.
 
-It does not teaches you basics of Cosmos nor CosmWasm nor blockchain, but references some relevant information.
+Please note that this document assumes prior knowledge of Cosmos, CosmWasm, and blockchain fundamentals. It serves as a reference for users already acquainted with these concepts and aims to provide guidance on working with CVM.
 
 ## Prerequisites
 
-You aware in generate how to interact with CosmWasm contracts. If not, please follow official guides on test contracts.
+Ensure that you have a clear understanding of how to interact with CosmWasm contracts. If you're unfamiliar with this process, we recommend referring to the official test contract guides.
 
-You know how to call Cosmos RPC via CLI(see guides Wasmd/Osmosis/Notional) or TS. If not, please follow official guides. On mainnet you may consider Celatone.
+Additionally, make sure you are well-versed in how to make Cosmos RPC calls via the CLI. If you need assistance, consider consulting the official guides or reaching out on the Composable Discord. For mainnet usage, you may want to explore Celatone as an option.
 
-You are aware of Bech32 encoding of accounts and IBC prefixed assets in Cosmos.
+Lastly, it's important to be aware of Bech32 encoding for accounts and the use of IBC prefixed assets within the Cosmos ecosystem. 
 
-### On mainnet chain
+### On Mainnet
 
 | chain     | stage   | id                                                                  |
 | --------- | ------- | ------------------------------------------------------------------- |
 | osmosis-1 | mainnet | osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql     |
-| centauri  | mainnet | centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g |
+| centauri-1  | mainnet | centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g |
 
-On devnets, there just CVM conracts, so can get their address via logs in `/tmp/composable-devnet/` or via RPC.
+If you are interacting with CVM contracts on the Devnet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 
-I maintained all latest idenfiers and mapping in [global configration file](./cvm.json).
+All of the latest idenfiers and mapping can be found in the [CVM global configration file](https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.json).
 
 ### Shells
 
-You have followed official guides of Osmosis and Centauri to setup their mainnet shells.
+Ensure that you have diligently followed the official setup guides provided for Osmosis and Composable Cosmos mainnet shells.
 
-Optionally, you can use nix too [nix](../../docs/docs/nix.md) according docs. 
-You can `nix develop "composable#centauri-devnet" --impure` to get devnet shell, same for `osmosis` and `mainnet` variants.
+Optionally, for those familiar with Nix and interested in leveraging it, consult the [Nix documentation](../../docs/docs/nix.md) for detailed instructions. To run a development network shell, you can execute the following commands:
 
+For Composable Cosmos Devnet:
+
+```
+nix develop "composable#centauri-devnet" --impure
+```
+
+For Osmosis Devnet:
+```
+nix develop "composable#osmosis-devnet" --impure
+```
+
+For Composable Cosmos Mainnet:
+```
+nix develop "composable#centauri-mainnet" --impure
+```
+
+For Osmosis Mainnet:
+```
+nix develop "composable#centauri-mainnet" --impure
+```
 
 ### Assets
 
-You must have PICA and (optional) DOT. Please follow multi hop guide to transfer amount amounts.
+Please follow the multi-hop guide to transfer PICA or DOT (optional). 
 
-On DevNet, `bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort`(which is validator too) has some PICA on start.
-
+For access to tokens on Devnet, you can request tokens via the #cvm-mantis-dev-chat channel on the Composable discord.
 
 ## End to end
 
-These steps given that the user has send tx from Centauri to osmosis with PICA and swaps its to OSMO on Osmosis.
+The following steps outline a user's transaction journey: sending PICA from Composable Cosmos to Osmosis swapping them for OSMO. Identifiers for a similar process with DOT will be released in the near future, but these steps must be manually replicated.
 
-Identifiers for same flow with DOT are provided later, but left for manual repeating.
+Additionally, this documentation includes commonly utilised queries for obtaining the state of the CVM in both a general context and for specific users.
 
-Also common queries to get state of CVM in general and specific user are described. 
-
-Finally, program to handle stuck funds (in case of cross chain message failure) is given. In short, that is just transfer program.
-
-### Recording 
-
-
-You can find how devnet runs end to end here https://www.youtube.com/watch?v=_nMD407E3F4
-
-You can find how mainnet rns end to end here https://www.youtube.com/watch?v=kxLkKzYW2xw
-
-As of time of writing testnet is not ready for cross chain. So no recording.
+Finally, a program to address situations where funds become stuck due to cross-chain message failures is given. This is simply a transfer program
 
 #### Prominent identifiers
 
-PICA on Centauri is 158456325028528675187087900673
-OSMO on Centauri is 158456325028528675187087900674
-DOT on Centauri is 158456325028528675187087900675
+PICA on Composable Cosmos is 158456325028528675187087900673
+OSMO on Composable Cosmos is 158456325028528675187087900674
+DOT on Composable Cosmos is 158456325028528675187087900675
 
 PICA on Osmosis is 237684487542793012780631851009
 OSMO on Osmosis is 237684487542793012780631851010
 DOT on Osmosis is 237684487542793012780631851011
 
 
-PICA<->OSMO on Osmosis is 237684489387467420151587012609
-PICA<->DOT on Osmosis is 237684489387467420151587012610
+PICA <-> OSMO on Osmosis is 237684489387467420151587012609
+PICA <-> DOT on Osmosis is 237684489387467420151587012610
 
 
-### Bridge Centauri PICA to Osmosis
+### Transfer Composable Cosmos PICA to Osmosis
 
-Execute next message. This message transfer PICA from sender account to CVM and bridges it to Osmosis.
+Executing the following message enables the transfer of PICA from the sender account to the CVM executor contract and then transfers it to Osmosis.
 
 Please read and remove `//` commands before executing.
 
@@ -197,49 +204,49 @@ Please read and remove `//` commands before executing.
 
 This is full execute messages for Wasmd. Please follow Wasmd/Notional/Osmosis how to send message for execution.
 
-As alway - ensure you have funds. If you do not - please trace errors which tell you about this.
+As always - ensure you have funds. If you do not - please trace errors which tell you about this.
 
-If you think something not working. Remove `Exchange` and `Spawn`. Do only `Transfer`, than add back `Exchange`. Observer success on each step.
+If you think something is not working correctly, remove `Exchange` and `Spawn`, and re-attempt the message with only `Transfer` and then only `Exchange` to observe where the error is occuring.
 
-I use `nix run "composable#xc-swap-pica-to-osmo"` the way to above program on devnet.
+The above program can be executed using `nix run "composable#xc-swap-pica-to-osmo"` on devnet.
 
-On `mainet`, after entering `centauri-mainnet` shell, I do this `$BINARY tx wasm execute centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g "$(cat swap-pica-to-osmosis.json)" --from=dz -y --gas=5000000 --amount=123456789000ppica`
+On `mainnet`, after using the `centauri-mainnet` shell, run:
+
+```
+$BINARY tx wasm execute <account> "<json file path>" --from=<wallet name> -y --gas=5000000 --amount=123456789000ppica`
+```
 
 #### Tracing
 
 
-All events are prefixed by `cvm.` as raised by CVM. All logs are prefixed by `cvm::` as logged by CVM contracts.
+All events raised by CVM are prefixed by `cvm.` All logs are prefixed by `cvm::` as logged by CVM contracts.
 
-On sender side look for wasmd `cvm` prefixed events, specifically `cvm.gateway.bridge.track.added` if packet was sent from Centauri.
+On the sender side, look for wasmd `cvm` prefixed events, specifically `cvm.gateway.bridge.track.added` if the packet was sent from Composable Cosmos.
 
-`cvm.interpreter.exchange.succeeded` indicated swap success on Osmosis.
+`cvm.interpreter.exchange.succeeded` indicates the swap was successful on Osmosis.
 
-Events prefixed `cvm.interpreter.` trace deep execution of program in `interpeter`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
+Events prefixed `cvm.interpreter.` trace deep execution of programs in the `interpeter`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
 
 All CVM events are wrapped around by IBC and wasmd modules events as documented by relevant parties.
 
 Some `cvm` events are prefixed with `wasm-` by wasmd. 
 
-Very specific event is 
-`wasm-cvm.interpreter.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
+A very specific event is `wasm-cvm.interpreter.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
 
-This address will be used to query `interpreter` state. 
+This address will be used to query the state of the `interpreter`. 
 
-In generally Celatone and other generalized indexers show execution very well. I happens according to sequence diagram in CVM description.
-
-
+In general, Celatone and other generalised indexers show execution very well. It occurs according to the sequence diagram in the CVM description.
 
 ### Query state of contract 
 
+After the schema is generated, you will be able to view all the queries that can be called. 
 
-So after you generated schema, you will see all queries you can do. 
+You can use the `State` query in the Interpreter to dump the whole state of the interpreter.
 
-Interpreter has `State` query which will dump whole state of interpreter.
-
-You can follow CW20 and Cosmos Bank guide to get amounts of assets on `interpreter` address.
+You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `interpreter` address.
 
 
-Next is example of getting CVM state of `interpreter`:
+The following example is to retrieve the CVM state of the `interpreter`:
 ```sh
 (devenv) bash-5.2$ $BINARY query wasm  contract-state smart centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl '{
 "state" : [] }'
@@ -248,23 +255,23 @@ Next is example of getting CVM state of `interpreter`:
 
 ```
 
-Field details are documented in Rust doc comments and in schema (generated from doc comments).
+Field details are comprehensively documented in Rust doc comments and within the schema, which is generated from these doc comments.
 
+In some instances, failures may arise at the IBC and WASMD levels before the CVM reaches a stage where it can issue events. In such cases, it is recommended to consult the IBC and WASMD guides to monitor the execution process. Utilising indexers like Numia, Mintscan, and Cosmos Indexers can be particularly beneficial in addressing these scenarios. 
 
-Failure can happen on IBC and WASMD level, without CVM executed to point where it can issue events. 
-For this case please follow IBC and WASMD guides to track execution (generalized indexers like Numia, Mintscan and Cosmos Indexer are super useful in this case).
+### CVM Exercise 
 
-### Try 
-
-Replace DOT asset id and DOT<->OSMO pool identifier identifier in `execute` message body. Try execute.
+Replace the asset id for DOT and DOT<->OSMO pool identifier identifier in `execute` message body and then try to execute this.
 
 ### Unstuck funds
 
-Here is program to unstuck funds on `interpreter`.
+Here is a program to release stuck funds on the `interpreter`.
 
-So what it does - it transfers 1 PICA to Osmosis, and than transfer some assets on Osmosis `interpreter` to some account. 
+This transfers 1 PICA to Osmosis, and than transfers some assets on the Osmosis `interpreter` to some account. 
 
-Also `interpreter` implements CW1 proxy contract allowing user to unstuck funds from Osmosis directly (just send CW20 or Bank transfer message on behalf of `interpreter`).
+Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to recover stuck funds from Osmosis directly by simply sending CW20 or Bank transfer messages on behalf of the `interpreter`.
+
+
 
 ```json
             {
@@ -345,6 +352,6 @@ Also `interpreter` implements CW1 proxy contract allowing user to unstuck funds 
 
 You can find types and simple client and CosmWasm JSON schemas in https://www.npmjs.com/package/cvm-cw-types package.
 
-Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/xcvm/index.ts .
+Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/cvm/index.ts .
 
-For usage with React consider generating React state and query integration using cosmwasm client generator from JSON schemas.
+If you are using React, consider generating React `state` and `query` integrations using the CosmWasm client generator from JSON schemas.

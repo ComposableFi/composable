@@ -1,4 +1,4 @@
-# Setting up a Keplr Wallet
+# How to create a Keplr Wallet for Composable Cosmos
 
 ## Download the Keplr extension​
 The following link allows you to download the Keplr extension: https://www.keplr.app/#extension 

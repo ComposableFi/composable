@@ -1,6 +1,6 @@
 # Composable Virtual Machine (CVM)
 
-The Composable Virtual Machine (CVM) is language and execution runtime for cross chain program execution and intents settlement. 
+The Composable Virtual Machine (CVM) is language and execution runtime for cross-chain program execution and intents settlement. 
 The CVM is a orchestration language on top of standards for cross-chain communication, specifically over [IBC](./composable-ibc.md).
 
 ## Summary
