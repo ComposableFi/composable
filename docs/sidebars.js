@@ -200,7 +200,7 @@
         "technology/cvm/tutorial",
    ],
   },
-   
+],
    develop: [
     {
       type: "doc",

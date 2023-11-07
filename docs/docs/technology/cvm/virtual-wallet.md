@@ -92,7 +92,7 @@ The Virtual Wallet streamlines operations, reduces risks, enhances gas efficienc
 4. Consolidate Cross-Chain Operations: Bundles multiple small cross-chain operations into a single transaction for improved efficiency.
 
 
-**The role of Solverse in an example**
+**The role of Solvers in an example**
 
 Alice seeks to exchange her ETH for ATOM on Neutron.
 
