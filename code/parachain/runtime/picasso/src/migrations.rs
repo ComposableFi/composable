@@ -1,13 +1,22 @@
 use crate::{prelude::*, *};
 use frame_support::traits::{GetStorageVersion, StorageVersion};
+use migrate_gov::MigrateGov;
+
+parameter_types! {
+	pub const DemocracyPalletName: &'static str = "Democracy";
+	pub const OpenGovPalletName: &'static str = "OpenGovBalances";
+}
 
 pub type Migrations = (
 	SchedulerMigrationV1toV4,
 	TechCollectiveRenameMigration,
+	MigrateGov,
 	preimage::migration::v1::Migration<Runtime>,
 	scheduler::migration::v3::MigrateToV4<Runtime>,
 	multisig::migrations::v1::MigrateToV1<Runtime>,
 	vesting::migrations::VestingV0ToV1<Runtime>,
+	frame_support::migrations::RemovePallet<DemocracyPalletName, <Runtime as frame_system::Config>::DbWeight>,
+	frame_support::migrations::RemovePallet<OpenGovPalletName, <Runtime as frame_system::Config>::DbWeight>,
 );
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
@@ -51,5 +60,81 @@ impl OnRuntimeUpgrade for TechCollectiveRenameMigration {
 	fn on_runtime_upgrade() -> Weight {
 		move_runtime_pallet::<"TechnicalCollective", 1, TechnicalCommittee>() +
 			move_runtime_pallet::<"TechnicalMembership", 1, TechnicalCommitteeMembership>()
+	}
+}
+
+pub mod migrate_gov {
+	use super::*;
+	use frame_support::traits::{GetStorageVersion, StorageVersion};
+
+	use hex_literal::hex;
+	use sp_runtime::AccountId32;
+
+	pub struct MigrateGov;
+
+	const REFERENDA_V2: StorageVersion = StorageVersion::new(2);
+
+	fn migrate() -> Weight {
+		// set key for relayer committee
+		let relayer_address = sp_runtime::MultiAddress::Id(AccountId32::from(hex!("868232e15789eaae263d655db7d222fcf5ffa5f6f8da4e46d32609312fcf6e60")));
+		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(frame_system::RawOrigin::Root.into(), relayer_address.clone());
+		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(frame_system::RawOrigin::Root.into(), relayer_address);
+		Weight::from_parts(100_000, 0)
+	}
+
+	impl OnRuntimeUpgrade for MigrateGov {
+		fn on_runtime_upgrade() -> Weight {
+			let on_chain_version = <Referenda as GetStorageVersion>::on_chain_storage_version();
+			if on_chain_version < REFERENDA_V2 {
+				StorageVersion::new(2).put::<Referenda>();
+				migrate()
+			} else {
+				<Runtime as system::Config>::DbWeight::get().reads(1)
+			}
+		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use frame_support::{
+		assert_storage_noop, sp_io, storage::unhashed, storage_root, StateVersion, StorageHasher,
+		Twox128,
+	};
+
+	use super::*;
+
+	pub fn new_test_ext() -> sp_io::TestExternalities {
+		let storage = frame_system::GenesisConfig::default()
+			.build_storage::<Runtime>()
+			.expect("in memory test");
+		let mut externalities = sp_io::TestExternalities::new(storage);
+		externalities.execute_with(|| System::set_block_number(1));
+		externalities
+	}
+
+	#[test]
+	fn migration_v1() {
+		new_test_ext().execute_with(|| {
+			let mut old_prefix = Twox128::hash(b"TechnicalCollective").to_vec();
+			old_prefix.append(&mut Twox128::hash(b"whatever").to_vec());
+			unhashed::put_raw(&old_prefix, &[42]);
+
+			let hash_root = storage_root(StateVersion::V1);
+			assert_ne!(
+				TechCollectiveRenameMigration::on_runtime_upgrade(),
+				Weight::from_parts(0, 0)
+			);
+			assert_ne!(hash_root, storage_root(StateVersion::V1));
+			let updated = || {
+				assert_eq!(
+					TechCollectiveRenameMigration::on_runtime_upgrade(),
+					Weight::from_parts(0, 0)
+				)
+			};
+			assert_storage_noop!(updated());
+
+			assert!(unhashed::get_raw(&old_prefix).is_none());
+		});
 	}
 }
