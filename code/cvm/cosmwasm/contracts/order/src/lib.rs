@@ -2,7 +2,7 @@
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
+	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64, DepsMut,
 };
 use cvm::{
 	instruction::ExchangeId,
