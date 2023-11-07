@@ -86,7 +86,7 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-xc-core = { path = "../../../xcvm/lib/core", default-features = false, features = [
+xc-core = { path = "../../../cvm/lib/core", default-features = false, features = [
   "xcm",
 ] }
 reward = { path = "../../frame/reward", default-features = false }

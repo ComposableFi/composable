@@ -89,6 +89,3 @@ const coin = Coin.fromPartial({ denom: "ppica", amount: "123456789000" })
 const result = await client.executeProgram(msg, "auto", null, [coin])
 
 print(result)
-
-// will pair code with @bengalmozzi order contract - which is simpler
-// i mostly used this one as example https://github.com/cosmos/cosmjs/blob/main/packages/cosmwasm-stargate/src/signingcosmwasmclient.spec.ts

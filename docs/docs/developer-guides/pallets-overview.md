@@ -15,7 +15,7 @@ In general, pallets provide a robust and powerful framework to help propel more 
 looking to build the future of DeFi’s primitive, core and application functions. 
 Given that our parachains are the foundational layer that powers our ecosystem, 
 we decided to initially adopt a pallet-centric approach to adding products directly in the runtime of our parachains 
-before launching the Composable XCVM where developers will be able to deploy their applications utilizing cross-chain 
+before launching the Composable CVM where developers will be able to deploy their applications utilizing cross-chain 
 smart contracts. 
 
 Developers and projects hold the ability to deploy as pallets on our chain, 

@@ -123,11 +123,15 @@ impl From<u128> for Balance {
 #[serde(rename_all = "snake_case")]
 pub struct Amount {
 	/// absolute amount
-	#[serde(skip_serializing_if = "Option::is_none", default)]
+	#[serde(skip_serializing_if = "is_default", default)]
 	pub intercept: Displayed<u128>,
 	/// part of MAX_PARTS from remaining after intercept subtraction
-	#[serde(skip_serializing_if = "Option::is_none", default)]
+	#[serde(skip_serializing_if = "is_default", default)]
 	pub slope: Displayed<u64>,
+}
+
+fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+	*value == T::default()
 }
 
 /// Arithmetic errors.

@@ -144,13 +144,3 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 
 ### Videos
 - [![IBC Explained to Cosmonauts Ep. 1](https://img.youtube.com/vi/dYuTYykRhH4/maxresdefault.jpg)](https://youtu.be/dYuTYykRhH4)
-
-
-## XCVM
----
-### Reading Materials
-- [specification](https://github.com/ComposableFi/composable/blob/main/xcvm/SPEC.md)
-
-#### Further Reading
-
-### Videos
