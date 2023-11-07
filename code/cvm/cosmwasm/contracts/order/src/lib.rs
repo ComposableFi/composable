@@ -2,7 +2,7 @@
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
+	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64, DepsMut,
 };
 use cvm::{
 	instruction::ExchangeId,
@@ -23,6 +23,9 @@ pub type Amount = Uint128;
 pub type OrderId = Uint128;
 pub type NetworkId = u32;
 pub type Blocks = u32;
+
+/// each CoW solver locally, is just transfer from shared pair bank with referenced order
+type CowFilledOrder = (Coin, OrderId);
 
 /// each pair waits ate least this amount of blocks before being decided
 pub const BATCH_EPOCH: u32 = 1;
@@ -373,7 +376,7 @@ impl OrderContract<'_> {
 		let mut a_in = 0;
 		let mut b_in = 0;
 		let mut transfers = vec![];
-		let mut solution_item = possible_solution;
+		let mut solution_item: SolutionItem = possible_solution;
 		for solution in all_solutions {
 			let alternative_all_orders = self.merge_solution_with_orders(&solution.msg, &ctx)?;
 			let a_total_in: u128 = alternative_all_orders
@@ -383,12 +386,12 @@ impl OrderContract<'_> {
 				.sum();
 			let b_total_in: u128 = alternative_all_orders
 				.iter()
-				.filter(|x| x.given().denom == b)
+				.filter(|x: &&SolvedOrder| x.given().denom == b)
 				.map(|x| x.given().amount.u128())
 				.sum();
-			// so do all cows up to bank
+			
 			let alternative_transfers = solves_cows_via_bank(
-				alternative_all_orders.clone(),
+				&alternative_all_orders.clone(),
 				a.clone(),
 				a_total_in,
 				b_total_in,
@@ -422,6 +425,7 @@ impl OrderContract<'_> {
 		let solution_chosen = Event::new("mantis-solution-chosen")
 			.add_attribute("pair", format!("{}{}", a, b))
 			.add_attribute("solver", ctx.info.sender.to_string());
+		let transfers = self.fill(&ctx.deps, transfers)?;
 		ctx.deps.api.debug(&format!("mantis-solution-chosen: {:?}", &solution_chosen));
 		Ok(response
 			.add_messages(transfers)
@@ -469,18 +473,47 @@ impl OrderContract<'_> {
 			.map(|r| r.map(|(_, x)| x))
 			.collect()
 	}
+
+
+	
+	struct FillResult {
+
+	}
+
+	/// (partially) fills orders.
+	/// Returns relevant transfers and sets proper tracking info for remaining cross chain execution.
+	/// Orders which are in cross chain execution are "locked", users cannot cancel them or take funds back during execution (because funds are moved).
+	fn fill(&self, deps: &DepsMut, cows: Vec<CowFilledOrder>) -> StdResult<Vec<BankMsg>> {
+		for (transfer, order) in cows.into_iter() {
+			let order: OrderItem = self.orders.load(deps.storage, order.u128())?;
+			
+			order.msg.wants.amount -= transfer;
+			order.given.amount -= transfer * order.given.amount / order.msg.wants.amount;
+			
+			if order.given.is_zero() {
+
+			}
+			self.orders.save(deps.storage, order.order_id.u128(), &order)?;
+			// for now cross chain tracking not here yet
+		}
+		panic!()
+	}
 }
 
+
+/// given all orders amounts aggregated into common pool,
+/// ensure that solution does not violates this pull
+/// and return proper action to handle settling funds locally according solution
 fn solves_cows_via_bank(
-	mut all_orders: Vec<SolvedOrder>,
+	all_orders: &Vec<SolvedOrder>,
 	a: String,
 	a_total_in: u128,
 	b_total_in: u128,
-) -> Result<Vec<BankMsg>, StdError> {
+) -> Result<Vec<CowFilledOrder>, StdError> {
 	let mut a_total_in = BigRational::from_integer(a_total_in.into());
 	let mut b_total_in = BigRational::from_integer(b_total_in.into());
 	let mut transfers = vec![];
-	for order in all_orders.iter_mut() {
+	for order in all_orders.iter() {
 		let cowed = order.solution.cow_amount;
 		let amount = Coin { amount: cowed.into(), ..order.given().clone() };
 
@@ -491,11 +524,14 @@ fn solves_cows_via_bank(
 		} else {
 			b_total_in -= BigRational::from_integer(cowed.u128().into());
 		};
-		transfers
-			.push(BankMsg::Send { to_address: order.owner().to_string(), amount: vec![amount] });
+
+		transfers.push((
+			amount,
+			order.order.order_id,
+		));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
