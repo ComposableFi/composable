@@ -664,8 +664,8 @@ impl vesting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = GeneralAdminOrRoot;
-	type UpdateSchedulesOrigin = GeneralAdminOrRoot;
+	type VestedTransferOrigin = EnsureRoot<Self::AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;

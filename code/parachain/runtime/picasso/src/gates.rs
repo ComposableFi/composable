@@ -72,7 +72,7 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
 			matches!(
 				call,
-				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_)
+				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_)
 			))
 	}
 }
