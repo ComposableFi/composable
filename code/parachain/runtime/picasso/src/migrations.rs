@@ -89,11 +89,13 @@ pub mod migrate_gov {
 		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(
 			frame_system::RawOrigin::Root.into(),
 			relayer_address.clone(),
-		).expect("should add");
+		)
+		.expect("should add");
 		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(
 			frame_system::RawOrigin::Root.into(),
 			relayer_address,
-		).expect("should remove");
+		)
+		.expect("should remove");
 		let accounts = balances::pallet::Locks::<Runtime>::iter()
 			.filter(|(_key, locks)| locks.iter().any(|a| a.id == DEMOCRACY_ID))
 			.map(|(key, _locks)| key)
