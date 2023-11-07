@@ -475,15 +475,17 @@ impl OrderContract<'_> {
 	}
 
 
-	
-	struct FillResult {
-
+	/// when solution is applied to order item, 
+	/// what to ask from host to do next
+	struct CowFillResult {
+		pub bank_msg: BankMsg,
+		pub event : Event,
 	}
 
 	/// (partially) fills orders.
 	/// Returns relevant transfers and sets proper tracking info for remaining cross chain execution.
 	/// Orders which are in cross chain execution are "locked", users cannot cancel them or take funds back during execution (because funds are moved).
-	fn fill(&self, deps: &DepsMut, cows: Vec<CowFilledOrder>) -> StdResult<Vec<BankMsg>> {
+	fn fill(&self, deps: &DepsMut, cows: Vec<CowFilledOrder>) -> StdResult<Vec<CowFillResult>> {
 		for (transfer, order) in cows.into_iter() {
 			let order: OrderItem = self.orders.load(deps.storage, order.u128())?;
 			
