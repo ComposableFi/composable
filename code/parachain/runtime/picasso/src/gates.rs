@@ -9,7 +9,7 @@ use common::{
 use composable_traits::account_proxy::ProxyType;
 use frame_support::{
 	parameter_types,
-	traits::InstanceFilter,
+	traits::InstanceFilter, pallet_prelude::DispatchResult,
 };
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
@@ -75,12 +75,26 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 		!(call_filter::Pallet::<Runtime>::contains(call) ||
 			matches!(
 				call,
-				RuntimeCall::Tokens(_) |
-					RuntimeCall::Indices(_) |
-					RuntimeCall::Treasury(_) |
-					RuntimeCall::Referenda(_) |
-					RuntimeCall::Sudo(_) | RuntimeCall::Whitelist(_)
+				RuntimeCall::Tokens(_) | RuntimeCall::Indices(_) | RuntimeCall::Treasury(_)
 			))
+	}
+}
+use call_filter::{CallFilterHook, CallFilterEntry};
+pub struct FilterCustomHook; 
+
+impl<S: Get<u32>> CallFilterHook<S> for FilterCustomHook {
+	#[inline(always)]
+	fn enable_hook(_: &CallFilterEntry<S>) -> DispatchResult {
+		Ok(())
+	}
+	#[inline(always)]
+	fn disable_hook(entry: &CallFilterEntry<S>) -> DispatchResult {
+		if (entry.pallet_name.clone().into_inner() != b"Referenda".to_vec() && entry.pallet_name.clone().into_inner() != b"Sudo".to_vec() && entry.pallet_name.clone().into_inner() != b"Whitelist".to_vec() && entry.pallet_name.clone().into_inner() != b"ConvictionVoting".to_vec()) {
+			Ok(())
+		} else {
+			Err(sp_runtime::DispatchError::Other("Can't filter"))
+		}
+		
 	}
 }
 
@@ -88,7 +102,7 @@ impl call_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EnableOrigin = EnsureRoot<Self::AccountId>;
 	type DisableOrigin = EnsureRoot<Self::AccountId>;
-	type Hook = ();
+	type Hook = FilterCustomHook;
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;
 }
