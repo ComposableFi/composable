@@ -182,6 +182,12 @@ pub enum SystemCall {
 	Remark(SystemRemarkCall),
 }
 
+#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum WestendSystemCall {
+	#[codec(index = 0)]
+	Remark(SystemRemarkCall),
+}
+
 #[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ProxyProxyCall<RelaychainCall> {
 	pub real: AccountId,
@@ -285,14 +291,30 @@ pub enum PolkadotCall<T: Config> {
 	#[codec(index = 0)]
 	System(SystemCall),
 	#[codec(index = 5)]
-	Balances(BalancesCall<T>),
+	Balances(BalancesCall<T>), //westend uses 4
 	#[codec(index = 7)]
-	Staking(StakingCall<T>),
+	Staking(StakingCall<T>),  // westend uses 6
 	#[codec(index = 26)]
-	Utility(Box<UtilityCall<Self>>),
+	Utility(Box<UtilityCall<Self>>), // westend uses 16
 	#[codec(index = 29)]
 	Proxy(Box<ProxyCall<Self>>),
 	#[codec(index = 73)]
+	Crowdloans(CrowdloansCall<T>),
+}
+
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum WestendCall<T: Config> {
+	#[codec(index = 0)]
+	System(WestendSystemCall),
+	#[codec(index = 4)]
+	Balances(BalancesCall<T>), //westend uses 4
+	#[codec(index = 6)]
+	Staking(StakingCall<T>),  // westend uses 6
+	#[codec(index = 16)]
+	Utility(Box<UtilityCall<Self>>), // westend uses 16
+	#[codec(index = 22)]
+	Proxy(Box<ProxyCall<Self>>),
+	#[codec(index = 64)]
 	Crowdloans(CrowdloansCall<T>),
 }
 
@@ -335,11 +357,15 @@ pub enum XcmCall {
 macro_rules! switch_relay {
     ({ $( $code:tt )* }) => {
         if <T as Config>::RelayNetwork::get() == NetworkId::Polkadot {
-            use crate::ump::PolkadotCall as RelaychainCall;
+            use crate::ump::WestendCall as RelaychainCall;
 
             $( $code )*
         } else if <T as Config>::RelayNetwork::get() == NetworkId::Kusama {
-            use crate::ump::KusamaCall as RelaychainCall;
+            use crate::ump::WestendCall as RelaychainCall;
+
+            $( $code )*
+		} else if <T as Config>::RelayNetwork::get() == NetworkId::Westend {
+            use crate::ump::WestendCall as RelaychainCall;
 
             $( $code )*
         } else {

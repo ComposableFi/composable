@@ -554,7 +554,7 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Westend;
 	pub const XcmHelperPalletId: PalletId = PalletId(*b"com/fees");
 	pub const NotifyTimeout: BlockNumber = 100;
 	// pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
