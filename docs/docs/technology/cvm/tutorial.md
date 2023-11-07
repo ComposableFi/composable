@@ -352,6 +352,6 @@ Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to
 
 You can find types and simple client and CosmWasm JSON schemas in https://www.npmjs.com/package/cvm-cw-types package.
 
-Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/cvm/index.ts .
+Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.ts .
 
 If you are using React, consider generating React `state` and `query` integrations using the CosmWasm client generator from JSON schemas.

@@ -1,108 +1,108 @@
 # Virtual wallet
 
-Virtual wallet is allows user to manage funds on several chains using only one native account on one chain (on wallet).
+The Virtual Wallet allows users to manage funds across multiple networks using a single native account on one designated chain, known as the "wallet" chain.
 
-Virtual wallet is not separate contract, but possible interactions enabled by CVM and MANTIS which allow to handle user intents across domains using only one signature.
+It's important to note that the virtual wallet is not a standalone contract; rather, it leverages the CVM and MANTIS to facilitate the seamless handling of user intentions across different blockchain domains while requiring just one signature from the user.
 
-## Inventing virtual wallet
+## Inventing the Virtual Wallet
 
 ### Problem
 
-`Alice` has only `Ethereum`` wallet and able to pay gas fees here.
+`Alice` only has an `Ethereum` wallet and able to pay gas fees on ETH mainnet.
 
-`Bob`` has only `Cosmos Hub`` wallet and able to pay gas fees here.
+`Bob` only has a `Cosmos` wallet and is able to pay gas fees on the Cosmos Hub.
 
-Alice wants some `Atom` for `ETH`.
+Alice wants to swap some `ATOM` for `ETH`.
 
-Bob wants some `ETH` for `Atom`.
+Bob wants to swap some `ETH` for `ATOM`.
 
-Price for Atom and ETH from Bob and Alice are good for them.
-Amount of `Atom` Alice wants is little bit above than Bob has.   
+Bob and ALice are both satisfied with the price they are willing to exchange ATOM and ETH however, the amount of `ATOM` Alice needs is more than what Bob has to offer.   
 
 **How can we make this exchange happen?**
 
 ### General solution
 
-In order to make exchange happen, first we must ensure that when it happens (atomically) both Alice and Bob assets are available at same time on same domain.
-How that can be made? 
+To enable a secure and atomic exchange, ensuring that both Alice's and Bob's assets are available simultaneously on the same domain, we can employ a 3rd chain, referred to as the "Composable" domain. Here's how it can be achieved:
 
-Alice and Bob escrow their tokens on their source chains, Ethereum and Cosmos Hub, and bridge information about that escrow and its ownership to single domain.
+1. Escrow Tokens: Alice and Bob escrow their respective tokens on their source chains (Ethereum and Cosmos Hub). This process involves locking their assets in a smart contract or escrow mechanism on their respective chains.
 
-Let use 3rd chain, let this domain Composable.
+2. Bridge Information: The next step is to bridge information about the escrow and its ownership from both Ethereum and Cosmos Hub to Composable. This information should include details about the locked assets, ownership, and any conditions required for the exchange.
 
-**We just invented IBC ICS-20 or Polkadot XCM reserve transfer**
+Atomic Exchange: Once the information is successfully bridged to the Composable domain, an atomic exchange can be initiated. This exchange process should ensure that both Alice's and Bob's assets are released simultaneously on the Composable chain, enabling a secure and coordinated transfer.
 
-So when information about tokens escrow arrived to Composable, token can be atomically exchanged with each other.
+**This mechanism resembles an IBC ICS-20 or Polkadot XCM reserve transfer.**
 
-After swap users may consider:
-- retaining assets on Composable to settle next intention
-- move to originating chain (where they have wallet)
-- move to source chain of assets (were assets was minted first)
-- move to any other chain
+Upon the arrival of information about the escrowed tokens on Composable, users can engage in atomic token exchanges with each other. 
 
-In all this cases users want to retain control over the assets.
+After the swap, users have various options:
 
-How he can achieve that?
+- Retaining Assets on Composable: Users can choose to keep their assets on Composable, allowing them to settle their next intentions within the Composable ecosystem.
 
-So here we invent CVM Executor, which works as cross chain account.
+- Moving to the Originating Chain: Users can move their assets back to the originating chain where they have their primary wallet.
+
+- Moving to the Source Chain of Assets: Users may decide to transfer their assets back to the source chain where the tokens were initially minted.
+
+- Moving to Any Other Chain: Users also have the flexibility to move their assets to any other network of their choice.
+
+In all these scenarios, users want to maintain control over their assets. To facilitate this, the concept of a CVM Executor is introduced, which acts as a cross-chain account. The CVM Executor plays a crucial role in enabling users to retain control over their assets while seamlessly managing them across different blockchain networks and domains.
+
 
 ### Account creation
 
-When user sends message from his domain to other, 
-CVM creates executor per originating `signature + chain` pair.
+When a user sends a message from their domain to another domain, the CVM creates an executor for each originating `signature + chain` pair. For example, if a user moves funds from Ethereum to the Composable domain via CVM, the system creates an executor to represent this particular `signature + chain` pair.
 
-So if user moved funds from Ethereum to Composable via CVM, 
-he can send at same time or as next message later, 
-message to put orders or exchange on behalf of user to any CVM executor he owns on any chain.
+This architecture allows the user to send messages at the same time or in the next message, to execute various actions such as placing orders or initiating exchanges on behalf of the user. These actions are executed through any CVM executor owned by the user on any chain.
 
-CVM ensures that only specific signature on specific chain could issue funds management transactions.
+It's essential to note that CVM enforces strict security measures, ensuring that only the specific signature on the designated chain can issue funds management transactions. This mechanism maintains the sovereignty and control of the user's assets while allowing them to seamlessly manage their funds across different chains and domains.
 
-**What if users gets his native wallet on Composable or wants to allow other accounts to manage his funds on any chain he send these?**
+**If a user has a native wallet on Composable or desires to authorise external accounts to oversee the management of their assets across the various chains where these assets have been sent, the following applies:**
 
-User sends CVM program to add proxy(delegation) account to CVM Executor account, 
-which will allow native account on Composable to manage, with some limits,
-funds and issue operation from users's CVM executor.
+*Configuring Proxy (Delegation) Accounts in the CVM Executor*
 
-Any chain were CVM exists and there are standards for proxy(delegation), can manage funds this way.
+Users have the ability to initiate a CVM program to integrate a proxy or delegation account with their CVM Executor account. This enables a native account in Composable to oversee and manage the user's funds, subject to predefined constraints, and execute operations on behalf of the user's CVM Executor.
 
-User also may delegate to other origins of CVM Executors. 
+*Universal Compatibility*
 
-**But users does not sees tokens as owned in Metamask anymore?**
+This functionality is universally applicable across al networks where the CVM is operational, provided that standardised protocols for proxy or delegation exist. Users can leverage this feature to manage their assets consistently across compatible chains.
 
-Indeed, until wallets on chains will not support CVM, users must be satisfied with CVM specific wallet and dashboard, aggregating their funds on all chains.
+*Delegation to Multiple Origins*
 
+Users retain the flexibility to delegate these responsibilities to multiple origins of CVM Executors.
 
-**Is wallet custodial?**
+**Why is the user's funds not showing up on their native wallet?**
 
-Wallet is non custodial. Instance of CVM executor is created per user signature. Funds always in CVM executor fully owned by user or in flight over bridge.
+Until native wallets on individual chains provide support for the CVM, users will need to make use of a CVM-specific wallet and accompanying dashboard. These specialised tools are designed to consolidate and display the user's assets across all chains where the CVM is operational.
+
+**Does this mean the Virtual wallet is custodial?**
+
+No, the Virtual Wallet is non-custodial. The instance of the CVM executor is created per user signature therfore, the funds are always in the CVM executor which is owned by the user or in flight over IBC.
 
 CVM contracts are managed by cross chain DAO.
 
-## Virtual Wallet value
+## Benefits of the Virtual Wallet 
 
-Virtual wallet allows set of operations happen with less risk, more gas efficient and increase liquidly usage.
+The Virtual Wallet streamlines operations, reduces risks, enhances gas efficiency, and promotes increased liquidity usage.
 
-- Instead of cross chain swap multiblock swap which may fail, do local atomic exchange and than cross chain transfer (which less likely to fail).
+1. Opt for Local Atomic Exchange: Instead of relying on multi-block swaps that may fail, it executes local atomic exchanges followed by cross-chain transfers, which have a lower likelihood of failure.
 
-- Replace mutlihop transfer and multihop swap with location operation on assets already accessible in wallets delegated liquidity for that, for example via CoW order.
+2. Simplify Multi-hop Operations: Replaces multi-hop transfers and multi-hop swaps with location-based operations on assets already accessible in wallets with delegated liquidity, such as through CoW orders.
 
-- Also allow to fund management to increase path prefix or reduce it when it is useful.
+3. Flexible Fund Management: Allows cross-chain asset management to adjust path prefixes, either expanding or reducing them when beneficial.
 
-- Bundle many small cross chain operation into one.
+4. Consolidate Cross-Chain Operations: Bundles multiple small cross-chain operations into a single transaction for improved efficiency.
 
-**Example**
 
-Alice wants to get ATOM Osmosis for ETH on Neutron.
+**The role of Solverse in an example**
 
-Bob wants to get ETH on Ethereum for Cosmos Hub ATOM.
+Alice seeks to exchange her ETH for ATOM on Neutron.
 
-They both escrow input tokens and make them appear on Composable.
+Bob aims to exchange his ATOM for ETH on the Ethereum network.
 
-Solvers find that they can:
-- they can give Bob ETH on Composable
-- they can give Alice ATOM on Composable.
+Both parties escrow their input tokens to facilitate the exchange on Composable.
 
-And provide transfer path to settle token on desired chain.
+Solvers have identified that:
 
-Direct exchange on same and pure transfer are more safe and cheaper,
-than allowing someone to transfer and swap on some other chain.
+- Bob can receive ETH directly on Composable.
+- Alice can obtain ATOM directly on Composable.
+
+This approach offers a more secure and cost-effective exchange compared to permitting intermediaries to transfer and swap tokens on other chains. 
