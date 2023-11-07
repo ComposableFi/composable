@@ -274,6 +274,11 @@ pub mod pallet {
 			staking_ledger: StakingLedger<T::AccountId, BalanceOf<T>>,
 			proof: Vec<Vec<u8>>,
 		},
+
+		OnInitializeHook{
+			relay_block_number : BlockNumberFor<T>,
+			era : u32,
+		}
 	}
 
 	#[pallet::error]
@@ -1148,6 +1153,7 @@ pub mod pallet {
 				}
 
 				let offset = Self::offset(relaychain_block_number);
+				Self::deposit_event(Event::<T>::OnInitializeHook { relay_block_number: relaychain_block_number, era : offset });
 				if offset.is_zero() {
 					return Ok(());
 				}
