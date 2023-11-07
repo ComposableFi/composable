@@ -117,7 +117,7 @@ impl pallet_referenda::Config for Runtime {
 
 	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
 
-	type SubmissionDeposit = ConstU128<1_000_000_000_000_000>;
+	type SubmissionDeposit = ConstU128<20_000_000_000_000_000>;
 
 	type MaxQueued = ConstU32<100>;
 
