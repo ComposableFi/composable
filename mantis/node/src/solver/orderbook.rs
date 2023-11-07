@@ -1,12 +1,10 @@
 //! Solving just order book without cross chain routing.
 
-use std::fmt::format;
-use std::fmt::Debug;
 
 use itertools::Itertools;
 
 use crate::prelude::*;
-use crate::types::*;
+use crate::solver::types::*;
 
 #[derive(Clone, Debug)]
 pub struct OrderList<Id> {

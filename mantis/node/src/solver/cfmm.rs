@@ -1,9 +1,8 @@
 //! waiting for bruno final solution
-use std::fmt::Debug;
-
-use crate::orderbook::*;
 use crate::prelude::*;
-use crate::types::*;
+
+use crate::solver::orderbook::*;
+use crate::solver::types::*;
 
 #[derive(Clone, Debug)]
 struct CFMM {

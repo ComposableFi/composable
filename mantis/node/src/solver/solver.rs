@@ -1,9 +1,9 @@
 use rand_distr::num_traits::FromPrimitive;
 
-use crate::orderbook::*;
 use crate::prelude::*;
-use crate::solution::Solution;
-use crate::types::*;
+use crate::solver::orderbook::*;
+use crate::solver::solution::Solution;
+use crate::solver::types::*;
 
 #[derive(Clone, Debug)]
 pub struct Solver<Id> {
