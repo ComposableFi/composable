@@ -507,8 +507,9 @@ impl OrderContract<'_> {
 	}
 
 	/// (partially) fills orders.
-	/// Returns relevant transfers and sets proper tracking info for remaining cross chain execution.
-	/// Orders which are in cross chain execution are "locked", users cannot cancel them or take funds back during execution (because funds are moved).
+	/// Returns relevant transfers and sets proper tracking info for remaining cross chain
+	/// execution. Orders which are in cross chain execution are "locked", users cannot cancel them
+	/// or take funds back during execution (because funds are moved).
 	fn fill(
 		&self,
 		storage: &mut dyn Storage,
@@ -566,7 +567,7 @@ fn solves_cows_via_bank(
 		transfers.push((amount, order.order.order_id));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
 	}
 	Ok(transfers)
 }
