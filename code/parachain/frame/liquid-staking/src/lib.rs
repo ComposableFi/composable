@@ -1797,6 +1797,7 @@ pub mod pallet {
 				&offset,
 			);
 
+			let relay_block_number: BlockNumberFor<T> = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			EraStartBlock::<T>::put(T::RelayChainValidationDataProvider::current_block_number());
 			CurrentEra::<T>::mutate(|e| *e = e.saturating_add(offset));
 
