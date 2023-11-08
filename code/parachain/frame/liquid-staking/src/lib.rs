@@ -275,10 +275,10 @@ pub mod pallet {
 			proof: Vec<Vec<u8>>,
 		},
 
-		OnInitializeHook{
-			relay_block_number : BlockNumberFor<T>,
-			era : u32,
-		}
+		OnInitializeHook {
+			relay_block_number: BlockNumberFor<T>,
+			era: u32,
+		},
 	}
 
 	#[pallet::error]
@@ -1132,7 +1132,11 @@ pub mod pallet {
 			let _ = ensure_signed(origin)?;
 			let key = Self::get_staking_ledger_key(derivative_index);
 			let derivative_account_id = Self::derivative_sovereign_account_id(derivative_index);
-			Self::deposit_event(Event::<T>::RelaychainStorageProofKey(derivative_index, key, derivative_account_id));
+			Self::deposit_event(Event::<T>::RelaychainStorageProofKey(
+				derivative_index,
+				key,
+				derivative_account_id,
+			));
 			Ok(())
 		}
 	}
@@ -1144,7 +1148,8 @@ pub mod pallet {
 			// let relaychain_block_number =
 			// 	T::RelayChainValidationDataProvider::current_block_number();
 
-			let relaychain_block_number = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
+			let relaychain_block_number =
+				ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			let mut do_on_initialize = || -> DispatchResult {
 				if !Self::is_matched() &&
 					T::ElectionSolutionStoredOffset::get()
@@ -1156,7 +1161,10 @@ pub mod pallet {
 				}
 
 				let offset = Self::offset(relaychain_block_number);
-				Self::deposit_event(Event::<T>::OnInitializeHook { relay_block_number: relaychain_block_number, era : offset });
+				Self::deposit_event(Event::<T>::OnInitializeHook {
+					relay_block_number: relaychain_block_number,
+					era: offset,
+				});
 				if offset.is_zero() {
 					return Ok(());
 				}
@@ -1798,7 +1806,8 @@ pub mod pallet {
 				&offset,
 			);
 
-			let relay_block_number: BlockNumberFor<T> = ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
+			let relay_block_number: BlockNumberFor<T> =
+				ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			EraStartBlock::<T>::put(T::RelayChainValidationDataProvider::current_block_number());
 			CurrentEra::<T>::mutate(|e| *e = e.saturating_add(offset));
 
