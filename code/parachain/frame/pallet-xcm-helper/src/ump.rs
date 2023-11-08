@@ -6,7 +6,6 @@ use cumulus_primitives_core::ParaId;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::StaticLookup, MultiSignature, RuntimeDebug};
 use sp_std::{boxed::Box, vec::Vec};
-use xcm::latest::MultiLocation;
 
 pub type Signature = MultiSignature;
 pub type Balance = u128;
@@ -328,15 +327,15 @@ pub enum XcmCall {
 macro_rules! switch_relay {
     ({ $( $code:tt )* }) => {
         if <T as Config>::RelayNetwork::get() == NetworkId::Polkadot {
-            use crate::ump::PolkadotCall as RelaychainCall;
+            use $crate::ump::PolkadotCall as RelaychainCall;
 
             $( $code )*
         } else if <T as Config>::RelayNetwork::get() == NetworkId::Kusama {
-            use crate::ump::KusamaCall as RelaychainCall;
+            use $crate::ump::KusamaCall as RelaychainCall;
 
             $( $code )*
         } else {
-            use crate::ump::PolkadotCall as RelaychainCall;
+            use $crate::ump::PolkadotCall as RelaychainCall;
 
             $( $code )*
         }

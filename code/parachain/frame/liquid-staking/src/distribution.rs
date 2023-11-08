@@ -2,7 +2,7 @@ use frame_support::traits::tokens::Balance as BalanceT;
 use sp_runtime::FixedPointOperand;
 use sp_std::vec::Vec;
 
-use crate::types::{DerivativeIndex, EraIndex};
+use crate::types::DerivativeIndex;
 use sp_std::vec;
 
 pub trait DistributionStrategy<Balance> {

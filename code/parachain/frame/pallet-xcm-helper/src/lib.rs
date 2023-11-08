@@ -36,7 +36,6 @@ pub mod ump;
 
 use crate::ump::*;
 
-use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use frame_support::traits::tokens::{Fortitude, Precision, Preservation};
 
 // mod benchmarking;
@@ -116,6 +115,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn xcm_weight_fee)]
+	#[allow(clippy::disallowed_types)]
 	pub type XcmWeightFee<T: Config> =
 		StorageMap<_, Twox64Concat, XcmCall, XcmWeightFeeMisc<Weight, BalanceOf<T>>, ValueQuery>;
 
