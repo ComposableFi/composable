@@ -1,0 +1,68 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-revenue-ibc"
+version = "1.0.0"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+# alias "parity-scale-code" to "codec"
+[dependencies.codec]
+default-features = false
+features = ["derive"]
+package = "parity-scale-codec"
+version = "3.0.0"
+
+[dependencies]
+composable-maths = { path = "../composable-maths", default-features = false }
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
+frame-benchmarking = { default-features = false, optional = true, workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+sp-arithmetic = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-std = { default-features = false, workspace = true }
+pallet-ibc = { workspace = true, default-features = false }
+
+bech32-no_std = { workspace = true, default-features = false, features = [
+  "strict",
+] }
+
+common = { path = "../../runtime/common", default-features = false }
+
+ibc-primitives = { workspace = true, default-features = false }
+
+primitives = { path = "../../runtime/primitives", default-features = false }
+ibc-rs-scale = { workspace = true, default-features = false, features = [
+  "parity-scale-codec",
+  "serde",
+] }
+[features]
+default = ["std"]
+std = [
+  "common/std",
+  "codec/std",
+  "composable-support/std",
+  "composable-traits/std",
+  "frame-benchmarking/std",
+  "frame-support/std",
+  "frame-system/std",
+  "pallet-ibc/std",
+  "primitives/std",
+  "scale-info/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+]
+
+runtime-benchmarks = []

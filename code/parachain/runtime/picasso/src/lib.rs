@@ -69,6 +69,7 @@ use gates::*;
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -80,7 +81,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Either, FixedI128,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -242,6 +242,25 @@ impl assets_registry::Config for Runtime {
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
 	type NetworkId = PicassoNetworkId;
+}
+
+parameter_types! {
+	pub const FromPalletId: PalletId = PalletId(*b"picatrsy");
+	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
+}
+
+impl revenue_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FromPalletId = FromPalletId;
+	type IntermediatePalletId = IntermediatePalletId;
+	type ForeignAssetId = primitives::currency::ForeignAssetId;
+	type AssetId = CurrencyId;
+	type AssetsRegistry = AssetsRegistry;
+	type Assets = Assets;
+	type MaxStringSize = MaxStringSize;
+	type Admin = EnsureRootOrTwoThirdNativeCouncil;
 }
 
 parameter_types! {
@@ -879,6 +898,8 @@ construct_runtime!(
 
 		Cosmwasm: cosmwasm = 180,
 
+
+
 		// IBC support
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
@@ -886,6 +907,7 @@ construct_runtime!(
 
 		PalletXcmHelper: pallet_xcm_helper = 194,
 		PalletLiquidStaking: pallet_liquid_staking = 195,
+		RevenueIbc: revenue_ibc = 200,
 	}
 );
 
