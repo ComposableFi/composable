@@ -557,12 +557,7 @@ parameter_types! {
 	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
 	pub const XcmHelperPalletId: PalletId = PalletId(*b"com/fees");
 	pub const NotifyTimeout: BlockNumber = 100;
-	// pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
-	// pub RelayCurrency: CurrencyId = DOT;
-	// pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	// pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
-
 	pub const RelayCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 }
 
