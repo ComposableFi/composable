@@ -45,7 +45,7 @@ exclude = [
   "parachain/frame/cosmwasm/cli",
 ]
 members = [
-  "parachain/frame/liquid-staking/relayer",
+  # "parachain/frame/liquid-staking/relayer",
   "parachain/frame/*",
   "parachain/node",
   "parachain/runtime/*",
