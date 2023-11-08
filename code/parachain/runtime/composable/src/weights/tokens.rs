@@ -1,7 +1,6 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
-#![allow(deprecated)]
 
 use frame_support::{
 	traits::Get,

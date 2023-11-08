@@ -500,7 +500,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	type Trader = Trader; //?
+	type Trader = Trader;
 	type ResponseHandler = XcmExecutorHandler;
 	type SubscriptionService = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -513,7 +513,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
-	type AssetTrap = PolkadotXcm;
+	type AssetTrap = CaptureAssetTrap;
 }
 
 parameter_type_with_key! {
