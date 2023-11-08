@@ -178,6 +178,20 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		},
 		RevenueCalcutions,
+		SetAllowed,
+		AddAllowed,
+		RemoveAllowed,
+		SetDisallowed,
+		AddDisallowed,
+		RemoveDisallowed,
+		TransferTriggered,
+		IntermediateTransferFail,
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		ChannelNotSet,
+		CentauriAddressNotSet
 	}
 
 	#[pallet::pallet]
@@ -223,6 +237,11 @@ pub mod pallet {
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 	{
+		// on every period, for every ibc asset from CentauriChannel - Disallowed Assets + Allowed Asset
+		// if 20 percent of new treasury balance for a token - old balance of token >= token's ED
+		// this amount is transferred to the pallets account
+		// from this account tokens are sent to osmosis. We have intermediate account so that tokens can be
+		// resend by trigger and transfer failure wont affect revenue calculations
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			if Self::period() != sp_runtime::traits::Zero::zero() &&
 				now % Self::period() == Zero::zero()
@@ -241,7 +260,7 @@ pub mod pallet {
 					let asset_ed_res = T::AssetsRegistry::existential_deposit(asset_id.clone());
 					if let Ok(asset_ed) = asset_ed_res {
 						if new_balance > old_balance &&
-							percentage * (new_balance - old_balance) > asset_ed
+							percentage * (new_balance - old_balance) >= asset_ed
 						{
 							let amount = percentage * (new_balance - old_balance);
 							match T::Assets::transfer(
@@ -265,6 +284,9 @@ pub mod pallet {
 					}
 					Self::deposit_event(Event::<T>::SkipAsset { asset_id: asset_id.clone() });
 				});
+				if let Err(_) = Self::transfer_from_intermediate() {
+					Self::deposit_event(Event::<T>::IntermediateTransferFail);
+				}
 
 				// T::WeightInfo::on_initialize(count)
 				Weight::zero()
@@ -288,7 +310,7 @@ pub mod pallet {
 			T::Admin::ensure_origin(origin)?;
 			// stop sharing
 			if period == Zero::zero() {
-				TokenPrevPeriodBalance::<T>::drain();
+				TokenPrevPeriodBalance::<T>::remove_all(None);
 			}
 			// save current values
 			if Self::period() == Zero::zero() {
@@ -326,6 +348,7 @@ pub mod pallet {
 		pub fn trigger_transfer(origin: OriginFor<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			Self::transfer_from_intermediate()?;
+			Self::deposit_event(Event::<T>::TransferTriggered);
 			Ok(())
 		}
 
@@ -333,16 +356,42 @@ pub mod pallet {
 		#[pallet::weight(100_000)]
 		pub fn set_allowed(origin: OriginFor<T>, assets: Vec<AssetIdOf<T>>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
-			AllowedAssets::<T>::drain();
-			assets.iter().for_each(|asset| AllowedAssets::<T>::insert(asset, ()));
+			AllowedAssets::<T>::drain().for_each(|(asset, _val)|{
+				TokenPrevPeriodBalance::<T>::remove(asset);
+			});
+			
+			assets.iter().for_each(|asset| {
+				AllowedAssets::<T>::insert(asset, ());
+				TokenPrevPeriodBalance::<T>::insert(
+					asset,
+					T::Assets::reducible_balance(
+						asset.clone(),
+						&Self::treasury_account_id(),
+						Preservation::Expendable,
+						frame_support::traits::tokens::Fortitude::Polite,
+					),
+				);
+			});
+			Self::deposit_event(Event::<T>::SetAllowed);
 			Ok(())
 		}
 
+		// add a new allowed asset or reset TokenPrevPeriodBalance to the current balance for asset 
 		#[pallet::call_index(4)]
 		#[pallet::weight(100_000)]
 		pub fn add_allowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
-			AllowedAssets::<T>::insert(asset, ());
+			AllowedAssets::<T>::insert(&asset, ());
+			TokenPrevPeriodBalance::<T>::insert(
+				&asset,
+				T::Assets::reducible_balance(
+					asset.clone(),
+					&Self::treasury_account_id(),
+					Preservation::Expendable,
+					frame_support::traits::tokens::Fortitude::Polite,
+				),
+			);
+			Self::deposit_event(Event::<T>::AddAllowed);
 			Ok(())
 		}
 
@@ -350,7 +399,9 @@ pub mod pallet {
 		#[pallet::weight(100_000)]
 		pub fn remove_allowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
-			AllowedAssets::<T>::remove(asset);
+			AllowedAssets::<T>::remove(&asset);
+			TokenPrevPeriodBalance::<T>::remove(&asset);
+			Self::deposit_event(Event::<T>::RemoveAllowed);
 			Ok(())
 		}
 
@@ -358,7 +409,9 @@ pub mod pallet {
 		#[pallet::weight(100_000)]
 		pub fn set_disallowed(origin: OriginFor<T>, assets: Vec<AssetIdOf<T>>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
+			DisallowedAssets::<T>::remove_all(None);
 			assets.iter().for_each(|asset| DisallowedAssets::<T>::insert(asset, ()));
+			Self::deposit_event(Event::<T>::SetDisallowed);
 			Ok(())
 		}
 
@@ -367,6 +420,7 @@ pub mod pallet {
 		pub fn add_disallowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			DisallowedAssets::<T>::insert(asset, ());
+			Self::deposit_event(Event::<T>::AddDisallowed);
 			Ok(())
 		}
 
@@ -375,6 +429,7 @@ pub mod pallet {
 		pub fn remove_disallowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			DisallowedAssets::<T>::remove(asset);
+			Self::deposit_event(Event::<T>::RemoveDisallowed);
 			Ok(())
 		}
 	}
@@ -431,32 +486,33 @@ pub mod pallet {
 					});
 					Ok(())
 				} else {
-					Err(DispatchError::Other("Centauri Address is not Specified"))
+					return Err(Error::<T>::CentauriAddressNotSet.into())
 				}
 			} else {
-				Err(DispatchError::Other("Channel Id Not Specified"))
+				return Err(Error::<T>::ChannelNotSet.into())
 			}
 		}
 
 		fn get_ibc_assets() -> Vec<AssetIdOf<T>> {
-			let disallowed = DisallowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
-			let mut allowed = AllowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
-			<T::AssetsRegistry as RemoteAssetRegistryInspect>::get_foreign_assets_list()
-				.iter()
-				.for_each(|asset| {
-					if let Ok(ForeignAssetId::IbcIcs20(denom)) =
-						ForeignAssetId::decode(&mut asset.foreign_id.clone().encode().as_slice())
-					{
-						if denom
-							.0
-							.trace_path
-							.starts_with(&TracePrefix::new(PortId::transfer(), ChannelId::new(15))) &&
-							!disallowed.contains(&asset.id)
-						{
-							allowed.push(asset.id.clone())
-						}
-					}
-				});
+			let allowed = AllowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
+			// TODO: send all ibc tokens to specified address
+			// let disallowed = DisallowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
+			// <T::AssetsRegistry as RemoteAssetRegistryInspect>::get_foreign_assets_list()
+			// 	.iter()
+			// 	.for_each(|asset| {
+			// 		if let Ok(ForeignAssetId::IbcIcs20(denom)) =
+			// 			ForeignAssetId::decode(&mut asset.foreign_id.clone().encode().as_slice())
+			// 		{
+			// 			if denom
+			// 				.0
+			// 				.trace_path
+			// 				.starts_with(&TracePrefix::new(PortId::transfer(), ChannelId::new(15))) &&
+			// 				!disallowed.contains(&asset.id)
+			// 			{
+			// 				allowed.push(asset.id.clone())
+			// 			}
+			// 		}
+			// 	});
 			allowed
 		}
 	}
