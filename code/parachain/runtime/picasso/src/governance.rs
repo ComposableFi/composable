@@ -131,7 +131,7 @@ impl pallet_referenda::Config for Runtime {
 }
 
 parameter_types! {
-	pub const VoteLockingPeriod: BlockNumber = DAYS;
+	pub const VoteLockingPeriod: BlockNumber = 28 * DAYS;
 }
 
 impl pallet_conviction_voting::Config for Runtime {
