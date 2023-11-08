@@ -85,9 +85,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking MatchingPool (r:1 w:1)
 	// Storage: LiquidStaking TotalReserves (r:1 w:1)
 	fn stake() -> Weight {
-		Weight::from_ref_time(288_998_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(17 as u64))
-			.saturating_add(T::DbWeight::get().writes(11 as u64))
+		Weight::from_ref_time(288_998_000u64)
+			.saturating_add(T::DbWeight::get().reads(17u64))
+			.saturating_add(T::DbWeight::get().writes(11u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking ExchangeRate (r:1 w:0)
@@ -98,9 +98,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Account (r:1 w:1)
 	// Storage: LiquidStaking MatchingPool (r:1 w:1)
 	fn unstake() -> Weight {
-		Weight::from_ref_time(124_428_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(8 as u64))
-			.saturating_add(T::DbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(124_428_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -119,9 +119,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn bond() -> Weight {
-		Weight::from_ref_time(204_060_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(14 as u64))
-			.saturating_add(T::DbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(204_060_000u64)
+			.saturating_add(T::DbWeight::get().reads(14u64))
+			.saturating_add(T::DbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -138,9 +138,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn nominate() -> Weight {
-		Weight::from_ref_time(187_662_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(12 as u64))
-			.saturating_add(T::DbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(187_662_000u64)
+			.saturating_add(T::DbWeight::get().reads(12u64))
+			.saturating_add(T::DbWeight::get().writes(8u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -159,18 +159,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn bond_extra() -> Weight {
-		Weight::from_ref_time(209_641_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(14 as u64))
-			.saturating_add(T::DbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(209_641_000u64)
+			.saturating_add(T::DbWeight::get().reads(14u64))
+			.saturating_add(T::DbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:1)
 	// Storage: LiquidStaking IsUpdated (r:1 w:1)
 	// Storage: LiquidStaking XcmRequests (r:1 w:0)
 	fn force_set_staking_ledger() -> Weight {
-		Weight::from_ref_time(75_995_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(75_995_000u64)
+			.saturating_add(T::DbWeight::get().reads(4u64))
+			.saturating_add(T::DbWeight::get().writes(3u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -188,9 +188,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn unbond() -> Weight {
-		Weight::from_ref_time(196_990_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(13 as u64))
-			.saturating_add(T::DbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(196_990_000u64)
+			.saturating_add(T::DbWeight::get().reads(13u64))
+			.saturating_add(T::DbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -208,9 +208,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn rebond() -> Weight {
-		Weight::from_ref_time(195_931_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(13 as u64))
-			.saturating_add(T::DbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(195_931_000u64)
+			.saturating_add(T::DbWeight::get().reads(13u64))
+			.saturating_add(T::DbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:1 w:0)
@@ -228,23 +228,23 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn withdraw_unbonded() -> Weight {
-		Weight::from_ref_time(199_966_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(13 as u64))
-			.saturating_add(T::DbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(199_966_000u64)
+			.saturating_add(T::DbWeight::get().reads(13u64))
+			.saturating_add(T::DbWeight::get().writes(8u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking ReserveFactor (r:1 w:1)
 	fn update_reserve_factor() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(T::DbWeight::get().reads(2u64))
+			.saturating_add(T::DbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgerCap (r:1 w:1)
 	fn update_staking_ledger_cap() -> Weight {
-		Weight::from_ref_time(39_767_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(39_767_000u64)
+			.saturating_add(T::DbWeight::get().reads(2u64))
+			.saturating_add(T::DbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking XcmRequests (r:1 w:1)
@@ -255,9 +255,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn notification_received() -> Weight {
-		Weight::from_ref_time(137_351_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(8 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(137_351_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(6u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:1 w:0)
@@ -268,33 +268,33 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking TotalReserves (r:1 w:0)
 	// Storage: LiquidStaking MatchingPool (r:1 w:0)
 	fn claim_for() -> Weight {
-		Weight::from_ref_time(157_173_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(9 as u64))
-			.saturating_add(T::DbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(157_173_000u64)
+			.saturating_add(T::DbWeight::get().reads(9u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking EraStartBlock (r:0 w:1)
 	fn force_set_era_start_block() -> Weight {
-		Weight::from_ref_time(12_342_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(12_342_000u64)
+			.saturating_add(T::DbWeight::get().reads(1u64))
+			.saturating_add(T::DbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:0 w:1)
 	// Storage: LiquidStaking IsMatched (r:0 w:1)
 	fn force_set_current_era() -> Weight {
-		Weight::from_ref_time(14_154_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(14_154_000u64)
+			.saturating_add(T::DbWeight::get().reads(1u64))
+			.saturating_add(T::DbWeight::get().writes(3u64))
 	}
 	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking IsMatched (r:1 w:0)
 	// Storage: LiquidStaking EraStartBlock (r:1 w:0)
 	fn on_initialize() -> Weight {
-		Weight::from_ref_time(21_084_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(4 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(21_084_000u64)
+			.saturating_add(T::DbWeight::get().reads(4u64))
+			.saturating_add(T::DbWeight::get().writes(1u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:3 w:0)
@@ -319,9 +319,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:2)
 	// Storage: PolkadotXcm Queries (r:0 w:2)
 	fn force_advance_era() -> Weight {
-		Weight::from_ref_time(465_583_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(22 as u64))
-			.saturating_add(T::DbWeight::get().writes(15 as u64))
+		Weight::from_ref_time(465_583_000u64)
+			.saturating_add(T::DbWeight::get().reads(22u64))
+			.saturating_add(T::DbWeight::get().writes(15u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:3 w:0)
@@ -342,9 +342,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: LiquidStaking XcmRequests (r:0 w:2)
 	// Storage: PolkadotXcm Queries (r:0 w:2)
 	fn force_matching() -> Weight {
-		Weight::from_ref_time(391_066_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(18 as u64))
-			.saturating_add(T::DbWeight::get().writes(12 as u64))
+		Weight::from_ref_time(391_066_000u64)
+			.saturating_add(T::DbWeight::get().reads(18u64))
+			.saturating_add(T::DbWeight::get().writes(12u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking TotalReserves (r:1 w:1)
@@ -352,9 +352,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:2 w:2)
 	fn reduce_reserves() -> Weight {
-		Weight::from_ref_time(125_618_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(6 as u64))
-			.saturating_add(T::DbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(125_618_000u64)
+			.saturating_add(T::DbWeight::get().reads(6u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking Unlockings (r:1 w:1)
@@ -365,28 +365,28 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn cancel_unstake() -> Weight {
-		Weight::from_ref_time(117_945_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(8 as u64))
-			.saturating_add(T::DbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(117_945_000u64)
+			.saturating_add(T::DbWeight::get().reads(8u64))
+			.saturating_add(T::DbWeight::get().writes(5u64))
 	}
 	fn update_commission_rate() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(T::DbWeight::get().reads(2u64))
+			.saturating_add(T::DbWeight::get().writes(2u64))
 	}
 	fn fast_match_unstake(n: u32, ) -> Weight {
-		Weight::from_ref_time(21_480_000 as u64)
+		Weight::from_ref_time(21_480_000u64)
 			// Standard Error: 38_000
-			.saturating_add(Weight::from_ref_time(82_727_000 as u64).saturating_mul(n as u64))
-			.saturating_add(T::DbWeight::get().reads(7 as u64))
-			.saturating_add(T::DbWeight::get().reads((4 as u64).saturating_mul(n as u64)))
-			.saturating_add(T::DbWeight::get().writes(4 as u64))
-			.saturating_add(T::DbWeight::get().writes((4 as u64).saturating_mul(n as u64)))
+			.saturating_add(Weight::from_ref_time(82_727_000u64).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(7u64))
+			.saturating_add(T::DbWeight::get().reads((4u64).saturating_mul(n as u64)))
+			.saturating_add(T::DbWeight::get().writes(4u64))
+			.saturating_add(T::DbWeight::get().writes((4u64).saturating_mul(n as u64)))
 	}
 	fn update_incentive() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(T::DbWeight::get().reads(2u64))
+			.saturating_add(T::DbWeight::get().writes(2u64))
 	}
 }
 
@@ -404,9 +404,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking MatchingPool (r:1 w:1)
 	// Storage: LiquidStaking TotalReserves (r:1 w:1)
 	fn stake() -> Weight {
-		Weight::from_ref_time(288_998_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(17 as u64))
-			.saturating_add(RocksDbWeight::get().writes(11 as u64))
+		Weight::from_ref_time(288_998_000u64)
+			.saturating_add(RocksDbWeight::get().reads(17u64))
+			.saturating_add(RocksDbWeight::get().writes(11u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking ExchangeRate (r:1 w:0)
@@ -417,9 +417,9 @@ impl WeightInfo for () {
 	// Storage: Assets Account (r:1 w:1)
 	// Storage: LiquidStaking MatchingPool (r:1 w:1)
 	fn unstake() -> Weight {
-		Weight::from_ref_time(124_428_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(8 as u64))
-			.saturating_add(RocksDbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(124_428_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -438,9 +438,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn bond() -> Weight {
-		Weight::from_ref_time(204_060_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(14 as u64))
-			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(204_060_000u64)
+			.saturating_add(RocksDbWeight::get().reads(14u64))
+			.saturating_add(RocksDbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -457,9 +457,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn nominate() -> Weight {
-		Weight::from_ref_time(187_662_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(12 as u64))
-			.saturating_add(RocksDbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(187_662_000u64)
+			.saturating_add(RocksDbWeight::get().reads(12u64))
+			.saturating_add(RocksDbWeight::get().writes(8u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -478,18 +478,18 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn bond_extra() -> Weight {
-		Weight::from_ref_time(209_641_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(14 as u64))
-			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(209_641_000u64)
+			.saturating_add(RocksDbWeight::get().reads(14u64))
+			.saturating_add(RocksDbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:1)
 	// Storage: LiquidStaking IsUpdated (r:1 w:1)
 	// Storage: LiquidStaking XcmRequests (r:1 w:0)
 	fn force_set_staking_ledger() -> Weight {
-		Weight::from_ref_time(75_995_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(75_995_000u64)
+			.saturating_add(RocksDbWeight::get().reads(4u64))
+			.saturating_add(RocksDbWeight::get().writes(3u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -507,9 +507,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn unbond() -> Weight {
-		Weight::from_ref_time(196_990_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(13 as u64))
-			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(196_990_000u64)
+			.saturating_add(RocksDbWeight::get().reads(13u64))
+			.saturating_add(RocksDbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:1 w:0)
@@ -527,9 +527,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn rebond() -> Weight {
-		Weight::from_ref_time(195_931_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(13 as u64))
-			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+		Weight::from_ref_time(195_931_000u64)
+			.saturating_add(RocksDbWeight::get().reads(13u64))
+			.saturating_add(RocksDbWeight::get().writes(9u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:1 w:0)
@@ -547,23 +547,23 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:1)
 	// Storage: PolkadotXcm Queries (r:0 w:1)
 	fn withdraw_unbonded() -> Weight {
-		Weight::from_ref_time(199_966_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(13 as u64))
-			.saturating_add(RocksDbWeight::get().writes(8 as u64))
+		Weight::from_ref_time(199_966_000u64)
+			.saturating_add(RocksDbWeight::get().reads(13u64))
+			.saturating_add(RocksDbWeight::get().writes(8u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking ReserveFactor (r:1 w:1)
 	fn update_reserve_factor() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(RocksDbWeight::get().reads(2u64))
+			.saturating_add(RocksDbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgerCap (r:1 w:1)
 	fn update_staking_ledger_cap() -> Weight {
-		Weight::from_ref_time(39_767_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(39_767_000u64)
+			.saturating_add(RocksDbWeight::get().reads(2u64))
+			.saturating_add(RocksDbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking XcmRequests (r:1 w:1)
@@ -574,9 +574,9 @@ impl WeightInfo for () {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn notification_received() -> Weight {
-		Weight::from_ref_time(137_351_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(8 as u64))
-			.saturating_add(RocksDbWeight::get().writes(6 as u64))
+		Weight::from_ref_time(137_351_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(6u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:1 w:0)
@@ -587,33 +587,33 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking TotalReserves (r:1 w:0)
 	// Storage: LiquidStaking MatchingPool (r:1 w:0)
 	fn claim_for() -> Weight {
-		Weight::from_ref_time(157_173_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(9 as u64))
-			.saturating_add(RocksDbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(157_173_000u64)
+			.saturating_add(RocksDbWeight::get().reads(9u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking EraStartBlock (r:0 w:1)
 	fn force_set_era_start_block() -> Weight {
-		Weight::from_ref_time(12_342_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(12_342_000u64)
+			.saturating_add(RocksDbWeight::get().reads(1u64))
+			.saturating_add(RocksDbWeight::get().writes(2u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking CurrentEra (r:0 w:1)
 	// Storage: LiquidStaking IsMatched (r:0 w:1)
 	fn force_set_current_era() -> Weight {
-		Weight::from_ref_time(14_154_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+		Weight::from_ref_time(14_154_000u64)
+			.saturating_add(RocksDbWeight::get().reads(1u64))
+			.saturating_add(RocksDbWeight::get().writes(3u64))
 	}
 	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking IsMatched (r:1 w:0)
 	// Storage: LiquidStaking EraStartBlock (r:1 w:0)
 	fn on_initialize() -> Weight {
-		Weight::from_ref_time(21_084_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		Weight::from_ref_time(21_084_000u64)
+			.saturating_add(RocksDbWeight::get().reads(4u64))
+			.saturating_add(RocksDbWeight::get().writes(1u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:3 w:0)
@@ -638,9 +638,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:2)
 	// Storage: PolkadotXcm Queries (r:0 w:2)
 	fn force_advance_era() -> Weight {
-		Weight::from_ref_time(465_583_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(22 as u64))
-			.saturating_add(RocksDbWeight::get().writes(15 as u64))
+		Weight::from_ref_time(465_583_000u64)
+			.saturating_add(RocksDbWeight::get().reads(22u64))
+			.saturating_add(RocksDbWeight::get().writes(15u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking StakingLedgers (r:3 w:0)
@@ -661,9 +661,9 @@ impl WeightInfo for () {
 	// Storage: LiquidStaking XcmRequests (r:0 w:2)
 	// Storage: PolkadotXcm Queries (r:0 w:2)
 	fn force_matching() -> Weight {
-		Weight::from_ref_time(391_066_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(18 as u64))
-			.saturating_add(RocksDbWeight::get().writes(12 as u64))
+		Weight::from_ref_time(391_066_000u64)
+			.saturating_add(RocksDbWeight::get().reads(18u64))
+			.saturating_add(RocksDbWeight::get().writes(12u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking TotalReserves (r:1 w:1)
@@ -671,9 +671,9 @@ impl WeightInfo for () {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:2 w:2)
 	fn reduce_reserves() -> Weight {
-		Weight::from_ref_time(125_618_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(6 as u64))
-			.saturating_add(RocksDbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(125_618_000u64)
+			.saturating_add(RocksDbWeight::get().reads(6u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: LiquidStaking Unlockings (r:1 w:1)
@@ -684,28 +684,28 @@ impl WeightInfo for () {
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Account (r:1 w:1)
 	fn cancel_unstake() -> Weight {
-		Weight::from_ref_time(117_945_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(8 as u64))
-			.saturating_add(RocksDbWeight::get().writes(5 as u64))
+		Weight::from_ref_time(117_945_000u64)
+			.saturating_add(RocksDbWeight::get().reads(8u64))
+			.saturating_add(RocksDbWeight::get().writes(5u64))
 	}
 
 	fn update_commission_rate() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(RocksDbWeight::get().reads(2u64))
+			.saturating_add(RocksDbWeight::get().writes(2u64))
 	}
 	fn fast_match_unstake(n: u32, ) -> Weight {
-		Weight::from_ref_time(21_480_000 as u64)
-			.saturating_add(Weight::from_ref_time(82_727_000 as u64).saturating_mul(n as u64))
-			.saturating_add(RocksDbWeight::get().reads(7 as u64))
-			.saturating_add(RocksDbWeight::get().reads((4 as u64).saturating_mul(n as u64)))
-			.saturating_add(RocksDbWeight::get().writes(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes((4 as u64).saturating_mul(n as u64)))
+		Weight::from_ref_time(21_480_000u64)
+			.saturating_add(Weight::from_ref_time(82_727_000u64).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(7u64))
+			.saturating_add(RocksDbWeight::get().reads((4u64).saturating_mul(n as u64)))
+			.saturating_add(RocksDbWeight::get().writes(4u64))
+			.saturating_add(RocksDbWeight::get().writes((4u64).saturating_mul(n as u64)))
 	}
 
 	fn update_incentive() -> Weight {
-		Weight::from_ref_time(40_612_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		Weight::from_ref_time(40_612_000u64)
+			.saturating_add(RocksDbWeight::get().reads(2u64))
+			.saturating_add(RocksDbWeight::get().writes(2u64))
 	}
 }

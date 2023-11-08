@@ -1,9 +1,5 @@
 use parity_scale_codec::{Decode, Encode, HasCompact};
-use sp_runtime::{
-	generic,
-	traits::{IdentifyAccount, Verify},
-	FixedU128, MultiSignature, Permill, RuntimeDebug,
-};
+use sp_runtime::{FixedU128, Permill, RuntimeDebug};
 // pub use cumulus_primitives_core::{PersistedValidationData};
 
 pub type Ratio = Permill;
@@ -319,17 +315,12 @@ impl<AccountId, Balance: BalanceT + FixedPointOperand> StakingLedger<AccountId, 
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
 pub enum UnstakeProvider {
+	#[default]
 	RelayChain = 0,
 	Loans = 1,
 	MatchingPool = 2,
-}
-
-impl Default for UnstakeProvider {
-	fn default() -> Self {
-		UnstakeProvider::RelayChain
-	}
 }
 
 impl UnstakeProvider {

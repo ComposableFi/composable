@@ -580,7 +580,7 @@ parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"com/lqsk");
 	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
 	pub const XcmFees: Balance = 500_000_000; // 0.05DOT
-	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
 	pub const StakingCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_COMPOSABLE_DOT;
 	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;

@@ -725,10 +725,10 @@ parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"pic/lqsk");
 	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
 	pub const XcmFees: Balance = 5_000_000_000; // 0.005KSM
-	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1u32, 100u32);
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
 	pub const StakingCurrency: CurrencyId = CurrencyId::KSM;
 	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_PICASSO_KSM; //TODO change currency id when you register new currency via asset_regestry pallet
-	pub const EraLength: BlockNumber = 1 * 3 * 60 / 6;
+	pub const EraLength: BlockNumber = 3 * 60 / 6;
 	pub const MinStakeLSD: Balance = 100_000_000_000; // 0.1KSM
 	pub const MinUnstake: Balance = 50_000_000_000; // 0.05sKSM
 	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 7;

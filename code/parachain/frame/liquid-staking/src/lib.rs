@@ -73,7 +73,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber, TransactionOutcome,
 	};
-	use sp_std::{borrow::Borrow, boxed::Box, cmp::min, result::Result, vec::Vec};
+	use sp_std::{borrow::Borrow, boxed::Box, result::Result, vec::Vec};
 	use sp_trie::StorageProof;
 	use xcm::latest::prelude::*;
 
@@ -335,11 +335,13 @@ pub mod pallet {
 	/// The exchange rate between relaychain native asset and the voucher.
 	#[pallet::storage]
 	#[pallet::getter(fn exchange_rate)]
+	#[allow(clippy::disallowed_types)]
 	pub type ExchangeRate<T: Config> = StorageValue<_, Rate, ValueQuery>;
 
 	/// The commission rate charge for staking total rewards.
 	#[pallet::storage]
 	#[pallet::getter(fn commission_rate)]
+	#[allow(clippy::disallowed_types)]
 	pub type CommissionRate<T: Config> = StorageValue<_, Rate, ValueQuery>;
 
 	/// ValidationData of previous block
@@ -354,21 +356,25 @@ pub mod pallet {
 	/// Fraction of reward currently set aside for reserves.
 	#[pallet::storage]
 	#[pallet::getter(fn reserve_factor)]
+	#[allow(clippy::disallowed_types)]
 	pub type ReserveFactor<T: Config> = StorageValue<_, Ratio, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_reserves)]
+	#[allow(clippy::disallowed_types)]
 	pub type TotalReserves<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	/// Store total stake amount and unstake amount in each era,
 	/// And will update when stake/unstake occurred.
 	#[pallet::storage]
 	#[pallet::getter(fn matching_pool)]
+	#[allow(clippy::disallowed_types)]
 	pub type MatchingPool<T: Config> = StorageValue<_, MatchingLedger<BalanceOf<T>>, ValueQuery>;
 
 	/// Staking ledger's cap
 	#[pallet::storage]
 	#[pallet::getter(fn staking_ledger_cap)]
+	#[allow(clippy::disallowed_types)]
 	pub type StakingLedgerCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	/// Flying & failed xcm requests
@@ -379,6 +385,7 @@ pub mod pallet {
 	/// Users' fast unstake requests in liquid currency
 	#[pallet::storage]
 	#[pallet::getter(fn fast_unstake_requests)]
+	#[allow(clippy::disallowed_types)]
 	pub type FastUnstakeRequests<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>, ValueQuery>;
 
@@ -387,11 +394,13 @@ pub mod pallet {
 	/// at certain height decided by `BondingDuration` and `EraLength`
 	#[pallet::storage]
 	#[pallet::getter(fn current_era)]
+	#[allow(clippy::disallowed_types)]
 	pub type CurrentEra<T: Config> = StorageValue<_, EraIndex, ValueQuery>;
 
 	/// Current era's start relaychain block
 	#[pallet::storage]
 	#[pallet::getter(fn era_start_block)]
+	#[allow(clippy::disallowed_types)]
 	pub type EraStartBlock<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	/// Unbonding requests to be handled after arriving at target era
@@ -402,6 +411,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn members)]
+	#[allow(clippy::disallowed_types)]
 	pub type Members<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	/// Platform's staking ledgers
@@ -418,28 +428,32 @@ pub mod pallet {
 	/// Set to true if staking ledger has been modified in this block
 	#[pallet::storage]
 	#[pallet::getter(fn is_updated)]
+	#[allow(clippy::disallowed_types)]
 	pub type IsUpdated<T: Config> = StorageMap<_, Twox64Concat, DerivativeIndex, bool, ValueQuery>;
 
 	/// DefaultVersion is using for initialize the StorageVersion
 	#[pallet::type_value]
-	pub(super) fn DefaultVersion<T: Config>() -> Versions {
+	pub(super) fn DefaultVersion() -> Versions {
 		Versions::V2
 	}
 
 	/// Storage version of the pallet.
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	pub(crate) type StorageVersion<T: Config> =
-		StorageValue<_, Versions, ValueQuery, DefaultVersion<T>>;
+		StorageValue<_, Versions, ValueQuery, DefaultVersion>;
 
 	/// Set to true if already do matching in current era
 	/// clear after arriving at next era
 	#[pallet::storage]
 	#[pallet::getter(fn is_matched)]
+	#[allow(clippy::disallowed_types)]
 	pub type IsMatched<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	/// Incentive for users who successfully update era/ledger
 	#[pallet::storage]
 	#[pallet::getter(fn incentive)]
+	#[allow(clippy::disallowed_types)]
 	pub type Incentive<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[derive(Default)]
@@ -1153,7 +1167,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
 		#[transactional]
 		pub fn set_members(origin: OriginFor<T>, members: Vec<T::AccountId>) -> DispatchResult {
-			if !T::UpdateOrigin::ensure_origin(origin).is_ok() {
+			if T::UpdateOrigin::ensure_origin(origin).is_err() {
 				return Err(BadOrigin.into());
 			}
 			Members::<T>::put(members.clone());
@@ -1826,8 +1840,6 @@ pub mod pallet {
 				&offset,
 			);
 
-			let relay_block_number: BlockNumberFor<T> =
-				ValidationData::<T>::get().map(|i| i.relay_parent_number).unwrap_or(0).into();
 			EraStartBlock::<T>::put(T::RelayChainValidationDataProvider::current_block_number());
 			CurrentEra::<T>::mutate(|e| *e = e.saturating_add(offset));
 

@@ -63,18 +63,15 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 		weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
 		for i in instructions.iter_mut() {
-			match i {
-				QueryResponse { ref mut querier, .. } => {
-					if querier.is_none() {
-						//need this line because querier is None
-						//and here is where it failed in pallet-xcm
-						//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
-						//so need to substitute it with expected querier
-						*querier = Some(MultiLocation { parents: 0, interior: Here });
-					}
-				},
-				_ => {},
-			};
+			if let QueryResponse { ref mut querier, .. } = i {
+				if querier.is_none() {
+					//need this line because querier is None
+					//and here is where it failed in pallet-xcm
+					//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+					//so need to substitute it with expected querier
+					*querier = Some(MultiLocation { parents: 0, interior: Here });
+				}
+			}
 		}
 
 		AllowKnownQueryResponses::<ResponseHandler>::should_execute(
@@ -446,7 +443,7 @@ impl OnResponse for XcmExecutorHandler {
 		query_id: u64,
 		querier: Option<&MultiLocation>,
 	) -> bool {
-		return PolkadotXcm::expecting_response(origin, query_id, querier);
+		PolkadotXcm::expecting_response(origin, query_id, querier)
 	}
 	/// Handler for receiving a `response` from `origin` relating to `query_id` initiated by
 	/// `querier`.
@@ -466,7 +463,7 @@ impl OnResponse for XcmExecutorHandler {
 		if querier.is_none() {
 			querier = Some(&MultiLocation { parents: 0, interior: Here });
 		}
-		return PolkadotXcm::on_response(origin, query_id, querier, response, max_weight, context);
+		PolkadotXcm::on_response(origin, query_id, querier, response, max_weight, context)
 	}
 }
 
