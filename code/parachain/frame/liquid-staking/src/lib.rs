@@ -31,8 +31,8 @@ use pallet_xcm_helper::ump::RewardDestination;
 
 // mod benchmarking;
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 // #[cfg(test)]
 // mod tests;
 
@@ -457,7 +457,6 @@ pub mod pallet {
 		}
 	}
 
-	//TODO rust.dev update weight
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Put assets under staking, the native assets will be transferred to the account
@@ -1648,7 +1647,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		//todo rust.dev you need this function to call from callable fn in pallet
 		#[require_transactional]
 		fn do_notification_received(
 			query_id: QueryId,
