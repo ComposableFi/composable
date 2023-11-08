@@ -1,5 +1,11 @@
 # Composable Cosmos Testnet 4 
 
+Composable Cosmos Testnet 4 serves the following purposes:
+
+- Testing chain upgrades before mainnet releases.
+- Connecting Ethereum Goerli to the first Cosmos chain via IBC.
+- An environment for developers and users to test the functionalities of CVM and MANTIS on a Cosmos-only blockchain.
+
 ## Information
 - Network information: https://github.com/notional-labs/composable-networks/tree/main/banksy-testnet-4
 - Chain ID: banksy-testnet-4
@@ -12,6 +18,7 @@
   - API: https://api-banksy4.notional.ventures:443
   - gRPC: http://168.119.91.22:2263
 - Block Explorer: https://explorer.stavr.tech/Composable-Testnet4
+- Faucet: [Composable Discord](https://discord.com/invite/composable)
 
 ## Setup Instruction
 
