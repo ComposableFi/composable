@@ -322,13 +322,6 @@ pub enum XcmCall {
 	Rebond,
 	WithdrawUnbonded,
 	Nominate,
-	Contribute,
-	Withdraw,
-	AddMemo,
-	TransferToSiblingchain(Box<MultiLocation>),
-	Proxy,
-	AddProxy,
-	RemoveProxy,
 }
 
 #[macro_export]

@@ -32,9 +32,6 @@ use sp_std::{boxed::Box, prelude::*, vec, vec::Vec};
 use xcm::{latest::prelude::*, DoubleEncoded};
 
 pub use pallet::*;
-// use pallet_traits::{switch_relay, ump::*};
-// use primitives::{AccountId, Balance, BlockNumber, CurrencyId, ParaId};
-
 pub mod ump;
 
 use crate::ump::*;
@@ -44,8 +41,8 @@ use frame_support::traits::tokens::{Fortitude, Precision, Preservation};
 
 // mod benchmarking;
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 // #[cfg(test)]
 // mod tests;
 
@@ -148,7 +145,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Update xcm fees amount to be used in xcm.Withdraw message
 		#[pallet::call_index(0)]
-		//TODO rust.dev: uncomment this line
 		#[pallet::weight(<T as Config>::WeightInfo::update_xcm_weight_fee())]
 		#[transactional]
 		pub fn update_xcm_weight_fee(
@@ -249,13 +245,6 @@ impl<T: Config> Pallet<T> {
 		Ok(query_id)
 	}
 
-	pub fn get_xcm_weight_fee_to_sibling(
-		location: MultiLocation,
-	) -> XcmWeightFeeMisc<Weight, BalanceOf<T>> {
-		let call = XcmCall::TransferToSiblingchain(Box::new(location));
-		Self::xcm_weight_fee(call)
-	}
-
 	// Since xcm v3 doesn't support utility.batch_all
 	// instead, here append one more transact msg
 	//
@@ -294,8 +283,6 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 		fees: BalanceOf<T>,
 	) -> Result<Xcm<()>, DispatchError> {
 		let asset: MultiAsset = (MultiLocation::here(), fees).into();
-		//TODO rust.dev need to uncomment this line to burn the fee. now we do not exact fee for
-		// each xcm call.
 		T::Assets::burn_from(
 			T::RelayCurrency::get(),
 			&Self::account_id(),

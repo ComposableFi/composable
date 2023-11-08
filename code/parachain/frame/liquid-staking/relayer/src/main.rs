@@ -77,16 +77,16 @@ async fn main() {
 		for i in &tuple {
 			let keys = vec![i.1.as_ref()];
 
-			let state_proof: Vec<Vec<u8>> = vec![]; //TODO uncomment when rpc method is available
-										// relay_client
-										// .rpc()
-										// .read_proof(keys.iter().map(AsRef::as_ref), None)
-										// .await.unwrap()
-										// .proof
-										// .into_iter()
-										// .map(|p| p.0)
-										// .collect();
-										// assert!(state_proof.len() > 0);
+			let state_proof: Vec<Vec<u8>> = relay_client
+				.rpc()
+				.read_proof(keys.iter().map(AsRef::as_ref), None)
+				.await
+				.unwrap()
+				.proof
+				.into_iter()
+				.map(|p| p.0)
+				.collect();
+			assert!(state_proof.len() > 0);
 
 			let block_hash = relay_client.rpc().block_hash(None).await.unwrap().unwrap();
 			println!("block_hash: {:?}", block_hash);
