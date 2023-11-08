@@ -279,6 +279,10 @@ pub mod pallet {
 			relay_block_number: BlockNumberFor<T>,
 			era: u32,
 		},
+
+		SetMembers {
+			members: Vec<T::AccountId>,
+		},
 	}
 
 	#[pallet::error]
@@ -324,6 +328,8 @@ pub mod pallet {
 		NoUnlockings,
 		/// Invalid commission rate
 		InvalidCommissionRate,
+
+		InvalidOrigin,
 	}
 
 	/// The exchange rate between relaychain native asset and the voucher.
@@ -393,6 +399,10 @@ pub mod pallet {
 	#[pallet::getter(fn unlockings)]
 	pub type Unlockings<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<UnlockChunk<BalanceOf<T>>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn members)]
+	pub type Members<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	/// Platform's staking ledgers
 	#[pallet::storage]
@@ -1137,6 +1147,18 @@ pub mod pallet {
 				key,
 				derivative_account_id,
 			));
+			Ok(())
+		}
+
+		#[pallet::call_index(26)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
+		#[transactional]
+		pub fn set_members(origin: OriginFor<T>, members: Vec<T::AccountId>) -> DispatchResult {
+			if !T::UpdateOrigin::ensure_origin(origin).is_ok() {
+				return Err(BadOrigin.into());
+			}
+			Members::<T>::put(members.clone());
+			Self::deposit_event(Event::<T>::SetMembers { members });
 			Ok(())
 		}
 	}
@@ -1949,7 +1971,7 @@ pub mod pallet {
 				return Ok(());
 			}
 			let who = ensure_signed(origin)?;
-			if !T::Members::contains(&who) {
+			if !T::Members::contains(&who) && !Members::<T>::get().contains(&who) {
 				return Err(BadOrigin.into());
 			}
 			Ok(())
