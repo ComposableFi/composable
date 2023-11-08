@@ -33,7 +33,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/developer-guides/build-on-composable">
+      <a href="/develop/build-on-composable">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206944/Frame_4_gepwoe.png" alt="Networks" alt="Develop" />

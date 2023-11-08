@@ -82,12 +82,12 @@ const config = {
 						label: 'Networks',
 					},
 					{
-						to: '/technology/composable-ibc',
+						to: '/technology/ibc',
 						position: 'left',
 						label: 'Architecture',
 					},
 					{
-						to: '/developer-guides/build-on-composable',
+						to: '/develop/build-on-composable',
 						position: 'left',
 						label: 'Develop',
 					},

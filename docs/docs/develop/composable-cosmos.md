@@ -1,4 +1,16 @@
-# Composable Cosmos mainnet: centauri-1
+# Composable Cosmos Mainnet
+
+## Information
+- Network information: https://github.com/notional-labs/composable-centauri
+- Chain ID: centauri-1
+- Genesis: https://github.com/notional-labs/composable-networks/blob/main/mainnet/genesis.json
+- Binary: https://github.com/notional-labs/composable-centauri/releases/tag/v6.3.1
+- Current version: v6.3.1 (check the repository for the latest release)
+- Public Notional endpoints:
+  - RPC: https://composable-rpc.polkachu.com/ (1) https://api-composable-ia.cosmosia.notional.ventures (2)
+- Block Explorer: https://ping.pub/composable (1) https://explorer.nodestake.top/composable/ (2)
+- Faucet: **The gas fees for Composable Cosmos is zero.**
+- IBC Channels: https://polkachu.com/ibcs?network=composable
 
 ## Hardware recommendation
 ```

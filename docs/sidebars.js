@@ -204,25 +204,24 @@
    develop: [
     {
       type: "doc",
-      id: "developer-guides/build-on-composable",
+      id: "develop/build-on-composable",
     },
+    "develop/composable-cosmos-mainnet",
+    "develop/testnet-4",
+    "develop/local-picasso-guide",
+    "develop/oracle-set-up-guide",
+    "develop/collator-guide",
     {
       type: "category",
       label: "Cosmwasm CLI",
       link: {
         type: "doc",
-        id: "developer-guides/cosmwasm-cli",
+        id: "develop/cosmwasm-cli",
       },
       collapsible: true,
       collapsed: true,
-      items: ["developer-guides/cosmwasm/walkthrough"],
+      items: ["develop/cosmwasm/walkthrough"],
     },
-    "developer-guides/oracle-set-up-guide",
-    "developer-guides/collator-guide",
-    "developer-guides/local-picasso-guide",
-    "developer-guides/composable-cosmos-mainnet",
-    "developer-guides/testnet-4",
-
     {
       type: "category",
       label: "Nix",
