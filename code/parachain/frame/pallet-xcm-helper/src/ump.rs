@@ -343,7 +343,9 @@ macro_rules! switch_relay {
 
             $( $code )*
         } else {
-            unreachable!()
+            use crate::ump::PolkadotCall as RelaychainCall;
+
+            $( $code )*
         }
     }
 }

@@ -267,7 +267,7 @@ pub mod pallet {
 		/// Not the ideal staking ledger
 		NonIdealStakingLedger(DerivativeIndex),
 
-		RelaychainStorageProofKey(DerivativeIndex, Vec<u8>),
+		RelaychainStorageProofKey(DerivativeIndex, Vec<u8>, T::AccountId),
 		SetStakingLedgerTry {
 			origin: T::AccountId,
 			derivative_index: DerivativeIndex,
@@ -566,7 +566,7 @@ pub mod pallet {
 				Self::liquid_currency()?,
 				&who,
 				liquid_amount,
-				Precision::BestEffort,
+				Precision::Exact,
 				Fortitude::Polite,
 			)?;
 
@@ -1131,7 +1131,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let key = Self::get_staking_ledger_key(derivative_index);
-			Self::deposit_event(Event::<T>::RelaychainStorageProofKey(derivative_index, key));
+			let derivative_account_id = Self::derivative_sovereign_account_id(derivative_index);
+			Self::deposit_event(Event::<T>::RelaychainStorageProofKey(derivative_index, key, derivative_account_id));
 			Ok(())
 		}
 	}
@@ -1626,7 +1627,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			use XcmRequest::*;
 
-			log::trace!(
+			log::info!(
 				target: "liquidStaking::notification_received",
 				"query_id: {:?}, response: {:?}",
 				&query_id,
@@ -1656,7 +1657,7 @@ pub mod pallet {
 						Self::staking_currency()?,
 						&Self::account_id(),
 						amount,
-						Precision::BestEffort,
+						Precision::Exact,
 						Fortitude::Polite,
 					)?;
 				},
@@ -1672,7 +1673,7 @@ pub mod pallet {
 						Self::staking_currency()?,
 						&Self::account_id(),
 						amount,
-						Precision::BestEffort,
+						Precision::Exact,
 						Fortitude::Polite,
 					)?;
 				},
@@ -1886,7 +1887,7 @@ pub mod pallet {
 						Self::liquid_currency()?,
 						unstaker,
 						liquid_to_burn,
-						Precision::BestEffort,
+						Precision::Exact,
 						Fortitude::Polite,
 					)?;
 					T::Assets::transfer(
