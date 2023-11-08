@@ -9,14 +9,14 @@
           self.inputs.bundlers.bundlers."${system}"."${type}" package;
         subwasm-version = runtime:
           builtins.readFile (pkgs.runCommand "subwasm-version" { } ''
-            ${packages.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
+            ${pkgs.subwasm}/bin/subwasm version ${runtime}/lib/runtime.optimized.wasm | grep specifications | cut -d ":" -f2 | cut -d " " -f3 | head -c -1 > $out
           '');
 
       in rec {
         generated-release-body = let
           subwasm-call = runtime:
             builtins.readFile (pkgs.runCommand "subwasm-info" { } ''
-              ${packages.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
+              ${pkgs.subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 | head -c -1 > $out
             '');
           flake-url =
             "github:ComposableFi/composable/release-v${packages.composable-node.version}";
@@ -97,9 +97,9 @@
             }.wasm
 
 
-            # XCVM
+            # CVM
             cp ${packages.cw-xc-gateway}/lib/cw_xc_gateway.wasm release-artifacts/to-upload/cw_xc_gateway.wasm
-            cp ${packages.cw-xc-interpreter}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_interpreter.wasm
+            cp ${packages.cw-xc-executor}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_executor.wasm
 
             echo "Generate node packages"
             cp ${
@@ -132,10 +132,10 @@
           '';
         };
 
-        release-testnet-xcvm-osmosis = pkgs.writeShellApplication {
+        release-testnet-cvm-osmosis = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
-          name = "release-testnet-xcvm-osmosis";
+          name = "release-testnet-cvm-osmosis";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -182,10 +182,10 @@
           '';
         };
 
-        gov-prod-xcvm = pkgs.writeShellApplication {
+        gov-prod-cvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
-          name = "gov-prod-xcvm";
+          name = "gov-prod-cvm";
           text = ''
              if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
                CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -209,7 +209,7 @@
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
                --description "$DESCRIPTION" --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
-               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/cvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$INTERPRETER_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
@@ -222,7 +222,7 @@
              sleep "$BLOCK_SECONDS" 
              "$BINARY" tx gov submit-proposal wasm-store "$GATEWAY_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine gateway contract" \
                --description "$DESCRIPTION" --run-as "$ADDRESS"  \
-               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/cvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
                --deposit="$DEPOSIT" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
@@ -232,10 +232,10 @@
           '';
         };
 
-        gov-testnet-xcvm = pkgs.writeShellApplication {
+        gov-testnet-cvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.osmosisd pkgs.jq ];
-          name = "gov-testnet-xcvm";
+          name = "gov-testnet-cvm";
           text = ''
              if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
                CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -260,7 +260,7 @@
                  builtins.readFile ./release-gov-osmosis-proposal-cvm-upload.md
                }' --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
-               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/interpreter' \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/cvm/cosmwasm/contracts/interpreter' \
                --builder "composablefi/devnet:v9.10037.1" \
                --code-hash "$INTERPRETER_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
@@ -275,7 +275,7 @@
                --description '${
                  builtins.readFile ./release-gov-osmosis-proposal-cvm-upload.md
                }' --run-as "$ADDRESS"  \
-               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/xcvm/cosmwasm/contracts/gateway' \
+               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/cvm/cosmwasm/contracts/gateway' \
                --builder "composablefi/devnet:v9.10037.1" \
                --deposit="$DEPOSIT" \
                --code-hash "$GATEWAY_WASM_CODE_HASH" \
@@ -285,10 +285,10 @@
           '';
         };
 
-        release-mainnet-xcvm = pkgs.writeShellApplication {
+        release-mainnet-cvm = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
-          name = "release-mainnet-xcvm";
+          name = "release-mainnet-cvm";
           text = ''
             if [[ -f .secret/CI_COSMOS_MNEMONIC ]]; then
               CI_COSMOS_MNEMONIC="$(cat .secret/CI_COSMOS_MNEMONIC)"
@@ -343,10 +343,10 @@
           '';
         };
 
-        release-testnet-xcvm-centauri = pkgs.writeShellApplication {
+        release-testnet-cvm-centauri = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq ];
-          name = "release-testnet-xcvm-centauri";
+          name = "release-testnet-cvm-centauri";
           text = ''
 
             ${bashTools.export centauri.env.testnet}       
@@ -403,10 +403,10 @@
           '';
         };
 
-        release-mainnet-xcvm-config = pkgs.writeShellApplication {
+        release-mainnet-cvm-config = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
-          name = "release-mainnet-xcvm-config-centauri";
+          name = "release-mainnet-cvm-config-centauri";
           text = ''
 
               FORCE=$(cat << EOF
@@ -597,10 +597,10 @@
           '';
         };
 
-        release-testnet-xcvm-config = pkgs.writeShellApplication {
+        release-testnet-cvm-config = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ packages.centaurid pkgs.jq packages.osmosisd ];
-          name = "release-testnet-xcvm-centauri";
+          name = "release-testnet-cvm-centauri";
           text = ''
             FEE=ppica
             CHAIN_ID=banksy-testnet-3

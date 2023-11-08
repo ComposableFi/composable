@@ -41,6 +41,7 @@
            items: [
              "user-guides/polkadotjs-extension-create-account",
              "user-guides/talisman-create-account",
+             "user-guides/keplr-guide",
              "user-guides/layr-guide",
            ],
          },
@@ -56,7 +57,7 @@
              "user-guides/claim-rewards-guide",
              "user-guides/how-to-provide-liquidity",
              "user-guides/how-to-trade-pica-on-pablo",
-             "user-guides/centauri-staking",
+             "user-guides/composable-cosmos-staking",
              "user-guides/centauri-guide",
              "user-guides/centauri-transfers",
            ],
@@ -159,25 +160,69 @@
        ],
      },
  
-     "networks/centauri-chain",
-   ],
- 
-   centauri: [
-     "technology/composable-ibc",
-     "technology/composable-ibc/cosmos-ibc",
-     "technology/composable-ibc/polkadot-kusama-ibc",
-     "technology/composable-ibc/ethereum-ibc",
-     "technology/composable-ibc/near-ibc-bridge",
-     "technology/composable-ibc/hyperspace-relayer",
-     "technology/composable-ibc/light-clients",
-     "technology/composable-ibc/merkle-mountain-ranges",
-     "technology/composable-ibc/cosmos11-BEEFY-COSMOS-IBC-light-client",
+     "networks/composable-cosmos",
    ],
 
-   technology: [
-     "technology/cvm",
+   architecture: [
+    {
+    type: "category",
+       label: "IBC",
+       link: {
+         type: "doc",
+         id: "technology/ibc",
+       },
+       collapsible: false,
+       collapsed: false,
+       items: [
+        "technology/ibc/cosmos-ibc",
+        "technology/ibc/polkadot-kusama-ibc",
+        "technology/ibc/ethereum-ibc",
+        "technology/ibc/near-ibc-bridge",
+        "technology/ibc/hyperspace-relayer",
+        "technology/ibc/light-clients",
+        "technology/ibc/merkle-mountain-ranges",
+        "technology/ibc/beefy-light-client",
+       ],
+      },
+
+    {
+      type: "category",
+          label: "CVM",
+          link: {
+           type: "doc",
+            id: "technology/cvm",
+         },
+        collapsible: false,
+        collapsed: false,
+        items: [
+        "technology/cvm/specification",
+        "technology/cvm/virtual-wallet",
+        "technology/cvm/tutorial",
    ],
+  },
+],
    develop: [
+    {
+      type: "doc",
+      id: "developer-guides/build-on-composable",
+    },
+    {
+      type: "category",
+      label: "Cosmwasm CLI",
+      link: {
+        type: "doc",
+        id: "developer-guides/cosmwasm-cli",
+      },
+      collapsible: true,
+      collapsed: true,
+      items: ["developer-guides/cosmwasm/walkthrough"],
+    },
+    "developer-guides/oracle-set-up-guide",
+    "developer-guides/collator-guide",
+    "developer-guides/local-picasso-guide",
+    "developer-guides/composable-cosmos-mainnet",
+    "developer-guides/testnet-4",
+
     {
       type: "category",
       label: "Nix",
@@ -202,51 +247,6 @@
       type: "doc",
       id: "codespaces",
     },
-    {
-      type: "category",
-      label: "Cosmwasm Orchestrate",
-      link: {
-        type: "doc",
-        id: "developer-guides/cosmwasm-orchestrate",
-      },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        {
-          type: "category",
-          label: "Concepts",
-          link: {
-            type: "doc",
-            id: "developer-guides/cosmwasm/cw-orchestrate/concepts/concepts",
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/direct-dispatch",
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/address-handlers",
-            "developer-guides/cosmwasm/cw-orchestrate/concepts/custom-handler",
-          ],
-        },
-        "developer-guides/cosmwasm/cw-orchestrate/tutorial-dex",
-      ],
-    },
-    {
-      type: "category",
-      label: "Cosmwasm CLI",
-      link: {
-        type: "doc",
-        id: "developer-guides/cosmwasm-cli",
-      },
-      collapsible: true,
-      collapsed: true,
-      items: ["developer-guides/cosmwasm/walkthrough"],
-    },
-    "developer-guides/oracle-set-up-guide",
-    "developer-guides/collator-guide",
-    "developer-guides/local-picasso-guide",
-    "developer-guides/composable-cosmos-mainnet",
-    "developer-guides/testnet-3",
-    "developer-guides/testnet-4",
 
   ],
    ecosystem: [

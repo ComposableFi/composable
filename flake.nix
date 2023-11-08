@@ -8,6 +8,11 @@
       url = "github:Platonic-Systems/process-compose-flake";
     };
 
+    process-compose = {
+      url = "github:F1bonacc1/process-compose";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils.url = "github:numtide/flake-utils";
     npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
@@ -56,14 +61,14 @@
     centauri-old-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/e66a104bf826e669ae4421e842265f58be1dac6a";
+        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
     # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/e66a104bf826e669ae4421e842265f58be1dac6a";
+        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
     eth-pos-devnet-src = {
@@ -75,6 +80,11 @@
     ethereum = {
       url =
         "github:dzmitry-lahoda-forks/ethereum.nix/9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4";
+    };
+
+    polkadot = {
+      url = "github:andresilva/polkadot.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -109,34 +119,35 @@
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/flake-module.nix
-        ./code/xcvm/evm/flake-module.nix
+        ./code/cvm/evm/flake-module.nix
+        ./code/cvm/flake-module.nix
         ./docs/flake-module.nix
         ./flake/all.nix
-        ./flake/nixos-configuration.nix
+        ./flake/bash.nix
         ./flake/cargo-tools.nix
         ./flake/check.nix
+        ./flake/cosmos.nix
         ./flake/darwin-configurations.nix
-        ./flake/bash.nix
         ./flake/dev-shells.nix
+        ./flake/devnet-tools.nix
         ./flake/devnet.nix
         ./flake/docker.nix
+        ./flake/ethereum.nix
         ./flake/fmt.nix
         ./flake/hermes.nix
-        ./flake/ethereum.nix
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
+        ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
-        ./flake/cosmos.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
+        ./flake/rust.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/chevdor/subwasm.nix
         ./inputs/ComposableFi/centauri/flake-module.nix
         ./inputs/CosmosContracts/juno.nix
         ./inputs/CosmWasm/flake-module.nix
@@ -148,9 +159,6 @@
         ./inputs/paritytech/zombienet/flake-module.nix
         ./inputs/Wasmswap/wasmswap-contracts.nix
         ./inputs/wynddao/flake-module.nix
-        ./tools/devnet-tools.nix
-        ./tools/pkgs.nix
-        ./tools/rust.nix
       ];
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];

@@ -25,6 +25,7 @@
       makeComposableNode = picasso-runtime: composable-runtime:
         crane.nightly.buildPackage (systemCommonRust.common-attrs // rec {
           name = "composable";
+          SKIP_WASM_BUILD = "1";
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand = "cargo build --release --package ${name}";
           cargoExtraArgs = "--features=builtin-wasm";

@@ -49,6 +49,15 @@ const config = {
 			}),
 		],
 	],
+	stylesheets: [
+		{
+		  href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
+		  type: 'text/css',
+		  integrity:
+			'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM',
+		  crossorigin: 'anonymous',
+		},
+	  ],	
 
 	themeConfig:
 		/** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -75,15 +84,10 @@ const config = {
 					{
 						to: '/technology/composable-ibc',
 						position: 'left',
-						label: 'Composable IBC',
+						label: 'Architecture',
 					},
 					{
-						to: '/technology/cvm',
-						position: 'left',
-						label: 'Composable VM',
-					},
-					{
-						to: '/nix',
+						to: '/developer-guides/build-on-composable',
 						position: 'left',
 						label: 'Develop',
 					},
@@ -100,6 +104,11 @@ const config = {
 					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
+						position: 'right',
+					},
+					{
+						href: 'https://explorer.trustless.zone/',
+						label: 'Explorer',
 						position: 'right',
 					},
 					{

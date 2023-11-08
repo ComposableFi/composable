@@ -17,14 +17,14 @@ This is just the start of Composable’s journey to bring interoperability to th
 and we want you to grow alongside us. The grants program has a few foci: 
 
 
-## XCVM and CosmWasm Grants Program
+## CVM and CosmWasm Grants Program
 
 To accelerate the development of cutting edge cross-chain products within the Composable ecosystem, 
-notably with the reveal of the XCVM, Composable Finance has launched a
+notably with the reveal of the CVM, Composable Finance has launched a
 [grants program](https://composablefi.medium.com/composable-finance-launches-grants-program-for-cosmwasm-developers-d1d74c3b5765) 
 for developers and projects building with CosmWasm. 
 The grants program is one of our multifaceted strategies to attract and support innovators who utilize and build with CosmWasm. 
-We aim to ignite an industry-wide revolution of cross-chain applications using our XCVM.
+We aim to ignite an industry-wide revolution of cross-chain applications using our CVM.
 
 
 Composable Finance aims to facilitate innovative and end-user focused development across various layers and chains. 
@@ -55,7 +55,7 @@ we are providing grants for pallet developers and those leveraging our pallets t
 
 There are three separate pallet tracks for our grants: primitive, core and application:
 
-* **Primitive Track** grant recipients building essential tooling for pallets and applications deployed on the XCVM. 
+* **Primitive Track** grant recipients building essential tooling for pallets and applications deployed on the CVM. 
 * **Secondary (Core) Track** teams will leverage the primary primitive pallets to create building blocks which allow for 
   user interaction and value generation.
 * **Tertiary (Application) Track** projects will be those that leverage both primitive pallets and core functionalities.

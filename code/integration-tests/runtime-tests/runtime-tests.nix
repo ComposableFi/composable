@@ -2,26 +2,22 @@
   perSystem = { config, self', inputs', pkgs, system, ... }: {
     packages = rec {
       devnet-integration-tests = pkgs.writeShellApplication {
-        runtimeInputs = with pkgs; [
-          curl
-          dasel
-          nodejs
-          coreutils
-          process-compose
-        ];
+        runtimeInputs = with pkgs;
+          with self'.packages; [
+            curl
+            dasel
+            nodejs
+            coreutils
+            process-compose
+            centaurid
+            osmosisd
+          ];
         name = "devnet-integration-tests";
         text = ''
           # shellcheck disable=SC2069
           ( ${
             pkgs.lib.meta.getExe self'.packages.devnet-xc-fresh-background
           } 2>&1 & ) | tee devnet-xc.log &
-
-          process-compose-stop() {
-            for i in $(process-compose process list)
-            do
-              process-compose process stop "$i"
-            done
-          }
 
           TRIES=0
           START_RESULT=1
@@ -35,13 +31,21 @@
             fi
             set -o errexit            
             if test $START_RESULT -eq 0; then
-              process-compose-stop
+              set +o errexit
+              pkill -SIGTERM process-compose
+              set -o errexit
               break
             fi
             ((TRIES=TRIES+1))
             sleep 4
           done
-          process-compose-stop
+
+          # here nodes are up and running, binaries in path, npm is here too
+
+          sleep 8
+          set +o errexit          
+          pkill -SIGKILL process-compose
+          set -o errexit
           exit $START_RESULT              
         '';
       };

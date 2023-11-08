@@ -105,8 +105,8 @@ in with prelude; rec {
       };
     in [ bootstrap ] ++ generated;
 
-  mkRelaychain =
-    { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
+  mkRelaychain = { chain, default_command, rpc_port ? 30444, ws_port ? 9944
+    , count ? 2, genesis ? { } }: {
       inherit default_command;
       inherit chain;
       default_args = [
@@ -117,20 +117,39 @@ in with prelude; rec {
         "--enable-offchain-indexing=true"
         "--discover-local"
       ];
-      genesis = {
-        runtime = {
-          runtime_genesis_config = {
-            configuration = {
-              config = {
-                max_validators_per_core = 2;
-                needed_approvals = 1;
-                validation_upgrade_cooldown = 2;
-                validation_upgrade_delay = 2;
+
+      genesis = let
+        recursiveMerge = with lib;
+          attrList:
+          let
+            f = attrPath:
+              zipAttrsWith (n: values:
+                if tail values == [ ] then
+                  head values
+                else if all isList values then
+                  unique (concatLists values)
+                else if all isAttrs values then
+                  f (attrPath ++ [ n ]) values
+                else
+                  last values);
+          in f [ ] attrList;
+      in recursiveMerge [
+        {
+          runtime = {
+            runtime_genesis_config = {
+              configuration = {
+                config = {
+                  max_validators_per_core = 2;
+                  needed_approvals = 1;
+                  validation_upgrade_cooldown = 2;
+                  validation_upgrade_delay = 2;
+                };
               };
             };
           };
-        };
-      };
+        }
+        genesis
+      ];
       nodes = mkRelaychainNodes { inherit rpc_port ws_port count chain; };
     };
   mkSettings = {

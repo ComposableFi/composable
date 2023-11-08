@@ -118,11 +118,11 @@ jobs:
             **/*.nix
             **/*.sol
             **/*.toml
-            code/xcvm/evm/lib/forge-std
-            code/xcvm/evm/lib/openzeppelin-contracts
-            code/xcvm/evm/lib/protobuf3-solidity-lib
-            code/xcvm/evm/lib/yui-ibc-solidity
-            code/xcvm/evm/lib/solidity-bytes-utils
+            code/cvm/evm/lib/forge-std
+            code/cvm/evm/lib/openzeppelin-contracts
+            code/cvm/evm/lib/protobuf3-solidity-lib
+            code/cvm/evm/lib/yui-ibc-solidity
+            code/cvm/evm/lib/solidity-bytes-utils
             flake/eth-pos-devnet
       - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
@@ -254,7 +254,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#xcvm-tests
+          command: nix -- build .#cvm-tests
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 

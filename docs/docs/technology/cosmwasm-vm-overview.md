@@ -43,28 +43,14 @@ CosmWasm on Picasso can be divided into three components:
     Essentially, it is a communicator and helper tool. It can be used in local development and called by other programs. 
     Anyone using CW can use the CW-CLI, and it is not specific to Picasso.
 
-## Overview of Developer Tools
-
-The following tools are a beta launch for CosmWasm developers. 
-Users who wish to leave feature requests and feedback are welcome to raise [Github issues]. 
-These tools are not exclusive for developers building on Picasso, but rather those building with CosmWasm in general.
-
-**[CosmWasm-Orchestrate]:** CW Orchestrate is a tool for testing and simulating CW contracts. 
-By integrating our CosmWasm Orchestrate library into developers' CosmWasm contracts, 
-they can easily test in-memory simulations of real chain implementations executing their contracts, 
-from simple to the most intricate orchestrations, all while being IBC supported. 
-Furthermore, with CosmWasm Orchestrate, developers can write tests programmatically in 
-the Continuous Integration (CI) pipeline and test them in a straightforward manner.
 
 
-**[Smart Contract Interface]:** With Composable Finance’s Smart Contract Tooling Interface, 
+**Developer Tool - [Smart Contract Interface]:** With Composable Finance’s Smart Contract Tooling Interface, 
 we have abstracted the process of using CosmWasm and made it accessible through a browser. 
 This allows developers to easily upload their smart contracts and instantly test them, 
 saving time and reducing the overhead of interacting with a blockchain. 
 
 Read our introductory thread for a preview of the [CosmWasm VM smart contract tooling interface].
 
-[Github issues]: https://github.com/ComposableFi/composable/issues
-[CosmWasm-Orchestrate]: https://github.com/ComposableFi/cosmwasm-vm/tree/main/orchestrate
 [Smart Contract Interface]: https://tools.xcvm.dev/
 [CosmWasm VM smart contract interface]: https://twitter.com/ComposableFin/status/1600538100282761216?s=20&t=NkUt9w8mush_wmMpkph7xw

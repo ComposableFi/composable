@@ -20,40 +20,27 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/technology/composable-ibc">
+      <a href="/technology/ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Composable IBC" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Architecture" />
           </div>
           <div class="card__body">
-            <h3>Composable IBC</h3>
-              Composable's extension of the Inter-blockchain communication (IBC) protocol.
+            <h3>Architecture</h3>
+              Read about the extension of the IBC protocol beyond Cosmos and the Composable Virtual Machine (CVM).
           </div>
         </div>
       </a>
     </div>
     <div class="col col--4">
-      <a href="/technology/cvm">
-        <div class="card">
-          <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-3_cb5rl0.png" alt="Networks" alt="Composable VM" />
-          </div>
-          <div class="card__body">
-            <h3>Composable VM</h3>
-              Cross-ecosystem communication enabled through cross-chain smart contracts.
-          </div>
-        </div>
-      </a>
-    </div>
-    <div class="col col--4">
-      <a href="/nix">
+      <a href="/developer-guides/build-on-composable">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206944/Frame_4_gepwoe.png" alt="Networks" alt="Develop" />
           </div>
           <div class="card__body">
             <h3>Develop</h3>
-              Develop with the Picasso testnet, instructions to setup an oracle, collator and validator.
+              Develop with Picasso, its testnet, Composable Cosmos and instructions to setup an oracle, collator and validator.
           </div>
         </div>
       </a>
@@ -66,7 +53,7 @@ slug: /
           </div>
           <div class="card__body">
             <h3>Ecosystem</h3>
-             Learn about Pablo, the Composable ecosystem, Team and Press Kit. 
+             Learn about the Composable ecosystem, Team, Press Kit and Bug Bounties.
           </div>
         </div>
       </a>
@@ -79,7 +66,7 @@ slug: /
           </div>
           <div class="card__body">
             <h3>User Guides</h3>
-              Navigate Composable products and infrastructure via User Guides.
+              Navigate Composable's technology and infrastructure via User Guides.
           </div>
         </div>
       </a>
@@ -96,7 +83,7 @@ slug: /
 *any money, any chain, anywhere*
 
 :::note
-The documentation for Composable is presently undergoing development, consequently resulting in an usual display.
+The documentation for Composable is presently undergoing development, consequently it may result in an usual display.
 :::
 ## The Vision
 
