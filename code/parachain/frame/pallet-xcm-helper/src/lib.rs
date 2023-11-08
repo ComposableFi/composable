@@ -300,7 +300,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			T::RelayCurrency::get(),
 			&Self::account_id(),
 			fees,
-			Precision::BestEffort,
+			Precision::Exact,
 			Fortitude::Polite,
 		)
 		.map_err(|_| Error::<T>::InsufficientXcmFees)?;
