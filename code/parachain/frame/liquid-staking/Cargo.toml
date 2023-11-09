@@ -39,13 +39,13 @@ sp-state-machine = { workspace = true }
 
 pallet-assets-registry = { path = "../assets-registry" }
 
-kusama-runtime              = { workspace = true, features = ['std'] }
-polkadot-core-primitives    = { workspace = true }
+# kusama-runtime              = { workspace = true, features = ['std'] }
+# polkadot-core-primitives    = { workspace = true }
 polkadot-parachain          = { workspace = true, features = ['std'] }
-polkadot-runtime-parachains = { workspace = true }
+# polkadot-runtime-parachains = { workspace = true }
 xcm-builder                 = { workspace = true, features = ['std'] }
 xcm-executor                = { workspace = true, features = ['std'] }
-xcm-simulator               = { workspace = true }
+# xcm-simulator               = { workspace = true }
 
 cumulus-pallet-dmp-queue        = { workspace = true, features = ['std'] }
 cumulus-pallet-parachain-system = { workspace = true, features = ['std'] }
