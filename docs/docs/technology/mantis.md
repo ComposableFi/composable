@@ -1,5 +1,6 @@
 # MANTIS
 
+**Multichain Agnostic Normalised Trust-minimised Intent Settlement**
 ## The Problem
 
 There is no one set definition for this Intents in DeFi. In general, intents are understood to be users’ desires for a given transaction or other outcome. Intents include desired parameters (such as to swap X amount of A token for B token), but leave some room for flexibility (such as where this swap occurs) in the solution that solvers provide. Anoma’s Apriori does a great job of breaking down the history and various definitions of intents in this blog about their Intents Day event. This blog by Essential also provides another means of defining intents and solvers.
