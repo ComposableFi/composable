@@ -83,7 +83,8 @@
     };
 
     polkadot = {
-      url = "github:andresilva/polkadot.nix";
+      url =
+        "github:andresilva/polkadot.nix/30a616cb07b8f26b7bdb1b06d18440628bc6ecff";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

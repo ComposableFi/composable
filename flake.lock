@@ -2312,16 +2312,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1698315294,
-        "narHash": "sha256-3KDbQSD765iOwLjUX6+aEhucs1FQ1hEMq5vOfh3GB58=",
+        "lastModified": 1695727433,
+        "narHash": "sha256-jjPQ+lITJzuhkDs0HcPzff4dpnwYVcK5LKTQCI8TvV8=",
         "owner": "andresilva",
         "repo": "polkadot.nix",
-        "rev": "00ef13ecfb94d6afa9601efe56419d1b56d0a258",
+        "rev": "30a616cb07b8f26b7bdb1b06d18440628bc6ecff",
         "type": "github"
       },
       "original": {
         "owner": "andresilva",
         "repo": "polkadot.nix",
+        "rev": "30a616cb07b8f26b7bdb1b06d18440628bc6ecff",
         "type": "github"
       }
     },

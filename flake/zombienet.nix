@@ -5,7 +5,11 @@
       relaychainBase = {
         chain = "rococo-local";
         default_command =
-          pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
+          # for fast westend and rococo uncomment next
+          # vote on official package https://github.com/andresilva/polkadot.nix/issues/8 too
+          # #fastnet #testnet 
+          # pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
+          pkgs.lib.meta.getExe pkgs.polkadot;
         count = 2;
       };
 
