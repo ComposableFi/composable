@@ -31,6 +31,8 @@ pub enum Register {
 	/// Result of the last executed instruction.
 	/// If not empty, program did not executed to the end.
 	Result,
+	/// Refers to amount transferred via Spawn or originating call
+	Carry(AssetId),
 }
 
 /// Bindings: (Index, Binding)

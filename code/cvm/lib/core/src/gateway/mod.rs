@@ -24,6 +24,7 @@ pub enum ExecuteMsg {
 	ExecuteProgram {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
+		#[serde(skip_serializing_if = "Option::is_none")]
 		tip: Option<String>,
 	},
 
@@ -223,7 +224,7 @@ mod tests {
 				program: XcProgram { tag: b"noop".to_vec(), instructions: [].into() },
 				assets: <_>::default(),
 			},
-			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: Some(String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n")),
 		};
 		let program = serde_json_wasm::to_string(&program).expect("serde");
 		let expected = serde_json_wasm::to_string(
@@ -257,9 +258,9 @@ mod tests {
 			execute_program: ExecuteProgramMsg {
 				salt: b"noop_with_asset".to_vec(),
 				program: XcProgram { tag: b"noop_with_asset".to_vec(), instructions: [].into() },
-				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+				assets: Some(vec![(pica_on_centauri, 1_000_000_000u128)].into()),
 			},
-			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: Some(String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n")),
 		};
 
 		let program = serde_json_wasm::to_string(&program).expect("serde");
@@ -310,9 +311,9 @@ mod tests {
 					}]
 					.into(),
 				},
-				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+				assets: Some(vec![(pica_on_centauri, 1_000_000_000u128)].into()),
 			},
-			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: None,
 		};
 
 		let program = serde_json_wasm::to_string(&program).expect("serde");
@@ -402,9 +403,9 @@ mod tests {
 					}]
 					.into(),
 				},
-				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+				assets: Some(vec![(pica_on_centauri, 1_000_000_000u128)].into()),
 			},
-			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: None,
 		};
 
 		let program = serde_json_wasm::to_string(&program).expect("serde");
@@ -531,9 +532,9 @@ mod tests {
 					}]
 					.into(),
 				},
-				assets: vec![(pica_on_centauri, 1_000_000_000u128)].into(),
+				assets: Some(vec![(pica_on_centauri, 1_000_000_000u128)].into()),
 			},
-			tip: String::from("centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: None,
 		};
 
 		//pica_on_osmosis
@@ -683,9 +684,9 @@ mod tests {
 					}]
 					.into(),
 				},
-				assets: vec![(osmo_on_osmosis, 1_000_000_000u128)].into(),
+				assets: Some(vec![(osmo_on_osmosis, 1_000_000_000u128)].into()),
 			},
-			tip: String::from("osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"),
+			tip: None,
 		};
 
 		let program = serde_json_wasm::to_string(&program).expect("serde");

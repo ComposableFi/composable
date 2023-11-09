@@ -13,7 +13,7 @@ pub use serde::{Deserialize, Serialize};
 pub use parity_scale_codec::{Decode, Encode};
 
 use super::{pb, NonEmptyExt};
-use crate::{shared::Displayed, Amount, Destination, Funds};
+use crate::{shared::Displayed, Destination, Funds};
 
 pub type CVMPacket<TAbiEncoded, TAccount, TAssets> =
 	crate::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>;
@@ -256,19 +256,21 @@ where
 				payload: encoded.into(),
 				bindings: super::from_sequence(bindings),
 			}),
-			Instruction::Spawn { network_id, salt, assets, program } =>
+			Instruction::Spawn { network_id, salt, assets, program } => {
 				Msg::Spawn(pb::program::Spawn {
 					network_id: network_id.into(),
 					salt,
 					program: Some(program.into()),
 					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
-				}),
-			Instruction::Exchange { exchange_id, give, want } =>
+				})
+			},
+			Instruction::Exchange { exchange_id, give, want } => {
 				Msg::Exchange(pb::program::Exchange {
 					exchange_id: Some(exchange_id.into()),
 					give: give.into().into_iter().map(|asset| asset.into()).collect(),
 					want: want.into().into_iter().map(|asset| asset.into()).collect(),
-				}),
+				})
+			},
 		};
 		Self { instruction: Some(instruction) }
 	}
@@ -323,6 +325,7 @@ impl From<pb::program::Register> for crate::Register {
 			pb::program::Register::Tip => Self::Tip,
 			pb::program::Register::This => Self::This,
 			pb::program::Register::Result => Self::Result,
+			pb::program::Register::Carry => unimplemented!("need to design register with data"),
 		}
 	}
 }
@@ -334,6 +337,7 @@ impl From<crate::Register> for pb::program::Register {
 			crate::Register::Tip => Self::Tip,
 			crate::Register::This => Self::This,
 			crate::Register::Result => Self::Result,
+			crate::Register::Carry(_) => unimplemented!("map with data"),
 		}
 	}
 }
@@ -346,8 +350,9 @@ where
 
 	fn try_from(account_type: pb::program::transfer::AccountType) -> Result<Self, Self::Error> {
 		Ok(match account_type {
-			pb::program::transfer::AccountType::Account(account) =>
-				Destination::Account(account.try_into().map_err(|_| ())?),
+			pb::program::transfer::AccountType::Account(account) => {
+				Destination::Account(account.try_into().map_err(|_| ())?)
+			},
 			pb::program::transfer::AccountType::Tip(_) => Destination::Tip,
 		})
 	}
@@ -377,61 +382,22 @@ super::define_conversion! {
 	}
 }
 
-super::define_conversion! {
-	(balance: pb::program::Balance) -> {
-		use pb::program::balance::BalanceType;
-		let (amount, is_unit) = match balance.balance_type.non_empty()? {
-			BalanceType::Ratio(pb::program::Ratio { nominator, denominator }) => {
-				(Amount::from((nominator, denominator)), false)
-			},
-			BalanceType::Absolute(pb::program::Absolute { value }) => {
-				(Amount::absolute(value.non_empty()?.into()), false)
-			},
-			BalanceType::Unit(unit) => {
-				let integer = unit.integer.non_empty()?;
-				let ratio = unit.ratio.non_empty()?;
-				let slope = Amount::from((ratio.nominator, ratio.denominator)).slope;
-				let amount = Amount::new(integer.into(), slope.into());
-				(amount, true)
-			},
-		};
-		Ok(crate::Amount::new(amount, 0))
-	}
-
-	(balance: crate::Amount) -> {
-		// Note that although functionally nothing changes, there is no guarantee of getting the
-		// same protobuf when you convert protobuf to CVM types and convert back again. Because
-		// `intercept = 0 & ratio = 0` is always converted to `Absolute`. But this can be also
-		// expressed with `Ratio` and `Unit` as well. Also, since the ratio is expanded to use
-		// denominator `MAX_PARTS`, it also won't be the same.
-
-		let balance_type = if balance.is_unit {
-			pb::program::balance::BalanceType::Unit(pb::program::Unit {
-				integer: Some(balance.amount.intercept.0.into()),
-				ratio: Some(pb::program::Ratio {
-					nominator: balance.amount.slope.0,
-					denominator: Amount::MAX_PARTS,
-				}),
-			})
-		} else if balance.amount.is_absolute() {
-			pb::program::balance::BalanceType::Absolute(pb::program::Absolute {
-				value: Some(balance.amount.intercept.0.into()),
-			})
-		} else {
-			pb::program::balance::BalanceType::Ratio(pb::program::Ratio {
-				nominator: balance.amount.slope.0,
-				denominator: Amount::MAX_PARTS,
-			})
-		};
-		Self { balance_type: Some(balance_type) }
+impl TryFrom<pb::program::Balance> for crate::Amount {
+	type Error = ();
+	fn try_from(balance: pb::program::Balance) -> Result<Self, Self::Error> {
+		let ratio = balance.ratio.map(|ratio| ratio.nominator).unwrap_or(0);
+		let absolute: Displayed<u128> = balance
+			.absolute
+			.map(|x| x.value.unwrap_or_default())
+			.map(Into::into)
+			.unwrap_or_default();
+		Ok(crate::Amount::new(absolute.into(), ratio))
 	}
 }
-
-#[test]
-fn test_balance_to_amount_works() {
-	let ratio = pb::program::Ratio { nominator: 3u64.into(), denominator: 5u64.into() };
-	let balance =
-		pb::program::Balance { balance_type: Some(pb::program::balance::BalanceType::Ratio(ratio)) };
-	let xcvm_balance: crate::Balance = balance.try_into().unwrap();
-	assert_eq!(xcvm_balance.amount.intercept, Displayed(0));
+impl From<crate::Amount> for pb::program::Balance {
+	fn from(balance: crate::Amount) -> pb::program::Balance {
+		let absolute = Some(pb::program::Absolute { value: Some(balance.intercept.0.into()) });
+		let ratio = Some(pb::program::Ratio { nominator: balance.slope.0 });
+		Self { absolute, ratio }
+	}
 }

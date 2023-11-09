@@ -97,7 +97,7 @@ pub struct Amount {
 	/// absolute amount, optional, default is 0
 	#[serde(skip_serializing_if = "is_default", default)]
 	pub intercept: Displayed<u128>,
-	/// part of MAX_PARTS from remaining after intercept subtraction, optional, default is 0
+	/// part of `MAX_PARTS`` from remaining after intercept subtraction, optional, default is 0
 	#[serde(skip_serializing_if = "is_default", default)]
 	pub slope: Displayed<u64>,
 }
