@@ -200,6 +200,8 @@
         "technology/cvm/tutorial",
    ],
   },
+
+  "technology/mantis",
 ],
    develop: [
     {
