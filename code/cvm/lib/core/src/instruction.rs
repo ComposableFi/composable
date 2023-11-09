@@ -79,8 +79,11 @@ pub enum Instruction<Payload, Account, Assets> {
 	Spawn {
 		network_id: crate::network::NetworkId,
 		/// If JSON, than hex encoded non prefixed lower case string.
+		/// Different salt allows to split funds into different virtual wallets 
+		/// So same salt shares assets on set of derived accounts on chains program executes.		
 		#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 		#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+		#[serde(skip_serializing_if = "Vec::is_empty", default)]
 		salt: Vec<u8>,
 		assets: Assets,
 		program: Program<VecDeque<Self>>,

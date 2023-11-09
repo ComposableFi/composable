@@ -24,7 +24,7 @@ pub enum ExecuteMsg {
 	ExecuteProgram {
 		/// Program to execute.
 		execute_program: ExecuteProgramMsg,
-		tip: String,
+		tip: Option<String>,
 	},
 
 	/// Request to execute a program on behalf of given user.
@@ -73,14 +73,17 @@ pub enum ShortcutSubMsg {
 pub struct ExecuteProgramMsg {
 	/// The program salt.
 	/// If JSON, than hex encoded non prefixed lower case string.
+	/// If not specified, uses no salt.
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub salt: Vec<u8>,
 	/// The program.
 	pub program: crate::shared::XcProgram,
-	/// Assets to fund the XCVM interpreter instance
-	/// The interpreter is funded prior to execution
-	pub assets: Funds<crate::shared::Displayed<u128>>,
+	/// Assets to fund the CVM interpreter instance.
+	/// The interpreter is funded prior to execution.
+	/// If None, 100% of received funds go to interpreter.
+	pub assets: Option<Funds<crate::shared::Displayed<u128>>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
