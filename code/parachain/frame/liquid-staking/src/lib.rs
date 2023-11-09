@@ -565,7 +565,7 @@ pub mod pallet {
 					*b = b.saturating_add(liquid_amount).min(balance);
 					Ok(())
 				})?;
-				return Ok(().into());
+				return Ok(().into())
 			}
 
 			let amount =
@@ -809,11 +809,11 @@ pub mod pallet {
 				);
 
 				if amount.is_zero() {
-					return Err(Error::<T>::NothingToClaim.into());
+					return Err(Error::<T>::NothingToClaim.into())
 				}
 
 				if total_unclaimed < amount {
-					return Err(Error::<T>::NotWithdrawn.into());
+					return Err(Error::<T>::NotWithdrawn.into())
 				}
 
 				Self::do_claim_for(&who, amount)?;
@@ -1168,7 +1168,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn set_members(origin: OriginFor<T>, members: Vec<T::AccountId>) -> DispatchResult {
 			if T::UpdateOrigin::ensure_origin(origin).is_err() {
-				return Err(BadOrigin.into());
+				return Err(BadOrigin.into())
 			}
 			Members::<T>::put(members.clone());
 			Self::deposit_event(Event::<T>::SetMembers { members });
@@ -1201,7 +1201,7 @@ pub mod pallet {
 					era: offset,
 				});
 				if offset.is_zero() {
-					return Ok(());
+					return Ok(())
 				}
 				weight += <T as Config>::WeightInfo::force_advance_era();
 				Self::do_advance_era(offset)
@@ -1337,11 +1337,11 @@ pub mod pallet {
 			payee: RewardDestination<T::AccountId>,
 		) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			if StakingLedgers::<T>::contains_key(derivative_index) {
-				return Self::do_bond_extra(derivative_index, amount);
+				return Self::do_bond_extra(derivative_index, amount)
 			}
 
 			ensure!(
@@ -1392,7 +1392,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			ensure!(
@@ -1433,7 +1433,7 @@ pub mod pallet {
 		#[require_transactional]
 		fn do_unbond(derivative_index: DerivativeIndex, amount: BalanceOf<T>) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			ensure!(
@@ -1475,7 +1475,7 @@ pub mod pallet {
 		#[require_transactional]
 		fn do_rebond(derivative_index: DerivativeIndex, amount: BalanceOf<T>) -> DispatchResult {
 			if amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			ensure!(
@@ -1513,7 +1513,7 @@ pub mod pallet {
 			num_slashing_spans: u32,
 		) -> DispatchResult {
 			if Self::unbonded_of(derivative_index).is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			ensure!(
@@ -1585,7 +1585,7 @@ pub mod pallet {
 			payee: RewardDestination<T::AccountId>,
 		) -> DispatchResult {
 			if total_amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			let amounts: Vec<(DerivativeIndex, BalanceOf<T>, BalanceOf<T>)> =
@@ -1612,7 +1612,7 @@ pub mod pallet {
 		#[require_transactional]
 		fn do_multi_unbond(total_amount: BalanceOf<T>) -> DispatchResult {
 			if total_amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			let amounts: Vec<(DerivativeIndex, BalanceOf<T>)> = T::DerivativeIndexList::get()
@@ -1635,7 +1635,7 @@ pub mod pallet {
 		#[require_transactional]
 		fn do_multi_rebond(total_amount: BalanceOf<T>) -> DispatchResult {
 			if total_amount.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			let amounts: Vec<(DerivativeIndex, BalanceOf<T>)> = T::DerivativeIndexList::get()
@@ -1678,7 +1678,7 @@ pub mod pallet {
 
 			let executed = res.is_none();
 			if !executed {
-				return Ok(());
+				return Ok(())
 			}
 
 			match req {
@@ -1762,7 +1762,7 @@ pub mod pallet {
 			let total_active_bonded = Self::get_total_active_bonded();
 			let issuance = T::Assets::total_issuance(Self::liquid_currency()?);
 			if issuance.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 			// TODO: when one era has big amount of stakes, the exchange rate
 			// will not look great
@@ -1831,7 +1831,7 @@ pub mod pallet {
 		#[require_transactional]
 		pub fn do_advance_era(offset: EraIndex) -> DispatchResult {
 			if offset.is_zero() {
-				return Ok(());
+				return Ok(())
 			}
 
 			log::trace!(
@@ -1873,7 +1873,7 @@ pub mod pallet {
 			let issuance = T::Assets::total_issuance(Self::liquid_currency()?);
 			let commission_rate = Self::commission_rate();
 			if issuance.is_zero() || commission_rate.is_zero() || rewards.is_zero() {
-				return Ok(Zero::zero());
+				return Ok(Zero::zero())
 			}
 
 			let matching_ledger = Self::matching_pool();
@@ -1900,7 +1900,7 @@ pub mod pallet {
 		fn do_fast_match_unstake(unstaker: &T::AccountId) -> DispatchResult {
 			FastUnstakeRequests::<T>::try_mutate_exists(unstaker, |b| -> DispatchResult {
 				if b.is_none() {
-					return Ok(());
+					return Ok(())
 				}
 				let keep_alive = false;
 				let keep_alive =
@@ -1978,11 +1978,11 @@ pub mod pallet {
 
 		fn ensure_origin(origin: OriginFor<T>) -> DispatchResult {
 			if T::RelayOrigin::ensure_origin(origin.clone()).is_ok() {
-				return Ok(());
+				return Ok(())
 			}
 			let who = ensure_signed(origin)?;
 			if !T::Members::contains(&who) && !Members::<T>::get().contains(&who) {
-				return Err(BadOrigin.into());
+				return Err(BadOrigin.into())
 			}
 			Ok(())
 		}
@@ -2021,7 +2021,7 @@ pub mod pallet {
 		) -> bool {
 			let validation_data = Self::validation_data();
 			if validation_data.is_none() {
-				return false;
+				return false
 			}
 			let PersistedValidationData { relay_parent_number, relay_parent_storage_root, .. } =
 				validation_data.expect("Could not be none, qed;");
@@ -2039,7 +2039,7 @@ pub mod pallet {
 				None,
 				None,
 			) {
-				return result == value;
+				return result == value
 			}
 			false
 		}

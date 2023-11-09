@@ -111,7 +111,7 @@ impl<Balance: BalanceT + FixedPointOperand> MatchingLedger<Balance> {
 	pub fn sub_stake_amount(&mut self, amount: Balance) -> DispatchResult {
 		let total_free_stake_amount = self.total_stake_amount.free()?;
 		if total_free_stake_amount < amount {
-			return Err(ArithmeticError::Underflow.into());
+			return Err(ArithmeticError::Underflow.into())
 		}
 
 		self.total_stake_amount.total = self
@@ -125,7 +125,7 @@ impl<Balance: BalanceT + FixedPointOperand> MatchingLedger<Balance> {
 	pub fn sub_unstake_amount(&mut self, amount: Balance) -> DispatchResult {
 		let total_free_unstake_amount = self.total_unstake_amount.free()?;
 		if total_free_unstake_amount < amount {
-			return Err(ArithmeticError::Underflow.into());
+			return Err(ArithmeticError::Underflow.into())
 		}
 
 		self.total_unstake_amount.total = self
@@ -143,7 +143,7 @@ impl<Balance: BalanceT + FixedPointOperand> MatchingLedger<Balance> {
 			.checked_add(&amount)
 			.ok_or(ArithmeticError::Overflow)?;
 		if new_reserved_stake_amount > self.total_stake_amount.total {
-			return Err(ArithmeticError::Overflow.into());
+			return Err(ArithmeticError::Overflow.into())
 		}
 		self.total_stake_amount.reserved = new_reserved_stake_amount;
 		Ok(())
@@ -165,7 +165,7 @@ impl<Balance: BalanceT + FixedPointOperand> MatchingLedger<Balance> {
 			.checked_add(&amount)
 			.ok_or(ArithmeticError::Overflow)?;
 		if new_reserved_unstake_amount > self.total_unstake_amount.total {
-			return Err(ArithmeticError::Overflow.into());
+			return Err(ArithmeticError::Overflow.into())
 		}
 		self.total_unstake_amount.reserved = new_reserved_unstake_amount;
 		Ok(())
@@ -184,7 +184,7 @@ impl<Balance: BalanceT + FixedPointOperand> MatchingLedger<Balance> {
 		let total_free_stake_amount = self.total_stake_amount.free()?;
 		let total_free_unstake_amount = self.total_unstake_amount.free()?;
 		if total_free_stake_amount != total_free_unstake_amount {
-			return Ok(());
+			return Ok(())
 		}
 
 		self.total_stake_amount.total = self
@@ -283,7 +283,7 @@ impl<AccountId, Balance: BalanceT + FixedPointOperand> StakingLedger<AccountId, 
 			}
 
 			if unlocking_balance >= value {
-				break;
+				break
 			}
 		}
 	}

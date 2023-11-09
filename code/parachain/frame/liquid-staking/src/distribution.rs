@@ -33,18 +33,18 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Av
 	) -> Vec<(DerivativeIndex, Balance)> {
 		let length = TryInto::<Balance>::try_into(bonded_amounts.len()).unwrap_or_default();
 		if length.is_zero() {
-			return Default::default();
+			return Default::default()
 		}
 
 		let mut distributions: Vec<(DerivativeIndex, Balance)> = vec![];
 		let amount = input.checked_div(&length).unwrap_or_default();
 		for (index, active_bonded, total_bonded) in bonded_amounts.into_iter() {
 			if amount.saturating_add(active_bonded) < min_nominator_bond {
-				continue;
+				continue
 			}
 			let amount = cap.saturating_sub(total_bonded).min(amount);
 			if amount.is_zero() {
-				continue;
+				continue
 			}
 			distributions.push((index, amount));
 		}
@@ -59,17 +59,17 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Av
 	) -> Vec<(DerivativeIndex, Balance)> {
 		let length = TryInto::<Balance>::try_into(active_bonded_amounts.len()).unwrap_or_default();
 		if length.is_zero() {
-			return Default::default();
+			return Default::default()
 		}
 
 		let mut distributions: Vec<(DerivativeIndex, Balance)> = vec![];
 		let amount = input.checked_div(&length).unwrap_or_default();
 		for (index, bonded) in active_bonded_amounts.into_iter() {
 			if bonded.saturating_sub(amount) < min_nominator_bond {
-				continue;
+				continue
 			}
 			if amount.is_zero() {
-				continue;
+				continue
 			}
 			distributions.push((index, amount));
 		}
@@ -83,7 +83,7 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Av
 	) -> Vec<(DerivativeIndex, Balance)> {
 		let length = TryInto::<Balance>::try_into(unbonding_amounts.len()).unwrap_or_default();
 		if length.is_zero() {
-			return Default::default();
+			return Default::default()
 		}
 
 		let mut distributions: Vec<(DerivativeIndex, Balance)> = vec![];
@@ -91,7 +91,7 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Av
 		for (index, unbonding) in unbonding_amounts.into_iter() {
 			amount = amount.min(unbonding);
 			if amount.is_zero() {
-				continue;
+				continue
 			}
 			distributions.push((index, amount));
 		}
@@ -116,18 +116,18 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Ma
 
 		for (index, active_bonded, total_bonded) in bonded_amounts.into_iter() {
 			if remain.is_zero() {
-				break;
+				break
 			}
 			let amount = cap.saturating_sub(total_bonded).min(remain);
 			if amount.is_zero() {
 				// `bonding_amounts` is an ascending sequence
 				// if occurs an item that exceed the cap, the items after this one must all be
 				// exceeded
-				break;
+				break
 			}
 
 			if amount.saturating_add(active_bonded) < min_nominator_bond {
-				continue;
+				continue
 			}
 
 			distributions.push((index, amount));
@@ -150,11 +150,11 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Ma
 
 		for (index, bonded) in active_bonded_amounts.into_iter() {
 			if remain.is_zero() {
-				break;
+				break
 			}
 			let amount = remain.min(bonded.saturating_sub(min_nominator_bond));
 			if amount.is_zero() {
-				continue;
+				continue
 			}
 			distributions.push((index, amount));
 			remain = remain.saturating_sub(amount);
@@ -175,11 +175,11 @@ impl<Balance: BalanceT + FixedPointOperand> DistributionStrategy<Balance> for Ma
 
 		for (index, unbonding) in unbonding_amounts.into_iter() {
 			if remain.is_zero() {
-				break;
+				break
 			}
 			let amount = remain.min(unbonding);
 			if amount.is_zero() {
-				continue;
+				continue
 			}
 			distributions.push((index, amount));
 			remain = remain.saturating_sub(amount);

@@ -261,7 +261,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			} => {
 				let key = &data[..data.len().min(length as usize)];
 				if ParaId::from(id) == ParachainInfo::parachain_id() && key == b"sDOT".to_vec() {
-					return Some(SDOT);
+					return Some(SDOT)
 				}
 				None
 			},

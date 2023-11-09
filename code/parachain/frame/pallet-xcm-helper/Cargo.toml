@@ -13,49 +13,49 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 parity-scale-codec = { workspace = true, features = ['max-encoded-len'] }
 frame-benchmarking = { workspace = true, optional = true }
-frame-support      = { workspace = true }
-frame-system       = { workspace = true }
-pallet-xcm         = { workspace = true }
-scale-info         = { workspace = true, features = ['derive'] }
-sp-core            = { workspace = true }
-sp-io              = { workspace = true }
-sp-runtime         = { workspace = true }
-sp-std             = { workspace = true }
-xcm                = { workspace = true }
-xcm-executor       = { workspace = true }
-polkadot-parachain          = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-xcm = { workspace = true }
+scale-info = { workspace = true, features = ['derive'] }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+xcm = { workspace = true }
+xcm-executor = { workspace = true }
+polkadot-parachain = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 polkadot-primitives = { workspace = true }
 
 [dev-dependencies]
-cumulus-pallet-dmp-queue        = { workspace = true, features = ['std'] }
+cumulus-pallet-dmp-queue = { workspace = true, features = ['std'] }
 cumulus-pallet-parachain-system = { workspace = true, features = ['std'] }
-cumulus-pallet-xcm              = { workspace = true, features = ['std'] }
-cumulus-pallet-xcmp-queue       = { workspace = true, features = ['std'] }
+cumulus-pallet-xcm = { workspace = true, features = ['std'] }
+cumulus-pallet-xcmp-queue = { workspace = true, features = ['std'] }
 # kusama-runtime                  = { workspace = true, features = ['runtime-benchmarks'] }
-orml-xcm-support                = { workspace = true, features = ['std'] }
-pallet-babe                     = { workspace = true, features = ['std'] }
-pallet-balances                 = { workspace = true, features = ['std'] }
-pallet-session                  = { workspace = true, features = ['std'] }
-pallet-timestamp                = { workspace = true, features = ['std'] }
-pallet-utility                  = { workspace = true, features = ['std'] }
-parachain-info                  = { workspace = true, features = ['std'] }
+orml-xcm-support = { workspace = true, features = ['std'] }
+pallet-babe = { workspace = true, features = ['std'] }
+pallet-balances = { workspace = true, features = ['std'] }
+pallet-session = { workspace = true, features = ['std'] }
+pallet-timestamp = { workspace = true, features = ['std'] }
+pallet-utility = { workspace = true, features = ['std'] }
+parachain-info = { workspace = true, features = ['std'] }
 # polkadot-core-primitives        = { workspace = true }
-polkadot-parachain              = { workspace = true, features = ['std'] }
+polkadot-parachain = { workspace = true, features = ['std'] }
 # polkadot-runtime-parachains     = { workspace = true }
-serde                           = { workspace = true }
-sp-io                           = { workspace = true }
-xcm-builder                     = { workspace = true, features = ['std'] }
-xcm-executor                    = { workspace = true, features = ['std'] }
+serde = { workspace = true }
+sp-io = { workspace = true }
+xcm-builder = { workspace = true, features = ['std'] }
+xcm-executor = { workspace = true, features = ['std'] }
 # xcm-simulator                   = { workspace = true }
-pallet-assets                              = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.43', default-features = false }
+pallet-assets = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.43', default-features = false }
 
 [features]
-default            = ['std']
+default = ['std']
 # runtime-benchmarks = ['frame-benchmarking']
-std                = [
+std = [
   'parity-scale-codec/std',
   'frame-benchmarking/std',
   'frame-support/std',
@@ -68,8 +68,8 @@ std                = [
   'xcm-executor/std',
   'primitives/std',
 
-'polkadot-parachain/std',
-'cumulus-primitives-core/std',
+  'polkadot-parachain/std',
+  'cumulus-primitives-core/std',
 
-'polkadot-primitives/std',
+  'polkadot-primitives/std',
 ]

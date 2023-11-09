@@ -300,7 +300,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			} => {
 				let key = &data[..data.len().min(length as usize)];
 				if ParaId::from(id) == ParachainInfo::parachain_id() && key == b"sKSM".to_vec() {
-					return Some(SKSM);
+					return Some(SKSM)
 				}
 				None
 			},
