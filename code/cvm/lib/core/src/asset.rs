@@ -241,7 +241,7 @@ impl From<u128> for Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
+pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
 
 impl<T> Funds<T> {
 	pub fn one<A: Into<T>>(id: AssetId, amount: A) -> Self {

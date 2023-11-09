@@ -1,4 +1,4 @@
-use crate::{service::dex::ExchangeId, AssetId, Balance, Program};
+use crate::{service::dex::ExchangeId, AssetId, Program, Amount};
 use alloc::{
 	borrow::Cow,
 	collections::{BTreeMap, VecDeque},
@@ -15,7 +15,7 @@ pub enum BindingValue {
 	Register(Register),
 	/// Asset's address
 	Asset(AssetId),
-	AssetAmount(AssetId, Balance),
+	AssetAmount(AssetId, Amount),
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]

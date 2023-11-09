@@ -6,7 +6,7 @@ pub type Salt = Vec<u8>;
 /// absolute amounts
 pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
 // like `XcFunds`, but allow relative(percentages) amounts. Similar to assets filters in XCM
-pub type XcBalanceFilter = crate::asset::Balance;
+pub type XcBalanceFilter = crate::asset::Amount;
 pub type XcFundsFilter = crate::Funds<XcBalanceFilter>;
 pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
 pub type XcPacket = crate::Packet<XcProgram>;

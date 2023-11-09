@@ -1,9 +1,9 @@
 pub mod common {
 	include!(concat!(env!("OUT_DIR"), "/cvm.common.rs"));
 }
-pub mod wallet {
-	include!(concat!(env!("OUT_DIR"), "/cvm.wallet.rs"));
+pub mod solidity {
+	include!(concat!(env!("OUT_DIR"), "/solidity.rs"));
 }
-pub mod xcvm {
-	include!(concat!(env!("OUT_DIR"), "/cvm.xcvm.rs"));
+pub mod program {
+	include!(concat!(env!("OUT_DIR"), "/cvm.program.rs"));
 }
