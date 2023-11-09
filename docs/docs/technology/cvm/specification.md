@@ -1,10 +1,10 @@
-# Overview
+# Specification
 
-The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimized, non-custodial, bridge-agnostic and [Turing decidable language](https://www.educative.io/answers/what-are-recursive-languages) cross-chain programs and intents. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
+The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimised, non-custodial, bridge-agnostic and [Turing decidable language](https://www.educative.io/answers/what-are-recursive-languages) cross-chain programs and intents. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
 
-## Why?
+## Why CVM?
 
-Enable ability to `move Polkadot DOT to Osmosis, swap to DOT to ETH, move ETH to Ethereum, swap to ETH to USDC, and move funds to Centauri in one user signed transaction` should be express as simple as english phrase you read.
+To enable users to perform cross-chain intent settlement such as `transferring DOT to Osmosis, swapping to ETH, transferring ETH to Ethereum, swapping to USDC, and moving funds to Composable Cosmos or any desired destination chain, in one user signed transaction`. Users should be able to express in simple english their desired actions.
 
 Here is what should happen semantically:
 
@@ -17,7 +17,7 @@ sequenceDiagram
     Osmosis ->> Osmosis : DOT to ETH
     Osmosis ->> Ethereum : Transfer ETH
     Ethereum ->> Ethereum: ETH to USDC
-    Ethereum ->> Centauri : Transfer USDC
+    Ethereum ->> Composable Cosmos : Transfer USDC
 ```
 
 This sounds simple, but you need to know several encodings, transports protocols, and SDKs to do this. Also, without the CVM, one may not easily start on Polkadot and proceed to the end using a single transaction.
@@ -36,8 +36,8 @@ sequenceDiagram
     Osmosis ->> Osmosis: Continue interpretation
     Osmosis ->> Ethereum: Transfer assets and CVM over IBC
     Ethereum ->> Ethereum : Interpret Swap
-    Ethereum ->> Centauri : Transfer asses and remaining CVM program 
-    Centauri ->> Centauri : No more instructions, stop here
+    Ethereum ->> Composable Cosmos : Transfer asses and remaining CVM program 
+    Composable Cosmos ->> Composable Cosmos : No more instructions, stop here
 ```
 
 More detail on this architecture can be found in the rest of this documentation. Carrying out cross-chain swaps is just one of the many possible operations
@@ -713,7 +713,7 @@ execute amount=100atom { // on osmosis
             spawn Stride amount=All {
                 bond amount=All
                 spawn Osmosis amount=100%stAtom {
-                    spawn Centauri amount=All {
+                    spawn Composable Cosmos amount=All {
 
                     }
                 }
