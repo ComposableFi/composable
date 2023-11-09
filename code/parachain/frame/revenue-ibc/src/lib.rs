@@ -165,6 +165,7 @@ pub mod pallet {
 		},
 		TransferFailed {
 			asset_id: AssetIdOf<T>,
+			amount: BalanceOf<T>,
 		},
 		SkipAsset {
 			asset_id: AssetIdOf<T>,
@@ -176,6 +177,12 @@ pub mod pallet {
 		TransferFail {
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+		},
+		CentauriChannelSet {
+			channel: u64,
+		},
+		CentauriAddressSet {
+			address: BoundedVec<u8, T::MaxStringSize>,
 		},
 		RevenueCalcutions,
 		SetAllowed,
@@ -191,7 +198,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		ChannelNotSet,
-		CentauriAddressNotSet
+		CentauriAddressNotSet,
 	}
 
 	#[pallet::pallet]
@@ -237,11 +244,11 @@ pub mod pallet {
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 	{
-		// on every period, for every ibc asset from CentauriChannel - Disallowed Assets + Allowed Asset
-		// if 20 percent of new treasury balance for a token - old balance of token >= token's ED
-		// this amount is transferred to the pallets account
-		// from this account tokens are sent to osmosis. We have intermediate account so that tokens can be
-		// resend by trigger and transfer failure wont affect revenue calculations
+		// on every period, for every ibc asset from CentauriChannel - Disallowed Assets + Allowed
+		// Asset if 20 percent of new treasury balance for a token - old balance of token >= token's
+		// ED this amount is transferred to the pallets account
+		// from this account tokens are sent to osmosis. We have intermediate account so that tokens
+		// can be resend by trigger and transfer failure wont affect revenue calculations
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			if Self::period() != sp_runtime::traits::Zero::zero() &&
 				now % Self::period() == Zero::zero()
@@ -356,10 +363,10 @@ pub mod pallet {
 		#[pallet::weight(100_000)]
 		pub fn set_allowed(origin: OriginFor<T>, assets: Vec<AssetIdOf<T>>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
-			AllowedAssets::<T>::drain().for_each(|(asset, _val)|{
+			AllowedAssets::<T>::drain().for_each(|(asset, _val)| {
 				TokenPrevPeriodBalance::<T>::remove(asset);
 			});
-			
+
 			assets.iter().for_each(|asset| {
 				AllowedAssets::<T>::insert(asset, ());
 				TokenPrevPeriodBalance::<T>::insert(
@@ -376,7 +383,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// add a new allowed asset or reset TokenPrevPeriodBalance to the current balance for asset 
+		// add a new allowed asset or reset TokenPrevPeriodBalance to the current balance for asset
 		#[pallet::call_index(4)]
 		#[pallet::weight(100_000)]
 		pub fn add_allowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
@@ -432,6 +439,27 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::RemoveDisallowed);
 			Ok(())
 		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(100_000)]
+		pub fn set_channel(origin: OriginFor<T>, channel: u64) -> DispatchResult {
+			T::Admin::ensure_origin(origin)?;
+			CentauriChannel::<T>::set(Some(channel));
+			Self::deposit_event(Event::<T>::CentauriChannelSet { channel });
+			Ok(())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(100_000)]
+		pub fn set_address(
+			origin: OriginFor<T>,
+			address: BoundedVec<u8, T::MaxStringSize>,
+		) -> DispatchResult {
+			T::Admin::ensure_origin(origin)?;
+			CentauriAddress::<T>::set(Some(address.clone()));
+			Self::deposit_event(Event::<T>::CentauriAddressSet { address });
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T>
@@ -468,20 +496,23 @@ pub mod pallet {
 						_ => None,
 					};
 					Self::get_ibc_assets().into_iter().for_each(|asset_id| {
-						let result = pallet_ibc::Pallet::<T>::transfer(
-							frame_system::RawOrigin::Signed(Self::pallet_account_id()).into(),
-							transfer_params.clone(),
+						let amount =T::Assets::reducible_balance(
 							asset_id.clone(),
-							T::Assets::reducible_balance(
-								asset_id.clone(),
-								&Self::pallet_account_id(),
-								Preservation::Expendable,
-								frame_support::traits::tokens::Fortitude::Polite,
-							),
-							memo.clone(),
+							&Self::pallet_account_id(),
+							Preservation::Expendable,
+							frame_support::traits::tokens::Fortitude::Polite,
 						);
-						if let Err(e) = result {
-							Self::deposit_event(Event::<T>::TransferFailed { asset_id });
+						if amount > Zero::zero() {
+							let result = pallet_ibc::Pallet::<T>::transfer(
+								frame_system::RawOrigin::Signed(Self::pallet_account_id()).into(),
+								transfer_params.clone(),
+								asset_id.clone(),
+								amount,
+								memo.clone(),
+							);
+							if let Err(e) = result {
+								Self::deposit_event(Event::<T>::TransferFailed { asset_id, amount });
+							}
 						}
 					});
 					Ok(())
