@@ -344,7 +344,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
@@ -388,7 +388,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
@@ -426,7 +426,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
@@ -464,7 +464,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
@@ -516,7 +516,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
@@ -555,7 +555,7 @@ impl<T: Config> XcmHelper<T, BalanceOf<T>, AccountIdOf<T>> for Pallet<T> {
 			)?;
 
 			if let Err(_err) = send_xcm::<T::XcmSender>(MultiLocation::parent(), msg) {
-				return Err(Error::<T>::SendFailure.into());
+				return Err(Error::<T>::SendFailure.into())
 			}
 
 			query_id
