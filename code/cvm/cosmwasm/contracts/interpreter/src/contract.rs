@@ -21,7 +21,7 @@ use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
 	service::dex::ExchangeId,
-	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
+	shared,  BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "cvm-executor";
@@ -199,7 +199,7 @@ fn interpret_exchange(
 		.get_asset_by_id(deps.querier, want.0)
 		.map_err(ContractError::AssetNotFound)?;
 
-	if want.1.amount.is_absolute() && want.1.amount.is_ratio() {
+	if want.1.amount.is_absolute() && want.1.is_ratio() {
 		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime)
 	}
 
@@ -208,7 +208,7 @@ fn interpret_exchange(
 	}
 
 	let want =
-		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.amount.intercept.to_string() };
+		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.intercept.to_string() };
 
 	let response = match exchange.exchange {
 		OsmosisCrossChainSwap(routes) => {
