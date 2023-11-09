@@ -136,8 +136,22 @@ type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | A
 /// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
     in: (AssetAmount | BindedAmount)[]
-    min_out: AssetAmount[]
+    min_out: AssetAmount[] 
+    condition : ExchangeCondition 
 }
+
+/// in CFMM and OB, there are always fluctuations,
+/// allows to decide if steel want to exchange if difference from
+/// window on average is too far       /// in CFMM and OB, there are always fluctuations,
+/// allows to decide if steel want to exchange if difference from
+/// window on average is too far   
+interface ExchangeCondition {
+    /// minimum number of blocks to consider averaging
+    window : number?
+    type : AggregationType
+
+} 
+type AggregationType = TimeWeightedAverage
 
 // time locks tokens, potentially getting some tokens out
 // can be Stake or liquidity provision 
