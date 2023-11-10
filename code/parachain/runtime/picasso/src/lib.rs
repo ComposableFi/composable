@@ -248,7 +248,7 @@ parameter_types! {
 	pub const FromPalletId: PalletId = PalletId(*b"ics20fee");
 	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
 	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
-	pub const MaxStringSizeAdress: u32 = 100;
+	pub const MaxStringSizeAddress: u32 = 100;
 	pub const MaxStringSize: u32 = 1000;
 }
 
@@ -260,7 +260,7 @@ impl revenue_ibc::Config for Runtime {
 	type AssetId = CurrencyId;
 	type AssetsRegistry = AssetsRegistry;
 	type Assets = Assets;
-	type MaxStringSizeAdress = MaxStringSizeAdress;
+	type MaxStringSizeAddress = MaxStringSizeAddress;
 	type MaxStringSizeMemo = MaxStringSize;
 	type Admin = EnsureRootOrTwoThirdNativeCouncil;
 	type WeightInfo = ();
