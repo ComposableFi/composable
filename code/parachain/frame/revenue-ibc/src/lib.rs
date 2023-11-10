@@ -36,12 +36,11 @@ pub use codec::{Decode, Encode, FullCodec};
 pub use pallet::*;
 
 pub mod weights;
-pub use sp_std::str::FromStr;
-pub use composable_traits::prelude::ToString;
 
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
+	pub use composable_traits::prelude::ToString;
 
 	use composable_traits::{
 		currency::AssetExistentialDepositInspect,
