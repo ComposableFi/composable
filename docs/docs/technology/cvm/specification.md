@@ -137,7 +137,7 @@ type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | A
 interface Exchange {
     in: (AssetAmount | BindedAmount)[]
     min_out: AssetAmount[] 
-    condition : ExchangeCondition 
+    condition : ExchangeCondition? 
 }
 
 /// in CFMM and OB, there are always fluctuations,
