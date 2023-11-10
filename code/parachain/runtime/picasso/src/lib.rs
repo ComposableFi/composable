@@ -261,6 +261,7 @@ impl revenue_ibc::Config for Runtime {
 	type Assets = Assets;
 	type MaxStringSize = MaxStringSize;
 	type Admin = EnsureRootOrTwoThirdNativeCouncil;
+	type WeightInfo = ();
 }
 
 parameter_types! {

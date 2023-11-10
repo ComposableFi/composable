@@ -11,7 +11,10 @@
 )]
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![warn(bad_style, trivial_numeric_casts)]
-#![allow(clippy::let_unit_value)]
+#![allow(
+	clippy::let_unit_value,
+	clippy::unused_unit
+)]
 #![deny(
 	bare_trait_objects,
 	improper_ctypes,
@@ -26,7 +29,7 @@
 	unused_allocation,
 	unused_comparisons,
 	unused_extern_crates,
-	// unused_imports,
+	unused_imports,
 	unused_parens,
 	while_true
 )]
@@ -35,52 +38,36 @@
 pub use codec::{Decode, Encode, FullCodec};
 pub use pallet::*;
 
+pub mod weights;
 pub use sp_std::str::FromStr;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use bech32_no_std::u5;
-	use common::ibc::RawMemo;
-	use composable_support::{
-		collections::vec::bounded::{bi_bounded_vec::BiBoundedVecOutOfBounds, BiBoundedVec},
-		math::safe::{SafeArithmetic, SafeSub},
-	};
+	pub use crate::weights::WeightInfo;
+
 	use composable_traits::{
-		assets::AssetInfo,
-		currency::{AssetExistentialDepositInspect, BalanceLike},
-		dex::{AssetAmount, FeeConfig, SwapResult},
+		currency::AssetExistentialDepositInspect,
 		prelude::{String, Vec},
 		xcm::assets::RemoteAssetRegistryInspect,
 	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
-		storage::with_transaction,
 		traits::{
 			fungibles::{Inspect, Mutate},
 			tokens::Preservation,
-			Time,
 		},
-		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
+		PalletId,
 	};
-	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor, RawOrigin};
+	use frame_system::pallet_prelude::OriginFor;
 	use ibc_primitives::Timeout as IbcTimeout;
-	use ibc_rs_scale::{
-		applications::transfer::TracePrefix,
-		core::ics24_host::identifier::{ChannelId, PortId},
-	};
-	use pallet_ibc::{
-		ics20::ValidateMemo, ics20_fee::FlatFeeConverter, DenomToAssetId, MultiAddress,
-		TransferParams,
-	};
-	use primitives::currency::ForeignAssetId;
-	use sp_arithmetic::FixedPointOperand;
+
+	use pallet_ibc::{MultiAddress, TransferParams};
+
 	use sp_runtime::{
-		traits::{AccountIdConversion, Convert, IdentifyAccount, One, Saturating, Zero},
-		AccountId32, ArithmeticError, BoundedBTreeSet, FixedPointNumber, Perbill, Permill,
-		TransactionOutcome,
+		traits::{AccountIdConversion, Zero},
+		AccountId32, Perbill,
 	};
-	use sp_std::{boxed::Box, collections::btree_map::BTreeMap};
 	pub use sp_std::{prelude::*, str::FromStr, vec};
 
 	pub(crate) type AssetIdOf<T> = <T as pallet_ibc::Config>::AssetId;
@@ -146,6 +133,9 @@ pub mod pallet {
 
 		// root and council
 		type Admin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
+
+		/// Weight information for the extrinsics.
+		type WeightInfo: WeightInfo;
 	}
 
 	// The pallet's events
@@ -184,6 +174,14 @@ pub mod pallet {
 		CentauriAddressSet {
 			address: BoundedVec<u8, T::MaxStringSize>,
 		},
+		CvmOsmoAddress {
+			asset_id: AssetIdOf<T>,
+			cvm_osmo: u128,
+		},
+		CvmCentauriAddress {
+			asset_id: AssetIdOf<T>,
+			cvm_centauri: u128,
+		},
 		RevenueCalcutions,
 		SetAllowed,
 		AddAllowed,
@@ -206,21 +204,25 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn allowed_assets)]
+	#[allow(clippy::disallowed_types)]
 	pub type AllowedAssets<T: Config> =
 		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, (), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn disallowed_assets)]
+	#[allow(clippy::disallowed_types)]
 	pub type DisallowedAssets<T: Config> =
 		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, (), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn tokens_prev_amount)]
+	#[allow(clippy::disallowed_types)]
 	pub type TokenPrevPeriodBalance<T: Config> =
 		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn period)]
+	#[allow(clippy::disallowed_types)]
 	pub type Period<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
 	#[pallet::storage]
@@ -231,6 +233,18 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn centauri_channel)]
 	pub type CentauriChannel<T: Config> = StorageValue<_, u64, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn cvm_osmo_addresses)]
+	#[allow(clippy::disallowed_types)]
+	pub type CvmOsmoAddress<T: Config> =
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn cvm_centauri_addresses)]
+	#[allow(clippy::disallowed_types)]
+	pub type CvmCentauriAddress<T: Config> =
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn memo)]
@@ -253,7 +267,6 @@ pub mod pallet {
 			if Self::period() != sp_runtime::traits::Zero::zero() &&
 				now % Self::period() == Zero::zero()
 			{
-				let mut count: u32 = 0;
 				Self::deposit_event(Event::<T>::RevenueCalcutions);
 				Self::get_ibc_assets().iter().for_each(|asset_id| {
 					let percentage = Perbill::from_rational(200_u32, 1000_u32);
@@ -291,12 +304,11 @@ pub mod pallet {
 					}
 					Self::deposit_event(Event::<T>::SkipAsset { asset_id: asset_id.clone() });
 				});
-				if let Err(_) = Self::transfer_from_intermediate() {
+				if Self::transfer_from_intermediate().is_err() {
 					Self::deposit_event(Event::<T>::IntermediateTransferFail);
 				}
 
-				// T::WeightInfo::on_initialize(count)
-				Weight::zero()
+				<T as Config>::WeightInfo::on_initialize(Self::get_ibc_assets().len())
 			} else {
 				Weight::zero()
 			}
@@ -312,7 +324,7 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 	{
 		#[pallet::call_index(0)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_period())]
 		pub fn set_period(origin: OriginFor<T>, period: T::BlockNumber) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			// stop sharing
@@ -339,7 +351,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_memo())]
 		pub fn set_memo(
 			origin: OriginFor<T>,
 			memo: BoundedVec<u8, T::MaxStringSize>,
@@ -351,7 +363,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::trigger_transfer())]
 		pub fn trigger_transfer(origin: OriginFor<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			Self::transfer_from_intermediate()?;
@@ -360,7 +372,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_allowed())]
 		pub fn set_allowed(origin: OriginFor<T>, assets: Vec<AssetIdOf<T>>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			AllowedAssets::<T>::drain().for_each(|(asset, _val)| {
@@ -385,7 +397,7 @@ pub mod pallet {
 
 		// add a new allowed asset or reset TokenPrevPeriodBalance to the current balance for asset
 		#[pallet::call_index(4)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_allowed())]
 		pub fn add_allowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			AllowedAssets::<T>::insert(&asset, ());
@@ -403,7 +415,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_allowed())]
 		pub fn remove_allowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			AllowedAssets::<T>::remove(&asset);
@@ -413,7 +425,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_disallowed())]
 		pub fn set_disallowed(origin: OriginFor<T>, assets: Vec<AssetIdOf<T>>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			DisallowedAssets::<T>::remove_all(None);
@@ -423,7 +435,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_disallowed())]
 		pub fn add_disallowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			DisallowedAssets::<T>::insert(asset, ());
@@ -432,7 +444,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_disallowed())]
 		pub fn remove_disallowed(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			DisallowedAssets::<T>::remove(asset);
@@ -441,7 +453,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_channel())]
 		pub fn set_channel(origin: OriginFor<T>, channel: u64) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			CentauriChannel::<T>::set(Some(channel));
@@ -450,7 +462,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_address())]
 		pub fn set_address(
 			origin: OriginFor<T>,
 			address: BoundedVec<u8, T::MaxStringSize>,
@@ -458,6 +470,32 @@ pub mod pallet {
 			T::Admin::ensure_origin(origin)?;
 			CentauriAddress::<T>::set(Some(address.clone()));
 			Self::deposit_event(Event::<T>::CentauriAddressSet { address });
+			Ok(())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_cvm_osmo_address())]
+		pub fn set_cvm_osmo_address(
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			cvm_osmo: u128,
+		) -> DispatchResult {
+			T::Admin::ensure_origin(origin)?;
+			CvmOsmoAddress::<T>::insert(&asset_id, cvm_osmo);
+			Self::deposit_event(Event::<T>::CvmOsmoAddress { asset_id, cvm_osmo });
+			Ok(())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_cvm_centauri_address())]
+		pub fn set_cvm_centauri_address(
+			origin: OriginFor<T>,
+			asset_id: AssetIdOf<T>,
+			cvm_centauri: u128
+		) -> DispatchResult {
+			T::Admin::ensure_origin(origin)?;
+			CvmCentauriAddress::<T>::insert(&asset_id,  cvm_centauri);
+			Self::deposit_event(Event::<T>::CvmCentauriAddress { asset_id, cvm_centauri });
 			Ok(())
 		}
 	}
@@ -488,7 +526,7 @@ pub mod pallet {
 								height: Some(1000),
 							},
 						};
-					let memo = match Self::memo().clone() {
+					let memo = match Self::memo() {
 						Some(m) => match String::from_utf8(m.into()) {
 							Ok(m) => <T as pallet_ibc::Config>::MemoMessage::from_str(&m).ok(),
 							_ => None,
@@ -510,7 +548,7 @@ pub mod pallet {
 								amount,
 								memo.clone(),
 							);
-							if let Err(e) = result {
+							if  result.is_err() {
 								Self::deposit_event(Event::<T>::TransferFailed {
 									asset_id,
 									amount,
@@ -520,15 +558,15 @@ pub mod pallet {
 					});
 					Ok(())
 				} else {
-					return Err(Error::<T>::CentauriAddressNotSet.into())
+					Err(Error::<T>::CentauriAddressNotSet.into())
 				}
 			} else {
-				return Err(Error::<T>::ChannelNotSet.into())
+				Err(Error::<T>::ChannelNotSet.into())
 			}
 		}
 
 		fn get_ibc_assets() -> Vec<AssetIdOf<T>> {
-			let allowed = AllowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
+			AllowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>()
 			// TODO: send all ibc tokens to specified address
 			// let disallowed = DisallowedAssets::<T>::iter_keys().collect::<Vec<AssetIdOf<T>>>();
 			// <T::AssetsRegistry as RemoteAssetRegistryInspect>::get_foreign_assets_list()
@@ -547,7 +585,7 @@ pub mod pallet {
 			// 			}
 			// 		}
 			// 	});
-			allowed
+
 		}
 	}
 }
