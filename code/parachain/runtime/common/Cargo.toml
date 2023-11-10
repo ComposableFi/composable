@@ -49,6 +49,8 @@ ibc-rs-scale = { workspace = true, default-features = false, features = [
   "parity-scale-codec",
   "serde",
 ] }
+pallet-custom-origins = { package = "pallet-custom-origins", path = "../../frame/origins", default-features = false }
+pallet-ibc = { workspace = true, default-features = false }
 
 cosmwasm-std = { workspace = true, default-features = false, features = [
   "ibc3",
@@ -78,6 +80,7 @@ std = [
   "collective/std",
   "composable-support/std",
   "composable-traits/std",
+  "pallet-ibc/std",
   "cosmwasm-std/std",
   "cumulus-pallet-xcm/std",
   "cumulus-primitives-core/std",

@@ -61,14 +61,14 @@
     centauri-old-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/629eb0da075350ae514bacfde70e15a1c93debd7";
+        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
     # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
     centauri-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/629eb0da075350ae514bacfde70e15a1c93debd7";
+        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
     eth-pos-devnet-src = {
@@ -83,7 +83,8 @@
     };
 
     polkadot = {
-      url = "github:andresilva/polkadot.nix";
+      url =
+        "github:andresilva/polkadot.nix/30a616cb07b8f26b7bdb1b06d18440628bc6ecff";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -114,13 +115,12 @@
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
-        ./code/integration-tests/local-integration-tests/flake-module.nix
         ./code/integration-tests/runtime-tests/runtime-tests.nix
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./code/xcvm/evm/flake-module.nix
-        ./code/xcvm/flake-module.nix
+        ./code/cvm/evm/flake-module.nix
+        ./code/cvm/flake-module.nix
         ./docs/flake-module.nix
         ./flake/all.nix
         ./flake/bash.nix

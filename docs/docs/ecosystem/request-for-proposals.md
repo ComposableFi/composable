@@ -15,11 +15,11 @@ for issuing truly canonical stablecoins across different chains.
 
 ### Requirements & Scope of Work:
 
-The purpose of this RFP is to build a **proof of concept** for a XCVM-powered stablecoin for multi-chain usage.
-Requirements for creating a custom XCVM-powered stablecoin for multi-chain use are as follows:
-- Design and develop a custom stablecoin for multi-chain usage using our technology stack, specifically the XCVM 
+The purpose of this RFP is to build a **proof of concept** for a CVM-powered stablecoin for multi-chain usage.
+Requirements for creating a custom CVM-powered stablecoin for multi-chain use are as follows:
+- Design and develop a custom stablecoin for multi-chain usage using our technology stack, specifically the CVM 
 - A minting contract must be on each chain that you want to mint your coin on
-- An XCVM contract must be on the chain of your choice in order to control mint and burn 
+- An CVM contract must be on the chain of your choice in order to control mint and burn 
   via [Inter-Blockchain Communication (IBC)] Protocol messages between chains
   - This will handle the actual accounting of the stablecoin
 

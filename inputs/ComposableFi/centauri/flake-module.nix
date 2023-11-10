@@ -80,9 +80,18 @@
       toDockerImage = package:
         self.inputs.bundlers.bundlers."${system}".toDockerImage package;
 
+      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        # others version fail wasm validation
+        (pkgs.rust-bin.nightly."2023-03-09".default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        });
+
       build-wasm = name: src:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        rust.buildPackage (systemCommonRust.common-attrs // {
           pname = name;
+          # really wasms do not need a lot
+          buildInputs = with pkgs; [ protobuf ];
+          nativeBuildInputs = [ ];
           version = "0.1";
           src = src;
           cargoBuildCommand =
@@ -267,19 +276,22 @@
         hyperspace-config-core = pkgs.writeText "config-core.toml"
           (self.inputs.nix-std.lib.serde.toTOML hyperspace-core-config);
 
-        hyperspace-composable-rococo-picasso-rococo = crane.stable.buildPackage
-          (subnix.subenv // rec {
+        hyperspace-composable-rococo-picasso-rococo =
+          crane.nightly-latest.buildPackage (subnix.subenv // rec {
             name = "hyperspace-composable-rococo-picasso-rococo";
             pname = name;
             version = "0.1";
-            cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
-              src = composable-rococo-picasso-rococo-centauri-patched-src;
-              pname = "hyperspace";
-              version = "0.1";
-              doCheck = false;
-              cargoExtraArgs = "--package hyperspace";
-              cargoTestCommand = "";
-            });
+            buildInputs = with pkgs; [ self'.packages.rust-nightly-latest ];
+            cargoArtifacts = crane.nightly-latest.buildDepsOnly (subnix.subenv
+              // {
+                buildInputs = with pkgs; [ self'.packages.rust-nightly-latest ];
+                src = composable-rococo-picasso-rococo-centauri-patched-src;
+                pname = "hyperspace";
+                version = "0.1";
+                doCheck = false;
+                cargoExtraArgs = "--package hyperspace";
+                cargoTestCommand = "";
+              });
             src = composable-rococo-picasso-rococo-centauri-patched-src;
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";

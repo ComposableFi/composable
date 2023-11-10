@@ -19,11 +19,19 @@
         lib = self.inputs.crane.mkLib pkgs;
         stable = lib.overrideToolchain self'.packages.rust-stable;
         nightly = lib.overrideToolchain rust-toolchain;
+        nightly-latest =
+          lib.overrideToolchain self'.packages.rust-nightly-latest;
       };
 
       packages = {
         rust-stable = pkgs.rust-bin.stable."1.71.0".default;
         rust-nightly = rust-toolchain;
+        rust-nightly-latest =
+          pkgs.rust-bin.nightly."2023-06-15".default.override {
+            # Set the build targets supported by the toolchain,
+            # wasm32-unknown-unknown is required for trunk
+            targets = [ "wasm32-unknown-unknown" "thumbv7em-none-eabi" ];
+          };
 
         cargo-fmt-check = crane.nightly.cargoFmt (systemCommonRust.common-attrs
           // {
@@ -34,6 +42,7 @@
         cargo-clippy-check = crane.nightly.cargoClippy
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
+            SKIP_WASM_BUILD = "1";
             cargoClippyExtraArgs =
               "--all-targets --tests -- --deny warnings --allow deprecated";
           });
@@ -50,42 +59,24 @@
         cargo-no-std-cosmwasm = cargo-no-std-check "pallet-cosmwasm";
         cargo-no-std-xcm-ibc = cargo-no-std-check "pallet-multihop-xcm-ibc";
 
-        cargo-udeps-check = crane.nightly.cargoBuild
-          (systemCommonRust.common-attrs // {
-            PICASSO_RUNTIME =
-              "${self'.packages.picasso-runtime}/lib/runtime.optimized.wasm";
-            COMPOSABLE_RUNTIME =
-              "${self'.packages.composable-runtime}/lib/runtime.optimized.wasm";
-            buildInputs = with pkgs; [
-              cargo-udeps
-              expat
-              freetype
-              fontconfig
-              openssl
-            ];
-            cargoArtifacts = self'.packages.common-deps-nightly;
-            buildPhase = "cargo udeps";
-            installPhase = "mkdir -p $out";
-            cargoExtraArgs =
-              "--workspace --exclude local-integration-tests --all-features";
-          });
-
         benchmarks-check = crane.nightly.cargoBuild
           (systemCommonRust.common-attrs // {
             cargoArtifacts = self'.packages.common-deps-nightly;
             cargoBuildCommand = "cargo check";
             cargoExtraArgs = "--benches --all --features runtime-benchmarks";
+            SKIP_WASM_BUILD = "1";
           });
 
         unit-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs
           // {
+            SKIP_WASM_BUILD = "1";
             pnameSuffix = "-tests";
             doInstallCargoArtifacts = false;
             cargoArtifacts = self'.packages.common-test-deps;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
             buildPhase =
-              "cargo test --workspace --release --locked --verbose --exclude local-integration-tests --exclude xc-tests";
+              "cargo test --workspace --release --locked --verbose --exclude xc-tests";
             installPhase = "mkdir -p $out";
           });
       };

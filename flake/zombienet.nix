@@ -5,7 +5,11 @@
       relaychainBase = {
         chain = "rococo-local";
         default_command =
-          pkgs.lib.meta.getExe self'.packages.polkadot-node-from-dep;
+          # for fast westend and rococo uncomment next
+          # vote on official package https://github.com/andresilva/polkadot.nix/issues/8 too
+          # #fastnet #testnet 
+          # pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
+          pkgs.lib.meta.getExe pkgs.polkadot;
         count = 2;
       };
 
@@ -119,17 +123,6 @@
         devnet-picasso = zombienet-rococo-local-picasso-dev;
         devnet-composable = zombienet-westend-local-composable-dev;
 
-        livenet-composable = zombieTools.writeZombienetShellApplication
-          "zombienet-polkadot-local-composable-dev" (overrideZombienet {
-            chain = "composable-dev";
-            relaychain = {
-              chain = "polkadot-dev";
-              default_command =
-                pkgs.lib.meta.getExe self'.packages.polkadot-live-runtime-node;
-              count = 3;
-            };
-          });
-
         inherit zombienet-rococo-local-picasso-dev;
 
         zombienet-westend-local-composable-dev = zombieTools.writeZombienet {
@@ -138,10 +131,25 @@
           config = (overrideZombienet {
             chain = "composable-dev";
             relaychain = {
+              # can build with `fast-runtime`, both relay, relay as part of para, and relay runtime
               chain = "westend-local";
-              default_command = pkgs.lib.meta.getExe
-                self'.packages.polkadot-node-on-parity-westend;
+              default_command =
+                pkgs.lib.meta.getExe self'.packages.polkadot-fast-runtime;
               count = 3;
+              genesis = {
+                # whatever stakin here to add and handle PoS instead of PoA
+                runtime = {
+                  balances = {
+                    balances = {
+                      "0" = {
+                        "0" =
+                          "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
+                        "1" = 17476266491902;
+                      };
+                    };
+                  };
+                };
+              };
             };
             parachains = [{
               command = pkgs.lib.meta.getExe self'.packages.polkadot-parachain;
@@ -158,7 +166,7 @@
           zombieTools.writeZombienetShellApplication
           "zombienet-picasso-centauri-a" (overrideZombienet {
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
+              "runtime::contracts=info,ibc_transfer=info,pallet_ibc=info,grandpa-verifier=info";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
             parachains = [ asset-hub-kusama-local ];
@@ -172,7 +180,7 @@
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
+              "runtime::contracts=info,ibc_transfer=info,pallet_ibc=info,grandpa-verifier=info";
             command = self'.packages.composable-testfast-node;
             chain = "picasso-dev";
           });
@@ -186,7 +194,7 @@
             relay_ws_port = 29944;
             relay_rpc_port = 31445;
             rust_log_add =
-              "runtime::contracts=debug,ibc_transfer=trace,pallet_ibc=trace,grandpa-verifier=debug";
+              "runtime::contracts=debug,ibc_transfer=info,pallet_ibc=info,grandpa-verifier=debug";
             command = self'.packages.composable-testfast-node;
             chain = "composable-dev";
             parachains = [{

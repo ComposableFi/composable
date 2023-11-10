@@ -58,7 +58,7 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
-impl collective::Config<NativeTechnicalMembership> for Runtime {
+impl collective::Config<NativeTechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;

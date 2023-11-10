@@ -60,8 +60,8 @@ pub mod pallet {
 	};
 	use frame_system::{
 		offchain::{
-			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
-			SigningTypes,
+			Account, AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload,
+			Signer, SigningTypes,
 		},
 		pallet_prelude::*,
 	};
@@ -72,15 +72,14 @@ pub mod pallet {
 		offchain::{http, Duration},
 		traits::{
 			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv,
-			CheckedMul, CheckedSub, Saturating, UniqueSaturatedInto as _, Zero,
+			CheckedMul, CheckedSub, IdentifyAccount, Saturating, UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		PerThing, Percent, RuntimeDebug,
+		PerThing, Percent, RuntimeAppPublic, RuntimeDebug,
 	};
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
-
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
@@ -1272,46 +1271,67 @@ pub mod pallet {
 				)
 			}
 			// checks to make sure key from keystore has not already submitted price
-			let prices = PrePrices::<T>::get(*price_id);
-			let public_keys: Vec<sp_core::sr25519::Public> =
-				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
-			let account = AccountId32::new(
-				public_keys.first().ok_or("No public keys for crypto key type `orac`")?.0,
-			);
-			let mut to32 = AccountId32::as_ref(&account);
-			let address: T::AccountId =
-				T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
-
+			let prices = PrePrices::<T>::get(*price_id)
+				.into_iter()
+				.map(|price| price.who)
+				.collect::<Vec<_>>();
 			if prices.len() as u32 >= asset_info.max_answers {
 				log::info!("Max answers reached");
 				return Err("Max answers reached")
 			}
+			let public_keys: Vec<sp_core::sr25519::Public> =
+				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
 
-			if prices.into_iter().any(|price| price.who == address) {
-				log::info!("Tx already submitted");
-				return Err("Tx already submitted")
+			if public_keys.is_empty() {
+				return Err("No public keys for crypto key type `orac`")
 			}
-			// Make an external HTTP request to fetch the current price.
-			// Note this call will block until response is received.
-			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
-			log::info!("price {:#?}", price);
 
-			// Using `send_signed_transaction` associated type we create and submit a transaction
-			// representing the call, we've just created.
-			// Submit signed will return a vector of results for all accounts that were found in the
-			// local keystore with expected `KEY_TYPE`.
+			for public_key in public_keys {
+				let account = AccountId32::new(public_key.0);
+				let mut to32 = AccountId32::as_ref(&account);
+				let address: T::AccountId =
+					T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
+				log::info!("address {:?}", public_key.0);
+				if prices.contains(&address) {
+					log::info!("Tx already submitted");
+				} else {
+					log::info!("findind match among existing keys");
+					let mut accounts = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::RuntimeAppPublic::all().into_iter().enumerate().map(|(index, key)| {
+						let generic_public = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::GenericPublic::from(key);
+						let public: T::Public = generic_public.into();
+						let account_id = public.clone().into_account();
+						Account::<T>::new(index, account_id, public)
+					});
 
-			let results = signer.send_signed_transaction(|_account| {
-				// Received price is wrapped into a call to `submit_price` public function of this
-				// pallet. This means that the transaction, when executed, will simply call that
-				// function passing `price` as an argument.
-				Call::submit_price { price: price.into(), asset_id: *price_id }
-			});
-
-			for (acc, res) in &results {
-				match res {
-					Ok(()) => log::info!("[{:?}] Submitted price of {} cents", acc.id, price),
-					Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+					if let Some(account) = accounts.find(|x| x.id == address) {
+						log::info!("found account");
+						// Make an external HTTP request to fetch the current price.
+						// Note this call will block until response is received.
+						let price =
+							Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
+						log::info!("price {:#?}", price);
+						let signer = Signer::<T, T::AuthorityId>::all_accounts();
+						let results = signer
+							.with_filter(vec![account.public])
+							.send_signed_transaction(|_account| {
+								// Received price is wrapped into a call to `submit_price` public
+								// function of this pallet. This means that the transaction, when
+								// executed, will simply call that function passing `price` as an
+								// argument.
+								Call::submit_price { price: price.into(), asset_id: *price_id }
+							});
+						for (acc, res) in &results {
+							match res {
+								Ok(()) =>
+									log::info!("[{:?}] Submitted price of {} cents", acc.id, price),
+								Err(e) => log::error!(
+									"[{:?}] Failed to submit transaction: {:?}",
+									acc.id,
+									e
+								),
+							}
+						}
+					}
 				}
 			}
 

@@ -82,12 +82,12 @@ const config = {
 						label: 'Networks',
 					},
 					{
-						to: '/technology/composable-ibc',
+						to: '/technology/ibc',
 						position: 'left',
 						label: 'Architecture',
 					},
 					{
-						to: '/developer-guides/build-on-composable',
+						to: '/develop/build-on-composable',
 						position: 'left',
 						label: 'Develop',
 					},
@@ -104,6 +104,11 @@ const config = {
 					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
+						position: 'right',
+					},
+					{
+						href: 'https://explorer.trustless.zone/',
+						label: 'Explorer',
 						position: 'right',
 					},
 					{

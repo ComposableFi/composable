@@ -21,7 +21,6 @@ composable-node = { path = "parachain/node" }
 
 [features]
 builtin-wasm = ["composable-node/builtin-wasm"]
-local-integration-tests = []
 picasso = []
 runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
@@ -45,6 +44,7 @@ exclude = [
   "parachain/frame/cosmwasm/cli",
 ]
 members = [
+  # "parachain/frame/liquid-staking/relayer",
   "parachain/frame/*",
   "parachain/node",
   "parachain/runtime/*",
@@ -52,12 +52,13 @@ members = [
   "utils/collator-sidecar",
   "utils/common",
   "utils/price-feed",
-  "xcvm/cosmwasm/contracts/gateway",
-  "xcvm/cosmwasm/contracts/interpreter",
-  "xcvm/cosmwasm/contracts/order",
-  "xcvm/cosmwasm/contracts/pingpong",
-  "xcvm/cosmwasm/tests",
-  "xcvm/lib/core/",
+  "cvm/cosmwasm/contracts/gateway",
+  "cvm/cosmwasm/contracts/interpreter",
+  "cvm/cosmwasm/contracts/order",
+  "cvm/cosmwasm/contracts/pingpong",
+  "cvm/cosmwasm/tests",
+  "cvm/lib/core/",
+  "cvm/crates/cvm/",
 ]
 resolver = "2"
 
@@ -124,11 +125,11 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/centauri", branch = "upgrade-polkadot-0.9.43", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
@@ -337,7 +338,6 @@ mmr-gadget = { git = "https://github.com/paritytech/substrate", branch = "polkad
 mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 subxt = { git = "https://github.com/paritytech/subxt", rev = "2a913a3aa99a07f7acaedbbaeed6925d34627303", default-features = false }
-
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -404,3 +404,9 @@ half = { version = "2.2.1", default-features = false }
 
 
 thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
+
+
+# kusama-runtime = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
+# polkadot-core-primitives = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
+# polkadot-runtime-parachains = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }
+# xcm-simulator = { git = 'https://github.com/paritytech/polkadot.git', branch = 'release-v0.9.43' }

@@ -86,7 +86,9 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
-xc-core = { path = "../../../xcvm/lib/core", default-features = false, features = [
+pallet-liquid-staking = { package = "pallet-liquid-staking", path = "../../frame/liquid-staking", default-features = false }
+pallet-xcm-helper = { package = "pallet-xcm-helper", path = "../../frame/pallet-xcm-helper", default-features = false }
+xc-core = { path = "../../../cvm/lib/core", default-features = false, features = [
   "xcm",
 ] }
 reward = { path = "../../frame/reward", default-features = false }
@@ -150,7 +152,6 @@ builtin-wasm = []
 testnet = []
 fastnet = []
 default = ["std"]
-local-integration-tests = []
 
 runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
@@ -282,4 +283,6 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
+  "pallet-liquid-staking/std",
+  "pallet-xcm-helper/std",
 ]

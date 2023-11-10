@@ -80,7 +80,7 @@ impl From<Error> for i32 {
 
 #[async_trait]
 impl<C, Block, Balance>
-	TransactionPaymentApiServer<<Block as BlockT>::Hash, RuntimeDispatchInfo<Balance, u64>>
+	TransactionPaymentApiServer<<Block as BlockT>::Hash, RuntimeDispatchInfo<Balance>>
 	for TransactionPayment<C, Block>
 where
 	Block: BlockT,
@@ -92,7 +92,7 @@ where
 		&self,
 		encoded_xt: Bytes,
 		at: Option<Block::Hash>,
-	) -> RpcResult<RuntimeDispatchInfo<Balance, u64>> {
+	) -> RpcResult<RuntimeDispatchInfo<Balance>> {
 		let api = self.client.runtime_api();
 		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 
@@ -115,7 +115,7 @@ where
 				.into()
 			})
 			.map(|x| RuntimeDispatchInfo {
-				weight: x.weight.ref_time(),
+				weight: x.weight,
 				class: x.class,
 				partial_fee: x.partial_fee,
 			})

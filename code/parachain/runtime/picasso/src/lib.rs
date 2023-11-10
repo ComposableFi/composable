@@ -40,7 +40,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
-use frame_support::{dispatch::DispatchError, traits::StorageMapShim};
+use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -50,6 +50,7 @@ use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
+	xcmp::AccountIdToMultiLocation,
 	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
 	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
 	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
@@ -236,8 +237,8 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = primitives::currency::ForeignAssetId;
-	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
 	type NetworkId = PicassoNetworkId;
@@ -258,8 +259,8 @@ impl pablo::Config for Runtime {
 	type LPTokenFactory = AssetsRegistry;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
-	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
@@ -320,9 +321,9 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfNativeCouncil;
-	type SetSigner = EnsureRootOrHalfNativeCouncil;
-	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type AddOracle = GeneralAdminOrRoot;
+	type SetSigner = GeneralAdminOrRoot;
+	type RewardOrigin = GeneralAdminOrRoot;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
@@ -545,7 +546,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -639,7 +640,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type RewardAsset = Assets;
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type AdminOrigin = EnsureRoot<AccountId>;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -664,8 +665,8 @@ impl vesting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type UpdateSchedulesOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type VestedTransferOrigin = EnsureRoot<Self::AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -695,6 +696,115 @@ impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type PalletInstanceId = MultihopXcmIbcPalletId;
 	type MaxMultihopCount = MaxMultihopCount;
 	type ChainNameVecLimit = ChainNameVecLimit;
+}
+
+parameter_types! {
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Kusama;
+	pub const XcmHelperPalletId: PalletId = PalletId(*b"pic/fees");
+	pub const NotifyTimeout: BlockNumber = 100;
+	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
+	pub const RelayCurrency: CurrencyId = CurrencyId::KSM;
+}
+
+impl pallet_xcm_helper::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type Assets = Assets;
+	type XcmSender = crate::xcmp::XcmRouter;
+	type RelayNetwork = RelayNetwork;
+	type PalletId = XcmHelperPalletId;
+	type NotifyTimeout = NotifyTimeout;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type RefundLocation = RefundLocation;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
+	type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+	type RelayCurrency = RelayCurrency;
+}
+
+parameter_types! {
+	pub const StakingPalletId: PalletId = PalletId(*b"pic/lqsk");
+	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
+	pub const XcmFees: Balance = 5_000_000_000; // 0.005KSM
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
+	pub const StakingCurrency: CurrencyId = CurrencyId::KSM;
+	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_PICASSO_KSM; //TODO change currency id when you register new currency via asset_regestry pallet
+	pub const EraLength: BlockNumber = 3 * 60 / 6;
+	pub const MinStakeLSD: Balance = 100_000_000_000; // 0.1KSM
+	pub const MinUnstake: Balance = 50_000_000_000; // 0.05sKSM
+	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 7;
+	pub const MinNominatorBond: Balance = 100_000_000_000; // 0.1KSM
+	pub const NumSlashingSpans: u32 = 0;
+	pub const ElectionSolutionStoredOffset: BlockNumber = 3150;
+}
+
+pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> sp_runtime::traits::BlockNumberProvider
+	for RelayChainValidationDataProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
+}
+
+impl<T: cumulus_pallet_parachain_system::Config>
+	pallet_liquid_staking::types::ValidationDataProvider for RelayChainValidationDataProvider<T>
+{
+	fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+	}
+}
+
+pub struct Members<T>(sp_std::marker::PhantomData<T>);
+
+impl<AccountId: core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
+	for Members<AccountId>
+{
+	fn sorted_members() -> Vec<AccountId> {
+		vec![]
+	}
+}
+
+pub struct Decimal;
+impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
+	fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
+		assets_registry::pallet::AssetDecimals::<Runtime>::get(asset_id)
+	}
+}
+
+impl pallet_liquid_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type PalletId = StakingPalletId;
+	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
+	type SelfParaId = ParachainInfo;
+	type Assets = Assets;
+	type RelayOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type DerivativeIndexList = DerivativeIndexList;
+	type XcmFees = XcmFees;
+	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
+	type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
+	type StakingCurrency = StakingCurrency;
+	type LiquidCurrency = LiquidCurrency;
+	type EraLength = EraLength;
+	type MinStake = MinStakeLSD;
+	type MinUnstake = MinUnstake;
+	type XCM = PalletXcmHelper;
+	type BondingDuration = BondingDuration;
+	type MinNominatorBond = MinNominatorBond;
+	type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
+	type Members = Members<AccountId>; // ..LiquidStakingAgentsMembership;
+	type NumSlashingSpans = NumSlashingSpans;
+	type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
+	type ProtocolFeeReceiver = TreasuryAccount;
+	type Decimal = Decimal;
+	type NativeCurrency = NativeAssetId;
 }
 
 construct_runtime!(
@@ -728,12 +838,13 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		ReleaseCommittee: collective::<Instance3> = 74,
 		ReleaseMembership: membership::<Instance3> = 75,
+		RelayerCommittee: collective::<Instance4> = 81,
+		RelayerCommitteeMembership: membership::<Instance4> = 82,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -761,7 +872,6 @@ construct_runtime!(
 
 		Referenda: pallet_referenda = 76,
 		ConvictionVoting: pallet_conviction_voting = 77,
-		OpenGovBalances: balances::<Instance2> = 78,
 		Origins: pallet_custom_origins = 79,
 		Whitelist: pallet_whitelist = 80,
 
@@ -773,6 +883,9 @@ construct_runtime!(
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
 		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
+
+		PalletXcmHelper: pallet_xcm_helper = 194,
+		PalletLiquidStaking: pallet_liquid_staking = 195,
 	}
 );
 
@@ -829,7 +942,6 @@ mod benches {
 		[proxy, Proxy]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
-		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
 	);

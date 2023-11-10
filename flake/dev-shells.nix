@@ -13,33 +13,36 @@
       tools = with pkgs;
         with self'.packages;
         [
+          bech32cli
           binaryen
+          bun
           clang
           dasel
+          forge
+          gex
           git
           git-lfs
           grpcurl
           jq
           nix-tree
           nixfmt
+          nixos-rebuild
           nodejs
+          nodePackages.npm
           openssl
           process-compose
           protobuf
           python3
           rnix-lsp
           sad
-          gex
-          bech32cli
+          self'.packages.bech32cli
           subwasm
-          terraform
+          opentofu
           terraform-ls
+          typescript
           websocat
           yarn
           zombienet
-          self'.packages.bech32cli
-          nixos-rebuild
-          forge
         ] ++ (with self'.packages; [ rust-nightly ]);
       defaultattrs = {
         inherit pkgs;
@@ -141,7 +144,7 @@
           modules = [{
             packages = [ self'.packages.centaurid ];
             env = centauri.env.mainnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";

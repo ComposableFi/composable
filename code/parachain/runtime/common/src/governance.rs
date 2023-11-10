@@ -7,6 +7,7 @@ pub mod native {
 	pub type NativeTechnicalCollective = collective::Instance2;
 	/// Quality assurance and pre-release testing.
 	pub type ReleaseCollective = collective::Instance3;
+	pub type RelayerCollective = collective::Instance4;
 	pub type NativeTreasury = treasury::Instance1;
 
 	/// Origin for either root or half of PICA council
@@ -96,4 +97,7 @@ pub mod native {
 			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 6>,
 		>,
 	>;
+
+	pub type GeneralAdminOrRoot =
+		EitherOfDiverse<EnsureRoot<AccountId>, pallet_custom_origins::GeneralAdmin>;
 }

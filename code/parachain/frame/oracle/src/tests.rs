@@ -2275,10 +2275,37 @@ fn should_submit_signed_transaction_on_chain() {
 }
 
 #[test]
-#[should_panic = "Tx already submitted"]
+#[should_panic = "Unfulfilled expected requests"]
 fn should_check_oracles_submitted_price() {
 	let (mut t, oracle_account_id, _) =
 		offchain_worker_env(|state| price_oracle_response(state, "0"));
+
+	t.execute_with(|| {
+		let account_2 = get_root_account();
+
+		assert_ok!(Oracle::add_asset_and_info(
+			RuntimeOrigin::signed(account_2),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5,
+			false,
+		));
+
+		add_price_storage(100_u128, 0, oracle_account_id, 0);
+		// when
+		Oracle::fetch_price_and_send_signed(&0, Oracle::asset_info(0).unwrap()).unwrap();
+	});
+}
+
+//should pass because there is second key to fetch info for
+#[test]
+fn should_check_oracles_submitted_price_2_keys() {
+	let (mut t, oracle_account_id, _) =
+		offchain_worker_env_2_keys(|state| price_oracle_response(state, "0"));
 
 	t.execute_with(|| {
 		let account_2 = get_root_account();
@@ -2382,6 +2409,33 @@ fn offchain_worker_env(
 	let keystore = KeystoreExt::new(sp_keystore::testing::MemoryKeystore::new());
 	let account_id = keystore
 		.sr25519_generate_new(crate::crypto::Public::ID, Some(&format!("{}/hunter1", PHRASE)))
+		.unwrap();
+
+	let mut t = sp_io::TestExternalities::default();
+	t.register_extension(OffchainDbExt::new(offchain.clone()));
+	t.register_extension(OffchainWorkerExt::new(offchain));
+	t.register_extension(TransactionPoolExt::new(pool));
+	t.register_extension(keystore);
+
+	state_updater(&mut offchain_state.write());
+
+	(t, account_id, pool_state)
+}
+
+fn offchain_worker_env_2_keys(
+	state_updater: fn(&mut testing::OffchainState),
+) -> (TestExternalities, AccountId, Arc<RwLock<testing::PoolState>>) {
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	let (offchain, offchain_state) = testing::TestOffchainExt::new();
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeystoreExt::new(sp_keystore::testing::MemoryKeystore::new());
+	let account_id = keystore
+		.sr25519_generate_new(crate::crypto::Public::ID, Some(&format!("{}/hunter1", PHRASE)))
+		.unwrap();
+	let account_id = keystore
+		.sr25519_generate_new(crate::crypto::Public::ID, Some(&format!("{}/hunter2", PHRASE)))
 		.unwrap();
 
 	let mut t = sp_io::TestExternalities::default();
