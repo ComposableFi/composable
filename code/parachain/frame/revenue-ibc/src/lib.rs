@@ -119,7 +119,17 @@ pub mod pallet {
 			+ Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		#[pallet::constant]
-		type MaxStringSize: Get<u32>
+		type MaxStringSizeAddress: Get<u32>
+			+ TypeInfo
+			+ core::fmt::Debug
+			+ MaxEncodedLen
+			+ Copy
+			+ Clone
+			+ PartialEq
+			+ Eq;
+
+		#[pallet::constant]
+		type MaxStringSizeMemo: Get<u32>
 			+ TypeInfo
 			+ core::fmt::Debug
 			+ MaxEncodedLen
@@ -143,12 +153,12 @@ pub mod pallet {
 			period: T::BlockNumber,
 		},
 		MemoSet {
-			memo: BoundedVec<u8, T::MaxStringSize>,
+			memo: BoundedVec<u8, T::MaxStringSizeMemo>,
 		},
 		RevenueTransferred {
 			amount: BalanceOf<T>,
 			asset_id: AssetIdOf<T>,
-			memo: BoundedVec<u8, T::MaxStringSize>,
+			memo: BoundedVec<u8, T::MaxStringSizeMemo>,
 		},
 		TransferFailed {
 			asset_id: AssetIdOf<T>,
@@ -169,7 +179,7 @@ pub mod pallet {
 			channel: u64,
 		},
 		CentauriAddressSet {
-			address: BoundedVec<u8, T::MaxStringSize>,
+			address: BoundedVec<u8, T::MaxStringSizeAddress>,
 		},
 		CvmOsmoAddress {
 			asset_id: AssetIdOf<T>,
@@ -225,7 +235,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn centauri_address)]
 	pub type CentauriAddress<T: Config> =
-		StorageValue<_, BoundedVec<u8, T::MaxStringSize>, OptionQuery>;
+		StorageValue<_, BoundedVec<u8, T::MaxStringSizeAddress>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn centauri_channel)]
@@ -246,7 +256,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn memo)]
 	pub type ForwardMemo<T: Config> =
-		StorageValue<_, BoundedVec<u8, T::MaxStringSize>, OptionQuery>;
+		StorageValue<_, BoundedVec<u8, T::MaxStringSizeMemo>, OptionQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T>
@@ -351,7 +361,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_memo())]
 		pub fn set_memo(
 			origin: OriginFor<T>,
-			memo: BoundedVec<u8, T::MaxStringSize>,
+			memo: BoundedVec<u8, T::MaxStringSizeMemo>,
 		) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			ForwardMemo::<T>::set(Some(memo.clone()));
@@ -462,7 +472,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_address())]
 		pub fn set_address(
 			origin: OriginFor<T>,
-			address: BoundedVec<u8, T::MaxStringSize>,
+			address: BoundedVec<u8, T::MaxStringSizeAddress>,
 		) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
 			CentauriAddress::<T>::set(Some(address.clone()));
