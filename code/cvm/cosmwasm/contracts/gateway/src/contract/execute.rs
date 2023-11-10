@@ -50,7 +50,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			let auth =
 				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
 
-			if !msg.msg.assets.0.is_empty() {
+			let assets = to_absolute_from_delegated(msg.msg.assets); 
+			if !assets.is_empty() {
 				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg, env.block)
 			} else {
 				super::ibc::ics27::handle_bridge_forward_no_assets(auth, deps, info, msg, env.block)
