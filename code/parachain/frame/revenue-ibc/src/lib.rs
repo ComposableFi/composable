@@ -189,6 +189,9 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			cvm_centauri: u128,
 		},
+		Memo {
+			memo: String,
+		},
 		RevenueCalcutions,
 		SetAllowed,
 		AddAllowed,
@@ -543,13 +546,16 @@ pub mod pallet {
 										replaced_memo = replaced_memo
 											.replace("{centauri}", centauri.to_string().as_str());
 									}
+									Self::deposit_event(Event::<T>::Memo {
+										memo: replaced_memo.clone()
+									});
 									<T as pallet_ibc::Config>::MemoMessage::from_str(&replaced_memo)
 										.ok()
 								},
 								_ => None,
 							},
 							_ => None,
-						};
+						};						
 						let amount = T::Assets::reducible_balance(
 							asset_id.clone(),
 							&Self::pallet_account_id(),
