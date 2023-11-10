@@ -14,12 +14,12 @@ use cosmwasm_std::{
 	SubMsgResult, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
+use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg,};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
+	gateway::{AssetReference, BridgeForwardMsg, BridgeExecuteProgramMsg},
 	service::dex::ExchangeId,
 	shared, Amount, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
@@ -397,7 +397,7 @@ pub fn interpret_spawn(
 		}
 	}
 
-	let execute_program = ExecuteProgramMsg { salt, program, assets: Some(normalized_funds) };
+	let execute_program = BridgeExecuteProgramMsg { salt, program, assets: normalized_funds };
 	Ok(response
 		.add_message(gateway.execute(BridgeForwardMsg {
 			executor_origin: interpreter_origin.clone(),

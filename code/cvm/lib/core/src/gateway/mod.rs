@@ -35,7 +35,7 @@ pub enum ExecuteMsg {
 		/// The origin of the call.
 		call_origin: CallOrigin,
 		/// Program to execute.
-		execute_program: ExecuteProgramMsg,
+		execute_program: BridgeExecuteProgramMsg,
 
 		tip: Addr,
 	},
@@ -97,7 +97,7 @@ pub struct BridgeForwardMsg {
 	pub executor_origin: InterpreterOrigin,
 	/// target network
 	pub to: NetworkId,
-	pub msg: ExecuteProgramMsg,
+	pub msg: BridgeExecuteProgramMsg,
 }
 
 /// Wrapper for interfacing with a gateway contract.

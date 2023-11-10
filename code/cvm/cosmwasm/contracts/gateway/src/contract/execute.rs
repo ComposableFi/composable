@@ -15,6 +15,7 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 
+use xc_core::gateway::BridgeExecuteProgramMsg;
 use xc_core::{gateway::ConfigSubMsg, CallOrigin, Funds, InterpreterOrigin};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -33,13 +34,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			handle_config_msg(auth, deps, msg, &env).map(Into::into)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } => handle_execute_program(
-			deps,
-			env,
-			info,
-			execute_program,
-			tip.unwrap_or(env.contract.address.to_string()),
-		),
+		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } => {
+			handle_execute_program(deps, env, info, execute_program, tip)
+		},
 
 		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
@@ -50,7 +47,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			let auth =
 				auth::Executor::authorise(deps.as_ref(), &info, msg.executor_origin.clone())?;
 
-			if !assets.is_empty() {
+			if !msg.msg.assets.0.is_empty() {
 				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg, env.block)
 			} else {
 				super::ibc::ics27::handle_bridge_forward_no_assets(auth, deps, info, msg, env.block)
@@ -66,7 +63,6 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
 	}
 }
-
 
 fn handle_config_msg(
 	auth: auth::Admin,
@@ -126,11 +122,11 @@ fn transfer_from_user(
 	self_address: Addr,
 	user: Addr,
 	host_funds: Vec<Coin>,
-	program_funds: &Option<Funds<Displayed<u128>>>,
-) -> Result<Vec<CosmosMsg>> {
+	program_funds: Option<Funds<Displayed<u128>>>,
+) -> Result<(Vec<CosmosMsg>, Funds<Displayed<u128>>)> {
 	deps.api
 		.debug(serde_json_wasm::to_string(&(&program_funds, &host_funds))?.as_str());
-	
+
 	if let Some(program_funds) = program_funds {
 		let mut transfers = Vec::with_capacity(program_funds.0.len());
 		for (asset_id, program_amount) in program_funds.0.iter() {
@@ -156,13 +152,23 @@ fn transfer_from_user(
 				},
 			}
 		}
-		Ok(transfers)
+		Ok((transfers, program_funds))
 	} else {
-		panic!()
+		let mut program_funds: Funds<Displayed<u128>> = <_>::default();
+		for coin in host_funds {
+			let asset = assets::get_local_asset_by_reference(
+				deps.as_ref(),
+				AssetReference::Native { denom: coin.denom },
+			)?;
+
+			program_funds.0.push((asset.asset_id, coin.amount.into()));
+		}
+		// we cannot do same trick with CW20 as need to know CW20 address (and it has to support Allowance query)
+		Ok((vec![], program_funds))
 	}
 }
 
-/// Handles request to execute an [`XCVMProgram`].
+/// Handles request to execute an [`CVMProgram`].
 ///
 /// This is the entry point for executing a program from a user.  Handling
 pub(crate) fn handle_execute_program(
@@ -170,24 +176,25 @@ pub(crate) fn handle_execute_program(
 	env: Env,
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
-	tip: String,
+	tip: Option<String>,
 ) -> Result {
+	let tip = tip.unwrap_or(env.contract.address.to_string());
 	let this = msg::Gateway::new(env.contract.address);
 	let tip = deps.api.addr_validate(&tip)?;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
-	let transfers = transfer_from_user(
-		&deps,
-		this.address(),
-		info.sender,
-		info.funds,
-		&execute_program.assets,
-	)?;
+	let (transfers, assets) =
+		transfer_from_user(&deps, this.address(), info.sender, info.funds, execute_program.assets)?;
+	let execute_program = BridgeExecuteProgramMsg {
+		salt: execute_program.salt,
+		program: execute_program.program,
+		assets,
+	};
 	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
 	let msg = this.execute(msg)?;
 	Ok(Response::default().add_messages(transfers).add_message(msg))
 }
 
-/// Handle a request to execute a [`XCVMProgram`].
+/// Handle a request to execute a [`CVMProgram`].
 /// Only the gateway is allowed to dispatch such operation.
 /// The gateway must ensure that the `CallOrigin` is valid as the router does not do further
 /// checking on it.
@@ -196,7 +203,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
-	msg::ExecuteProgramMsg { salt, program, assets }: msg::ExecuteProgramMsg,
+	msg::BridgeExecuteProgramMsg { salt, program, assets }: msg::BridgeExecuteProgramMsg,
 	tip: Addr,
 ) -> Result {
 	let config = load_this(deps.storage)?;
@@ -239,8 +246,11 @@ pub(crate) fn handle_execute_program_privilleged(
 
 		// Secondly, call itself again with the same parameters, so that this functions goes
 		// into `Ok` state and properly executes the interpreter
-		let execute_program: msg::ExecuteProgramMsg =
-			xc_core::gateway::ExecuteProgramMsg { salt: interpreter_origin.salt, program, assets };
+		let execute_program = xc_core::gateway::BridgeExecuteProgramMsg {
+			salt: interpreter_origin.salt,
+			program,
+			assets,
+		};
 		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
 		let self_call_message = this.execute(msg)?;
 
@@ -251,7 +261,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	}
 }
 
-/// Transfer funds attached to a [`XCVMProgram`] before dispatching the program to the interpreter.
+/// Transfer funds attached to a [`CVMProgram`] before dispatching the program to the interpreter.
 fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,
