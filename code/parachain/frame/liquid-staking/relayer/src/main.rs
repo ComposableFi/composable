@@ -1,10 +1,7 @@
 use grandpa_client_primitives::parachain_header_storage_key;
 use grandpa_prover::GrandpaProver;
 
-
-use hyperspace_core::substrate::{
-	DefaultConfig as PolkadotConfig,
-};
+use hyperspace_core::substrate::DefaultConfig as PolkadotConfig;
 
 cfg_if::cfg_if! {
 	if #[cfg(feature = "composable")] {
@@ -32,25 +29,35 @@ cfg_if::cfg_if! {
 	}
 }
 
+use futures_util::stream::StreamExt;
 use jsonrpsee::{async_client::Client, tracing::log, ws_client::WsClientBuilder};
-use sp_core::storage::StorageKey;
+use sp_core::{storage::StorageKey, Pair};
+use sp_keyring::AccountKeyring;
 use std::{io::Bytes, str::FromStr, sync::Arc, time::Duration};
 use subxt::{
-	config::Header, dynamic::Value, ext::scale_value::Composite, rpc::types::StorageChangeSet,
-	tx::Payload, Config, OnlineClient, SubstrateConfig,
+	config::Header,
+	dynamic::Value,
+	ext::scale_value::Composite,
+	rpc::types::StorageChangeSet,
+	tx::{PairSigner, Payload},
+	utils::AccountId32,
+	Config, OnlineClient, SubstrateConfig,
 };
-use futures_util::stream::StreamExt;
-use sp_core::Pair;
-use sp_keyring::AccountKeyring;
-use subxt::{tx::PairSigner, utils::AccountId32};
+
+struct SovereignSubAccount {
+	pub address: String,
+	pub storage_key: StorageKey,
+	pub derivative_index: u16,
+}
 
 #[tokio::main]
 async fn main() {
-
-	let para_storage_key = parachain_header_storage_key(2019);
+	//RELAY_HOST=wss://kusama-rpc.polkadot.io:443 PARA_HOST=ws://127.0.0.1:8000 cargo run -p
+	// lsd-relayer
 
 	cfg_if::cfg_if! {
 		if #[cfg(feature = "composable")] {
+			println!("{}", "Composable");
 			let sovereign_account_id = "13YMK2ecbyxtm4cmFs31PqzWmQ7gWVboJSmXbcA56DB94xB9";
 			let sovereign_account_id_index_0 = "12x6QU4c9eRPxJMATFsRNFiZTMK5QgZkdZFFeu2QDKn4TR82";
 			let sovereign_account_id_index_1 = "1461Z7Bm1bwQpz1PuYMQ8phj9bRpxNU7ZYsb7aXQRAUuNecG";
@@ -67,6 +74,7 @@ async fn main() {
 			let p5 = "5f3e4907f716ac89b6347d15ececedca422adb579f1dbf4f3886c5cfa3bb8cc4232647f67d6923193db6aedafe0d5ea3abc522231610ec74f6391785db08c68f3c07c1bb45e2193b413f66926dec5072";
 		}
 		else{
+			println!("{}", "Kusama");
 			let sovereign_account_id = "F7fq1imhk2xwqqiQZav65eYKuzxSWWaF3HQp4fXkx6Sb3jY";
 			let sovereign_account_id_index_0 = "5xi8ChU4B7KQhpu3VcAhiPHJwCB7ZRBGHrtkkWEc59dufxud";
 			let sovereign_account_id_index_1 = "5vWm2EwDzaAx9m1zA4cn6L2kGpSqEodXCSboU3sC2L1Bap89";
@@ -84,8 +92,6 @@ async fn main() {
 		}
 	}
 
-	
-
 	let s0 = StorageKey(hex::decode(p0).expect("Failed to decode hex string p0"));
 	let s1 = StorageKey(hex::decode(p1).expect("Failed to decode hex string p1"));
 	let s2 = StorageKey(hex::decode(p2).expect("Failed to decode hex string p2"));
@@ -93,20 +99,48 @@ async fn main() {
 	let s4 = StorageKey(hex::decode(p4).expect("Failed to decode hex string p4"));
 	let s5 = StorageKey(hex::decode(p5).expect("Failed to decode hex string p5"));
 
-	let tuple = vec![
-		(sovereign_account_id_index_0, s0, 0),
-		(sovereign_account_id_index_1, s1, 1),
-		(sovereign_account_id_index_2, s2, 2),
-		(sovereign_account_id_index_3, s3, 3),
-		(sovereign_account_id_index_4, s4, 4),
-		(sovereign_account_id_index_5, s5, 5),
+	let sub_accounts = vec![
+		SovereignSubAccount {
+			address: sovereign_account_id_index_0.to_string(),
+			storage_key: s0.clone(),
+			derivative_index: 0,
+		},
+		SovereignSubAccount {
+			address: sovereign_account_id_index_1.to_string(),
+			storage_key: s1.clone(),
+			derivative_index: 1,
+		},
+		SovereignSubAccount {
+			address: sovereign_account_id_index_2.to_string(),
+			storage_key: s2.clone(),
+			derivative_index: 2,
+		},
+		SovereignSubAccount {
+			address: sovereign_account_id_index_3.to_string(),
+			storage_key: s3.clone(),
+			derivative_index: 3,
+		},
+		SovereignSubAccount {
+			address: sovereign_account_id_index_4.to_string(),
+			storage_key: s4.clone(),
+			derivative_index: 4,
+		},
+		SovereignSubAccount {
+			address: sovereign_account_id_index_5.to_string(),
+			storage_key: s5.clone(),
+			derivative_index: 5,
+		},
 	];
-	let relay = std::env::var("RELAY_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
-	let para = std::env::var("PARA_HOST").unwrap_or_else(|_| "rpc.polkadot.io".to_string());
+	let relay = std::env::var("RELAY_HOST")
+		.unwrap_or_else(|_| "wss://kusama-rpc.polkadot.io:443".to_string());
+	let para = std::env::var("PARA_HOST").unwrap_or_else(|_| "ws://127.0.0.1:8000".to_string());
 
-	let relay_ws_url = format!("wss://{relay}:443");
-	let relay_ws_url = format!("ws://127.0.0.1:8001");
-	let para_ws_url = format!("ws://127.0.0.1:8000");
+	// let relay_ws_url = format!("wss://{relay}:443");
+	// let relay_ws_url = format!("ws://127.0.0.1:8001");
+	// let para_ws_url = format!("ws://127.0.0.1:8000");
+
+	let relay_ws_url = relay.as_str();
+	let para_ws_url = para.as_str();
 
 	let relay_ws_client = Arc::new(WsClientBuilder::default().build(relay_ws_url).await.unwrap());
 	let relay_client = OnlineClient::<PolkadotConfig>::from_rpc_client(relay_ws_client.clone())
@@ -118,8 +152,8 @@ async fn main() {
 		.unwrap();
 
 	while true {
-		for i in &tuple {
-			let keys = vec![i.1.as_ref()];
+		for i in &sub_accounts {
+			let keys = vec![i.storage_key.as_ref()];
 
 			let state_proof: Vec<Vec<u8>> = relay_client
 				.rpc()
@@ -136,16 +170,18 @@ async fn main() {
 			println!("block_hash: {:?}", block_hash);
 
 			use subxt::utils::AccountId32;
-			let account_id = AccountId32::from_str(i.0).unwrap();
+			let account_id = AccountId32::from_str(&i.address).unwrap();
 			let staking = relaychain::api::storage().staking().ledger(account_id);
 
 			let Some(ledger) = relay_client.storage().at(block_hash).fetch(&staking).await.unwrap()
 			else {
-				println!("ledger not found");
+				println!("ledger: {} not found", i.address);
 				continue;
 			};
 
-			let sl = relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger).unwrap();
+			let sl =
+				relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger)
+					.unwrap();
 			println!("sl: {:?}", sl);
 
 			let mut unlocking = vec![];
@@ -162,7 +198,7 @@ async fn main() {
 			}
 
 			let xxx = StakingLedger::<AccountId32, u128> {
-				stash: AccountId32::from_str(i.0).unwrap(),
+				stash: AccountId32::from_str(&i.address).unwrap(),
 				total: sl.total,
 				active: sl.active,
 				unlocking,
@@ -170,13 +206,11 @@ async fn main() {
 			};
 			let tx_set_staking_ledger = parachain_subxt::api::tx()
 				.pallet_liquid_staking()
-				.set_staking_ledger(i.2, xxx, state_proof);
+				.set_staking_ledger(i.derivative_index, xxx, state_proof);
 			let tx_value =
 				parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
-			let api = OnlineClient::<subxt::SubstrateConfig>::from_url("ws://127.0.0.1:8000")
-				.await
-				.unwrap();
+			let api = OnlineClient::<subxt::SubstrateConfig>::from_url(para_ws_url).await.unwrap();
 
 			use subxt::ext::sp_core::Pair;
 			//test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
@@ -193,7 +227,7 @@ async fn main() {
 		}
 
 		//sleep 5 hours before next submit of ledger proof to lsd pallet on composable
-		tokio::time::sleep(std::time::Duration::from_secs(60 * 50 * 5)).await;
+		tokio::time::sleep(std::time::Duration::from_secs(60 * 60 * 1)).await;
 	}
 
 	todo!();
