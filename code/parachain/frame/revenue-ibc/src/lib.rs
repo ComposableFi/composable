@@ -533,7 +533,7 @@ pub mod pallet {
 						let memo = match Self::memo() {
 							Some(m) => match String::from_utf8(m.into()) {
 								Ok(m) => {
-									let mut replaced_memo = m.clone();
+									let mut replaced_memo = m;
 									if let Some(osmo_id) = CvmOsmoAddress::<T>::get(&asset_id) {
 										replaced_memo = replaced_memo
 											.replace("{osmo}", osmo_id.to_string().as_str());
@@ -562,7 +562,7 @@ pub mod pallet {
 								transfer_params.clone(),
 								asset_id.clone(),
 								amount,
-								memo.clone(),
+								memo,
 							);
 							if result.is_err() {
 								Self::deposit_event(Event::<T>::TransferFailed {

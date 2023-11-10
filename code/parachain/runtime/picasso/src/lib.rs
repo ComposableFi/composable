@@ -29,6 +29,7 @@ pub mod assets;
 mod contracts;
 mod fees;
 mod tracks;
+use hex_literal::hex;
 pub use pallet_custom_origins;
 pub use tracks::TracksInfo;
 pub mod governance;
@@ -38,13 +39,12 @@ mod prelude;
 pub mod version;
 mod weights;
 pub mod xcmp;
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
 use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
-
-pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
@@ -245,7 +245,7 @@ impl assets_registry::Config for Runtime {
 }
 
 parameter_types! {
-	pub FeeAccount: AccountId32 = AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28"));
+	pub FeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28"));
 	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
 	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
 	pub const MaxStringSizeAddress: u32 = 100;
