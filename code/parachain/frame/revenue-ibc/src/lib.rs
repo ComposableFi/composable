@@ -37,6 +37,7 @@ pub use pallet::*;
 
 pub mod weights;
 pub use sp_std::str::FromStr;
+pub use composable_traits::prelude::ToString;
 
 #[frame_support::pallet]
 pub mod pallet {
