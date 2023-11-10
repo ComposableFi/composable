@@ -63,14 +63,19 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 		weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
 		for i in instructions.iter_mut() {
-			if let QueryResponse { ref mut querier, .. } = i {
-				if querier.is_none() {
-					//need this line because querier is None
-					//and here is where it failed in pallet-xcm
-					//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
-					//so need to substitute it with expected querier
-					*querier = Some(MultiLocation { parents: 0, interior: Here });
-				}
+			if let QueryResponse { .. } = i {
+				//should execute. it is notifcation from parent. there is double check of validity
+				// during on response function. there is validation of query_id and querier and
+				// origin in on_response function
+				return Ok(());
+
+				// if querier.is_none() {
+				// 	//need this line because querier is None
+				// 	//and here is where it failed in pallet-xcm
+				// 	//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+				// 	//so need to substitute it with expected querier
+				// 	*querier = Some(MultiLocation { parents: 0, interior: Here });
+				// }
 			}
 		}
 
