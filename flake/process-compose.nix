@@ -256,7 +256,7 @@
                 } // parachain-startup;
                 namespace = "polkadot";
               };
-         
+
               osmosis-centauri-hermes-init = {
                 command = self'.packages.osmosis-centauri-hermes-init;
                 depends_on = {

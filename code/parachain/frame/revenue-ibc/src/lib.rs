@@ -496,7 +496,7 @@ pub mod pallet {
 						_ => None,
 					};
 					Self::get_ibc_assets().into_iter().for_each(|asset_id| {
-						let amount =T::Assets::reducible_balance(
+						let amount = T::Assets::reducible_balance(
 							asset_id.clone(),
 							&Self::pallet_account_id(),
 							Preservation::Expendable,
@@ -511,7 +511,10 @@ pub mod pallet {
 								memo.clone(),
 							);
 							if let Err(e) = result {
-								Self::deposit_event(Event::<T>::TransferFailed { asset_id, amount });
+								Self::deposit_event(Event::<T>::TransferFailed {
+									asset_id,
+									amount,
+								});
 							}
 						}
 					});
