@@ -235,13 +235,13 @@ pub mod pallet {
 	#[pallet::getter(fn cvm_osmo_addresses)]
 	#[allow(clippy::disallowed_types)]
 	pub type CvmOsmoAddress<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn cvm_centauri_addresses)]
 	#[allow(clippy::disallowed_types)]
 	pub type CvmCentauriAddress<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn memo)]
@@ -523,14 +523,27 @@ pub mod pallet {
 								height: Some(1000),
 							},
 						};
-					let memo = match Self::memo() {
-						Some(m) => match String::from_utf8(m.into()) {
-							Ok(m) => <T as pallet_ibc::Config>::MemoMessage::from_str(&m).ok(),
-							_ => None,
-						},
-						_ => None,
-					};
 					Self::get_ibc_assets().into_iter().for_each(|asset_id| {
+						let memo = match Self::memo() {
+							Some(m) => match String::from_utf8(m.into()) {
+								Ok(m) => {
+									let mut replaced_memo = m.clone();
+									if let Some(osmo_id) = CvmOsmoAddress::<T>::get(&asset_id) {
+										replaced_memo = replaced_memo
+											.replace("{osmo}", osmo_id.to_string().as_str());
+									}
+									if let Some(centauri) = CvmCentauriAddress::<T>::get(&asset_id)
+									{
+										replaced_memo = replaced_memo
+											.replace("{centauri}", centauri.to_string().as_str());
+									}
+									<T as pallet_ibc::Config>::MemoMessage::from_str(&replaced_memo)
+										.ok()
+								},
+								_ => None,
+							},
+							_ => None,
+						};
 						let amount = T::Assets::reducible_balance(
 							asset_id.clone(),
 							&Self::pallet_account_id(),

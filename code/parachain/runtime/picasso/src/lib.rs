@@ -245,7 +245,7 @@ impl assets_registry::Config for Runtime {
 }
 
 parameter_types! {
-	pub const FromPalletId: PalletId = PalletId(*b"picatrsy");
+	pub const FromPalletId: PalletId = PalletId(*b"ics20fee");
 	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
 	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
 	pub const MaxStringSize: u32 = 100;
