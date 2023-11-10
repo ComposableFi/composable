@@ -92,6 +92,7 @@
         "force_asset": {
           "asset_id": "237684487542793012780631851009",
           "network_id": 3,
+          "metadata":"Picasso PICA Layer PICA on Osmosis",
           "local": {
             "native": {
               "denom": "ibc/56D7C03B8F6A07AD322EEE1BEF3AE996E09D1C1E34C27CF37E0D4A0AC5972516"
@@ -130,6 +131,7 @@
         "force_asset": {
           "asset_id": "158456325028528675187087900673",
           "network_id": 2,
+          "metadata": "Picasso PICA on Layer",
           "local": {
             "native": {
               "denom": "ppica"
@@ -149,6 +151,7 @@
         "force_asset": {
           "asset_id": "158456325028528675187087900674",
           "network_id": 2,
+          "metadata": "Osmosis OSMO on Layer",
           "local": {
             "native": {
               "denom": "ibc/47BD209179859CDE4A2806763D7189B6E6FE13A17880FE2B42DE1E6C1E329E23"
@@ -187,6 +190,7 @@
         "force_asset": {
           "asset_id": "237684487542793012780631851010",
           "network_id": 3,
+          "metadata":"Osmosis OSMO",
           "local": {
             "native": {
               "denom": "uosmo"
