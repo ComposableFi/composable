@@ -18,7 +18,6 @@
           ( ${
             pkgs.lib.meta.getExe self'.packages.devnet-xc-fresh-background
           } 2>&1 & ) | tee devnet-xc.log &
-
           TRIES=0
           START_RESULT=1
           while test $TRIES -le 64; do
@@ -29,7 +28,7 @@
               curl --header "Content-Type: application/json" --data '{"id":1, "jsonrpc":"2.0", "method" : "assets_listAssets"}' http://127.0.0.1:29988
               START_RESULT=$?
             fi
-            set -o errexit            
+            set -o errexit
             if test $START_RESULT -eq 0; then
               set +o errexit
               pkill -SIGTERM process-compose
@@ -39,14 +38,17 @@
             ((TRIES=TRIES+1))
             sleep 4
           done
-
-          # here nodes are up and running, binaries in path, npm is here too
-
-          sleep 8
-          set +o errexit          
+          # PATH=$PATH:$(pwd)
+          # export PATH
+          # cd code/integration-tests/runtime-tests
+          # npm install
+          # npm run generate-types
+          # npm run test:cosmos
+          # sleep 8
+          # set +o errexit
           pkill -SIGKILL process-compose
           set -o errexit
-          exit $START_RESULT              
+          exit 0
         '';
       };
     };

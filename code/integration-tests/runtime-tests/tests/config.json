@@ -1,7 +1,7 @@
 {
   "endpoints": {
-    "picassoEndpoint": "ws://localhost:9988",
-    "composableEndpoint": "ws://localhost:29988",
+    "picassoEndpoint": "ws://127.0.0.1:9988",
+    "composableEndpoint": "ws://127.0.0.1:29988",
     "kusamaEndpoint": "ws://localhost:9944"
   },
   "chains": {
