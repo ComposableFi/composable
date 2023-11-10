@@ -29,12 +29,8 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 /// Added with helper per chain to get final address to use.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[cfg_attr(
-    feature = "scale",
-    derive(
-        parity_scale_codec::Encode,
-        parity_scale_codec::Decode,
-        scale_info::TypeInfo
-    )
+	feature = "scale",
+	derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)
 )]
 #[derive(
 	Clone,
@@ -51,20 +47,28 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 #[repr(transparent)]
 pub struct XcAddr(String);
 
+impl XcAddr {
+	pub fn encode_for_cosmos(&self, api: &dyn Api) -> Result<String, String> {
+		let bech32 = bech32_no_std::decode(self.0);
+		if let Ok((_, addr, _)) = bech32 {
+			
+		}
+	}
+}
+
+// Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
 
 // #[test]
 // fn spawn_with_asset_and_transfer() {
-// 	let (_, addr, _) =
-// 		bech32_no_std::decode("centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k").unwrap();
+
 // 	let addr: Vec<u8> = bech32_no_std::FromBase32::from_base32(&addr).unwrap();
 // 	let addr = Binary(addr).to_base64();
 // 	assert_eq!(addr, "4qA3hVL1E8yLhVTSZFHbrpHFKI4=");
 // }
 
-
 impl core::fmt::Display for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Display::fmt(&self.0 , fmtr)
+		core::fmt::Display::fmt(&self.0, fmtr)
 	}
 }
 
@@ -73,7 +77,6 @@ impl core::fmt::Debug for XcAddr {
 		core::fmt::Debug::fmt(&self.0, fmtr)
 	}
 }
-
 
 /// A wrapper around a type which is serde-serialised as a string.
 ///

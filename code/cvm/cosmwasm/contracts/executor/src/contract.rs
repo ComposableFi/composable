@@ -421,7 +421,7 @@ pub fn interpret_transfer(
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 	deps.api.debug(&format!("cvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
-		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
+		Destination::Account(account) => account.encode_for_cosmos(deps.api)?.0,
 		Destination::Tip => tip.into(),
 	};
 
