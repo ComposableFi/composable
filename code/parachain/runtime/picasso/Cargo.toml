@@ -150,7 +150,6 @@ builtin-wasm = []
 testnet = []
 fastnet = []
 default = ["std"]
-local-integration-tests = []
 
 runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",

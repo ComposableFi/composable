@@ -76,7 +76,7 @@
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
             buildPhase =
-              "cargo test --workspace --release --locked --verbose --exclude local-integration-tests --exclude xc-tests";
+              "cargo test --workspace --release --locked --verbose --exclude xc-tests";
             installPhase = "mkdir -p $out";
           });
       };
