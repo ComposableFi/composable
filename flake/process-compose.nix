@@ -207,7 +207,7 @@
           };
         };
 
-         devnet-xc = {
+        devnet-xc = {
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
