@@ -78,13 +78,13 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 						);
 
 					if is_asked_by_lsd {
-						return Ok(());
+						return Ok(())
 					}
 					//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
 				}
 			}
 		}
-		return result;
+		return result
 	}
 }
 
