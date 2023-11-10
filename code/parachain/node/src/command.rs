@@ -353,6 +353,10 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
+	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+		self.base.base.rpc_addr(default_listen_port)
+	}
+
 	// fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
 	// 	self.base.base.rpc_http(default_listen_port)
 	// }
@@ -402,6 +406,10 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {
 		self.base.base.rpc_methods()
+	}
+
+	fn rpc_max_connections(&self) -> Result<u32> {
+		self.base.base.rpc_max_connections()
 	}
 
 	// fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
