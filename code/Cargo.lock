@@ -3440,24 +3440,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-pingpong"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
- "cw-utils",
- "cw2",
- "cw20",
- "num",
- "schemars",
- "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
- "serde_json",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
 name = "cw2"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
@@ -19495,7 +19477,6 @@ dependencies = [
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "cw-xc-interpreter",
- "cw-xc-pingpong",
  "cw20",
  "cw20-base",
  "env_logger 0.10.0",

@@ -1,3 +1,24 @@
+//! Kind of rust SDK to use like:
+//! Ok(ProgramBuilder::<T, XcAddr, Funds<Balance>>::new("PING".as_bytes().to_vec())
+//! .spawn::<U, (), _, _>(
+//! 	"PONG".as_bytes().to_vec(),
+//! 	vec![0x01, 0x02, 0x03],
+//! 	Funds::<Balance>::default(),
+//! 	|child| {
+//! 		Ok(child.call_raw(
+//! 			serde_json::to_vec(&FlatCosmosMsg::Wasm(FlatWasmMsg::<ExecuteMsg>::Execute {
+//! 				contract_addr: String::from_utf8_lossy(&Vec::<u8>::from(remote_address))
+//! 					.to_string(),
+//! 				msg,
+//! 				funds: Default::default(),
+//! 			}))
+//! 			.map_err(|_| ())?,
+//! 		))
+//! 	},
+//! )
+//! .map_err(|_| StdError::generic_err("invalid program"))?
+//! .build())
+
 #![allow(clippy::comparison_chain)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(

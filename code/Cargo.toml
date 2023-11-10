@@ -55,7 +55,6 @@ members = [
   "cvm/cosmwasm/contracts/gateway",
   "cvm/cosmwasm/contracts/interpreter",
   "cvm/cosmwasm/contracts/order",
-  "cvm/cosmwasm/contracts/pingpong",
   "cvm/cosmwasm/tests",
   "cvm/lib/core/",
   "cvm/crates/cvm/",

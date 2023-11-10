@@ -36,7 +36,6 @@
       packages = rec {
         cw-xc-executor = mkCvmContract "cw-xc-interpreter";
         cw-xc-gateway = mkCvmContract "cw-xc-gateway";
-        cw-xc-pingpong = mkCvmContract "cw-xc-pingpong";
         cw-mantis-order = mkMantisContract "cw-mantis-order";
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
