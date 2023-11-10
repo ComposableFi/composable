@@ -245,7 +245,7 @@ impl assets_registry::Config for Runtime {
 }
 
 parameter_types! {
-	pub const FromPalletId: PalletId = PalletId(*b"ics20fee");
+	pub FeeAccount: AccountId32 = AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28"));
 	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
 	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
 	pub const MaxStringSizeAddress: u32 = 100;
@@ -255,7 +255,7 @@ parameter_types! {
 
 impl revenue_ibc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type FromPalletId = FromPalletId;
+	type FeeAccount = FeeAccount;
 	type IntermediatePalletId = IntermediatePalletId;
 	type ForeignAssetId = primitives::currency::ForeignAssetId;
 	type AssetId = CurrencyId;

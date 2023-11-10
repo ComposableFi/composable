@@ -79,7 +79,7 @@ pub mod pallet {
 
 		// treasury account
 		#[pallet::constant]
-		type FromPalletId: Get<PalletId>;
+		type FeeAccount: Get<AccountIdOf<Self>>;
 
 		// every period, funds to transfer are sent to IntermediatePalletId, then from it they are
 		// send further In case of failure funds come back to this account and revenue calculation
@@ -279,7 +279,7 @@ pub mod pallet {
 					let percentage = Perbill::from_rational(200_u32, 1000_u32);
 					let new_balance = T::Assets::reducible_balance(
 						asset_id.clone(),
-						&Self::treasury_account_id(),
+						&<T as Config>::FeeAccount::get(),
 						Preservation::Expendable,
 						frame_support::traits::tokens::Fortitude::Polite,
 					);
@@ -292,7 +292,7 @@ pub mod pallet {
 							let amount = percentage * (new_balance - old_balance);
 							match T::Assets::transfer(
 								asset_id.clone(),
-								&Self::treasury_account_id(),
+								&<T as Config>::FeeAccount::get(),
 								&Self::pallet_account_id(),
 								percentage * (new_balance - old_balance),
 								Preservation::Expendable,
@@ -345,7 +345,7 @@ pub mod pallet {
 						asset_id,
 						T::Assets::reducible_balance(
 							asset_id.clone(),
-							&Self::treasury_account_id(),
+							&<T as Config>::FeeAccount::get(),
 							Preservation::Expendable,
 							frame_support::traits::tokens::Fortitude::Polite,
 						),
@@ -392,7 +392,7 @@ pub mod pallet {
 					asset,
 					T::Assets::reducible_balance(
 						asset.clone(),
-						&Self::treasury_account_id(),
+						&<T as Config>::FeeAccount::get(),
 						Preservation::Expendable,
 						frame_support::traits::tokens::Fortitude::Polite,
 					),
@@ -412,7 +412,7 @@ pub mod pallet {
 				&asset,
 				T::Assets::reducible_balance(
 					asset.clone(),
-					&Self::treasury_account_id(),
+					&<T as Config>::FeeAccount::get(),
 					Preservation::Expendable,
 					frame_support::traits::tokens::Fortitude::Polite,
 				),
@@ -513,10 +513,6 @@ pub mod pallet {
 		AccountId32: From<<T as frame_system::Config>::AccountId>,
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 	{
-		pub fn treasury_account_id() -> T::AccountId {
-			T::FromPalletId::get().into_account_truncating()
-		}
-
 		pub fn pallet_account_id() -> T::AccountId {
 			T::IntermediatePalletId::get().into_account_truncating()
 		}
