@@ -1,5 +1,5 @@
 use crate::{prelude::*, AssetId};
-use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
+use cosmwasm_std::{from_binary, to_binary, Api, Binary, CanonicalAddr, StdError, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub type Salt = Vec<u8>;
@@ -47,24 +47,39 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 #[repr(transparent)]
 pub struct XcAddr(String);
 
-impl XcAddr {
-	pub fn encode_for_cosmos(&self, api: &dyn Api) -> Result<String, String> {
-		let bech32 = bech32_no_std::decode(self.0);
-		if let Ok((_, addr, _)) = bech32 {
-			
-		}
+impl Into<Vec<u8>> for XcAddr {
+	fn into(self) -> Vec<u8> {
+		self.0.bytes().collect()
 	}
 }
 
-// Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
+impl TryFrom<Vec<u8>> for XcAddr {
+	type Error = StdError;
 
-// #[test]
-// fn spawn_with_asset_and_transfer() {
+	fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+		Ok(Self(String::from_utf8(value)?))
+	}
+}
 
-// 	let addr: Vec<u8> = bech32_no_std::FromBase32::from_base32(&addr).unwrap();
-// 	let addr = Binary(addr).to_base64();
-// 	assert_eq!(addr, "4qA3hVL1E8yLhVTSZFHbrpHFKI4=");
-// }
+impl XcAddr {
+	pub fn encode_cosmwasm(&self, api: &dyn Api) -> Result<String, StdError> {
+		if let Ok(addr) = Binary::from_base64(&self.0) {
+			if let Ok(addr) = api.addr_humanize(&CanonicalAddr(addr)) {
+				return Ok(addr.into_string())
+			}
+		}
+		if let Ok((_, addr, _)) = bech32_no_std::decode(&self.0) {
+			use bech32_no_std::FromBase32;
+			if let Ok(addr) = Vec::from_base32(&addr) {
+				if let Ok(addr) = api.addr_humanize(&CanonicalAddr(Binary(addr))) {
+					return Ok(addr.into_string())
+				}
+			}
+		}
+
+		Err(StdError::generic_err("Failed to ensure XcAddr encoding"))
+	}
+}
 
 impl core::fmt::Display for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {

@@ -14,12 +14,12 @@ use cosmwasm_std::{
 	SubMsgResult, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg,};
+use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{AssetReference, BridgeForwardMsg, BridgeExecuteProgramMsg},
+	gateway::{AssetReference, BridgeExecuteProgramMsg, BridgeForwardMsg},
 	service::dex::ExchangeId,
 	shared, Amount, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
@@ -137,18 +137,14 @@ pub fn handle_execute_step(
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
 		deps.api.debug(&format!("cvm::interpreter::execute:: {:?}", &instruction));
 		let response = match instruction {
-			Instruction::Transfer { to, assets } => {
-				interpret_transfer(&mut deps, &env, &tip, to, assets)
-			},
-			Instruction::Call { bindings, encoded } => {
-				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip)
-			},
-			Instruction::Spawn { network_id, salt, assets, program } => {
-				interpret_spawn(&mut deps, &env, network_id, salt, assets, program)
-			},
-			Instruction::Exchange { exchange_id, give, want } => {
-				interpret_exchange(&mut deps, give, want, exchange_id, env.contract.address.clone())
-			},
+			Instruction::Transfer { to, assets } =>
+				interpret_transfer(&mut deps, &env, &tip, to, assets),
+			Instruction::Call { bindings, encoded } =>
+				interpret_call(deps.as_ref(), &env, bindings, encoded, instruction_pointer, &tip),
+			Instruction::Spawn { network_id, salt, assets, program } =>
+				interpret_spawn(&mut deps, &env, network_id, salt, assets, program),
+			Instruction::Exchange { exchange_id, give, want } =>
+				interpret_exchange(&mut deps, give, want, exchange_id, env.contract.address.clone()),
 		}?;
 		// Save the intermediate IP so that if the execution fails, we can recover at which
 		// instruction it happened.
@@ -204,7 +200,7 @@ fn interpret_exchange(
 		.map_err(ContractError::AssetNotFound)?;
 
 	if want.1.is_absolute() && want.1.is_ratio() {
-		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime);
+		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime)
 	}
 
 	let want = if want.1.is_absolute() {
@@ -291,9 +287,8 @@ impl<'a> BindingResolver<'a> {
 		match binding {
 			BindingValue::Register(reg) => self.resolve_register(*reg),
 			BindingValue::Asset(asset_id) => self.resolve_asset(*asset_id),
-			BindingValue::AssetAmount(asset_id, balance) => {
-				self.resolve_asset_amount(*asset_id, balance)
-			},
+			BindingValue::AssetAmount(asset_id, balance) =>
+				self.resolve_asset_amount(*asset_id, balance),
 		}
 	}
 
@@ -336,9 +331,7 @@ impl<'a> BindingResolver<'a> {
 			AssetReference::Native { denom } => {
 				let coin =
 					self.deps.querier.query_balance(self.env.contract.address.clone(), denom)?;
-				balance
-					.apply(coin.amount.into())
-					.map_err(|_| ContractError::ArithmeticError)?
+				balance.apply(coin.amount.into()).map_err(|_| ContractError::ArithmeticError)?
 			},
 			AssetReference::Erc20 { .. } => Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 		};
@@ -365,9 +358,7 @@ pub fn interpret_spawn(
 			AssetReference::Native { denom } => {
 				let coin =
 					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
-				balance
-					.apply(coin.amount.into())
-					.map_err(|_| ContractError::ArithmeticError)
+				balance.apply(coin.amount.into()).map_err(|_| ContractError::ArithmeticError)
 			},
 			AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
@@ -386,18 +377,18 @@ pub fn interpret_spawn(
 					to_address: gateway.address().into(),
 					amount: vec![Coin { denom, amount: transfer_amount.into() }],
 				}),
-				AssetReference::Cw20 { contract } => {
+				AssetReference::Cw20 { contract } =>
 					response.add_message(Cw20Contract(contract).call(Cw20ExecuteMsg::Transfer {
 						recipient: gateway.address().into(),
 						amount: transfer_amount.into(),
-					})?)
-				},
+					})?),
 				AssetReference::Erc20 { .. } => Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 			};
 		}
 	}
 
-	let execute_program = BridgeExecuteProgramMsg { salt, program, assets: normalized_funds, tip: None };
+	let execute_program =
+		BridgeExecuteProgramMsg { salt, program, assets: normalized_funds, tip: None };
 	Ok(response
 		.add_message(gateway.execute(BridgeForwardMsg {
 			executor_origin: interpreter_origin.clone(),
@@ -421,7 +412,7 @@ pub fn interpret_transfer(
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 	deps.api.debug(&format!("cvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
-		Destination::Account(account) => account.encode_for_cosmos(deps.api)?.0,
+		Destination::Account(account) => account.encode_cosmwasm(deps.api)?,
 		Destination::Tip => tip.into(),
 	};
 
@@ -461,13 +452,11 @@ pub fn interpret_transfer(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 	match msg {
 		QueryMsg::Register(Register::Ip) => Ok(to_binary(&IP_REGISTER.load(deps.storage)?)?),
-		QueryMsg::Register(Register::Result) => {
-			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?)
-		},
+		QueryMsg::Register(Register::Result) =>
+			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
-		QueryMsg::Register(Register::Carry(_)) => Err(StdError::generic_err(
-			"Carry register is not implemented yet",
-		)),
+		QueryMsg::Register(Register::Carry(_)) =>
+			Err(StdError::generic_err("Carry register is not implemented yet")),
 		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 		QueryMsg::State() => Ok(state::read(deps.storage)?.try_into()?),
 	}
@@ -517,9 +506,8 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 				.unwrap_or(ExchangeId::default());
 			Response::new().add_event(CvmInterpreterExchangeSucceeded::new(exchange_id))
 		},
-		SubMsgResult::Err(err) => {
-			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone()))
-		},
+		SubMsgResult::Err(err) =>
+			Response::new().add_event(CvmInterpreterExchangeFailed::new(err.clone())),
 	};
 	RESULT_REGISTER.save(deps.storage, &msg.result.into_result())?;
 	Ok(response)

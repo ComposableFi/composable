@@ -1,9 +1,9 @@
 use prost::Message as _;
 
 pub mod common;
+pub mod cvm;
 pub mod pb;
 pub mod result;
-pub mod cvm;
 
 /// Defines an isomorphism between a Rust type `Self` and a protocol message.
 ///

@@ -7,7 +7,7 @@ use scale_info::TypeInfo;
 #[serde(rename_all = "snake_case")]
 pub struct Program<Instructions> {
 	/// In JSON, hex encoded identifiers to identify the program off chain (for example in
-	/// indexer).	
+	/// indexer).
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
 	#[serde(skip_serializing_if = "Vec::is_empty", default)]

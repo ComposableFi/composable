@@ -1,4 +1,5 @@
-//! Responsible for mapping CVM program as inputs on specific origin chain to on the wire representation understood by each chain.
+//! Responsible for mapping CVM program as inputs on specific origin chain to on the wire
+//! representation understood by each chain.
 pub use alloc::{
 	boxed::Box,
 	collections::VecDeque,
@@ -256,21 +257,19 @@ where
 				payload: encoded.into(),
 				bindings: super::from_sequence(bindings),
 			}),
-			Instruction::Spawn { network_id, salt, assets, program } => {
+			Instruction::Spawn { network_id, salt, assets, program } =>
 				Msg::Spawn(pb::program::Spawn {
 					network_id: network_id.into(),
 					salt,
 					program: Some(program.into()),
 					assets: assets.into().into_iter().map(|asset| asset.into()).collect(),
-				})
-			},
-			Instruction::Exchange { exchange_id, give, want } => {
+				}),
+			Instruction::Exchange { exchange_id, give, want } =>
 				Msg::Exchange(pb::program::Exchange {
 					exchange_id: Some(exchange_id.into()),
 					give: give.into().into_iter().map(|asset| asset.into()).collect(),
 					want: want.into().into_iter().map(|asset| asset.into()).collect(),
-				})
-			},
+				}),
 		};
 		Self { instruction: Some(instruction) }
 	}
@@ -350,9 +349,8 @@ where
 
 	fn try_from(account_type: pb::program::transfer::AccountType) -> Result<Self, Self::Error> {
 		Ok(match account_type {
-			pb::program::transfer::AccountType::Account(account) => {
-				Destination::Account(account.try_into().map_err(|_| ())?)
-			},
+			pb::program::transfer::AccountType::Account(account) =>
+				Destination::Account(account.try_into().map_err(|_| ())?),
 			pb::program::transfer::AccountType::Tip(_) => Destination::Tip,
 		})
 	}

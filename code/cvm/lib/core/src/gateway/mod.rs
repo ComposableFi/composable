@@ -78,7 +78,7 @@ pub struct ExecuteProgramMsg<Assets = Option<Funds<crate::shared::Displayed<u128
 	/// The interpreter is funded prior to execution.
 	/// If None, 100% of received funds go to interpreter.
 	pub assets: Assets,
-	
+
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub tip: Option<String>,
 }
@@ -204,4 +204,3 @@ impl Gateway {
 		querier.query(&query.into())
 	}
 }
-
