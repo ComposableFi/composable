@@ -80,20 +80,11 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 					if is_asked_by_lsd {
 						return Ok(());
 					}
-
-					// if querier.is_none() {
-					// 	//need this line because querier is None
-					// 	//and here is where it failed in pallet-xcm
-					// 	//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
-					// 	//so need to substitute it with expected querier
-					// 	*querier = Some(MultiLocation { parents: 0, interior: Here });
-					// }
+					//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
 				}
 			}
 		}
 		return result;
-
-		// Ok(())
 	}
 }
 
