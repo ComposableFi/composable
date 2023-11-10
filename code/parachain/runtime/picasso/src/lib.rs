@@ -728,7 +728,7 @@ parameter_types! {
 	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
 	pub const StakingCurrency: CurrencyId = CurrencyId::KSM;
 	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_PICASSO_KSM;
-	pub const EraLength: BlockNumber = 6 * 1 * 3600 / 6; // 6HOURS
+	pub const EraLength: BlockNumber = 6 * 3600 / 6; // 6HOURS
 	pub const MinStakeLSD: Balance = 100_000_000_000; // 0.1KSM
 	pub const MinUnstake: Balance = 50_000_000_000; // 0.05sKSM
 	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 28; //28 era = 7 days (era 6 hours)

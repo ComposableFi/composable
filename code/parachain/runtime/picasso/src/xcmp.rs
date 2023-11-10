@@ -84,7 +84,7 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 				}
 			}
 		}
-		return result
+		result
 	}
 }
 
