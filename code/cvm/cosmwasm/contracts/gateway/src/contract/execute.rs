@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use crate::{
 	assets, auth,
 	batch::BatchResponse,
@@ -32,8 +33,13 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			handle_config_msg(auth, deps, msg, &env).map(Into::into)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } =>
-			handle_execute_program(deps, env, info, execute_program, tip),
+		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } => handle_execute_program(
+			deps,
+			env,
+			info,
+			execute_program,
+			tip.unwrap_or(env.contract.address.to_string()),
+		),
 
 		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
@@ -47,7 +53,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			if !msg.msg.assets.0.is_empty() {
 				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg, env.block)
 			} else {
-				super::ibc::xcvm::handle_bridge_forward_no_assets(auth, deps, info, msg, env.block)
+				super::ibc::ics27::handle_bridge_forward_no_assets(auth, deps, info, msg, env.block)
 			}
 		},
 		msg::ExecuteMsg::MessageHook(msg) => {
@@ -69,14 +75,17 @@ fn handle_config_msg(
 ) -> Result<BatchResponse> {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
-		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
-			network::force_network_to_network(auth, deps, msg),
+		ConfigSubMsg::ForceNetworkToNetwork(msg) => {
+			network::force_network_to_network(auth, deps, msg)
+		},
 		ConfigSubMsg::ForceAsset(msg) => assets::force_asset(auth, deps, msg),
 		ConfigSubMsg::ForceExchange(msg) => exchange::force_exchange(auth, deps, msg),
-		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
-			assets::force_remove_asset(auth, deps, asset_id),
-		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>
-			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset),
+		ConfigSubMsg::ForceRemoveAsset { asset_id } => {
+			assets::force_remove_asset(auth, deps, asset_id)
+		},
+		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } => {
+			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset)
+		},
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
 		ConfigSubMsg::ForceInstantiate { user_origin, salt } => interpreter::force_instantiate(
 			auth,
@@ -107,40 +116,49 @@ fn handle_shortcut(
 	Err(ContractError::NotImplemented)
 }
 
-/// transfers assets from user
-/// if case of bask assets, transfers directly,
-/// in case of cw20 asset transfers using messages
+/// Transfers assets from user.
+/// In case of bank assets, transfers directly,
+/// In case of cw20 asset transfers using messages.
+/// If assets are non, default 100% of bank transferred assets or delegated via CW20.
 fn transfer_from_user(
 	deps: &DepsMut,
 	self_address: Addr,
 	user: Addr,
 	host_funds: Vec<Coin>,
-	program_funds: &Funds<xc_core::shared::Displayed<u128>>,
+	program_funds: &Option<Funds<Displayed<u128>>>,
 ) -> Result<Vec<CosmosMsg>> {
 	deps.api
 		.debug(serde_json_wasm::to_string(&(&program_funds, &host_funds))?.as_str());
-	let mut transfers = Vec::with_capacity(program_funds.0.len());
-	for (asset_id, program_amount) in program_funds.0.iter() {
-		match assets::get_asset_by_id(deps.as_ref(), *asset_id)?.local {
-			msg::AssetReference::Native { denom } => {
-				let Coin { amount: host_amount, .. } = host_funds
-					.iter()
-					.find(|c| c.denom == denom)
-					.ok_or(ContractError::ProgramFundsDenomMappingToHostNotFound)?;
-				if *program_amount != u128::from(*host_amount) {
-					return Err(ContractError::ProgramAmountNotEqualToHostAmount)?
-				}
-			},
-			msg::AssetReference::Cw20 { contract } =>
-				transfers.push(Cw20Contract(contract).call(Cw20ExecuteMsg::TransferFrom {
-					owner: user.to_string(),
-					recipient: self_address.to_string(),
-					amount: (*program_amount).into(),
-				})?),
-			msg::AssetReference::Erc20 { .. } => Err(ContractError::RuntimeUnsupportedOnNetwork)?,
+	
+	if let Some(program_funds) = program_funds {
+		let mut transfers = Vec::with_capacity(program_funds.0.len());
+		for (asset_id, program_amount) in program_funds.0.iter() {
+			match assets::get_asset_by_id(deps.as_ref(), *asset_id)?.local {
+				msg::AssetReference::Native { denom } => {
+					let Coin { amount: host_amount, .. } = host_funds
+						.iter()
+						.find(|c| c.denom == denom)
+						.ok_or(ContractError::ProgramFundsDenomMappingToHostNotFound)?;
+					if *program_amount != u128::from(*host_amount) {
+						return Err(ContractError::ProgramAmountNotEqualToHostAmount)?;
+					}
+				},
+				msg::AssetReference::Cw20 { contract } => {
+					transfers.push(Cw20Contract(contract).call(Cw20ExecuteMsg::TransferFrom {
+						owner: user.to_string(),
+						recipient: self_address.to_string(),
+						amount: (*program_amount).into(),
+					})?)
+				},
+				msg::AssetReference::Erc20 { .. } => {
+					Err(ContractError::RuntimeUnsupportedOnNetwork)?
+				},
+			}
 		}
+		Ok(transfers)
+	} else {
+		panic!()
 	}
-	Ok(transfers)
 }
 
 /// Handles request to execute an [`XCVMProgram`].
@@ -203,8 +221,9 @@ pub(crate) fn handle_execute_program_privilleged(
 		// and save it)
 		let interpreter_code_id = match config.gateway.expect("expected setup") {
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
-			msg::GatewayId::Evm { .. } =>
-				Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?,
+			msg::GatewayId::Evm { .. } => {
+				Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?
+			},
 		};
 		deps.api.debug("instantiating interpreter");
 		let this = msg::Gateway::new(env.contract.address);
@@ -242,7 +261,7 @@ fn send_funds_to_interpreter(
 	for (asset_id, amount) in funds.0 {
 		// Ignore zero amounts
 		if amount == 0 {
-			continue
+			continue;
 		}
 		deps.api.debug("cvm::gateway:: sending funds");
 

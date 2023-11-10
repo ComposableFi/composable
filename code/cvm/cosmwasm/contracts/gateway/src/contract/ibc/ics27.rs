@@ -1,4 +1,4 @@
-//! custom ibc channel, cannot directly transfer ics20 assets
+//! ics27 integration to do txes
 
 use std::str::FromStr;
 

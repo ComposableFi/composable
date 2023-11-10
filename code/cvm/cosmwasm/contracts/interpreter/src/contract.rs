@@ -210,7 +210,7 @@ fn interpret_exchange(
 	let want = if want.1.is_absolute() {
 		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.intercept.to_string() }
 	} else {
-		/// use https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/swaprouter/src/msg.rs to allow slippage
+		// use https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/swaprouter/src/msg.rs to allow slippage
 		xc_core::cosmos::Coin { denom: asset.denom(), amount: "1".to_string() }
 	};
 

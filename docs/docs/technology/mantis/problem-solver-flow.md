@@ -110,7 +110,7 @@ Coded as a simple CosmWasm transfers back and forth accounts.
 
 ### 7. Contract sends message to convert route to CVM
 
-Each solution has a simplfied version of routes which is 1 to 1 mappedto a more detailed lower level CVM program. 
+Each solution has a simplified version of routes which is 1 to 1 mapped to a more detailed lower level CVM program. 
 
 Coding is in progress. 
 
