@@ -7,6 +7,7 @@ name = "lsd-relayer"
 version = "1.0.0"
 
 [dependencies]
+cfg-if = "1.0"
 grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", default-features = false }
 grandpa-prover = { git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", default-features = false }
 tokio = { version = "1.22.0", features = ["full"] }
@@ -14,6 +15,7 @@ jsonrpsee = { version = "0.16.2", features = [
   "async-client",
   "jsonrpsee-ws-client",
 ] }
+
 subxt = { git = "https://github.com/paritytech/subxt", tag = "v0.29.0", features = [
   "substrate-compat",
 ] }
@@ -29,3 +31,5 @@ hex = "0.4.3"
 [features]
 default = ["std"]
 std = ["grandpa-client-primitives/std"]
+composable = []
+picasso = []
