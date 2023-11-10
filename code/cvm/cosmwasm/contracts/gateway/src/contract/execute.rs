@@ -160,7 +160,8 @@ fn transfer_from_user(
 			program_funds.0.push((asset.asset_id, coin.amount.into()));
 		}
 		// we cannot do same trick with CW20 as need to know CW20 address (and it has to support
-		// Allowance query)
+		// Allowance query).
+		// so it is implement CW20 receiver interface like Michal did for wallet
 		Ok((vec![], program_funds))
 	}
 }

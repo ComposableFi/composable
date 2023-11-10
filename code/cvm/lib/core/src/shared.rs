@@ -62,6 +62,8 @@ impl TryFrom<Vec<u8>> for XcAddr {
 }
 
 impl XcAddr {
+	/// idea that whatever user plugs into, it works, really for adoption
+	/// sure for Ethereum he must plug exact binary address, but for others it's just a string
 	pub fn encode_cosmwasm(&self, api: &dyn Api) -> Result<String, StdError> {
 		if let Ok(addr) = Binary::from_base64(&self.0) {
 			if let Ok(addr) = api.addr_humanize(&CanonicalAddr(addr)) {
@@ -77,6 +79,7 @@ impl XcAddr {
 			}
 		}
 
+		/// here we will do CW on Substrate if that will be needed, but not prio
 		Err(StdError::generic_err("Failed to ensure XcAddr encoding"))
 	}
 }
