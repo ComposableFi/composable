@@ -92,5 +92,6 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		release_committee: Default::default(),
+		pallet_liquid_staking: Default::default(),
 	}
 }

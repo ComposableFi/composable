@@ -86,6 +86,8 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
   "stargate",
 ] }
 
+pallet-liquid-staking = { package = "pallet-liquid-staking", path = "../../frame/liquid-staking", default-features = false }
+pallet-xcm-helper = { package = "pallet-xcm-helper", path = "../../frame/pallet-xcm-helper", default-features = false }
 xc-core = { path = "../../../cvm/lib/core", default-features = false, features = [
   "xcm",
 ] }
@@ -281,4 +283,6 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
+  "pallet-liquid-staking/std",
+  "pallet-xcm-helper/std",
 ]
