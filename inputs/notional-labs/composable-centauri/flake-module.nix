@@ -412,7 +412,6 @@
 
           SWAP_PICA_TO_OSMOSIS=$(cat << EOF
             {
-              "execute_program": {
                 "execute_program": {
                   "salt": "737061776e5f776974685f6173736574",
                   "program": {
@@ -426,11 +425,8 @@
                             [
                               "158456325028528675187087900673",
                               {
-                                "amount": {
                                   "intercept": "1234567890",
                                   "slope": "0"
-                                },
-                                "is_unit": false
                               }
                             ]
                           ],
@@ -444,11 +440,8 @@
                                     [
                                       "237684487542793012780631851009",
                                       {
-                                        "amount": {
                                           "intercept": "123456789",
                                           "slope": "0"
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ],
@@ -456,11 +449,8 @@
                                     [
                                       "237684487542793012780631851010",
                                       {
-                                        "amount": {
                                           "intercept": "1000",
                                           "slope": "0"
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ]
@@ -474,11 +464,8 @@
                                     [
                                       "237684487542793012780631851010",
                                       {
-                                        "amount": {
                                           "intercept": "0",
                                           "slope": "1000000000000000000"
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ],
@@ -494,11 +481,8 @@
                                             [
                                               "158456325028528675187087900674",
                                               {
-                                                "amount": {
                                                   "intercept": "0",
                                                   "slope": "1000000000000000000"
-                                                },
-                                                "is_unit": false
                                               }
                                             ]
                                           ]
@@ -521,8 +505,7 @@
                     ]
                   ]
                 },
-                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
-              }
+                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"              
             }
           EOF
           )                  

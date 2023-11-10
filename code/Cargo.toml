@@ -54,8 +54,7 @@ members = [
   "utils/price-feed",
   "cvm/cosmwasm/contracts/gateway",
   "cvm/cosmwasm/contracts/executor",
-  "cvm/cosmwasm/contracts/order",
-  "cvm/cosmwasm/tests",
+  "cvm/cosmwasm/contracts/order",  
   "cvm/lib/core/",
   "cvm/crates/cvm/",
 ]
