@@ -19,8 +19,8 @@ pub trait WeightInfo {
 	fn remove_disallowed() -> Weight;
 	fn set_channel() -> Weight;
 	fn set_address() -> Weight;
-    fn set_cvm_osmo_address() -> Weight;
-    fn set_cvm_centauri_address() -> Weight;
+	fn set_cvm_osmo_address() -> Weight;
+	fn set_cvm_centauri_address() -> Weight;
 }
 
 /// Weights for pallet_oracle using the Substrate node and recommended hardware.
@@ -62,10 +62,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn set_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
-    fn set_cvm_osmo_address() -> Weight {
+	fn set_cvm_osmo_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
-    fn set_cvm_centauri_address() -> Weight {
+	fn set_cvm_centauri_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
 }
@@ -105,13 +105,13 @@ impl WeightInfo for () {
 	fn set_channel() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
-    fn set_address() -> Weight {
+	fn set_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
 	fn set_cvm_osmo_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
-    fn set_cvm_centauri_address() -> Weight {
+	fn set_cvm_centauri_address() -> Weight {
 		Weight::from_parts(100_000, 0)
 	}
 }

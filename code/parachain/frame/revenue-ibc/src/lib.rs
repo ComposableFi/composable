@@ -11,10 +11,7 @@
 )]
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![warn(bad_style, trivial_numeric_casts)]
-#![allow(
-	clippy::let_unit_value,
-	clippy::unused_unit
-)]
+#![allow(clippy::let_unit_value, clippy::unused_unit)]
 #![deny(
 	bare_trait_objects,
 	improper_ctypes,
@@ -491,10 +488,10 @@ pub mod pallet {
 		pub fn set_cvm_centauri_address(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
-			cvm_centauri: u128
+			cvm_centauri: u128,
 		) -> DispatchResult {
 			T::Admin::ensure_origin(origin)?;
-			CvmCentauriAddress::<T>::insert(&asset_id,  cvm_centauri);
+			CvmCentauriAddress::<T>::insert(&asset_id, cvm_centauri);
 			Self::deposit_event(Event::<T>::CvmCentauriAddress { asset_id, cvm_centauri });
 			Ok(())
 		}
@@ -548,7 +545,7 @@ pub mod pallet {
 								amount,
 								memo.clone(),
 							);
-							if  result.is_err() {
+							if result.is_err() {
 								Self::deposit_event(Event::<T>::TransferFailed {
 									asset_id,
 									amount,
@@ -585,7 +582,6 @@ pub mod pallet {
 			// 			}
 			// 		}
 			// 	});
-
 		}
 	}
 }
