@@ -1734,6 +1734,7 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-custom-origins",
  "pallet-ibc",
  "pallet-sudo",
  "pallet-treasury",
@@ -9113,6 +9114,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 5.0.0",
+ "strum 0.24.1",
+ "strum_macros 0.24.3",
 ]
 
 [[package]]

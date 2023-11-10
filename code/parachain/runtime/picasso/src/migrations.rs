@@ -1,16 +1,28 @@
 use crate::{prelude::*, *};
 use frame_support::traits::{GetStorageVersion, StorageVersion};
-use migrate_oracle::MigrateOracle;
+use migrate_gov::MigrateGov;
+
+parameter_types! {
+	pub const DemocracyPalletName: &'static str = "Democracy";
+	pub const OpenGovPalletName: &'static str = "OpenGovBalances";
+}
 
 pub type Migrations = (
 	SchedulerMigrationV1toV4,
 	TechCollectiveRenameMigration,
-	MigrateOracle,
+	MigrateGov,
 	preimage::migration::v1::Migration<Runtime>,
 	scheduler::migration::v3::MigrateToV4<Runtime>,
-	democracy::migrations::v1::Migration<Runtime>,
 	multisig::migrations::v1::MigrateToV1<Runtime>,
 	vesting::migrations::VestingV0ToV1<Runtime>,
+	frame_support::migrations::RemovePallet<
+		DemocracyPalletName,
+		<Runtime as frame_system::Config>::DbWeight,
+	>,
+	frame_support::migrations::RemovePallet<
+		OpenGovPalletName,
+		<Runtime as frame_system::Config>::DbWeight,
+	>,
 );
 
 // Migration for scheduler pallet to move from a plain Call to a CallOrHash.
@@ -57,164 +69,52 @@ impl OnRuntimeUpgrade for TechCollectiveRenameMigration {
 	}
 }
 
-pub mod migrate_oracle {
+pub mod migrate_gov {
 	use super::*;
 	use frame_support::traits::{GetStorageVersion, StorageVersion};
 
-	use sp_std::vec::Vec;
+	use frame_support::traits::LockableCurrency;
+	use hex_literal::hex;
+	use sp_runtime::AccountId32;
+	pub struct MigrateGov;
 
-	pub struct MigrateOracle;
+	const REFERENDA_V2: StorageVersion = StorageVersion::new(2);
+	const DEMOCRACY_ID: LockIdentifier = *b"democrac";
 
-	const ORACLE_V2: StorageVersion = StorageVersion::new(2);
+	fn migrate() -> Weight {
+		// set key for relayer committee
+		let relayer_address = sp_runtime::MultiAddress::Id(AccountId32::from(hex!(
+			"868232e15789eaae263d655db7d222fcf5ffa5f6f8da4e46d32609312fcf6e60"
+		)));
+		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(
+			frame_system::RawOrigin::Root.into(),
+			relayer_address.clone(),
+		)
+		.expect("should add");
+		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(
+			frame_system::RawOrigin::Root.into(),
+			relayer_address,
+		)
+		.expect("should remove");
+		let accounts = balances::pallet::Locks::<Runtime>::iter()
+			.filter(|(_key, locks)| locks.iter().any(|a| a.id == DEMOCRACY_ID))
+			.map(|(key, _locks)| key)
+			.collect::<Vec<_>>();
 
-	/// change some of the pools' lp token ids
-	fn migrate_oracle() -> Weight {
-		let mut answers_accounts: Vec<_> = Vec::new();
-		for account in oracle::pallet::AnswerInTransit::<Runtime>::iter_keys() {
-			answers_accounts.push(account);
+		for account in accounts {
+			<Balances as LockableCurrency<AccountId>>::remove_lock(DEMOCRACY_ID, &account);
 		}
-
-		let mut preprices_assets: Vec<_> = Vec::new();
-		for asset in oracle::pallet::PrePrices::<Runtime>::iter_keys() {
-			preprices_assets.push(asset);
-		}
-
-		for account in answers_accounts {
-			oracle::pallet::AnswerInTransit::<Runtime>::remove(account.clone());
-		}
-
-		for asset in preprices_assets {
-			oracle::pallet::PrePrices::<Runtime>::remove(asset);
-		}
-
 		Weight::from_parts(100_000, 0)
 	}
 
-	impl OnRuntimeUpgrade for MigrateOracle {
+	impl OnRuntimeUpgrade for MigrateGov {
 		fn on_runtime_upgrade() -> Weight {
-			let on_chain_version = <Oracle as GetStorageVersion>::on_chain_storage_version();
-			if on_chain_version < ORACLE_V2 {
-				StorageVersion::new(2).put::<Oracle>();
-				migrate_oracle()
+			let on_chain_version = <Referenda as GetStorageVersion>::on_chain_storage_version();
+			if on_chain_version < REFERENDA_V2 {
+				StorageVersion::new(2).put::<Referenda>();
+				migrate()
 			} else {
 				<Runtime as system::Config>::DbWeight::get().reads(1)
-			}
-		}
-	}
-
-	#[cfg(test)]
-	mod tests {
-		use frame_support::sp_io;
-
-		use super::*;
-
-		pub fn new_test_ext() -> sp_io::TestExternalities {
-			let storage = frame_system::GenesisConfig::default()
-				.build_storage::<Runtime>()
-				.expect("in memory test");
-			let mut externalities = sp_io::TestExternalities::new(storage);
-			externalities.execute_with(|| System::set_block_number(1));
-			externalities
-		}
-
-		mod migrate_oracle {
-
-			use super::*;
-			use common::AccountId;
-			use oracle::PrePrice;
-			use sp_core::crypto::AccountId32;
-			#[test]
-			fn test_migrate_oracle() {
-				new_test_ext().execute_with(|| {
-					let alice: AccountId = AccountId32::new([
-						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-						0, 0, 0, 0, 0, 0, 1,
-					]);
-					let bob: AccountId = AccountId32::new([
-						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-						0, 0, 0, 0, 0, 0, 2,
-					]);
-					let usdt = CurrencyId(130);
-					let usdc = CurrencyId(131);
-					oracle::pallet::AnswerInTransit::<Runtime>::mutate(&alice, |transit| {
-						*transit = Some(2000000000000);
-					});
-					oracle::pallet::AnswerInTransit::<Runtime>::mutate(&bob, |transit| {
-						*transit = Some(20000000000000);
-					});
-					assert_eq!(
-						oracle::pallet::AnswerInTransit::<Runtime>::get(&alice),
-						Some(2000000000000)
-					);
-					assert_eq!(
-						oracle::pallet::AnswerInTransit::<Runtime>::get(&bob),
-						Some(20000000000000)
-					);
-
-					oracle::pallet::PrePrices::<Runtime>::try_mutate(
-						usdt,
-						|current_prices| -> Result<(), DispatchError> {
-							current_prices
-								.try_push(PrePrice { price: 1, who: bob.clone(), block: 0 })
-								.unwrap();
-							current_prices
-								.try_push(PrePrice { price: 2, who: alice.clone(), block: 1 })
-								.unwrap();
-
-							Ok(())
-						},
-					)
-					.unwrap();
-
-					oracle::pallet::PrePrices::<Runtime>::try_mutate(
-						usdc,
-						|current_prices| -> Result<(), DispatchError> {
-							current_prices
-								.try_push(PrePrice { price: 20, who: bob.clone(), block: 1 })
-								.unwrap();
-							current_prices
-								.try_push(PrePrice { price: 10, who: alice.clone(), block: 0 })
-								.unwrap();
-
-							Ok(())
-						},
-					)
-					.unwrap();
-
-					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(usdt)
-							.into_iter()
-							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
-						vec![
-							PrePrice { price: 1, block: 0, who: bob.clone() },
-							PrePrice { price: 2, block: 1, who: alice.clone() }
-						]
-					);
-					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(usdc)
-							.into_iter()
-							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
-						vec![
-							PrePrice { price: 20, block: 1, who: bob.clone() },
-							PrePrice { price: 10, block: 0, who: alice.clone() }
-						]
-					);
-					migrate_oracle();
-					assert_eq!(oracle::pallet::AnswerInTransit::<Runtime>::get(&alice), None);
-					assert_eq!(oracle::pallet::AnswerInTransit::<Runtime>::get(&bob), None);
-					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(usdt)
-							.into_iter()
-							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
-						vec![]
-					);
-					assert_eq!(
-						oracle::pallet::PrePrices::<Runtime>::get(usdc)
-							.into_iter()
-							.collect::<Vec<PrePrice<Balance, BlockNumber, AccountId>>>(),
-						vec![]
-					);
-				});
 			}
 		}
 	}

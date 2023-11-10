@@ -40,7 +40,7 @@ mod weights;
 pub mod xcmp;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
-use frame_support::{dispatch::DispatchError, traits::StorageMapShim};
+use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
@@ -236,8 +236,8 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = primitives::currency::ForeignAssetId;
-	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
 	type NetworkId = PicassoNetworkId;
@@ -258,8 +258,8 @@ impl pablo::Config for Runtime {
 	type LPTokenFactory = AssetsRegistry;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
-	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
@@ -320,9 +320,9 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfNativeCouncil;
-	type SetSigner = EnsureRootOrHalfNativeCouncil;
-	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type AddOracle = GeneralAdminOrRoot;
+	type SetSigner = GeneralAdminOrRoot;
+	type RewardOrigin = GeneralAdminOrRoot;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
@@ -545,7 +545,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -639,7 +639,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type RewardAsset = Assets;
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type AdminOrigin = EnsureRoot<AccountId>;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -664,8 +664,8 @@ impl vesting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type UpdateSchedulesOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type VestedTransferOrigin = EnsureRoot<Self::AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -728,12 +728,13 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		ReleaseCommittee: collective::<Instance3> = 74,
 		ReleaseMembership: membership::<Instance3> = 75,
+		RelayerCommittee: collective::<Instance4> = 81,
+		RelayerCommitteeMembership: membership::<Instance4> = 82,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -761,7 +762,6 @@ construct_runtime!(
 
 		Referenda: pallet_referenda = 76,
 		ConvictionVoting: pallet_conviction_voting = 77,
-		OpenGovBalances: balances::<Instance2> = 78,
 		Origins: pallet_custom_origins = 79,
 		Whitelist: pallet_whitelist = 80,
 
@@ -829,7 +829,6 @@ mod benches {
 		[proxy, Proxy]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
-		[democracy, Democracy]
 		[oracle, Oracle]
 		[pallet_ibc, Ibc]
 	);

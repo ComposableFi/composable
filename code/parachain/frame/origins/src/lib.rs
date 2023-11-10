@@ -4,6 +4,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
+	use strum_macros::EnumString;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {}
@@ -11,11 +12,20 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
+	#[derive(
+		PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug, EnumString,
+	)]
+	#[strum(serialize_all = "snake_case")]
 	#[pallet::origin]
 	pub enum Origin {
 		/// Origin able to dispatch a whitelisted call.
 		WhitelistedCaller,
+		/// General admin
+		GeneralAdmin,
+		/// Origin able to cancel referenda.
+		ReferendumCanceller,
+		/// Origin able to kill referenda.
+		ReferendumKiller,
 	}
 
 	macro_rules! decl_unit_ensures {
@@ -28,6 +38,7 @@ pub mod pallet {
 				fn try_origin(o: O) -> Result<Self::Success, O> {
 					o.into().and_then(|o| match o {
 						Origin::$name => Ok($success),
+						r => Err(O::from(r)),
 					})
 				}
 				#[cfg(feature = "runtime-benchmarks")]
@@ -47,5 +58,5 @@ pub mod pallet {
 		};
 		() => {}
 	}
-	decl_unit_ensures!(WhitelistedCaller,);
+	decl_unit_ensures!(ReferendumCanceller, ReferendumKiller, WhitelistedCaller, GeneralAdmin);
 }

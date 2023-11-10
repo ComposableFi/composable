@@ -17,6 +17,7 @@
 //! Track configurations for governance.
 
 use super::*;
+use sp_std::str::FromStr;
 
 const fn percent(x: i32) -> sp_runtime::FixedI64 {
 	sp_runtime::FixedI64::from_rational(x as u128, 100)
@@ -119,12 +120,29 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
 		if let Ok(system_origin) = frame_system::RawOrigin::try_from(id.clone()) {
 			match system_origin {
-				frame_system::RawOrigin::Root => Ok(0),
+				frame_system::RawOrigin::Root => {
+					if let Some((track_id, _)) =
+						Self::tracks().iter().find(|(_, track)| track.name == "root")
+					{
+						Ok(*track_id)
+					} else {
+						Err(())
+					}
+				},
 				_ => Err(()),
 			}
 		} else if let Ok(custom_origin) = pallet_custom_origins::Origin::try_from(id.clone()) {
-			match custom_origin {
-				pallet_custom_origins::Origin::WhitelistedCaller => Ok(1),
+			if let Some((track_id, _)) = Self::tracks().iter().find(|(_, track)| {
+				if let Ok(track_custom_origin) = pallet_custom_origins::Origin::from_str(track.name)
+				{
+					track_custom_origin == custom_origin
+				} else {
+					false
+				}
+			}) {
+				Ok(*track_id)
+			} else {
+				Err(())
 			}
 		} else {
 			Err(())

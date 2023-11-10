@@ -145,7 +145,7 @@ impl pallet_ibc::Config for Runtime {
 	#[cfg(feature = "testnet")]
 	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
 	#[cfg(not(feature = "testnet"))]
-	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type RelayerOrigin = system::EnsureSignedBy<RelayerCommitteeMembership, Self::IbcAccountId>;
 
 	type FeeAccount = FeeAccount;
 	type CleanUpPacketsPeriod = ConstU32<100>;
