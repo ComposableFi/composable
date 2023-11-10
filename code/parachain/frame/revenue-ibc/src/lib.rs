@@ -547,7 +547,7 @@ pub mod pallet {
 											.replace("{centauri}", centauri.to_string().as_str());
 									}
 									Self::deposit_event(Event::<T>::Memo {
-										memo: replaced_memo.clone()
+										memo: replaced_memo.clone(),
 									});
 									<T as pallet_ibc::Config>::MemoMessage::from_str(&replaced_memo)
 										.ok()
@@ -555,7 +555,7 @@ pub mod pallet {
 								_ => None,
 							},
 							_ => None,
-						};						
+						};
 						let amount = T::Assets::reducible_balance(
 							asset_id.clone(),
 							&Self::pallet_account_id(),
