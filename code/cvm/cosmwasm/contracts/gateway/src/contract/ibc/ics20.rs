@@ -27,7 +27,7 @@ use crate::{
 // hope route checked amid 2 networks and if can do shortcut 3. else full CVM Executor call is
 // propagated
 pub(crate) fn handle_bridge_forward(
-	_: auth::Interpreter,
+	_: auth::Executor,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
@@ -63,7 +63,7 @@ pub(crate) fn handle_bridge_forward(
 
 		let packet = XcPacket {
 			interpreter: String::from(info.sender).into_bytes(),
-			user_origin: msg.interpreter_origin.user_origin.clone(),
+			user_origin: msg.executor_origin.user_origin.clone(),
 			salt: msg.msg.salt,
 			program: msg.msg.program,
 			assets: vec![asset].into(),

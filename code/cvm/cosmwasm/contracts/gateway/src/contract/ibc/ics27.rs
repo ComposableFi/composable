@@ -137,7 +137,7 @@ pub fn ibc_packet_timeout(
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
 pub(crate) fn handle_bridge_forward_no_assets(
-	_: auth::Interpreter,
+	_: auth::Executor,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: msg::BridgeForwardMsg,
@@ -152,7 +152,7 @@ pub(crate) fn handle_bridge_forward_no_assets(
 		.ok_or(ContractError::UnknownChannel)?;
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin,
+		user_origin: msg.executor_origin.user_origin,
 		salt: msg.msg.salt,
 		program: msg.msg.program,
 		assets: msg.msg.assets,

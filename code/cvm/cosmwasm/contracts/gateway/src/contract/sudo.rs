@@ -40,7 +40,7 @@ fn handle_transport_failure(
 	let bridge_msg =
 		crate::state::tracking::get_interpreter_track(deps.storage, channel.as_str(), sequence)?;
 	let interpreter =
-		crate::state::interpreter::get_by_origin(deps.as_ref(), bridge_msg.interpreter_origin)?;
+		crate::state::interpreter::get_by_origin(deps.as_ref(), bridge_msg.executor_origin)?;
 	let mut response = Response::new();
 
 	let assets = bridge_msg

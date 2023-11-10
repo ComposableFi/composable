@@ -25,7 +25,7 @@ pub(crate) struct Auth<T>(core::marker::PhantomData<T>);
 pub(crate) type Contract = Auth<policy::Contract>;
 
 /// Authorisation token for messages which come from an interpreter.
-pub(crate) type Interpreter = Auth<policy::Interpreter>;
+pub(crate) type Executor = Auth<policy::Interpreter>;
 
 /// Authorisation token for messages which come from contract’s admin.
 pub(crate) type Admin = Auth<policy::Admin>;

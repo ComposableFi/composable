@@ -71,7 +71,7 @@ pub enum ShortcutSubMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct ExecuteProgramMsg {
+pub struct ExecuteProgramMsg<Assets = Option<Funds<crate::shared::Displayed<u128>>>> {
 	/// The program salt.
 	/// If JSON, than hex encoded non prefixed lower case string.
 	/// If not specified, uses no salt.
@@ -84,14 +84,17 @@ pub struct ExecuteProgramMsg {
 	/// Assets to fund the CVM interpreter instance.
 	/// The interpreter is funded prior to execution.
 	/// If None, 100% of received funds go to interpreter.
-	pub assets: Option<Funds<crate::shared::Displayed<u128>>>,
+	pub assets: Assets,
 }
+
+/// message sent within CVM must have assets defined
+pub type BridgeExecuteProgramMsg = ExecuteProgramMsg<Funds<crate::shared::Displayed<u128>>>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct BridgeForwardMsg {
-	pub interpreter_origin: InterpreterOrigin,
+	pub executor_origin: InterpreterOrigin,
 	/// target network
 	pub to: NetworkId,
 	pub msg: ExecuteProgramMsg,

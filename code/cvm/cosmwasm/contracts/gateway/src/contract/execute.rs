@@ -48,9 +48,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 
 		msg::ExecuteMsg::BridgeForward(msg) => {
 			let auth =
-				auth::Interpreter::authorise(deps.as_ref(), &info, msg.interpreter_origin.clone())?;
+				auth::Executor::authorise(deps.as_ref(), &info, msg.executor_origin.clone())?;
 
-			let assets = to_absolute_from_delegated(msg.msg.assets); 
 			if !assets.is_empty() {
 				super::ibc::ics20::handle_bridge_forward(auth, deps, info, msg, env.block)
 			} else {
@@ -67,6 +66,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 		msg::ExecuteMsg::Shortcut(msg) => handle_shortcut(deps, env, info, msg),
 	}
 }
+
 
 fn handle_config_msg(
 	auth: auth::Admin,

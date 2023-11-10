@@ -400,7 +400,7 @@ pub fn interpret_spawn(
 	let execute_program = ExecuteProgramMsg { salt, program, assets: Some(normalized_funds) };
 	Ok(response
 		.add_message(gateway.execute(BridgeForwardMsg {
-			interpreter_origin: interpreter_origin.clone(),
+			executor_origin: interpreter_origin.clone(),
 			msg: execute_program,
 			to: network_id,
 		})?)
