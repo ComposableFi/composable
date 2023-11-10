@@ -397,7 +397,7 @@ pub fn interpret_spawn(
 		}
 	}
 
-	let execute_program = BridgeExecuteProgramMsg { salt, program, assets: normalized_funds };
+	let execute_program = BridgeExecuteProgramMsg { salt, program, assets: normalized_funds, tip: None };
 	Ok(response
 		.add_message(gateway.execute(BridgeForwardMsg {
 			executor_origin: interpreter_origin.clone(),

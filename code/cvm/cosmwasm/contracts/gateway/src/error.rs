@@ -84,6 +84,8 @@ pub enum ContractError {
 	RuntimeUnsupportedOnNetwork,
 	#[error("Badly configured route because this chain can send only from cosmwasm")]
 	BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm,
+	#[error("Account in program is not mappable to this chain")]
+	AccountInProgramIsNotMappableToThisChain,
 }
 
 impl From<xc_core::proto::DecodeError> for ContractError {

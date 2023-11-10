@@ -233,10 +233,14 @@ pub(crate) fn ics20_message_hook(
 		})
 		.collect();
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
-	let execute_program =
-		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: assets?.into() };
-	let msg =
-		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
+	let execute_program = ExecuteProgramMsg {
+		salt: packet.salt,
+		program: packet.program,
+		assets: assets?.into(),
+		tip: Some(info.sender.to_string()),
+	};
+
+	let msg = ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, ReplyId::ExecProgram.into())))
 }

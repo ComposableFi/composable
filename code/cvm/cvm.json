@@ -4,6 +4,7 @@
       {
         "force_network": {
           "network_id": 3,
+          "metadata": "Cosmos Osmosis",
           "accounts": {
             "bech": "osmo"
           },

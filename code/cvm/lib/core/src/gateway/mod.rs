@@ -21,12 +21,7 @@ pub enum ExecuteMsg {
 	Config(ConfigSubMsg),
 
 	/// Sent by the user to execute a program on their behalf.
-	ExecuteProgram {
-		/// Program to execute.
-		execute_program: ExecuteProgramMsg,
-		#[serde(skip_serializing_if = "Option::is_none")]
-		tip: Option<String>,
-	},
+	ExecuteProgram(ExecuteProgramMsg),
 
 	/// Request to execute a program on behalf of given user.
 	///
@@ -36,8 +31,6 @@ pub enum ExecuteMsg {
 		call_origin: CallOrigin,
 		/// Program to execute.
 		execute_program: BridgeExecuteProgramMsg,
-
-		tip: Addr,
 	},
 
 	/// Message sent from interpreter trying to spawn program on another
@@ -85,6 +78,9 @@ pub struct ExecuteProgramMsg<Assets = Option<Funds<crate::shared::Displayed<u128
 	/// The interpreter is funded prior to execution.
 	/// If None, 100% of received funds go to interpreter.
 	pub assets: Assets,
+	
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub tip: Option<String>,
 }
 
 /// message sent within CVM must have assets defined

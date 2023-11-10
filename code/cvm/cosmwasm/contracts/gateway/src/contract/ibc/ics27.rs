@@ -97,13 +97,10 @@ pub fn ibc_packet_receive(
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
+			tip: Some(msg.relayer.to_string()),
 		};
 
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
-			call_origin,
-			execute_program,
-			tip: msg.relayer,
-		};
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(msg, ReplyId::ExecProgram.into()))
 	})();

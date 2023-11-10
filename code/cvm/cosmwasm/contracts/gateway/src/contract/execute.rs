@@ -1,4 +1,3 @@
-use crate::prelude::*;
 use crate::{
 	assets, auth,
 	batch::BatchResponse,
@@ -6,6 +5,7 @@ use crate::{
 	events::make_event,
 	exchange, interpreter, msg,
 	network::{self, load_this},
+	prelude::*,
 	state,
 };
 
@@ -15,8 +15,10 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 
-use xc_core::gateway::BridgeExecuteProgramMsg;
-use xc_core::{gateway::ConfigSubMsg, CallOrigin, Funds, InterpreterOrigin};
+use xc_core::{
+	gateway::{BridgeExecuteProgramMsg, ConfigSubMsg},
+	CallOrigin, Funds, InterpreterOrigin,
+};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg) -> Result {
@@ -34,13 +36,12 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: msg::ExecuteMsg)
 			handle_config_msg(auth, deps, msg, &env).map(Into::into)
 		},
 
-		msg::ExecuteMsg::ExecuteProgram { execute_program, tip } => {
-			handle_execute_program(deps, env, info, execute_program, tip)
-		},
+		msg::ExecuteMsg::ExecuteProgram(execute_program) =>
+			handle_execute_program(deps, env, info, execute_program),
 
-		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip } => {
+		msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program } => {
 			let auth = auth::Contract::authorise(&env, &info)?;
-			handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program, tip)
+			handle_execute_program_privilleged(auth, deps, env, call_origin, execute_program)
 		},
 
 		msg::ExecuteMsg::BridgeForward(msg) => {
@@ -72,17 +73,14 @@ fn handle_config_msg(
 ) -> Result<BatchResponse> {
 	deps.api.debug(serde_json_wasm::to_string(&msg)?.as_str());
 	match msg {
-		ConfigSubMsg::ForceNetworkToNetwork(msg) => {
-			network::force_network_to_network(auth, deps, msg)
-		},
+		ConfigSubMsg::ForceNetworkToNetwork(msg) =>
+			network::force_network_to_network(auth, deps, msg),
 		ConfigSubMsg::ForceAsset(msg) => assets::force_asset(auth, deps, msg),
 		ConfigSubMsg::ForceExchange(msg) => exchange::force_exchange(auth, deps, msg),
-		ConfigSubMsg::ForceRemoveAsset { asset_id } => {
-			assets::force_remove_asset(auth, deps, asset_id)
-		},
-		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } => {
-			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset)
-		},
+		ConfigSubMsg::ForceRemoveAsset { asset_id } =>
+			assets::force_remove_asset(auth, deps, asset_id),
+		ConfigSubMsg::ForceAssetToNetworkMap { this_asset, other_network, other_asset } =>
+			assets::force_asset_to_network_map(auth, deps, this_asset, other_network, other_asset),
 		ConfigSubMsg::ForceNetwork(msg) => network::force_network(auth, deps, msg),
 		ConfigSubMsg::ForceInstantiate { user_origin, salt } => interpreter::force_instantiate(
 			auth,
@@ -137,19 +135,17 @@ fn transfer_from_user(
 						.find(|c| c.denom == denom)
 						.ok_or(ContractError::ProgramFundsDenomMappingToHostNotFound)?;
 					if *program_amount != u128::from(*host_amount) {
-						return Err(ContractError::ProgramAmountNotEqualToHostAmount)?;
+						return Err(ContractError::ProgramAmountNotEqualToHostAmount)?
 					}
 				},
-				msg::AssetReference::Cw20 { contract } => {
+				msg::AssetReference::Cw20 { contract } =>
 					transfers.push(Cw20Contract(contract).call(Cw20ExecuteMsg::TransferFrom {
 						owner: user.to_string(),
 						recipient: self_address.to_string(),
 						amount: (*program_amount).into(),
-					})?)
-				},
-				msg::AssetReference::Erc20 { .. } => {
-					Err(ContractError::RuntimeUnsupportedOnNetwork)?
-				},
+					})?),
+				msg::AssetReference::Erc20 { .. } =>
+					Err(ContractError::RuntimeUnsupportedOnNetwork)?,
 			}
 		}
 		Ok((transfers, program_funds))
@@ -163,7 +159,8 @@ fn transfer_from_user(
 
 			program_funds.0.push((asset.asset_id, coin.amount.into()));
 		}
-		// we cannot do same trick with CW20 as need to know CW20 address (and it has to support Allowance query)
+		// we cannot do same trick with CW20 as need to know CW20 address (and it has to support
+		// Allowance query)
 		Ok((vec![], program_funds))
 	}
 }
@@ -176,11 +173,9 @@ pub(crate) fn handle_execute_program(
 	env: Env,
 	info: MessageInfo,
 	execute_program: msg::ExecuteProgramMsg,
-	tip: Option<String>,
 ) -> Result {
-	let tip = tip.unwrap_or(env.contract.address.to_string());
+	let tip = execute_program.tip.unwrap_or(env.contract.address.to_string());
 	let this = msg::Gateway::new(env.contract.address);
-	let tip = deps.api.addr_validate(&tip)?;
 	let call_origin = CallOrigin::Local { user: info.sender.clone() };
 	let (transfers, assets) =
 		transfer_from_user(&deps, this.address(), info.sender, info.funds, execute_program.assets)?;
@@ -188,8 +183,9 @@ pub(crate) fn handle_execute_program(
 		salt: execute_program.salt,
 		program: execute_program.program,
 		assets,
+		tip: Some(tip),
 	};
-	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
+	let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 	let msg = this.execute(msg)?;
 	Ok(Response::default().add_messages(transfers).add_message(msg))
 }
@@ -203,8 +199,7 @@ pub(crate) fn handle_execute_program_privilleged(
 	deps: DepsMut,
 	env: Env,
 	call_origin: CallOrigin,
-	msg::BridgeExecuteProgramMsg { salt, program, assets }: msg::BridgeExecuteProgramMsg,
-	tip: Addr,
+	msg::BridgeExecuteProgramMsg { salt, program, assets, tip }: msg::BridgeExecuteProgramMsg,
 ) -> Result {
 	let config = load_this(deps.storage)?;
 	let interpreter_origin =
@@ -216,7 +211,13 @@ pub(crate) fn handle_execute_program_privilleged(
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
-			&cw_xc_interpreter::msg::ExecuteMsg::Execute { tip, program },
+			&cw_xc_interpreter::msg::ExecuteMsg::Execute {
+				tip: tip
+					.map(|x| deps.api.addr_validate(&x))
+					.ok_or(ContractError::AccountInProgramIsNotMappableToThisChain)?
+					.unwrap_or(env.contract.address),
+				program,
+			},
 			vec![],
 		)?;
 		Ok(response
@@ -229,9 +230,8 @@ pub(crate) fn handle_execute_program_privilleged(
 		// and save it)
 		let interpreter_code_id = match config.gateway.expect("expected setup") {
 			msg::GatewayId::CosmWasm { interpreter_code_id, .. } => interpreter_code_id,
-			msg::GatewayId::Evm { .. } => {
-				Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?
-			},
+			msg::GatewayId::Evm { .. } =>
+				Err(ContractError::BadlyConfiguredRouteBecauseThisChainCanSendOnlyFromCosmwasm)?,
 		};
 		deps.api.debug("instantiating interpreter");
 		let this = msg::Gateway::new(env.contract.address);
@@ -250,8 +250,9 @@ pub(crate) fn handle_execute_program_privilleged(
 			salt: interpreter_origin.salt,
 			program,
 			assets,
+			tip,
 		};
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip };
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let self_call_message = this.execute(msg)?;
 
 		Ok(Response::new()
@@ -272,7 +273,7 @@ fn send_funds_to_interpreter(
 	for (asset_id, amount) in funds.0 {
 		// Ignore zero amounts
 		if amount == 0 {
-			continue;
+			continue
 		}
 		deps.api.debug("cvm::gateway:: sending funds");
 
