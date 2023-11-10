@@ -109,16 +109,6 @@
             ${pkgs.lib.meta.getExe self'.packages.devnet-xc}
           '';
         };
-
-        devnet-xc-picasso-cosmos = pkgs.writeShellApplication {
-          runtimeInputs = devnetTools.withBaseContainerTools;
-          name = "devnet-xc-fresh";
-          text = ''
-            rm --force --recursive ${devnet-root-directory}             
-            mkdir --parents ${devnet-root-directory}
-            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-picasso-cosmos}
-          '';
-        };
       };
       process-compose = rec {
         devnet-xc-background = devnet-xc // { tui = false; };
