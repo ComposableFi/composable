@@ -2,7 +2,7 @@
 #[allow(clippy::disallowed_methods)]
 fn main() {
 	use cosmwasm_schema::write_api;
-	use cw_xc_interpreter::msg::*;
+	use cw_xc_executor::msg::*;
 
 	write_api! {
 		instantiate: InstantiateMsg,
@@ -10,7 +10,7 @@ fn main() {
 		execute: ExecuteMsg,
 	}
 	let events = schemars::gen::SchemaGenerator::default()
-		.into_root_schema_for::<cw_xc_interpreter::events::CvmInterpreter>();
+		.into_root_schema_for::<cw_xc_executor::events::CvmInterpreter>();
 
 	// same as in above macro
 	let mut out_dir = std::env::current_dir().unwrap();

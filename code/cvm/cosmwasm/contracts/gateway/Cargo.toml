@@ -14,7 +14,7 @@ workspace = true
 
 [features]
 library = []
-std = ["cw-xc-interpreter/std", "xc-core/std"]
+std = ["cw-xc-executor/std", "xc-core/std"]
 default = ["std"]
 
 [dependencies]
@@ -31,7 +31,7 @@ serde = { workspace = true }
 serde-json-wasm = { workspace = true }
 thiserror = { workspace = true }
 
-cw-xc-interpreter = { path = "../interpreter", features = [
+cw-xc-executor = { path = "../executor", features = [
   "library",
 ], default-features = false }
 xc-core = { path = "../../../lib/core", features = [

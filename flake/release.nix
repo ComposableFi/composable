@@ -99,7 +99,7 @@
 
             # CVM
             cp ${packages.cw-xc-gateway}/lib/cw_xc_gateway.wasm release-artifacts/to-upload/cw_xc_gateway.wasm
-            cp ${packages.cw-xc-executor}/lib/cw_xc_interpreter.wasm release-artifacts/to-upload/cw_xc_executor.wasm
+            cp ${packages.cw-xc-executor}/lib/cw_xc_executor.wasm release-artifacts/to-upload/cw_xc_executor.wasm
 
             echo "Generate node packages"
             cp ${
@@ -149,7 +149,7 @@
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
 
-            INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_executor.wasm"
             GATEWAY_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
 
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
@@ -202,7 +202,7 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
-            INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_executor.wasm"
             INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
             DESCRIPTION=$(cat ${./release-gov-osmosis-proposal-cvm-upload.md})
 
@@ -252,7 +252,7 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
-             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+             INTERPRETER_WASM_FILE="${packages.xc-cw-contracts}/lib/cw_xc_executor.wasm"
              INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
 
              "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
@@ -300,7 +300,7 @@
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
 
-            INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_executor.wasm"
             GATEWAY="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
 
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
@@ -360,7 +360,7 @@
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
 
-            INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm"
+            INTERPRETER="${packages.xc-cw-contracts}/lib/cw_xc_executor.wasm"
             GATEWAY="${packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm"
 
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json

@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 description = "CVM Executor contract"
 edition = "2021"
-name = "cw-xc-interpreter"
+name = "cw-xc-executor"
 repository = "https://github.com/ComposableFi/composable"
 version = "0.2.0"
 

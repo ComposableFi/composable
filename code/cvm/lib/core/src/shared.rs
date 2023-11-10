@@ -20,8 +20,22 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 	from_binary::<T>(&Binary::from_base64(encoded.as_ref())?)
 }
 
-/// A wrapper around CanonicalAddr which implements SCALE encoding.
+/// A wrapper around any address on any chain.
+/// Similar to `ibc_rs::Signer`(multi encoding), but not depend on ibc code bloat.
+/// Unlike parity MultiLocation/Account32/Account20 which hard codes enum into code.
+/// Better send canonical address to each chain for performance,
+/// But it will also decode/reencode best effort.
+/// Inner must be either base64 or hex encoded or contain only characters from these.
+/// Added with helper per chain to get final address to use.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(
+    feature = "scale",
+    derive(
+        parity_scale_codec::Encode,
+        parity_scale_codec::Decode,
+        scale_info::TypeInfo
+    )
+)]
 #[derive(
 	Clone,
 	PartialEq,
@@ -35,68 +49,31 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 )]
 #[into(owned, ref, ref_mut)]
 #[repr(transparent)]
-pub struct XcAddr(CanonicalAddr);
+pub struct XcAddr(String);
+
+
+// #[test]
+// fn spawn_with_asset_and_transfer() {
+// 	let (_, addr, _) =
+// 		bech32_no_std::decode("centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k").unwrap();
+// 	let addr: Vec<u8> = bech32_no_std::FromBase32::from_base32(&addr).unwrap();
+// 	let addr = Binary(addr).to_base64();
+// 	assert_eq!(addr, "4qA3hVL1E8yLhVTSZFHbrpHFKI4=");
+// }
+
 
 impl core::fmt::Display for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Display::fmt(&self.0 .0, fmtr)
+		core::fmt::Display::fmt(&self.0 , fmtr)
 	}
 }
 
 impl core::fmt::Debug for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Debug::fmt(&self.0 .0, fmtr)
+		core::fmt::Debug::fmt(&self.0, fmtr)
 	}
 }
 
-impl From<&[u8]> for XcAddr {
-	fn from(bytes: &[u8]) -> Self {
-		Self(CanonicalAddr(Binary(bytes.to_vec())))
-	}
-}
-
-impl From<XcAddr> for Vec<u8> {
-	fn from(addr: XcAddr) -> Self {
-		addr.0 .0 .0
-	}
-}
-
-impl From<Vec<u8>> for XcAddr {
-	fn from(bytes: Vec<u8>) -> Self {
-		Self(CanonicalAddr(Binary(bytes)))
-	}
-}
-
-impl From<Binary> for XcAddr {
-	fn from(bytes: Binary) -> Self {
-		Self(CanonicalAddr(bytes))
-	}
-}
-
-impl parity_scale_codec::Encode for XcAddr {
-	fn size_hint(&self) -> usize {
-		self.as_slice().size_hint()
-	}
-
-	fn encode_to<T: parity_scale_codec::Output + ?Sized>(&self, dest: &mut T) {
-		self.as_slice().encode_to(dest)
-	}
-}
-
-impl parity_scale_codec::Decode for XcAddr {
-	fn decode<I: parity_scale_codec::Input>(
-		input: &mut I,
-	) -> Result<Self, parity_scale_codec::Error> {
-		Vec::<u8>::decode(input).map(|vec| Self(CanonicalAddr(Binary(vec))))
-	}
-}
-
-impl scale_info::TypeInfo for XcAddr {
-	type Identity = <[u8] as scale_info::TypeInfo>::Identity;
-	fn type_info() -> scale_info::Type {
-		<[u8] as scale_info::TypeInfo>::type_info()
-	}
-}
 
 /// A wrapper around a type which is serde-serialised as a string.
 ///

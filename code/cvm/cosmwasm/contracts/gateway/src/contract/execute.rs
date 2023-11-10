@@ -211,7 +211,7 @@ pub(crate) fn handle_execute_program_privilleged(
 		let response = send_funds_to_interpreter(deps.as_ref(), address.clone(), assets)?;
 		let wasm_msg = wasm_execute(
 			address.clone(),
-			&cw_xc_interpreter::msg::ExecuteMsg::Execute {
+			&cw_xc_executor::msg::ExecuteMsg::Execute {
 				tip: tip
 					.map(|x| deps.api.addr_validate(&x))
 					.ok_or(ContractError::AccountInProgramIsNotMappableToThisChain)?

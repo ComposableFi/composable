@@ -14,7 +14,7 @@ std = [
   "cosmwasm-vm-wasmi/std",
   "cosmwasm-vm/std",
   "cw20/std",
-  "cw-xc-interpreter/std",
+  "cw-xc-executor/std",
   "xc-core/std",
 ]
 
@@ -25,7 +25,7 @@ cosmwasm-vm = { workspace = true }
 cosmwasm-vm-wasmi = { workspace = true }
 cosmwasm-orchestrate = { workspace = true }
 
-cw-xc-interpreter = { path = "../contracts/interpreter", default-features = false }
+cw-xc-executor = { path = "../contracts/executor", default-features = false }
 xc-core = { path = "../../lib/core" }
 
 log = { version = "0.4" }

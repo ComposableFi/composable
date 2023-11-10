@@ -34,7 +34,7 @@
         makeCosmwasmContract name crane.nightly "--no-default-features";
     in {
       packages = rec {
-        cw-xc-executor = mkCvmContract "cw-xc-interpreter";
+        cw-xc-executor = mkCvmContract "cw-xc-executor";
         cw-xc-gateway = mkCvmContract "cw-xc-gateway";
         cw-mantis-order = mkMantisContract "cw-mantis-order";
         xc-cw-contracts = pkgs.symlinkJoin {
@@ -82,7 +82,7 @@
             mkdir --parents $out
             mkdir --parents $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
             cp --recursive --no-preserve=mode,ownership $src/. $out/
-            cp  "${xc-cw-contracts}/lib/cw_xc_interpreter.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
+            cp  "${xc-cw-contracts}/lib/cw_xc_executor.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
             cp  "${xc-cw-contracts}/lib/cw_xc_gateway.wasm" $out/target/wasm32-unknown-unknown/cosmwasm-contracts/
           '';
           dontFixup = true;

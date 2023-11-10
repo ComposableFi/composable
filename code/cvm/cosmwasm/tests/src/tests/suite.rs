@@ -319,7 +319,7 @@ fn load_contracts() -> XCVMContracts {
 		read(contracts_dir.join(filename))
 	}
 
-	let code_interpreter = read_contract("cw_xc_interpreter.wasm");
+	let code_interpreter = read_contract("cw_xc_executor.wasm");
 	let code_gateway = read_contract("cw_xc_gateway.wasm");
 	let out_dir =
 		[option_env!("NIX_CARGO_OUT_DIR").unwrap_or(env!("OUT_DIR")), "/cw20_base.wasm"].concat();

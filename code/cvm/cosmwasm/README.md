@@ -51,7 +51,7 @@ cargo run --package xc-core --bin gateway
 For interpreter
 
 ```sh
-cargo run --package cw-xc-interpreter --bin interpreter
+cargo run --package cw-xc-executor --bin interpreter
 ```
 
 For query/execute message look into official CosmWasm docs, for events, look at node names in `events.json`. 

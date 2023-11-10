@@ -27,7 +27,7 @@ pub fn genesis_config(
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
 	let contracts =
-		[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("CW_XC_INTERPRETER_WASM_PATH")]
+		[option_env!("CW_XC_GATEWAY_WASM_PATH"), option_env!("cw_xc_executor_WASM_PATH")]
 			.into_iter()
 			.flatten()
 			.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {

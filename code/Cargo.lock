@@ -3397,28 +3397,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-gateway"
-version = "0.1.0"
-dependencies = [
- "bech32",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
- "cw-utils",
- "cw-xc-interpreter",
- "cw2",
- "cw20",
- "enumn",
- "ibc 0.43.1",
- "prost",
- "schemars",
- "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xc-interpreter"
+name = "cw-xc-executor"
 version = "0.2.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
@@ -3435,6 +3414,27 @@ dependencies = [
  "serde-cw-value 0.7.0 (git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595)",
  "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "serde_json",
+ "thiserror-core",
+ "xc-core",
+]
+
+[[package]]
+name = "cw-xc-gateway"
+version = "0.1.0"
+dependencies = [
+ "bech32",
+ "cosmwasm-std 1.2.5",
+ "cw-storage-plus 1.0.2",
+ "cw-utils",
+ "cw-xc-executor",
+ "cw2",
+ "cw20",
+ "enumn",
+ "ibc 0.43.1",
+ "prost",
+ "schemars",
+ "serde",
+ "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
  "thiserror-core",
  "xc-core",
 ]
@@ -19476,7 +19476,7 @@ dependencies = [
  "cosmwasm-std 1.2.5",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "cw-xc-interpreter",
+ "cw-xc-executor",
  "cw20",
  "cw20-base",
  "env_logger 0.10.0",
