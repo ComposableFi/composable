@@ -1,12 +1,12 @@
 use crate::{prelude::*, AssetId};
-use cosmwasm_std::{from_binary, to_binary, Binary, CanonicalAddr, StdResult};
+use cosmwasm_std::{from_binary, to_binary, Api, Binary, CanonicalAddr, StdError, StdResult};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub type Salt = Vec<u8>;
 /// absolute amounts
 pub type XcFunds = Vec<(AssetId, Displayed<u128>)>;
 // like `XcFunds`, but allow relative(percentages) amounts. Similar to assets filters in XCM
-pub type XcBalanceFilter = crate::asset::Balance;
+pub type XcBalanceFilter = crate::asset::Amount;
 pub type XcFundsFilter = crate::Funds<XcBalanceFilter>;
 pub type XcInstruction = crate::Instruction<Vec<u8>, XcAddr, XcFundsFilter>;
 pub type XcPacket = crate::Packet<XcProgram>;
@@ -20,8 +20,18 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 	from_binary::<T>(&Binary::from_base64(encoded.as_ref())?)
 }
 
-/// A wrapper around CanonicalAddr which implements SCALE encoding.
+/// A wrapper around any address on any chain.
+/// Similar to `ibc_rs::Signer`(multi encoding), but not depend on ibc code bloat.
+/// Unlike parity MultiLocation/Account32/Account20 which hard codes enum into code.
+/// Better send canonical address to each chain for performance,
+/// But it will also decode/reencode best effort.
+/// Inner must be either base64 or hex encoded or contain only characters from these.
+/// Added with helper per chain to get final address to use.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(
+	feature = "scale",
+	derive(parity_scale_codec::Encode, parity_scale_codec::Decode, scale_info::TypeInfo)
+)]
 #[derive(
 	Clone,
 	PartialEq,
@@ -35,66 +45,54 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 )]
 #[into(owned, ref, ref_mut)]
 #[repr(transparent)]
-pub struct XcAddr(CanonicalAddr);
+pub struct XcAddr(String);
+
+impl From<XcAddr> for Vec<u8> {
+	fn from(value: XcAddr) -> Self {
+		value.0.into_bytes()
+	}
+}
+
+impl TryFrom<Vec<u8>> for XcAddr {
+	type Error = StdError;
+
+	fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+		Ok(Self(String::from_utf8(value)?))
+	}
+}
+
+impl XcAddr {
+	/// idea that whatever user plugs into, it works, really for adoption
+	/// sure for Ethereum he must plug exact binary address, but for others it's just a string
+	pub fn encode_cosmwasm(&self, api: &dyn Api) -> Result<String, StdError> {
+		if let Ok(addr) = Binary::from_base64(&self.0) {
+			if let Ok(addr) = api.addr_humanize(&CanonicalAddr(addr)) {
+				return Ok(addr.into_string())
+			}
+		}
+		if let Ok((_, addr, _)) = bech32_no_std::decode(&self.0) {
+			use bech32_no_std::FromBase32;
+			if let Ok(addr) = Vec::from_base32(&addr) {
+				if let Ok(addr) = api.addr_humanize(&CanonicalAddr(Binary(addr))) {
+					return Ok(addr.into_string())
+				}
+			}
+		}
+
+		// here we will do CW on Substrate if that will be needed, but not prio
+		Err(StdError::generic_err("Failed to ensure XcAddr encoding"))
+	}
+}
 
 impl core::fmt::Display for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Display::fmt(&self.0 .0, fmtr)
+		core::fmt::Display::fmt(&self.0, fmtr)
 	}
 }
 
 impl core::fmt::Debug for XcAddr {
 	fn fmt(&self, fmtr: &mut core::fmt::Formatter) -> core::fmt::Result {
-		core::fmt::Debug::fmt(&self.0 .0, fmtr)
-	}
-}
-
-impl From<&[u8]> for XcAddr {
-	fn from(bytes: &[u8]) -> Self {
-		Self(CanonicalAddr(Binary(bytes.to_vec())))
-	}
-}
-
-impl From<XcAddr> for Vec<u8> {
-	fn from(addr: XcAddr) -> Self {
-		addr.0 .0 .0
-	}
-}
-
-impl From<Vec<u8>> for XcAddr {
-	fn from(bytes: Vec<u8>) -> Self {
-		Self(CanonicalAddr(Binary(bytes)))
-	}
-}
-
-impl From<Binary> for XcAddr {
-	fn from(bytes: Binary) -> Self {
-		Self(CanonicalAddr(bytes))
-	}
-}
-
-impl parity_scale_codec::Encode for XcAddr {
-	fn size_hint(&self) -> usize {
-		self.as_slice().size_hint()
-	}
-
-	fn encode_to<T: parity_scale_codec::Output + ?Sized>(&self, dest: &mut T) {
-		self.as_slice().encode_to(dest)
-	}
-}
-
-impl parity_scale_codec::Decode for XcAddr {
-	fn decode<I: parity_scale_codec::Input>(
-		input: &mut I,
-	) -> Result<Self, parity_scale_codec::Error> {
-		Vec::<u8>::decode(input).map(|vec| Self(CanonicalAddr(Binary(vec))))
-	}
-}
-
-impl scale_info::TypeInfo for XcAddr {
-	type Identity = <[u8] as scale_info::TypeInfo>::Identity;
-	fn type_info() -> scale_info::Type {
-		<[u8] as scale_info::TypeInfo>::type_info()
+		core::fmt::Debug::fmt(&self.0, fmtr)
 	}
 }
 

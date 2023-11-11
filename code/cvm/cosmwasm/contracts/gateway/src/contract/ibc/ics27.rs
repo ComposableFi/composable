@@ -1,4 +1,4 @@
-//! custom ibc channel, cannot directly transfer ics20 assets
+//! ics27 integration to do txes
 
 use std::str::FromStr;
 
@@ -97,13 +97,10 @@ pub fn ibc_packet_receive(
 			salt: packet.salt,
 			program: packet.program,
 			assets: packet.assets,
+			tip: Some(msg.relayer.to_string()),
 		};
 
-		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged {
-			call_origin,
-			execute_program,
-			tip: msg.relayer,
-		};
+		let msg = msg::ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 		let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 		Ok(SubMsg::reply_always(msg, ReplyId::ExecProgram.into()))
 	})();
@@ -137,7 +134,7 @@ pub fn ibc_packet_timeout(
 /// Handle a request gateway message.
 /// The call must originate from an interpreter.
 pub(crate) fn handle_bridge_forward_no_assets(
-	_: auth::Interpreter,
+	_: auth::Executor,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: msg::BridgeForwardMsg,
@@ -152,7 +149,7 @@ pub(crate) fn handle_bridge_forward_no_assets(
 		.ok_or(ContractError::UnknownChannel)?;
 	let packet = XcPacket {
 		interpreter: String::from(info.sender).into_bytes(),
-		user_origin: msg.interpreter_origin.user_origin,
+		user_origin: msg.executor_origin.user_origin,
 		salt: msg.msg.salt,
 		program: msg.msg.program,
 		assets: msg.msg.assets,

@@ -36,11 +36,11 @@ fn handle_transport_failure(
 		format!("cvm::gateway::handle::transport_failure {} {} {}", &channel, sequence, &reason)
 			.as_str(),
 	);
-	let msg = cw_xc_interpreter::msg::ExecuteMsg::SetErr { reason };
+	let msg = cw_xc_executor::msg::ExecuteMsg::SetErr { reason };
 	let bridge_msg =
 		crate::state::tracking::get_interpreter_track(deps.storage, channel.as_str(), sequence)?;
 	let interpreter =
-		crate::state::interpreter::get_by_origin(deps.as_ref(), bridge_msg.interpreter_origin)?;
+		crate::state::interpreter::get_by_origin(deps.as_ref(), bridge_msg.executor_origin)?;
 	let mut response = Response::new();
 
 	let assets = bridge_msg

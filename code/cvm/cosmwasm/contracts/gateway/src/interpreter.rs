@@ -10,7 +10,7 @@ use cosmwasm_std::{
 	to_binary, Deps, DepsMut, Reply, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 
-use cw_xc_interpreter::events::CvmInterpreterInstantiated;
+use cw_xc_executor::events::CvmInterpreterInstantiated;
 use xc_core::{CallOrigin, InterpreterOrigin};
 
 use crate::{auth, prelude::*};
@@ -52,7 +52,7 @@ pub fn instantiate(
 	let instantiate_msg = WasmMsg::Instantiate2 {
 		admin: Some(admin.clone().into_string()),
 		code_id: interpreter_code_id,
-		msg: to_binary(&cw_xc_interpreter::msg::InstantiateMsg {
+		msg: to_binary(&cw_xc_executor::msg::InstantiateMsg {
 			gateway_address: admin.into_string(),
 			interpreter_origin: interpreter_origin.clone(),
 		})?,

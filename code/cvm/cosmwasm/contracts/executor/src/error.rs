@@ -51,9 +51,6 @@ pub enum ContractError {
 	#[error("Address is invalid")]
 	InvalidAddress,
 
-	#[error("Native token doesn't support `decimals`")]
-	DecimalsInNativeToken,
-
 	#[error("Unsupported")]
 	Unsupported,
 
@@ -69,6 +66,7 @@ pub enum ContractError {
 	#[error("Only single asset exchange is supported by pool")]
 	OnlySingleAssetExchangeIsSupportedByPool,
 
+	/// for the case when specific pool does not supports slippage
 	#[error("Exchange does not support slippage")]
 	ExchangeDoesNotSupportSlippage,
 

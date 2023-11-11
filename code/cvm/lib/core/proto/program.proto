@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "common.proto";
 
-package cvm.xcvm;
+package cvm.program;
 
 message PacketAsset {
   cvm.common.Uint128 asset_id = 1;
@@ -46,35 +46,26 @@ message Instruction {
   // next tag: 5
 }
 
-
 message Ratio {
+  /// lest or equal to denominator
   uint64 nominator = 1;
-  uint64 denominator = 2;
-
-  // next tag: 3
-}
-
-message Unit {
-  cvm.common.Uint128 integer = 1;
-  Ratio ratio = 2;
-
-  // next tag: 3
+  // `denominator = 1_000_000_000_000_000_000` always
 }
 
 message Absolute {
   cvm.common.Uint128 value = 1;
-
   // next tag: 2
 }
 
+// in case of no fileds is just zero amount
+// if only ratio, when app,lied to absolute amount in register or virutal wallet, is part of it
+// absolute is just absolute amount taken from register or virtual wallet
+// in case of both, absolute is taken, and from remaining, part is added
 message Balance {
-  oneof balance_type {
-    Ratio ratio = 1;
-    Absolute absolute = 2;
-    Unit unit = 3;
-  }
+  optional Absolute absolute = 1;
+  optional Ratio ratio = 2;
 
-  // next tag: 4
+  // next tag: 3
 }
 
 message Asset {
@@ -106,8 +97,7 @@ enum Register {
   TIP = 1;
   THIS = 2;
   RESULT = 3;
-
-  // next tag: 4
+  CARRY = 4;
 }
 
 message Binding {

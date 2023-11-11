@@ -1,6 +1,6 @@
 # Specification
 
-The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trust-minimised, non-custodial, bridge-agnostic and [Turing decidable language](https://www.educative.io/answers/what-are-recursive-languages) cross-chain programs and intents. This involves code propagated along with data, accessing de facto native liquidity markets on each chain and abstracting away several underlying transports,encodings, assets systems, and messaging protocols.
+The CVM is made of opaque contracts for execution of non-atomic, asynchronous, trustless, transparent, non-custodial, bridge-agnostic, generalized and [Turing decidable language](https://www.educative.io/answers/what-are-recursive-languages) cross-chain programs and intents.
 
 ## Why CVM?
 
@@ -49,9 +49,32 @@ More detail on this architecture can be found in the rest of this documentation.
 - Address, account, wallet: also used interchangeably; each can do something on-chain from its own identity, and hold some funds
 - Bridge, relayer: Something which can act on one chain on behalf of another, for example mint tokens (transfer)
 
+### Definition deconstruction
+
+`Opaque contracts` - In the CVM, these may be module or contract, executing on one or many chains
+
+`Non-atomic` - the whole program is not executed in single block; it is not an all-or-nothing transaction
+
+`Asynchronous` - two Spawns in single program, but are sent to bridges at same time, execute concurrently on on several chains; other instruction are sequential
+
+`Trustless` - internally, the  CVM uses the most secured, trustless bridges, to execute CVM programs; CVM contracts are subject to cross-chain governance
+
+`Non-custodial` - each user owns all assets on each chain; they delegate the ability to move these funds cross-chain from their cross-chain account (executor)
+
+`Turing decidable language` - that there are no procedural loops or recursion, meaning that CVM programs are predictable, deterministic, and will stop
+
+`Transparent` - reading and auditing CVM program much easier than set of cross chain contracts, code of propagated along with data, you do not need to deploy programs, you just send programs; as subprograms move from chain to chain, they move assets along
+
+`Bridge-agnostic, generalized` - CVM abstracts away several underlying transports,encodings, assets systems, and messaging protocols, you do not need to know assets systems, how to talk to bridges, or how to encode common operation on each chain you want to act on; you learn the CVM, and it helps you to handle these details
+
+`Cross-chain programs` - the same program input works consistently on all supported chains; you can write it once to run anywhere
+
+`Accessing de facto native liquidity markets` - the CVM uses native assets contracts on each chain and each bridge it uses, so programs can leverage existing liquidity on chains; as new bridges and chains are added, the CVM incorporates these without any modification from the user
+
+
 ## Additional References
 
-Cross-chain DeFi gets complicated. To understand this documentation at the deepest level, it is helpful to have existing knowledge about the application side of messaging protocols, like [Parity’s XCM](https://github.com/paritytech/xcm-format), [Cosmos’s IBC-ICS-20/27](https://github.com/cosmos/ibc), or [NEAR’s multi block execution](https://docs.near.org/concepts/basics/transactions/overview).
+Cross-chain DeFi gets complicated. To understand this documentation at the deepest level, it is helpful to have existing knowledge about the application side of messaging protocols, like [Parity’s XCM](https://github.com/paritytech/xcm-format), [Cosmos’s IBC-ICS-20/27](https://github.com/cosmos/ibc), or [NEAR’s multi block execution](https://docs.near.org/concepts/basics/transactions/overview). Also has some resemblance to [Fluence Aqua](https://fluence.dev/docs/aqua-book/language/) and [Anom Juvix](https://docs.juvix.org/)
 
 
 ## What is CVM, and what are its functions?
@@ -84,28 +107,6 @@ Exchange/Transfer/Spawn are shortcuts for specific Calls. From here onwards, we 
 
 During program interpretation, while the instruction is executing, the result of call execution and bridging state (internal of Spawn) are recorded in executor state. In case of a CVM program error, funds are retained on the sending or receiving executor. Users can observe the state of the executor and send a program to handle the current state. For example, they can move funds to another account or chain.
 
-### CVM definition deconstruction
-
-`Opaque contracts` - In the CVM, these may be module or contract, executing on one or many chains
-
-`Non-atomic` - the whole program is not executed in single block; it is not an all-or-nothing transaction
-
-`Asynchronous` - two Spawns in single program, but are sent to bridges at same time, execute concurrently on on several chains; other instruction are sequential
-
-`Trust minimized` - internally, the  CVM uses the most secured, trustless bridges, to execute CVM programs; CVM contracts are subject to cross-chain governance
-
-`Non-custodial` - each user owns all assets on each chain; they delegate the ability to move these funds cross-chain from their cross-chain account (executor)
-
-`Turing decidable language` - that there are no procedural loops or recursion, meaning that CVM programs are predictable, deterministic, and will stop
-
-`Code propagated along with data` - you do not need to deploy programs, you just send programs; as subprograms move from chain to chain, they move assets along
-
-`Cross-chain programs` - the same program input works consistently on all supported chains; you can write it once to run anywhere
-
-`Accessing de facto native liquidity markets` - the CVM uses native assets contracts on each chain and each bridge it uses, so programs can leverage existing liquidity on chains; as new bridges and chains are added, the CVM incorporates these without any modification from the user
-
-`Abstracting away in several underlying transports, encodings, assets systems and messaging protocols` - you do not need to know assets systems, how to talk to bridges, or how to encode common operation on each chain you want to act on; you learn the CVM, and it helps you to handle these details
-
 ### Simplified CVM Design
 
 ```typescript
@@ -135,8 +136,22 @@ type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | A
 /// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
     in: (AssetAmount | BindedAmount)[]
-    min_out: AssetAmount[]
+    min_out: AssetAmount[] 
+    condition : ExchangeCondition? 
 }
+
+/// in CFMM and OB, there are always fluctuations,
+/// allows to decide if steel want to exchange if difference from
+/// window on average is too far       /// in CFMM and OB, there are always fluctuations,
+/// allows to decide if steel want to exchange if difference from
+/// window on average is too far   
+interface ExchangeCondition {
+    /// minimum number of blocks to consider averaging
+    window : number?
+    type : AggregationType
+
+} 
+type AggregationType = TimeWeightedAverage
 
 // time locks tokens, potentially getting some tokens out
 // can be Stake or liquidity provision 

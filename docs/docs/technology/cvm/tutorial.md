@@ -87,7 +87,6 @@ Please read and remove `//` commands before executing.
 
 ```json
             {
-              "execute_program": {
                 "execute_program": {
                   "salt": "737061776e5f776974685f6173736574", // each user has instances of interpreter contract per user per salt, so each new slat instances new contract, 
                                                               // while reusing salt reuses existing instances (and funds on these)
@@ -102,11 +101,8 @@ Please read and remove `//` commands before executing.
                             [
                               "158456325028528675187087900673", // PICA on Centauri
                               {
-                                "amount": {
                                   "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to interpreter
                                   "slope": "0"
-                                },
-                                "is_unit": false
                               }
                             ]
                           ],
@@ -120,11 +116,8 @@ Please read and remove `//` commands before executing.
                                     [
                                       "237684487542793012780631851009", // PICA on Osmosis has other identifier
                                       {
-                                        "amount": {
                                           "intercept": "123456789",
                                           "slope": "0"
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ],
@@ -132,11 +125,8 @@ Please read and remove `//` commands before executing.
                                     [
                                       "237684487542793012780631851010", // OSMO on Osmosis
                                       {
-                                        "amount": {
                                           "intercept": "1000", // min want amount, larger value is less slippage
                                           "slope": "0"
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ]
@@ -150,11 +140,8 @@ Please read and remove `//` commands before executing.
                                     [
                                       "237684487542793012780631851010",
                                       {
-                                        "amount": {
                                           "intercept": "0",
                                           "slope": "1000000000000000000" // 100% of OSMO after swap to be transferred to Centauri
-                                        },
-                                        "is_unit": false
                                       }
                                     ]
                                   ],
@@ -170,11 +157,8 @@ Please read and remove `//` commands before executing.
                                             [
                                               "158456325028528675187087900674", // OSMO identifier on Osmosis
                                               {
-                                                "amount": {
                                                   "intercept": "0",
                                                   "slope": "1000000000000000000"
-                                                },
-                                                "is_unit": false
                                               }
                                             ]
                                           ]
@@ -198,7 +182,6 @@ Please read and remove `//` commands before executing.
                   ]
                 },
                 "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n" // any address, use self for now
-              }
             }
 ```
 
@@ -275,7 +258,6 @@ Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to
 
 ```json
             {
-              "execute_program": {
                 "execute_program": {
                   "salt": "737061776e5f776974685f6173736574", // retain same salt to talk to same interpreter
                   "program": {
@@ -289,11 +271,8 @@ Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to
                             [
                               "158456325028528675187087900673", // PICA on Centauri
                               {
-                                "amount": {
                                   "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to interpreter
                                   "slope": "0"
-                                },
-                                "is_unit": false
                               }
                             ]
                           ],
@@ -310,21 +289,15 @@ Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to
                                   [
                                     "237684487542793012780631851009",
                                     {
-                                      "amount": {
                                         "intercept": "0",
                                         "slope": "1000000000000000000"
-                                      },
-                                      "is_unit": false
                                     }
                                   ],
                                   [
                                     "237684487542793012780631851010",
                                     {
-                                      "amount": {
                                         "intercept": "0",
                                         "slope": "1000000000000000000"
-                                      },
-                                      "is_unit": false
                                     }
                                   ]
                                 ]
@@ -342,8 +315,7 @@ Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to
                     ]
                   ]
                 },
-                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n" 
-              }
+                "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"               
             }
 ```
 

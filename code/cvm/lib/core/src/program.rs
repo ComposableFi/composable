@@ -10,6 +10,8 @@ pub struct Program<Instructions> {
 	/// indexer).
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub tag: Vec<u8>,
+	/// list of instructions to be executed
 	pub instructions: Instructions,
 }

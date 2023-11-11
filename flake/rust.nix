@@ -75,8 +75,7 @@
             cargoArtifacts = self'.packages.common-test-deps;
             # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
             # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-            buildPhase =
-              "cargo test --workspace --release --locked --verbose --exclude xc-tests";
+            buildPhase = "cargo test --workspace --release --locked --verbose";
             installPhase = "mkdir -p $out";
           });
       };

@@ -27,7 +27,7 @@ use crate::{
 // hope route checked amid 2 networks and if can do shortcut 3. else full CVM Executor call is
 // propagated
 pub(crate) fn handle_bridge_forward(
-	_: auth::Interpreter,
+	_: auth::Executor,
 	deps: DepsMut,
 	info: MessageInfo,
 	msg: xc_core::gateway::BridgeForwardMsg,
@@ -63,7 +63,7 @@ pub(crate) fn handle_bridge_forward(
 
 		let packet = XcPacket {
 			interpreter: String::from(info.sender).into_bytes(),
-			user_origin: msg.interpreter_origin.user_origin.clone(),
+			user_origin: msg.executor_origin.user_origin.clone(),
 			salt: msg.msg.salt,
 			program: msg.msg.program,
 			assets: vec![asset].into(),
@@ -233,10 +233,14 @@ pub(crate) fn ics20_message_hook(
 		})
 		.collect();
 	let call_origin = CallOrigin::Remote { user_origin: packet.user_origin };
-	let execute_program =
-		ExecuteProgramMsg { salt: packet.salt, program: packet.program, assets: assets?.into() };
-	let msg =
-		ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program, tip: info.sender };
+	let execute_program = ExecuteProgramMsg {
+		salt: packet.salt,
+		program: packet.program,
+		assets: assets?.into(),
+		tip: Some(info.sender.to_string()),
+	};
+
+	let msg = ExecuteMsg::ExecuteProgramPrivileged { call_origin, execute_program };
 	let msg = wasm_execute(env.contract.address, &msg, Default::default())?;
 	Ok(Response::new().add_submessage(SubMsg::reply_always(msg, ReplyId::ExecProgram.into())))
 }

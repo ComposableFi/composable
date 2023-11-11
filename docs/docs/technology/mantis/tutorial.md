@@ -20,8 +20,3 @@ Example of problem you can see is here:
 ```
 
 You can try live code with https://github.com/ComposableFi/composable/blob/main/code/cvm/mantis.ts .
-
-
-
-
-

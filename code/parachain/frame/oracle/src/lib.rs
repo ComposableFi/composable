@@ -1322,8 +1322,9 @@ pub mod pallet {
 							});
 						for (acc, res) in &results {
 							match res {
-								Ok(()) =>
-									log::info!("[{:?}] Submitted price of {} cents", acc.id, price),
+								Ok(()) => {
+									log::info!("[{:?}] Submitted price of {} cents", acc.id, price)
+								},
 								Err(e) => log::error!(
 									"[{:?}] Failed to submit transaction: {:?}",
 									acc.id,

@@ -102,7 +102,7 @@
               BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
@@ -131,7 +131,7 @@
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
@@ -145,7 +145,7 @@
             packages = [ self'.packages.centaurid ];
             env = centauri.env.mainnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               FEE = "ppica";
@@ -169,7 +169,7 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.mainnet // {
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
@@ -187,7 +187,7 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               FEE = "uatom";
@@ -202,7 +202,7 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               NODE = "tcp://localhost:36657";
@@ -232,7 +232,7 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.remote-devnet // {
               INTERPRETER_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_interpreter.wasm";
+                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };

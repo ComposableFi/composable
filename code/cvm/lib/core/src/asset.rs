@@ -87,34 +87,6 @@ impl cw_storage_plus::KeyDeserialize for AssetId {
 	}
 }
 
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-#[derive(
-	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
-)]
-#[serde(rename_all = "snake_case")]
-pub struct Balance {
-	pub amount: Amount,
-	pub is_unit: bool,
-}
-
-impl Balance {
-	pub const fn new(amount: Amount, is_unit: bool) -> Self {
-		Self { amount, is_unit }
-	}
-}
-
-impl From<(u64, u64)> for Balance {
-	fn from(value: (u64, u64)) -> Self {
-		Balance { amount: Amount::from(value), is_unit: false }
-	}
-}
-
-impl From<u128> for Balance {
-	fn from(value: u128) -> Self {
-		Self { amount: Amount::absolute(value), is_unit: false }
-	}
-}
-
 /// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
@@ -122,10 +94,10 @@ impl From<u128> for Balance {
 )]
 #[serde(rename_all = "snake_case")]
 pub struct Amount {
-	/// absolute amount
+	/// absolute amount, optional, default is 0
 	#[serde(skip_serializing_if = "is_default", default)]
 	pub intercept: Displayed<u128>,
-	/// part of MAX_PARTS from remaining after intercept subtraction
+	/// part of `MAX_PARTS` from remaining after intercept subtraction, optional, default is 0
 	#[serde(skip_serializing_if = "is_default", default)]
 	pub slope: Displayed<u64>,
 }
@@ -269,7 +241,7 @@ impl From<u128> for Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Balance>(pub Vec<(AssetId, T)>);
+pub struct Funds<T = Amount>(pub Vec<(AssetId, T)>);
 
 impl<T> Funds<T> {
 	pub fn one<A: Into<T>>(id: AssetId, amount: A) -> Self {

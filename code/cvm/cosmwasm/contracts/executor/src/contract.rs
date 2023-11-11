@@ -14,14 +14,14 @@ use cosmwasm_std::{
 	SubMsgResult, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg, TokenInfoResponse};
+use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_utils::ensure_from_older_version;
 use num::Zero;
 use xc_core::{
 	apply_bindings,
-	gateway::{AssetReference, BridgeForwardMsg, ExecuteProgramMsg},
+	gateway::{AssetReference, BridgeExecuteProgramMsg, BridgeForwardMsg},
 	service::dex::ExchangeId,
-	shared, Balance, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
+	shared, Amount, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
 const CONTRACT_NAME: &str = "cvm-executor";
@@ -191,7 +191,7 @@ fn interpret_exchange(
 		.map_err(ContractError::AssetNotFound)?;
 
 	let amount = deps.querier.query_balance(&sender, asset.denom())?;
-	let amount = give.1.amount.apply(amount.amount.u128())?;
+	let amount = give.1.apply(amount.amount.u128())?;
 	let give: xc_core::cosmos::Coin =
 		xc_core::cosmos::Coin { denom: asset.denom(), amount: amount.to_string() };
 
@@ -199,16 +199,16 @@ fn interpret_exchange(
 		.get_asset_by_id(deps.querier, want.0)
 		.map_err(ContractError::AssetNotFound)?;
 
-	if want.1.amount.is_absolute() && want.1.amount.is_ratio() {
+	if want.1.is_absolute() && want.1.is_ratio() {
 		return Err(ContractError::CannotDefineBothSlippageAndLimitAtSameTime)
 	}
 
-	if want.1.amount.is_ratio() {
-		return Err(ContractError::ExchangeDoesNotSupportSlippage)
-	}
-
-	let want =
-		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.amount.intercept.to_string() };
+	let want = if want.1.is_absolute() {
+		xc_core::cosmos::Coin { denom: asset.denom(), amount: want.1.intercept.to_string() }
+	} else {
+		// use https://github.com/osmosis-labs/osmosis/blob/main/cosmwasm/contracts/swaprouter/src/msg.rs to allow slippage
+		xc_core::cosmos::Coin { denom: asset.denom(), amount: "1".to_string() }
+	};
 
 	let response = match exchange.exchange {
 		OsmosisCrossChainSwap(routes) => {
@@ -294,6 +294,7 @@ impl<'a> BindingResolver<'a> {
 
 	fn resolve_register(&'a self, reg: Register) -> Result<Cow<'a, [u8]>> {
 		Ok(match reg {
+			Register::Carry(_) => Err(ContractError::NotImplemented)?,
 			Register::Ip => Cow::Owned(self.instruction_pointer.to_string().into_bytes()),
 			Register::Tip => Cow::Owned(self.tip.to_string().into_bytes()),
 			Register::This => Cow::Borrowed(self.env.contract.address.as_bytes()),
@@ -317,7 +318,7 @@ impl<'a> BindingResolver<'a> {
 	fn resolve_asset_amount(
 		&'a self,
 		asset_id: xc_core::AssetId,
-		balance: &Balance,
+		balance: &Amount,
 	) -> Result<Cow<'a, [u8]>> {
 		let reference = self.gateway.get_asset_by_id(self.deps.querier, asset_id)?;
 		let amount = match reference.local {
@@ -328,15 +329,9 @@ impl<'a> BindingResolver<'a> {
 				&self.env.contract.address,
 			)?,
 			AssetReference::Native { denom } => {
-				if balance.is_unit {
-					return Err(ContractError::InvalidBindings)
-				}
 				let coin =
 					self.deps.querier.query_balance(self.env.contract.address.clone(), denom)?;
-				balance
-					.amount
-					.apply(coin.amount.into())
-					.map_err(|_| ContractError::ArithmeticError)?
+				balance.apply(coin.amount.into()).map_err(|_| ContractError::ArithmeticError)?
 			},
 			AssetReference::Erc20 { .. } => Err(ContractError::AssetUnsupportedOnThisNetwork)?,
 		};
@@ -349,7 +344,7 @@ pub fn interpret_spawn(
 	env: &Env,
 	network_id: NetworkId,
 	salt: Vec<u8>,
-	assets: Funds<Balance>,
+	assets: Funds<Amount>,
 	program: shared::XcProgram,
 ) -> Result {
 	let Config { interpreter_origin, gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
@@ -361,15 +356,9 @@ pub fn interpret_spawn(
 		let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 		let transfer_amount = match &reference.local {
 			AssetReference::Native { denom } => {
-				if balance.is_unit {
-					return Err(ContractError::DecimalsInNativeToken)
-				}
 				let coin =
 					deps.querier.query_balance(env.contract.address.clone(), denom.clone())?;
-				balance
-					.amount
-					.apply(coin.amount.into())
-					.map_err(|_| ContractError::ArithmeticError)
+				balance.apply(coin.amount.into()).map_err(|_| ContractError::ArithmeticError)
 			},
 			AssetReference::Cw20 { contract } => apply_amount_to_cw20_balance(
 				deps.as_ref(),
@@ -398,10 +387,11 @@ pub fn interpret_spawn(
 		}
 	}
 
-	let execute_program = ExecuteProgramMsg { salt, program, assets: normalized_funds };
+	let execute_program =
+		BridgeExecuteProgramMsg { salt, program, assets: normalized_funds, tip: None };
 	Ok(response
 		.add_message(gateway.execute(BridgeForwardMsg {
-			interpreter_origin: interpreter_origin.clone(),
+			executor_origin: interpreter_origin.clone(),
 			msg: execute_program,
 			to: network_id,
 		})?)
@@ -417,29 +407,22 @@ pub fn interpret_transfer(
 	env: &Env,
 	tip: &Addr,
 	to: Destination<shared::XcAddr>,
-	assets: Funds<Balance>,
+	assets: Funds<Amount>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
 	deps.api.debug(&format!("cvm::interpreter::transfer:: to {:?}", &to));
 	let recipient = match to {
-		Destination::Account(account) => deps.api.addr_humanize(&account)?.into_string(),
+		Destination::Account(account) => account.encode_cosmwasm(deps.api)?,
 		Destination::Tip => tip.into(),
 	};
 
 	let mut response = Response::default();
 	for (asset_id, balance) in assets.0 {
-		if balance.amount.is_zero() {
-			continue
-		}
-
 		let reference = gateway.get_asset_by_id(deps.querier, asset_id)?;
 		response = match reference.local {
 			AssetReference::Native { denom } => {
-				if balance.is_unit {
-					return Err(ContractError::DecimalsInNativeToken)
-				}
 				let mut coin = deps.querier.query_balance(env.contract.address.clone(), denom)?;
-				coin.amount = balance.amount.apply(coin.amount.into())?.into();
+				coin.amount = balance.apply(coin.amount.into())?.into();
 				response.add_message(BankMsg::Send {
 					to_address: recipient.clone(),
 					amount: vec![coin],
@@ -472,6 +455,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 		QueryMsg::Register(Register::Result) =>
 			Ok(to_binary(&RESULT_REGISTER.load(deps.storage)?)?),
 		QueryMsg::Register(Register::This) => Ok(to_binary(&env.contract.address)?),
+		QueryMsg::Register(Register::Carry(_)) =>
+			Err(StdError::generic_err("Carry register is not implemented yet")),
 		QueryMsg::Register(Register::Tip) => Ok(to_binary(&TIP_REGISTER.load(deps.storage)?)?),
 		QueryMsg::State() => Ok(state::read(deps.storage)?.try_into()?),
 	}
@@ -535,7 +520,7 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 /// * `self_address`: This interpreter's address
 fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 	deps: Deps,
-	balance: &Balance,
+	balance: &Amount,
 	contract: A,
 	self_address: A,
 ) -> Result<u128> {
@@ -545,18 +530,5 @@ fn apply_amount_to_cw20_balance<A: Into<String> + Clone>(
 			msg: to_binary(&Cw20QueryMsg::Balance { address: self_address.into() })?,
 		}))?;
 
-	if balance.is_unit {
-		// If the balance is unit, we need to take `decimals` into account.
-		let token_info =
-			deps.querier.query::<TokenInfoResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
-				contract_addr: contract.into(),
-				msg: to_binary(&Cw20QueryMsg::TokenInfo {})?,
-			}))?;
-		balance
-			.amount
-			.apply_with_decimals(token_info.decimals, balance_response.balance.into())
-	} else {
-		balance.amount.apply(balance_response.balance.into())
-	}
-	.map_err(ContractError::from)
+	balance.apply(balance_response.balance.into()).map_err(ContractError::from)
 }
