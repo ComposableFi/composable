@@ -233,12 +233,12 @@ jobs:
     name: build-cosmos-cosmwasm
     needs: 
       - privilege-check
-    runs-on:
-      - x86_64-linux-32C-128GB-2TB
+    runs-on: ubuntu-20.04
     concurrency:
       group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: true      
     steps:
+      - uses: nixbuild/nix-quick-install-action@v24
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
@@ -251,10 +251,12 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false          
-      - name: Build all packages 
-        uses: "./.github/templates/watch-exec"
+      - uses: nixbuild/nixbuild-action@v19
         with:
-          command: nix -- build .#cvm-mount
+          nixbuild_token: ${{ secrets.nixbuild_token }}
+          generate_summary_for: 'job'          
+      - run:
+          nix build .#cvm-mount --no-update-lock-file --accept-flake-config 
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
