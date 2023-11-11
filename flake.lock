@@ -1536,17 +1536,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1699729568,
-        "narHash": "sha256-LuOMLszVe9Hx6pABYUdgGGOPtH+Sdhz6UQ+5TKfknLI=",
+        "lastModified": 1699737818,
+        "narHash": "sha256-J6Jjcg1FNHgSV19E1rct590jbGdNETsuNYV7UPbbkJQ=",
         "owner": "InstrumentalFi",
         "repo": "instrumental-contracts",
-        "rev": "8f0f93e41bcb0741a2746e7eb5efecc2e4271274",
+        "rev": "61b3c81992178b7382308bfc3ecce04fff3de59c",
         "type": "github"
       },
       "original": {
         "owner": "InstrumentalFi",
         "repo": "instrumental-contracts",
-        "rev": "8f0f93e41bcb0741a2746e7eb5efecc2e4271274",
+        "rev": "61b3c81992178b7382308bfc3ecce04fff3de59c",
         "type": "github"
       }
     },
