@@ -251,7 +251,7 @@ jobs:
           nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
           generate_summary_for: 'job'          
       - run:
-          nix build .#cvm-mount --no-update-lock-file --accept-flake-config 
+          nix build .#cvm-mount --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
