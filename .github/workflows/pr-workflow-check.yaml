@@ -32,3 +32,4 @@ jobs:
       PABLO_PROJ_JSON: ${{ secrets.PABLO_PROJ_JSON }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       CANCEL_GITHUB_TOKEN: ${{ github.token }}
+      NIXBUILD_TOKEN: ${{ secrets.NIXBUILD_TOKEN }}
