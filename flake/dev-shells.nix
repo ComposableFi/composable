@@ -148,6 +148,8 @@
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+              STAKING_WASM_FILE =
+                self.inputs.instrumental.packages."${system}".staking;
               FEE = "ppica";
             };
 

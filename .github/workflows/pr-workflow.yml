@@ -24,6 +24,8 @@ on:
         required: true
         type: string                
     secrets:
+      NIXBUILD_TOKEN:
+        required: true
       CACHIX_AUTH_TOKEN:
         required: true    
       DOCKER_HUB_USERNAME:
@@ -256,7 +258,7 @@ jobs:
         with:
           command: nix -- build .#cvm-mount
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+        run: echo "ok=true" >> "$GITHUB_OUTPUT" 
 
   build-evm:
     outputs:
@@ -264,28 +266,23 @@ jobs:
     name: build-evm
     needs: 
       - privilege-check
-    runs-on:
-      - x86_64-linux-32C-128GB-2TB
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-build-evm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Set up Cachix
-        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
-        with:
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable
-          installCommand: "true"
-          skipAddingSubstituter: true             
+      - uses: nixbuild/nix-quick-install-action@v24          
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false          
-      - name: evm-cvm-gateway 
-        uses: "./.github/templates/watch-exec"
+      - uses: nixbuild/nixbuild-action@v19
         with:
-          command: nix -- build .#evm-cvm-gateway
+          nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
+          generate_summary_for: 'job'
+      - run:
+          nix build .#evm-cvm-gateway --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 
