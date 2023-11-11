@@ -70,7 +70,7 @@
       inputs.flake-utils.follows = "flake-utils";
       inputs.cosmos.follows = "cosmos";
       inputs.rust-overlay.follows = "rust-overlay";
-      inputs.crane.follows = "rust-overlay";
+      inputs.crane.follows = "crane";
       inputs.flake-parts.follows = "flake-parts";
     };
 
