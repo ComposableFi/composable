@@ -24,6 +24,8 @@ on:
         required: true
         type: string                
     secrets:
+      NIXBUILD_TOKEN:
+        required: true
       CACHIX_AUTH_TOKEN:
         required: true    
       DOCKER_HUB_USERNAME:
@@ -246,7 +248,7 @@ jobs:
           persist-credentials: false          
       - uses: nixbuild/nixbuild-action@v19
         with:
-          nixbuild_token: ${{ secrets.nixbuild_token }}
+          nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
           generate_summary_for: 'job'          
       - run:
           nix build .#cvm-mount --no-update-lock-file --accept-flake-config 
