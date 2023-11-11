@@ -235,7 +235,7 @@ jobs:
     name: build-cosmos-cosmwasm
     needs: 
       - privilege-check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true      
