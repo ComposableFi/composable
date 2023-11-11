@@ -47,9 +47,9 @@ pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResul
 #[repr(transparent)]
 pub struct XcAddr(String);
 
-impl Into<Vec<u8>> for XcAddr {
-	fn into(self) -> Vec<u8> {
-		self.0.bytes().collect()
+impl From<XcAddr> for Vec<u8> {
+	fn from(value: XcAddr) -> Self {
+		value.0.into_bytes()
 	}
 }
 
@@ -79,7 +79,7 @@ impl XcAddr {
 			}
 		}
 
-		/// here we will do CW on Substrate if that will be needed, but not prio
+		// here we will do CW on Substrate if that will be needed, but not prio
 		Err(StdError::generic_err("Failed to ensure XcAddr encoding"))
 	}
 }
