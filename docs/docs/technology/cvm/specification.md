@@ -204,9 +204,14 @@ type IPRegister = Uint8
 type TipRegister = Account
 
 interface Call {
+    /// most chains have one default executor
+    /// tells how to interpret `payload` 
+    executor : NativeExecutor?
     payload : Payload
-    bindings : Bindings
+    bindings : Bindings?
 }
+
+type NativeExecutor = Polkadot | Cosmos | Evm | CosmWasm | Solana
 
 interface Binding {    
     index : Uint8

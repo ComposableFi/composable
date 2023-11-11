@@ -57,18 +57,21 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # https://github.com/ComposableFi/centauri/pull/397#issuecomment-1704320448
-    centauri-old-src = {
+    centauri-src = {
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
-    # after https://github.com/ComposableFi/centauri/pull/397 update and check devnet cosmos and dotsama work relaying
-    centauri-src = {
-      flake = false;
+    instrumental = {
       url =
-        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
+        "github:InstrumentalFi/instrumental-contracts/8f0f93e41bcb0741a2746e7eb5efecc2e4271274";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.cosmos.follows = "cosmos";
+      inputs.rust-overlay.follows = "rust-overlay";
+      inputs.crane.follows = "rust-overlay";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     eth-pos-devnet-src = {

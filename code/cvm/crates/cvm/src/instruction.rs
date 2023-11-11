@@ -53,7 +53,7 @@ pub enum Destination<Account> {
 	Tip,
 }
 
-/// Base XCVM instructions.
+/// Base CVM instructions.
 /// This set will remain as small as possible, expressiveness must come on `top` of the base
 /// instructions.
 #[cfg_attr(feature = "json-schema", derive(schemars::JsonSchema))]

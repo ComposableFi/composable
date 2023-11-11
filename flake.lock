@@ -118,23 +118,6 @@
         "type": "github"
       }
     },
-    "centauri-old-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1698427447,
-        "narHash": "sha256-4ANGCiPMTtzOJ6ai30XnBcDa3yujZfbkYTTb/JHqMY0=",
-        "owner": "ComposableFi",
-        "repo": "composable-ibc",
-        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ComposableFi",
-        "repo": "composable-ibc",
-        "rev": "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8",
-        "type": "github"
-      }
-    },
     "centauri-src": {
       "flake": false,
       "locked": {
@@ -1568,6 +1551,42 @@
         "type": "github"
       }
     },
+    "instrumental": {
+      "inputs": {
+        "cosmos": [
+          "cosmos"
+        ],
+        "crane": [
+          "rust-overlay"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1699729568,
+        "narHash": "sha256-LuOMLszVe9Hx6pABYUdgGGOPtH+Sdhz6UQ+5TKfknLI=",
+        "owner": "InstrumentalFi",
+        "repo": "instrumental-contracts",
+        "rev": "8f0f93e41bcb0741a2746e7eb5efecc2e4271274",
+        "type": "github"
+      },
+      "original": {
+        "owner": "InstrumentalFi",
+        "repo": "instrumental-contracts",
+        "rev": "8f0f93e41bcb0741a2746e7eb5efecc2e4271274",
+        "type": "github"
+      }
+    },
     "interchain-security-src": {
       "flake": false,
       "locked": {
@@ -2457,7 +2476,6 @@
         "arion-src": "arion-src",
         "bech32cli": "bech32cli",
         "bundlers": "bundlers",
-        "centauri-old-src": "centauri-old-src",
         "centauri-src": "centauri-src",
         "cosmos": "cosmos",
         "crane": "crane",
@@ -2469,6 +2487,7 @@
         "flake-utils": "flake-utils_7",
         "helix": "helix",
         "home-manager": "home-manager",
+        "instrumental": "instrumental",
         "nix-std": "nix-std_2",
         "nixpkgs": "nixpkgs_9",
         "nixpkgs-latest": "nixpkgs-latest",

@@ -1,4 +1,4 @@
-# CVM Interpreter
+# CVM Executor
 
 Receives and stores user funds.
 Fully owned by user.

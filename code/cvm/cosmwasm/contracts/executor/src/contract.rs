@@ -121,9 +121,9 @@ fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response
 	Response::default().add_event(CvmInterpreterOwnerRemoved::new(owners))
 }
 
-/// Execute an XCVM program.
+/// Execute an CVM program.
 /// The function will execute the program instructions one by one.
-/// If the program contains a [`XCVMInstruction::Call`], the execution is suspended and resumed
+/// If the program contains a [`CVMInstruction::Call`], the execution is suspended and resumed
 /// after having executed the call.
 /// The [`IP_REGISTER`] is updated accordingly.
 /// A final `executed` event is yield whenever a program come to completion (all it's instructions
@@ -235,7 +235,7 @@ fn interpret_exchange(
 /// Interpret the `Call` instruction
 /// * `encoded`: JSON-encoded `LateCall` as bytes
 ///
-/// Late-bindings are actually done in this function. If our XCVM SDK is not used,
+/// Late-bindings are actually done in this function. If our CVM SDK is not used,
 /// make sure that indices in the `LateCall` is sorted in an ascending order.
 pub fn interpret_call(
 	deps: Deps,
