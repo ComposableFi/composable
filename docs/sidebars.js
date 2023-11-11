@@ -157,6 +157,20 @@
          "networks/composable/composable-crowdloan",
          "networks/composable/LAYR-tokenomics",
          "networks/composable/composable-council",
+         {
+          type: "category",
+          label: "Polkadot Liquid Staking",
+          link: {
+            type: "doc",
+            id: "technology/liquid-staking",
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            "technology/liquid-staking/why-lsd",
+            "technology/liquid-staking/technical-overview",
+          ],
+        },
        ],
      },
  
