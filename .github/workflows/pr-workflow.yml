@@ -235,36 +235,10 @@ jobs:
     name: build-cosmos-cosmwasm
     needs: 
       - privilege-check
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true      
-    steps:
-      - uses: nixbuild/nix-quick-install-action@v24          
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false          
-      - uses: nixbuild/nixbuild-action@v19
-        with:
-          nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
-          generate_summary_for: 'job'          
-      - run:
-          nix build .#cvm-mount --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
-      - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
-
-  build-evm:
-    outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
-    name: build-evm
-    needs: 
-      - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
-      group: ${{ inputs.github_workflow }}-build-evm-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
@@ -279,10 +253,36 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false          
-      - name: evm-cvm-gateway 
+      - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#evm-cvm-gateway
+          command: nix -- build .#cvm-mount
+      - id: ok
+        run: echo "ok=true" >> "$GITHUB_OUTPUT" 
+
+  build-evm:
+    outputs:
+      ok: ${{ steps.ok.outputs.ok }}   
+    name: build-evm
+    needs: 
+      - privilege-check
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ inputs.github_workflow }}-build-evm-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: nixbuild/nix-quick-install-action@v24          
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
+          persist-credentials: false          
+      - uses: nixbuild/nixbuild-action@v19
+        with:
+          nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
+          generate_summary_for: 'job'
+      - run:
+          nix build .#evm-cvm-gateway --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 

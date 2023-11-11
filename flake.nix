@@ -65,7 +65,7 @@
 
     instrumental = {
       url =
-        "github:InstrumentalFi/instrumental-contracts/8f0f93e41bcb0741a2746e7eb5efecc2e4271274";
+        "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
       inputs.cosmos.follows = "cosmos";

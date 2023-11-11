@@ -110,7 +110,7 @@
               "$BINARY" tx wasm store  "${
                 self.inputs.instrumental.packages."${system}".staking
               }/lib/staking.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
-              INSTRUMENTAL_STAKING_CODE_ID=5
+              # INSTRUMENTAL_STAKING_CODE_ID=5
 
               sleep $BLOCK_SECONDS             
               "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
