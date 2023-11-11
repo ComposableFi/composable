@@ -9773,6 +9773,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-revenue-ibc"
+version = "1.0.0"
+dependencies = [
+ "bech32",
+ "common",
+ "composable-maths",
+ "composable-support",
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "ibc 0.43.1",
+ "ibc-primitives",
+ "pallet-ibc",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
@@ -10582,6 +10607,7 @@ dependencies = [
  "pallet-preimage",
  "pallet-proxy",
  "pallet-referenda",
+ "pallet-revenue-ibc",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",

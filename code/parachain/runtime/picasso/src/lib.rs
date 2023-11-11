@@ -29,6 +29,7 @@ pub mod assets;
 mod contracts;
 mod fees;
 mod tracks;
+use hex_literal::hex;
 pub use pallet_custom_origins;
 pub use tracks::TracksInfo;
 pub mod governance;
@@ -38,13 +39,12 @@ mod prelude;
 pub mod version;
 mod weights;
 pub mod xcmp;
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
 use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
-
-pub use crate::fees::WellKnownForeignToNativePriceConverter;
 
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
@@ -69,6 +69,7 @@ use gates::*;
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -80,7 +81,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Either, FixedI128,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -242,6 +242,29 @@ impl assets_registry::Config for Runtime {
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
 	type NetworkId = PicassoNetworkId;
+}
+
+parameter_types! {
+	pub FeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28"));
+	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSizeAddress: u32 = 100;
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSizeMemo: u32 = 1000;
+}
+
+impl revenue_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FeeAccount = FeeAccount;
+	type IntermediatePalletId = IntermediatePalletId;
+	type ForeignAssetId = primitives::currency::ForeignAssetId;
+	type AssetId = CurrencyId;
+	type AssetsRegistry = AssetsRegistry;
+	type Assets = Assets;
+	type MaxStringSizeAddress = MaxStringSizeAddress;
+	type MaxStringSizeMemo = MaxStringSizeMemo;
+	type Admin = EnsureRootOrTwoThirdNativeCouncil;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -879,6 +902,8 @@ construct_runtime!(
 
 		Cosmwasm: cosmwasm = 180,
 
+
+
 		// IBC support
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
@@ -886,6 +911,7 @@ construct_runtime!(
 
 		PalletXcmHelper: pallet_xcm_helper = 194,
 		PalletLiquidStaking: pallet_liquid_staking = 195,
+		RevenueIbc: revenue_ibc = 200,
 	}
 );
 
