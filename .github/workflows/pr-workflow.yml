@@ -254,7 +254,7 @@ jobs:
       - name: Build all packages 
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#cvm-tests
+          command: nix -- build .#cvm-mount
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"  
 

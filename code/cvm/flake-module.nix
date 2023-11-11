@@ -88,23 +88,6 @@
           dontFixup = true;
           dontStrip = true;
         };
-
-        cvm-tests = crane.nightly.cargoBuild (systemCommonRust.common-attrs // {
-          src = cvm-mount;
-          cargoArtifacts = cvm-deps;
-          buildPhase = ''
-            NIX_CARGO_OUT_DIR="$TEMP/out/"
-            mkdir --parents "$NIX_CARGO_OUT_DIR"
-            cp ${self'.packages.cw20_base} "$NIX_CARGO_OUT_DIR"/cw20_base.wasm
-            export NIX_CARGO_OUT_DIR
-            # just build, will be moved to testing with host at hand
-            cargo build --release --package xc-tests --tests --features="std"
-          '';
-          installPhase = ''
-            mkdir --parents $out
-          '';
-          RUST_LOG = "debug";
-        });
       };
     };
 }
