@@ -21,10 +21,6 @@
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    arion-src = {
-      url = "github:hercules-ci/arion";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     helix.url = "github:helix-editor/helix";
     bundlers = {
       url = "github:NixOS/bundlers";
@@ -47,7 +43,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
+        "github:informalsystems/cosmos.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -57,7 +53,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    centauri-src = {
+    composable-ibc = {
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
@@ -82,7 +78,7 @@
 
     ethereum = {
       url =
-        "github:dzmitry-lahoda-forks/ethereum.nix/9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4";
+        "github:nix-community/ethereum.nix";
     };
 
     polkadot = {
@@ -152,8 +148,7 @@
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/ComposableFi/centauri/flake-module.nix
-        ./inputs/CosmosContracts/juno.nix
+        ./inputs/ComposableFi/composable-ibc/flake-module.nix
         ./inputs/CosmWasm/flake-module.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/paritytech/cumulus.nix

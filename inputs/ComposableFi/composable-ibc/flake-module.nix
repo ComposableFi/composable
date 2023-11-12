@@ -115,8 +115,8 @@
 
     in {
       packages = rec {
-        centauri-src = self.inputs.centauri-src;
-        ics10-grandpa-cw-src = self.inputs.centauri-src;
+        composable-ibc = self.inputs.composable-ibc;
+        ics10-grandpa-cw-src = self.inputs.composable-ibc;
 
         ics10-grandpa-cw =
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
@@ -127,13 +127,13 @@
           pname = "codegen";
           version = "0.1";
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
-            src = centauri-src;
+            src = composable-ibc;
             cargoExtraArgs = "--package codegen";
             cargoTestCommand = "";
             version = "0.1";
             pname = "codegen";
           });
-          src = centauri-src;
+          src = composable-ibc;
           cargoExtraArgs = "--package codegen";
           cargoTestCommand = "";
           meta = { mainProgram = "codegen"; };
@@ -144,12 +144,12 @@
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             pname = "hyperspace";
             version = "0.1";
-            src = centauri-src;
+            src = composable-ibc;
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";
             cargoTestCommand = "";
           });
-          src = centauri-src;
+          src = composable-ibc;
           doCheck = false;
           cargoExtraArgs = "--package hyperspace";
           cargoTestCommand = "";
@@ -164,7 +164,7 @@
               self'.packages.composable-rococo-subxt-client
               self'.packages.picasso-rococo-subxt-client
             ];
-            src = centauri-src;
+            src = composable-ibc;
             patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
@@ -191,7 +191,7 @@
               self'.packages.composable-polkadot-subxt-client
               self'.packages.picasso-kusama-subxt-client
             ];
-            src = centauri-src;
+            src = composable-ibc;
             patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
@@ -214,7 +214,7 @@
           pkgs.stdenv.mkDerivation rec {
             name = "composable-rococo-picasso-rococo-centauri-patched-src";
             pname = "${name}";
-            src = centauri-src;
+            src = composable-ibc;
             buildInputs = with pkgs; [ sd git ];
             patchFlags = "--strip=4";
             installPhase = ''
@@ -236,7 +236,7 @@
           pkgs.stdenv.mkDerivation rec {
             name = "composable-polkadot-picasso-kusama-centauri-patched-src";
             pname = "${name}";
-            src = centauri-src;
+            src = composable-ibc;
             buildInputs = with pkgs; [ sd git ];
             patchFlags = "--strip=4";
             installPhase = ''
