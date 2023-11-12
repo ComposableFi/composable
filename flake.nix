@@ -129,6 +129,7 @@
         ./flake/bash.nix
         ./flake/cargo-tools.nix
         ./flake/check.nix
+        ./flake/lightnet.nix
         ./flake/cosmos.nix
         ./flake/darwin-configurations.nix
         ./flake/dev-shells.nix
