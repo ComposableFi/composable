@@ -297,11 +297,11 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosisd-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
                 log_location =
-                  "${devnet-root-directory}/osmosisd-xcvm-init.log";
+                  "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -495,11 +495,11 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosisd-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
                 log_location =
-                  "${devnet-root-directory}/osmosisd-xcvm-init.log";
+                  "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -619,25 +619,25 @@
                 availability = { restart = chain-restart; };
               };
 
-              centauri-xcvm-config = {
-                command = self'.packages.centaurid-xcvm-config;
+              centauri-cvm-config = {
+                command = self'.packages.centaurid-cvm-config;
                 depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
-                depends_on."osmosis-xcvm-init".condition =
+                depends_on."osmosis-cvm-init".condition =
                   "process_completed_successfully";
                 log_location =
-                  "${devnet-root-directory}/centauri-xcvm-config.log";
+                  "${devnet-root-directory}/centauri-cvm-config.log";
                 availability = { restart = chain-restart; };
               };
 
-              osmosis-xcvm-config = {
-                command = self'.packages.osmosisd-xcvm-config;
+              osmosis-cvm-config = {
+                command = self'.packages.osmosisd-cvm-config;
                 depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
-                depends_on."osmosis-xcvm-init".condition =
+                depends_on."osmosis-cvm-init".condition =
                   "process_completed_successfully";
                 log_location =
-                  "${devnet-root-directory}/osmosis-xcvm-config.log";
+                  "${devnet-root-directory}/osmosis-cvm-config.log";
                 availability = { restart = chain-restart; };
               };
 
@@ -656,10 +656,10 @@
                   "${devnet-root-directory}/osmosisd-pools-init.log";
                 availability = { restart = chain-restart; };
               };
-              osmosis-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosis-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "${devnet-root-directory}/osmosis-xcvm-init.log";
+                log_location = "${devnet-root-directory}/osmosis-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "osmosis";
               };
@@ -682,25 +682,19 @@
                   "osmosis-centauri-hermes-init".condition =
                     "process_completed_successfully";
                 };
-                readiness_probe.http_get = {
-                  host = "127.0.0.1";
-                  port = 30041;
-                };
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
                 namespace = "ibc";
               };
 
-
               osmosis-osmo-to-centauri = {
                 command = self'.packages.osmosis-osmo-to-centauri;
                 depends_on = {
-                  "centauri-init".condition = "process_completed_successfully";
-                  "osmosis".condition = "process_healthy";
+                  "osmosis-centauri-hermes-init".condition = "process_completed_successfully";
                 };
               };
-              
+
               eth-gen = {
                 command = self'.packages.eth-gen;
                 log_location = "${devnet-root-directory}/eth-gen.log";

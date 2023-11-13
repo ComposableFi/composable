@@ -159,7 +159,7 @@
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
-            add-genesis-account "${cosmosTools.xcvm.mnemonic}" "xcvm"
+            add-genesis-account "${cosmosTools.cvm.mnemonic}" "cvm"
             add-genesis-account "${cosmosTools.mnemonics.pools}" "pools"
 
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
@@ -205,18 +205,18 @@
           '';
         };
 
-        osmosisd-xcvm-init = pkgs.writeShellApplication {
-          name = "osmosisd-xcvm-init";
+        osmosisd-cvm-init = pkgs.writeShellApplication {
+          name = "osmosisd-cvm-init";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
             ${bashTools.export env.devnet}
 
             NETWORK_ID=3
-            KEY=${cosmosTools.xcvm.osmosis}
+            KEY=${cosmosTools.cvm.osmosis}
             BINARY=osmosisd
 
-            function init_xcvm() {              
+            function init_cvm() {              
               local INSTANTIATE=$1
               echo $NETWORK_ID
               "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
@@ -247,7 +247,7 @@
             EOF
             )
 
-            init_xcvm "$INSTANTIATE"           
+            init_cvm "$INSTANTIATE"           
           '';
         };
 
@@ -265,13 +265,13 @@
           '';
         };
 
-        osmosisd-xcvm-config = pkgs.writeShellApplication {
-          name = "osmosisd-xcvm-config";
+        osmosisd-cvm-config = pkgs.writeShellApplication {
+          name = "osmosisd-cvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
             ${bashTools.export env.devnet}
-            KEY=${cosmosTools.xcvm.osmosis}
+            KEY=${cosmosTools.cvm.osmosis}
 
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
             CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
