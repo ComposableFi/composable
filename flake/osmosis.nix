@@ -443,7 +443,7 @@
                             {
                               "pool_id": 1,
                               "token_a": "uosmo",
-                              "token_b": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B",
+                              "token_b": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
                             }                          
                         },
                         "exchange_id": "237684489387467420151587012609",
