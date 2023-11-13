@@ -21,7 +21,7 @@
           container-tools = devnetTools.withDevNetContainerTools ++ [
             pkgs.bash
             self'.packages.centaurid
-            self'.packages.devnet-xc-cosmos-fresh
+            self'.packages.devnet-cosmos-fresh
             self'.packages.devnet-xc-fresh
             self'.packages.osmosisd
             self'.packages.zombienet-rococo-local-picasso-dev

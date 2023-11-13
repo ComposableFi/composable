@@ -12,7 +12,7 @@ First is Nix installation guide, and run via nix. Another run via docker.
 
 ```bash
 # this runs lightweight chain only with cosmos chains as on latest main branch
-nix run composable#devnet-xc-cosmos-fresh
+nix run composable#devnet-cosmos-fresh
 ```
 
 ```bash

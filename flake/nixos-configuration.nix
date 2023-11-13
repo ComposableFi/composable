@@ -53,7 +53,7 @@ in {
             8081
             13000
           ];
-          service = self'.packages.devnet-xc-cosmos-fresh-background;
+          service = self'.packages.devnet-cosmos-fresh-background;
         in self.inputs.nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
