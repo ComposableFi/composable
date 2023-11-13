@@ -97,9 +97,50 @@
           '';
         };
 
+        xapp-no-really-cross-chain = pkgs.writeShellApplication {
+          name = "xapp-no-really-cross-chain";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ self'.packages.centaurid ];
+          text = ''
+            sleep 12 # just stupid wait for previous transfer of osmo, need to improve
+            ${bashTools.export centauri.env.devnet}
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
+            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+
+            APP_MSG=$(cat << EOF            
+            {
+              "execute_program": {
+                "program": {
+                  "instructions": [
+                    {
+                      "transfer": {
+                        "to": {
+                          "account": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k"
+                        },
+                        "assets": [
+                          [
+                            "158456325028528675187087900673",
+                            {
+                              "slope": "1000000000000000000"
+                            }
+                          ]
+                        ]
+                      }
+                    }                                         
+                  ]
+                }
+              }
+            }            
+            EOF
+            )
+            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 3232323"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          '';
+        };
+
         xapp-swap-centauri-osmo-to-osmosis-pica-and-back =
           pkgs.writeShellApplication {
-            name = "xc-swap-centauri-osmo-to-osmosis-pica-and-back";
+            name = "xapp-swap-centauri-osmo-to-osmosis-pica-and-back";
             runtimeInputs = devnetTools.withBaseContainerTools
               ++ [ self'.packages.centaurid ];
             text = ''
@@ -117,7 +158,6 @@
                       {
                         "spawn": {
                           "network_id": 3,
-                          "salt": "737061776e5f776974685f6173736574",
                           "assets": [
                             [
                               "158456325028528675187087900674",
