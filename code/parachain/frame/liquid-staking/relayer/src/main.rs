@@ -155,6 +155,25 @@ async fn main() {
 		for i in &sub_accounts {
 			let keys = vec![i.storage_key.as_ref()];
 
+			let api = OnlineClient::<subxt::SubstrateConfig>::from_url(para_ws_url).await.unwrap();
+			let block_hash_para = api.rpc().block_hash(None).await.unwrap().unwrap();
+			let validation_data = parachain_subxt::api::storage().pallet_liquid_staking().validation_data();
+			let Some(validation_data) = api.storage().at(block_hash_para).fetch(&validation_data).await.unwrap()
+			else {
+				println!("validation data: {} not found", i.address);
+				continue;
+			};
+
+			use crate::parachain_subxt::api::runtime_types::polkadot_primitives::v4::PersistedValidationData;
+
+			let validation_data =
+				PersistedValidationData::try_from(validation_data)
+					.unwrap();
+			// println!("validation_data: {:?}", validation_data);
+
+			let block_hash = relay_client.rpc().block_hash(Some(validation_data.relay_parent_number.into())).await.unwrap().unwrap();
+			println!("block_hash: {:?}", block_hash);
+
 			let state_proof: Vec<Vec<u8>> = relay_client
 				.rpc()
 				.read_proof(keys.iter().map(AsRef::as_ref), None)
@@ -165,9 +184,6 @@ async fn main() {
 				.map(|p| p.0)
 				.collect();
 			assert!(state_proof.len() > 0);
-
-			let block_hash = relay_client.rpc().block_hash(None).await.unwrap().unwrap();
-			println!("block_hash: {:?}", block_hash);
 
 			use subxt::utils::AccountId32;
 			let account_id = AccountId32::from_str(&i.address).unwrap();
@@ -182,7 +198,7 @@ async fn main() {
 			let sl =
 				relaychain::api::runtime_types::pallet_staking::StakingLedger::try_from(ledger)
 					.unwrap();
-			println!("sl: {:?}", sl);
+			// println!("sl: {:?}", sl);
 
 			let mut unlocking = vec![];
 			for chunk in sl.unlocking.0.iter() {
@@ -210,7 +226,7 @@ async fn main() {
 			let tx_value =
 				parachain_subxt::api::tx().pallet_liquid_staking().initiate_exchange_rate();
 
-			let api = OnlineClient::<subxt::SubstrateConfig>::from_url(para_ws_url).await.unwrap();
+			
 
 			use subxt::ext::sp_core::Pair;
 			//test wallet for lsd testing 5DPqUqEfnp3buHaqiVnPt8ryykJEQRgdqAjbscnrZG2qDADa
@@ -241,7 +257,7 @@ async fn sign_and_submit_staking_ledger_update(
 	let mut i = 10;
 	while i > 0 {
 		let signed = api.tx().sign_and_submit_then_watch(&p, &s, <_>::default()).await;
-		println!("signed: {:?}", signed);
+		// println!("signed: {:?}", signed);
 		i -= 1;
 		match signed {
 			Ok(_) => {
