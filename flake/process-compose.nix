@@ -12,7 +12,8 @@
         failure_threshold = 16;
         timeout_seconds = 4;
       };
-    in {
+    in
+    {
 
       packages = rec {
 
@@ -80,23 +81,23 @@
           '';
         };
 
-        devnet-xc-cosmos-fresh = pkgs.writeShellApplication {
+        devnet-cosmos-fresh = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
-          name = "devnet-xc-cosmos-fresh";
+          name = "devnet-cosmos-fresh";
           text = ''
             rm --force --recursive ${devnet-root-directory}             
             mkdir --parents ${devnet-root-directory}
-            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-cosmos}
           '';
         };
 
-        devnet-xc-cosmos-fresh-background = pkgs.writeShellApplication {
+        devnet-cosmos-fresh-background = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
-          name = "devnet-xc-cosmos-fresh-background";
+          name = "devnet-cosmos-fresh-background";
           text = ''
             rm --force --recursive ${devnet-root-directory}             
             mkdir --parents ${devnet-root-directory}
-            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos-background}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-cosmos-background}
           '';
         };
 
@@ -588,9 +589,9 @@
           };
         };
 
-        devnet-xc-cosmos-background = devnet-xc-cosmos // { tui = false; };
+        devnet-cosmos-background = devnet-cosmos // { tui = false; };
 
-        devnet-xc-cosmos = {
+        devnet-cosmos = {
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
@@ -681,11 +682,25 @@
                   "osmosis-centauri-hermes-init".condition =
                     "process_completed_successfully";
                 };
+                readiness_probe.http_get = {
+                  host = "127.0.0.1";
+                  port = 30041;
+                };
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
                 namespace = "ibc";
               };
+
+
+              osmosis-osmo-to-centauri = {
+                command = self'.packages.osmosis-osmo-to-centauri;
+                depends_on = {
+                  "centauri-init".condition = "process_completed_successfully";
+                  "osmosis".condition = "process_healthy";
+                };
+              };
+              
               eth-gen = {
                 command = self'.packages.eth-gen;
                 log_location = "${devnet-root-directory}/eth-gen.log";

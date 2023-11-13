@@ -147,6 +147,7 @@
         ./flake/live.nix
         ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
+        ./flake/xapps.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix

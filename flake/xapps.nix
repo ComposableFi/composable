@@ -1,29 +1,17 @@
 # cross chain apps, which require all to be setup and running
 { self, ... }: {
-  perSystem =
-    { self'
-    , pkgs
-    , systemCommonRust
-    , subnix
-    , lib
-    , system
-    , devnetTools
-    , cosmosTools
-    , bashTools
-    , osmosis
-    , ...
-    }:
+  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
+    , cosmosTools, bashTools, osmosis, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
-    in
-    {
+    in {
       packages = rec {
         xc-transfer-osmo-from--osmosis-to-centauri =
           pkgs.writeShellApplication {
             name = "xc-transfer-osmo-from--osmosis-to-centauri";
             runtimeInputs = devnetTools.withBaseContainerTools
-              ++ [ osmosisd pkgs.jq ];
+              ++ [ self'.packages.osmosisd pkgs.jq ];
             text = ''
                             HOME=/tmp/composable-devnet
                             export HOME
@@ -85,14 +73,14 @@
                             sleep "$BLOCK_SECONDS"
             '';
           };
-        osmosis-tx = pkgs.writeShellApplication {
-          name = "osmosis-tx";
+        osmosis-osmo-to-centauri = pkgs.writeShellApplication {
+          name = "osmosis-osmo-to-centauri";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.osmosisd pkgs.jq ];
 
           text = ''
             ${bashTools.export osmosis.env.devnet}
-            osmosis tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 66642100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            osmosisd tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 66642100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
 
