@@ -121,7 +121,11 @@ impl CvmInterpreterCrosschainFailed {
 
 impl CvmInterpreterStepExecuted {
 	pub fn new(tag: &[u8]) -> Event {
-		Event::new("cvm.executor.step.executed").add_attribute("tag", hex::encode(tag))
+		let mut event = Event::new("cvm.executor.step.executed");
+		if !tag.is_empty() {
+			event = event.add_attribute("tag", hex::encode(tag));
+		}
+		event
 	}
 }
 
@@ -220,7 +224,6 @@ impl CvmInterpreterInstantiated {
 
 impl CvmInterpreterExchangeSucceeded {
 	pub fn new(exchange_id: ExchangeId) -> Event {
-		Event::new("cvm.executor.exchanged")
-			.add_attribute("exchange_id", exchange_id.to_string())
+		Event::new("cvm.executor.exchanged").add_attribute("exchange_id", exchange_id.to_string())
 	}
 }
