@@ -17,9 +17,9 @@ use super::{pb, NonEmptyExt};
 use crate::{shared::Displayed, Destination, Funds};
 
 pub type CVMPacket<TAbiEncoded, TAccount, TAssets> =
-	crate::Packet<XCVMProgram<TAbiEncoded, TAccount, TAssets>>;
+	crate::Packet<CVMProgram<TAbiEncoded, TAccount, TAssets>>;
 
-pub type XCVMProgram<TAbiEncoded, TAccount, TAssets> =
+pub type CVMProgram<TAbiEncoded, TAccount, TAssets> =
 	crate::Program<VecDeque<crate::Instruction<TAbiEncoded, TAccount, TAssets>>>;
 
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
@@ -34,7 +34,7 @@ where
 }
 
 impl<TAbiEncoded, TAccount, TAssets> super::Isomorphism
-	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
+	for CVMProgram<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>> + Into<Vec<u8>>,
 	TAccount: TryFrom<Vec<u8>> + Into<Vec<u8>>,
@@ -112,7 +112,7 @@ where
 }
 
 impl<TAbiEncoded, TAccount, TAssets> TryFrom<pb::program::Program>
-	for XCVMProgram<TAbiEncoded, TAccount, TAssets>
+	for CVMProgram<TAbiEncoded, TAccount, TAssets>
 where
 	TAbiEncoded: TryFrom<Vec<u8>>,
 	TAccount: TryFrom<Vec<u8>>,
@@ -121,21 +121,21 @@ where
 	type Error = ();
 
 	fn try_from(program: pb::program::Program) -> Result<Self, Self::Error> {
-		Ok(XCVMProgram {
+		Ok(CVMProgram {
 			tag: program.tag,
 			instructions: super::try_from_sequence(program.instructions)?,
 		})
 	}
 }
 
-impl<TAbiEncoded, TAccount, TAssets> From<XCVMProgram<TAbiEncoded, TAccount, TAssets>>
+impl<TAbiEncoded, TAccount, TAssets> From<CVMProgram<TAbiEncoded, TAccount, TAssets>>
 	for pb::program::Program
 where
 	TAbiEncoded: Into<Vec<u8>>,
 	TAccount: Into<Vec<u8>>,
 	TAssets: Into<Vec<(crate::AssetId, crate::Amount)>>,
 {
-	fn from(program: XCVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
+	fn from(program: CVMProgram<TAbiEncoded, TAccount, TAssets>) -> Self {
 		let instructions = super::from_sequence(program.instructions);
 		Self { tag: program.tag, instructions }
 	}

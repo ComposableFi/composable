@@ -90,6 +90,7 @@
             runtimeInputs = devnetTools.withBaseContainerTools
               ++ [ self'.packages.centaurid ];
             text = ''
+              sleep 12 # just stupid wait for previous transfer of osmo, need to improve
               ${bashTools.export centauri.env.devnet}
               CHAIN_DATA="${devnet-root-directory}/.centaurid"          
               KEYRING_TEST="$CHAIN_DATA/keyring-test"            
@@ -177,7 +178,7 @@
               }            
               EOF
               )
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount "1212121ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
             '';
           };
 

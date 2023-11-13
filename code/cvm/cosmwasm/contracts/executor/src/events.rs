@@ -87,6 +87,7 @@ pub struct CvmInterpreterInstructionCallInitiated {}
 pub struct CvmInterpreterStepExecuted {
 	#[serde(serialize_with = "hex::serialize", deserialize_with = "hex::deserialize")]
 	#[cfg_attr(feature = "std", schemars(schema_with = "String::json_schema"))]
+	#[serde(skip_serializing_if = "Vec::is_empty", default)]
 	pub tag: Vec<u8>,
 }
 
