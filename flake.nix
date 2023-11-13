@@ -8,6 +8,12 @@
       url = "github:Platonic-Systems/process-compose-flake";
     };
 
+    sbt-derivation.url = "github:zaninime/sbt-derivation";
+    # fixes wird behaviour when flake depends on this flake
+    # it either fails to find overlay in sbt or fails to put nixpks into input
+    sbt-derivation.inputs.nixpkgs.follows = "nixpkgs";
+    sbt-derivation.inputs.flake-utils.follows = "flake-utils";
+
     process-compose = {
       url = "github:F1bonacc1/process-compose";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -42,8 +48,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cosmos = {
-      url = "github:informalsystems/cosmos.nix";
+      url =
+        "github:dzmitry-lahoda-forks/cosmos.nix/daf53bad2f41e2c879e1c8c5a3f01206de030b66";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
+
     };
 
     bech32cli = {
@@ -61,12 +72,12 @@
     instrumental = {
       url =
         "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
       inputs.cosmos.follows = "cosmos";
-      inputs.rust-overlay.follows = "rust-overlay";
       inputs.crane.follows = "crane";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
 
     eth-pos-devnet-src = {
