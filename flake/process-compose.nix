@@ -12,8 +12,7 @@
         failure_threshold = 16;
         timeout_seconds = 4;
       };
-    in
-    {
+    in {
 
       packages = rec {
 
@@ -300,8 +299,7 @@
               osmosisd-cvm-init = {
                 command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location =
-                  "${devnet-root-directory}/osmosisd-cvm-init.log";
+                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -498,8 +496,7 @@
               osmosisd-cvm-init = {
                 command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location =
-                  "${devnet-root-directory}/osmosisd-cvm-init.log";
+                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -691,7 +688,8 @@
               osmosis-osmo-to-centauri = {
                 command = self'.packages.osmosis-osmo-to-centauri;
                 depends_on = {
-                  "osmosis-centauri-hermes-init".condition = "process_completed_successfully";
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
                 };
               };
 

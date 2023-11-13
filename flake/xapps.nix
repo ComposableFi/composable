@@ -84,6 +84,129 @@
           '';
         };
 
+        xc-swap-pica-to-osmo = pkgs.writeShellApplication {
+          name = "xc-swap-pica-to-osmo";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ self'.packages.centaurid pkgs.jq ];
+          text = ''
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+            CHAIN_ID="centauri-dev"
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"
+            PORT=26657
+            FEE=ppica
+            BINARY=centaurid
+            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+
+            SWAP_PICA_TO_OSMOSIS=$(cat << EOF
+              {
+                  "execute_program": {
+                    "salt": "737061776e5f776974685f6173736574",
+                    "program": {
+                      "tag": "737061776e5f776974685f6173736574",
+                      "instructions": [
+                        {
+                          "spawn": {
+                            "network_id": 3,
+                            "salt": "737061776e5f776974685f6173736574",
+                            "assets": [
+                              [
+                                "158456325028528675187087900673",
+                                {
+                                    "intercept": "1234567890",
+                                    "slope": "0"
+                                }
+                              ]
+                            ],
+                            "program": {
+                              "tag": "737061776e5f776974685f6173736574",
+                              "instructions": [
+                                {
+                                  "exchange": {
+                                    "exchange_id": "237684489387467420151587012609",
+                                    "give": [
+                                      [
+                                        "237684487542793012780631851009",
+                                        {
+                                            "intercept": "123456789",
+                                            "slope": "0"
+                                        }
+                                      ]
+                                    ],
+                                    "want": [
+                                      [
+                                        "237684487542793012780631851010",
+                                        {
+                                            "intercept": "1000",
+                                            "slope": "0"
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                },
+                                {
+                                  "spawn": {
+                                    "network_id": 2,
+                                    "salt": "737061776e5f776974685f6173736574",
+                                    "assets": [
+                                      [
+                                        "237684487542793012780631851010",
+                                        {
+                                            "intercept": "0",
+                                            "slope": "1000000000000000000"
+                                        }
+                                      ]
+                                    ],
+                                    "program": {
+                                      "tag": "737061776e5f776974685f6173736574",
+                                      "instructions": [
+                                        {
+                                          "transfer": {
+                                            "to": {
+                                              "account": "AB9vNpqXOevUvR5+JDnlljDbHhw="
+                                            },
+                                            "assets": [
+                                              [
+                                                "158456325028528675187087900674",
+                                                {
+                                                    "intercept": "0",
+                                                    "slope": "1000000000000000000"
+                                                }
+                                              ]
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "assets": [
+                      [
+                        "158456325028528675187087900673",
+                        "1234567890"
+                      ]
+                    ]
+                  },
+                  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"              
+              }
+            EOF
+            )                  
+
+            # check route
+            "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+
+            while true; do
+              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+              sleep "10"
+            done
+          '';
+        };
+
       };
     };
 }
