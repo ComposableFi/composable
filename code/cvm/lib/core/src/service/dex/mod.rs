@@ -1,7 +1,5 @@
 use crate::{prelude::*, NetworkId};
 
-use self::osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
-
 pub mod osmosis_std;
 
 pub type ExchangeId = crate::shared::Displayed<u128>;

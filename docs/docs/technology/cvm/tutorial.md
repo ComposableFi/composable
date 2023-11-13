@@ -16,8 +16,9 @@ Lastly, it's important to be aware of Bech32 encoding for accounts and the use o
 
 | chain     | stage   | id                                                                  |
 | --------- | ------- | ------------------------------------------------------------------- |
-| osmosis-1 | mainnet | osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql     |
-| centauri-1  | mainnet | centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g |
+| osmosis-1 | mainnet |      |
+| centauri-1  | mainnet |  |
+| picasso  | mainnet |  |
 
 If you are interacting with CVM contracts on the Devnet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 
@@ -60,7 +61,7 @@ For access to tokens on Devnet, you can request tokens via the #cvm-mantis-dev-c
 
 The following steps outline a user's transaction journey: sending PICA from Composable Cosmos to Osmosis swapping them for OSMO. Identifiers for a similar process with DOT will be released in the near future, but these steps must be manually replicated.
 
-Additionally, this documentation includes commonly utilised queries for obtaining the state of the CVM in both a general context and for specific users.
+Additionally, this documentation includes commonly utilized queries for obtaining the state of the CVM in both a general context and for specific users.
 
 Finally, a program to address situations where funds become stuck due to cross-chain message failures is given. This is simply a transfer program
 
@@ -73,7 +74,6 @@ DOT on Composable Cosmos is 158456325028528675187087900675
 PICA on Osmosis is 237684487542793012780631851009
 OSMO on Osmosis is 237684487542793012780631851010
 DOT on Osmosis is 237684487542793012780631851011
-
 
 PICA <-> OSMO on Osmosis is 237684489387467420151587012609
 PICA <-> DOT on Osmosis is 237684489387467420151587012610
