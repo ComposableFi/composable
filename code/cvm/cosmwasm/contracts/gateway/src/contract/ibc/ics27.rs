@@ -144,7 +144,7 @@ pub(crate) fn handle_bridge_forward_no_assets(
 	let other = load_other(deps.storage, msg.to)?;
 	let channel_id = other
 		.connection
-		.xcvm_channel
+		.ics27_channel
 		.map(|x| x.id)
 		.ok_or(ContractError::UnknownChannel)?;
 	let packet = XcPacket {

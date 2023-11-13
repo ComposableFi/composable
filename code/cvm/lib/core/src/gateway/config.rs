@@ -165,8 +165,8 @@ pub struct OtherNetworkItem {
 	pub ics_20: Option<IcsPair>,
 	/// default timeout to use for direct send
 	pub counterparty_timeout: RelativeTimeout,
-	/// if there is custom IBC channel opened
-	pub xcvm_channel: Option<ChannelInfo>,
+	/// if there is ICS27 IBC channel opened
+	pub ics27_channel: Option<ChannelInfo>,
 	/// if true, than will use shortcuts
 	/// for example,
 	/// if program transfer only program will just use native transfer

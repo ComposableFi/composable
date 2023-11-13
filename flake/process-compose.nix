@@ -685,12 +685,27 @@
                 namespace = "ibc";
               };
 
-              osmosis-osmo-to-centauri = {
-                command = self'.packages.osmosis-osmo-to-centauri;
+              xapp-osmosis-osmo-to-centauri = {
+                command = self'.packages.xapp-osmosis-osmo-to-centauri;
                 depends_on = {
                   "osmosis-centauri-hermes-init".condition =
                     "process_completed_successfully";
                 };
+                log_location =
+                  "${devnet-root-directory}/xapp-osmosis-osmo-to-centauri.log";
+                namespace = "xapp";
+              };
+
+              xapp-swap-centauri-osmo-to-osmosis-pica-and-back = {
+                command =
+                  self'.packages.xapp-swap-centauri-osmo-to-osmosis-pica-and-back;
+                depends_on = {
+                  "xapp-osmosis-osmo-to-centauri".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/xapp-swap-centauri-osmo-to-osmosis-pica-and-back.log";
+                namespace = "xapp";
               };
 
               eth-gen = {

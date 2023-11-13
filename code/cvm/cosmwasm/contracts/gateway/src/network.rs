@@ -34,7 +34,7 @@ pub(crate) fn force_network_to_network(
 	msg: xc_core::gateway::ForceNetworkToNetworkMsg,
 ) -> std::result::Result<BatchResponse, crate::error::ContractError> {
 	NETWORK_TO_NETWORK.save(deps.storage, (msg.from, msg.to), &msg.other)?;
-	if let Some(ibc) = msg.other.xcvm_channel {
+	if let Some(ibc) = msg.other.ics27_channel {
 		IBC_CHANNEL_NETWORK.save(deps.storage, ibc.id.to_string(), &msg.to)?;
 	}
 	Ok(BatchResponse::new().add_event(
