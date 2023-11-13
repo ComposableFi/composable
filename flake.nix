@@ -42,8 +42,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cosmos = {
-      url =
-        "github:informalsystems/cosmos.nix";
+      url = "github:informalsystems/cosmos.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -76,10 +75,7 @@
         "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
     };
 
-    ethereum = {
-      url =
-        "github:nix-community/ethereum.nix";
-    };
+    ethereum = { url = "github:nix-community/ethereum.nix"; };
 
     polkadot = {
       url =
