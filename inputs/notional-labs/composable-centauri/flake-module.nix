@@ -325,12 +325,12 @@
                   {
                     "force_exchange": {
                       "exchange": {
-                        "osmosis_cross_chain_swap": [
+                        "osmosis_cross_chain_swap" :
                           {
                             "pool_id": 1,
-                            "token_out_denom": "uosmo"
-                          }
-                        ]
+                            "token_a": "uosmo",
+                            "token_b": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518"
+                          }                        
                       },
                       "exchange_id": "237684489387467420151587012609",
                       "network_id": 3

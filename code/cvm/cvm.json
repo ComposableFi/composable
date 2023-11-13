@@ -202,12 +202,12 @@
       {
         "force_exchange": {
           "exchange": {
-            "osmosis_cross_chain_swap": [
+            "osmosis_cross_chain_swap":
               {
                 "pool_id": 1057,
-                "token_out_denom": "uosmo"
-              }
-            ]
+                "token_a": "uosmo",
+                "token_b": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244"
+              }            
           },
           "exchange_id": "237684489387467420151587012609",
           "network_id": 3
@@ -217,12 +217,12 @@
       {
         "force_exchange": {
           "exchange": {
-            "osmosis_cross_chain_swap": [
+            "osmosis_cross_chain_swap": 
               {
                 "pool_id": 1069,
-                "token_out_denom": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244"
-              }
-            ]
+                "token_a": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244",
+                "token_b": "uosmo"
+              }            
           },
           "exchange_id": "237684489387467420151587012610",
           "network_id": 3

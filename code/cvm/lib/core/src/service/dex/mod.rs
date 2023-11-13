@@ -10,7 +10,11 @@ pub type ExchangeId = crate::shared::Displayed<u128>;
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ExchangeType {
-	OsmosisCrossChainSwap(vec::Vec<SwapAmountInRoute>),
+	OsmosisCrossChainSwap{
+		pool_id: u64,		
+		token_a: String,
+		token_b: String,
+	},
 }
 
 /// allows to execute Exchange instruction
