@@ -1,6 +1,6 @@
 {
     "name": "cvm-cw-types",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Composable VM CosmWasm types and client", 
     "files": [
         "dist/**/*"
