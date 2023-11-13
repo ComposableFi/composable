@@ -58,7 +58,7 @@ pub fn instantiate(
 		})?,
 		funds: vec![],
 		// and label has some unknown limits  (including usage of special characters)
-		label: format!("cvm_interpreter_{}", &next_interpreter_id),
+		label: format!("cvm_executor_{}", &next_interpreter_id),
 		// salt limit is 64 characters
 		salt: to_binary(&salt)?,
 	};
@@ -99,7 +99,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 		.attributes
 		.iter()
 		.find(|attr| attr.key == CvmInterpreterInstantiated::INTERPRETER_ORIGIN)
-		.ok_or_else(|| StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
+		.ok_or_else(|| StdError::not_found("no data is returned from 'cvm_executor'"))?
 		.value;
 	let interpreter_origin =
 		xc_core::shared::decode_base64::<_, InterpreterOrigin>(interpreter_origin.as_str())?;
@@ -122,7 +122,7 @@ pub(crate) fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<R
 	deps.api.debug("cvm:: saved interpreter");
 
 	Ok(Response::new().add_event(
-		make_event("cvm.interpreter.instantiated")
+		make_event("cvm.executor.instantiated")
 			.add_attribute("interpreter_id", interpreter_id.to_string()),
 	))
 }

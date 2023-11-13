@@ -206,17 +206,17 @@ All events raised by CVM are prefixed by `cvm.` All logs are prefixed by `cvm::`
 
 On the sender side, look for wasmd `cvm` prefixed events, specifically `cvm.gateway.bridge.track.added` if the packet was sent from Composable Cosmos.
 
-`cvm.interpreter.exchange.succeeded` indicates the swap was successful on Osmosis.
+`cvm.executor.exchange.succeeded` indicates the swap was successful on Osmosis.
 
-Events prefixed `cvm.interpreter.` trace deep execution of programs in the `interpeter`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
+Events prefixed `cvm.executor.` trace deep execution of programs in the `executor`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
 
 All CVM events are wrapped around by IBC and wasmd modules events as documented by relevant parties.
 
 Some `cvm` events are prefixed with `wasm-` by wasmd. 
 
-A very specific event is `wasm-cvm.interpreter.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
+A very specific event is `wasm-cvm.executor.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
 
-This address will be used to query the state of the `interpreter`. 
+This address will be used to query the state of the `executor`. 
 
 In general, Celatone and other generalised indexers show execution very well. It occurs according to the sequence diagram in the CVM description.
 
@@ -226,10 +226,10 @@ After the schema is generated, you will be able to view all the queries that can
 
 You can use the `State` query in the Interpreter to dump the whole state of the interpreter.
 
-You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `interpreter` address.
+You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `executor` address.
 
 
-The following example is to retrieve the CVM state of the `interpreter`:
+The following example is to retrieve the CVM state of the `executor`:
 ```sh
 (devenv) bash-5.2$ $BINARY query wasm  contract-state smart centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl '{
 "state" : [] }'
@@ -248,11 +248,11 @@ Replace the asset id for DOT and DOT<->OSMO pool identifier identifier in `execu
 
 ### Unstuck funds
 
-Here is a program to release stuck funds on the `interpreter`.
+Here is a program to release stuck funds on the `executor`.
 
-This transfers 1 PICA to Osmosis, and than transfers some assets on the Osmosis `interpreter` to some account. 
+This transfers 1 PICA to Osmosis, and than transfers some assets on the Osmosis `executor` to some account. 
 
-Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to recover stuck funds from Osmosis directly by simply sending CW20 or Bank transfer messages on behalf of the `interpreter`.
+Additionally, the `executor` includes a CW1 proxy contract, allowing users to recover stuck funds from Osmosis directly by simply sending CW20 or Bank transfer messages on behalf of the `executor`.
 
 
 

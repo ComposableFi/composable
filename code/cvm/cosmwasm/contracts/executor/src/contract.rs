@@ -500,7 +500,7 @@ fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 			let exchange_id: ExchangeId = ok
 				.events
 				.iter()
-				.find(|x| x.ty == "cvm.interpreter.exchange.started")
+				.find(|x| x.ty == "cvm.executor.exchange.started")
 				.and_then(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
 				.map(|x| x.value.parse().unwrap())
 				.unwrap_or(ExchangeId::default());
