@@ -1,7 +1,7 @@
 # cross chain apps, which require all to be setup and running
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , cosmosTools, bashTools, osmosis, ... }:
+    , cosmosTools, bashTools, osmosis, centauri, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
@@ -73,7 +73,7 @@
                             sleep "$BLOCK_SECONDS"
             '';
           };
-        osmosis-osmo-to-centauri = pkgs.writeShellApplication {
+        xapp-osmosis-osmo-to-centauri = pkgs.writeShellApplication {
           name = "osmosis-osmo-to-centauri";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.osmosisd pkgs.jq ];
@@ -84,17 +84,111 @@
           '';
         };
 
-        xc-swap-pica-to-osmo = pkgs.writeShellApplication {
+        xapp-swap-centauri-osmo-to-osmosis-pica-and-back =
+          pkgs.writeShellApplication {
+            name = "xc-swap-centauri-osmo-to-osmosis-pica-and-back";
+            runtimeInputs = devnetTools.withBaseContainerTools
+              ++ [ self'.packages.centaurid ];
+            text = ''
+              ${bashTools.export centauri.env.devnet}
+              CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+              KEYRING_TEST="$CHAIN_DATA/keyring-test"            
+              GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+
+              APP_MSG=$(cat << EOF            
+              {
+                "execute_program": {
+                  "program": {
+                    "instructions": [
+                      {
+                        "spawn": {
+                          "network_id": 3,
+                          "salt": "737061776e5f776974685f6173736574",
+                          "assets": [
+                            [
+                              "158456325028528675187087900674",
+                              {
+                                "slope": "1000000000000000000"
+                              }
+                            ]
+                          ],
+                          "program": {
+                            "instructions": [
+                              {
+                                "exchange": {
+                                  "exchange_id": "237684489387467420151587012609",
+                                  "give": [
+                                    [
+                                      "237684487542793012780631851010",
+                                      {
+                                        "slope": "1000000000000000000"
+                                      }
+                                    ]
+                                  ],
+                                  "want": [
+                                    [
+                                      "237684487542793012780631851009",
+                                      {
+                                        "slope": "950000000000000000"
+                                      }
+                                    ]
+                                  ]
+                                }
+                              },
+                              {
+                                "spawn": {
+                                  "network_id": 2,
+                                  "assets": [
+                                    [
+                                      "237684487542793012780631851009",
+                                      {
+                                        "slope": "1000000000000000000"
+                                      }
+                                    ]
+                                  ],
+                                  "program": {
+                                    "instructions": [
+                                      {
+                                        "transfer": {
+                                          "to": {
+                                            "account": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k"
+                                          },
+                                          "assets": [
+                                            [
+                                              "158456325028528675187087900673",
+                                              {
+                                                "slope": "1000000000000000000"
+                                              }
+                                            ]
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }            
+              EOF
+              )
+              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            '';
+          };
+
+        xapp-swap-pica-to-osmo = pkgs.writeShellApplication {
           name = "xc-swap-pica-to-osmo";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.centaurid pkgs.jq ];
           text = ''
+            ${bashTools.export centauri.env.devnet}
             CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-            CHAIN_ID="centauri-dev"
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"
-            PORT=26657
-            FEE=ppica
-            BINARY=centaurid
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
             GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
             SWAP_PICA_TO_OSMOSIS=$(cat << EOF

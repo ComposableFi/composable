@@ -534,6 +534,16 @@
             NODE = "https://rpc-t.composable.nodestake.top:443";
             BLOCK_TIME = 7;
           };
+          devnet = rec {
+            FEE = "ppica";
+            NETWORK_ID = 2;
+            PORT = 26657;
+            CHAIN_ID = "centauri-dev";
+            DIR = "testnet/.centaurid";
+            BINARY = "centaurid";
+            NODE = "tcp://localhost:${builtins.toString PORT}";
+            BLOCK_TIME = 7;
+          };
         };
       };
 
