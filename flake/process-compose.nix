@@ -696,10 +696,23 @@
                 namespace = "xapp";
               };
 
+              xapp-centauri-pica-to-osmosis = {
+                command = self'.packages.xapp-centauri-pica-to-osmosis;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/xapp-centauri-pica-to-osmosis.log";
+                namespace = "xapp";
+              };
+
               xapp-swap-centauri-osmo-to-osmosis-pica-and-back = {
                 command =
                   self'.packages.xapp-swap-centauri-osmo-to-osmosis-pica-and-back;
                 depends_on = {
+                  "xapp-centauri-pica-to-osmosis".condition =
+                    "process_completed_successfully";
                   "xapp-osmosis-osmo-to-centauri".condition =
                     "process_completed_successfully";
                 };

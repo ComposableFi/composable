@@ -120,6 +120,10 @@
             dasel-genesis '.app_state.bank.denom_metadata.[2].name' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
             dasel-genesis '.app_state.bank.denom_metadata.[2].symbol' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
 
+            dasel  put --type string --file "$GENESIS" --value "transfer" '.app_state.transfer.port_id'
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.transfer.denom_traces'
+            dasel  put --type string --file "$GENESIS" --value "trasnfer/channel-0" '.app_state.transfer.denom_traces.[0].path'
+            dasel  put --type string --file "$GENESIS" --value "ppica" '.app_state.transfer.denom_traces.[0].base_denom'
 
             dasel-genesis '.app_state.crisis.constant_fee.denom' 'uosmo'
             dasel-genesis '.app_state.gov.voting_params.voting_period' '30s'
@@ -435,7 +439,7 @@
                           }
                         }
                       }
-                    },
+                    },                    
                     {
                       "force_exchange": {
                         "exchange": {

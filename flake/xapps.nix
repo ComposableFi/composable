@@ -84,6 +84,19 @@
           '';
         };
 
+        xapp-centauri-pica-to-osmosis = pkgs.writeShellApplication {
+          name = "xapp-centauri-pica-to-osmosis";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ self'.packages.centaurid pkgs.jq ];
+
+          text = ''
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"      
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
+            ${bashTools.export centauri.env.devnet}
+            centaurid tx ibc-transfer transfer transfer channel-0 ${cosmosTools.cvm.centauri} 1366642100500ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+          '';
+        };
+
         xapp-swap-centauri-osmo-to-osmosis-pica-and-back =
           pkgs.writeShellApplication {
             name = "xc-swap-centauri-osmo-to-osmosis-pica-and-back";
