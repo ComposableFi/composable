@@ -20,7 +20,9 @@ use num::Zero;
 use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeExecuteProgramMsg, BridgeForwardMsg},
-	service::dex::{ExchangeId, osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute},
+	service::dex::{
+		osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute, ExchangeId,
+	},
 	shared, Amount, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
@@ -128,8 +130,8 @@ fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response
 /// The [`IP_REGISTER`] is updated accordingly.
 /// A final `executed` event is yield whenever a program come to completion (all it's instructions
 /// has been executed).
-/// If some step fails, its result is recorded in the [`RESULT_REGISTER`] and the execution is halted.
-/// Default behavior not to abort transaction. 
+/// If some step fails, its result is recorded in the [`RESULT_REGISTER`] and the execution is
+/// halted. Default behavior not to abort transaction.
 pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
@@ -212,14 +214,10 @@ fn interpret_exchange(
 		xc_core::cosmos::Coin { denom: asset.denom(), amount: "1".to_string() }
 	};
 
-
 	let response = match exchange.exchange {
 		OsmosisCrossChainSwap { pool_id, .. } => {
 			let msg = MsgSwapExactAmountIn {
-				routes: vec![SwapAmountInRoute {
-					pool_id : pool_id,
-					token_out_denom : want.denom,
-				}],
+				routes: vec![SwapAmountInRoute { pool_id, token_out_denom: want.denom }],
 				sender: sender.to_string(),
 				token_in: Some(give),
 				token_out_min_amount: want.amount,
