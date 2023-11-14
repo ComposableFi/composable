@@ -1,0 +1,11 @@
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "shared"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.20.0"
