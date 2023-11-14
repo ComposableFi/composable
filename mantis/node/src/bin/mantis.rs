@@ -1,42 +1,37 @@
-mod args;
-use args::*;
-use clap::Parser;
+use mantis_node::mantis::{args::*, cosmos::*};
 use cosmos_sdk_proto::cosmwasm::wasm::v1::QuerySmartContractStateRequest;
 use cosmrs::cosmwasm::*;
 use cosmrs::rpc::{Client, HttpClient, HttpClientUrl};
 
-
-
-
 #[tokio::main]
 async fn main() {
-    let args = MantisArgs::parse();
-        // connect to orders node
+    let args = MantisArgs::parsed();
+    //     // connect to orders node
 
-        // request all orders
-        let orders_request = QuerySmartContractStateRequest {
-            address: args.order_contract,
-            query_data: r###"{ "get_all_orders": {} }"###.as_bytes().to_vec(),
-        };
-        let orders_response = client
-            .smart_contract_state(orders_request)
-            .await
-            .expect("orders obtained");
+    //     // request all orders
+    //     let orders_request = QuerySmartContractStateRequest {
+    //         address: args.order_contract,
+    //         query_data: r###"{ "get_all_orders": {} }"###.as_bytes().to_vec(),
+    //     };
+    //     let orders_response = client
+    //         .smart_contract_state(orders_request)
+    //         .await
+    //         .expect("orders obtained");
     
-        // just print them for now
-        println!("orders: {:?}", orders_response);
+    //     // just print them for now
+    //     println!("orders: {:?}", orders_response);
         
-    while (true) {
-        if let Some(simulate) = args.simulate  {
-            if tick(1,10) {
-                random_orders(orders_client, args.order_contract, args.wallet, simulate).await;
-            }
-        }
+    // while (true) {
+    //     if let Some(simulate) = args.simulate  {
+    //         if tick(1,10) {
+    //             random_orders(orders_client, args.order_contract, args.wallet, simulate).await;
+    //         }
+    //     }
 
-        if tick(1, 50) {
-            solve(orders_client, args.wallet, args.order_contract).await;
-        }
-    }
+    //     if tick(1, 50) {
+    //         solve(orders_client, args.wallet, args.order_contract).await;
+    //     }
+    // }
 
 }
 

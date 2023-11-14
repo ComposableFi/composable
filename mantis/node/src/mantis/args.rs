@@ -26,3 +26,11 @@ pub struct MantisArgs {
     #[arg(long)]
     pub wallet: String,
 }
+
+impl MantisArgs {
+    pub fn parsed() -> Self {
+        use clap::Parser;
+        let args = Self::parse();
+        args
+    }
+}

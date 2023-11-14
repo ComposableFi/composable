@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 cw-mantis-order = { path = "../../code/cvm/cosmwasm/contracts/order" }
-clap = { version = "4.4.7", features = ["derive"] }
+clap = { version = "4.4.8", features = ["derive"] }
 cosmrs = { version = "0.15.0", features = ["cosmwasm", "rpc", "grpc"] }
-tokio = { version = "1.33.0", features = ["full"] }
+tokio = { version = "1.34.0", features = ["full"] }
 cosmos-sdk-proto = { version = "0.20.0", features = ["grpc-transport"] }
 tonic = { version = "0.10.2" }
 rand = { version = "0.8.5", default-features = false }
