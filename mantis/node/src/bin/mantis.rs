@@ -6,6 +6,21 @@ use cosmrs::rpc::{Client, HttpClient, HttpClientUrl};
 #[tokio::main]
 async fn main() {
     let args = MantisArgs::parsed();
+    let mut client = create_wasm_query_client(&args.centauri).await;
+
+    while (true) {
+        let orders_request = QuerySmartContractStateRequest {
+            address: args.order_contract.clone(),
+            query_data: r###"{ "get_all_orders": {} }"###.as_bytes().to_vec(),
+        };
+        let orders_response = client
+            .smart_contract_state(orders_request)
+            .await
+            .expect("orders obtained");
+    
+        // just print them for now
+        println!("orders: {:?}", orders_response);
+    }
     //     // connect to orders node
 
     //     // request all orders

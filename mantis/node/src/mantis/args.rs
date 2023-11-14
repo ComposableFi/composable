@@ -14,8 +14,9 @@ pub struct MantisArgs {
     /// CVM contract on Centauri
     #[arg(long)]
     pub cvm_contract: String,
-
+    
     /// Order contract on Centauri
+    #[arg(long)]
     pub order_contract: String,
 
     /// tokens to send to order contract as problem
