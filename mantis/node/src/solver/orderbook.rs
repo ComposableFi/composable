@@ -106,11 +106,11 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
 
     pub fn print(&self) {
         for order in self.buy().value.iter() {
-            println!("{:?}", order);
+            order.print();
         }
         println!("----------");
         for order in self.sell().value.iter() {
-            println!("{:?}", order);
+            order.print();
         }
         println!("----------");
     }
