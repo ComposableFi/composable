@@ -13,3 +13,4 @@ pub  async fn  create_wasm_query_client(rpc: &str) -> QueryClient<Channel> {
         .await
         .expect("connected")
 }
+
