@@ -31,8 +31,8 @@ use pallet_xcm_helper::ump::RewardDestination;
 
 // mod benchmarking;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 // #[cfg(test)]
 // mod tests;
 
