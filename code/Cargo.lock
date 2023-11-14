@@ -8724,8 +8724,6 @@ version = "1.0.0"
 dependencies = [
  "cfg-if 1.0.0",
  "futures-util",
- "grandpa-light-client-primitives 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
- "grandpa-prover",
  "hex",
  "hyperspace-core",
  "jsonrpsee 0.16.2",
