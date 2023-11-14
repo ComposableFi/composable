@@ -8,6 +8,12 @@
       url = "github:Platonic-Systems/process-compose-flake";
     };
 
+    sbt-derivation.url = "github:zaninime/sbt-derivation";
+    # fixes wird behaviour when flake depends on this flake
+    # it either fails to find overlay in sbt or fails to put nixpks into input
+    sbt-derivation.inputs.nixpkgs.follows = "nixpkgs";
+    sbt-derivation.inputs.flake-utils.follows = "flake-utils";
+
     process-compose = {
       url = "github:F1bonacc1/process-compose";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,10 +25,6 @@
     rust-overlay = { url = "github:oxalica/rust-overlay"; };
     crane = {
       url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    arion-src = {
-      url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     helix.url = "github:helix-editor/helix";
@@ -47,8 +49,12 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
+        "github:dzmitry-lahoda-forks/cosmos.nix/daf53bad2f41e2c879e1c8c5a3f01206de030b66";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
+
     };
 
     bech32cli = {
@@ -57,7 +63,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    centauri-src = {
+    composable-ibc = {
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
@@ -66,12 +72,12 @@
     instrumental = {
       url =
         "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
       inputs.cosmos.follows = "cosmos";
-      inputs.rust-overlay.follows = "rust-overlay";
       inputs.crane.follows = "crane";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
 
     eth-pos-devnet-src = {
@@ -80,10 +86,7 @@
         "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
     };
 
-    ethereum = {
-      url =
-        "github:dzmitry-lahoda-forks/ethereum.nix/9a2c8d3f5da2e2bcace7a8d7048860db5759cbf4";
-    };
+    ethereum = { url = "github:nix-community/ethereum.nix"; };
 
     polkadot = {
       url =
@@ -144,6 +147,7 @@
         ./flake/live.nix
         ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
+        ./flake/xapps.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
@@ -152,8 +156,7 @@
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
-        ./inputs/ComposableFi/centauri/flake-module.nix
-        ./inputs/CosmosContracts/juno.nix
+        ./inputs/ComposableFi/composable-ibc/flake-module.nix
         ./inputs/CosmWasm/flake-module.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/paritytech/cumulus.nix

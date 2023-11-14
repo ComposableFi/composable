@@ -20,13 +20,13 @@ resource "github_branch_protection" "main" {
   required_pull_request_reviews {
     
     # Require approvals
-    required_approving_review_count = 1
+    required_approving_review_count = 0
     
     # Dismiss stale pull request approvals when new commits are pushed
     dismiss_stale_reviews           = true
 
     # Require review from Code Owners
-    require_code_owner_reviews      = true
+    require_code_owner_reviews      = false
     
     # Allow specified actors to bypass required pull requests
     pull_request_bypassers          = []

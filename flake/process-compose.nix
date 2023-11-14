@@ -80,23 +80,23 @@
           '';
         };
 
-        devnet-xc-cosmos-fresh = pkgs.writeShellApplication {
+        devnet-cosmos-fresh = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
-          name = "devnet-xc-cosmos-fresh";
+          name = "devnet-cosmos-fresh";
           text = ''
             rm --force --recursive ${devnet-root-directory}             
             mkdir --parents ${devnet-root-directory}
-            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-cosmos}
           '';
         };
 
-        devnet-xc-cosmos-fresh-background = pkgs.writeShellApplication {
+        devnet-cosmos-fresh-background = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools;
-          name = "devnet-xc-cosmos-fresh-background";
+          name = "devnet-cosmos-fresh-background";
           text = ''
             rm --force --recursive ${devnet-root-directory}             
             mkdir --parents ${devnet-root-directory}
-            ${pkgs.lib.meta.getExe self'.packages.devnet-xc-cosmos-background}
+            ${pkgs.lib.meta.getExe self'.packages.devnet-cosmos-background}
           '';
         };
 
@@ -296,11 +296,10 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosisd-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location =
-                  "${devnet-root-directory}/osmosisd-xcvm-init.log";
+                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -494,11 +493,10 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosisd-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location =
-                  "${devnet-root-directory}/osmosisd-xcvm-init.log";
+                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
@@ -588,9 +586,9 @@
           };
         };
 
-        devnet-xc-cosmos-background = devnet-xc-cosmos // { tui = false; };
+        devnet-cosmos-background = devnet-cosmos // { tui = false; };
 
-        devnet-xc-cosmos = {
+        devnet-cosmos = {
           settings = {
             log_level = "trace";
             log_location = "/tmp/composable-devnet/pc.log";
@@ -618,25 +616,25 @@
                 availability = { restart = chain-restart; };
               };
 
-              centauri-xcvm-config = {
-                command = self'.packages.centaurid-xcvm-config;
+              centauri-cvm-config = {
+                command = self'.packages.centaurid-cvm-config;
                 depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
-                depends_on."osmosis-xcvm-init".condition =
+                depends_on."osmosis-cvm-init".condition =
                   "process_completed_successfully";
                 log_location =
-                  "${devnet-root-directory}/centauri-xcvm-config.log";
+                  "${devnet-root-directory}/centauri-cvm-config.log";
                 availability = { restart = chain-restart; };
               };
 
-              osmosis-xcvm-config = {
-                command = self'.packages.osmosisd-xcvm-config;
+              osmosis-cvm-config = {
+                command = self'.packages.osmosisd-cvm-config;
                 depends_on."centauri-cvm-init".condition =
                   "process_completed_successfully";
-                depends_on."osmosis-xcvm-init".condition =
+                depends_on."osmosis-cvm-init".condition =
                   "process_completed_successfully";
                 log_location =
-                  "${devnet-root-directory}/osmosis-xcvm-config.log";
+                  "${devnet-root-directory}/osmosis-cvm-config.log";
                 availability = { restart = chain-restart; };
               };
 
@@ -655,10 +653,10 @@
                   "${devnet-root-directory}/osmosisd-pools-init.log";
                 availability = { restart = chain-restart; };
               };
-              osmosis-xcvm-init = {
-                command = self'.packages.osmosisd-xcvm-init;
+              osmosis-cvm-init = {
+                command = self'.packages.osmosisd-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "${devnet-root-directory}/osmosis-xcvm-init.log";
+                log_location = "${devnet-root-directory}/osmosis-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "osmosis";
               };
@@ -686,6 +684,43 @@
                 availability = { restart = relay; };
                 namespace = "ibc";
               };
+
+              xapp-osmosis-osmo-to-centauri = {
+                command = self'.packages.xapp-osmosis-osmo-to-centauri;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/xapp-osmosis-osmo-to-centauri.log";
+                namespace = "xapp";
+              };
+
+              xapp-centauri-pica-to-osmosis = {
+                command = self'.packages.xapp-centauri-pica-to-osmosis;
+                depends_on = {
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/xapp-centauri-pica-to-osmosis.log";
+                namespace = "xapp";
+              };
+
+              xapp-swap-centauri-osmo-to-osmosis-pica-and-back = {
+                command =
+                  self'.packages.xapp-swap-centauri-osmo-to-osmosis-pica-and-back;
+                depends_on = {
+                  "xapp-centauri-pica-to-osmosis".condition =
+                    "process_completed_successfully";
+                  "xapp-osmosis-osmo-to-centauri".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/xapp-swap-centauri-osmo-to-osmosis-pica-and-back.log";
+                namespace = "xapp";
+              };
+
               eth-gen = {
                 command = self'.packages.eth-gen;
                 log_location = "${devnet-root-directory}/eth-gen.log";

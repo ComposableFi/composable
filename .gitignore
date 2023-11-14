@@ -235,3 +235,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# polkadot
+*.db.sqlite
+*.db.sqlite-shm
+*.db.sqlite-wal

@@ -13,7 +13,7 @@ Note that these events will be yield from the router in production.
 ### Instantiate contract
 ```json
 {
-	"type": "wasm-xcvm.interpreter.instantiated",
+	"type": "wasm-xcvm.executor.instantiated",
 	"attributes": [
 		{
 			"key": "data",
@@ -28,7 +28,7 @@ Note that these events will be yield from the router in production.
 ### Execute contract
 ```json
 {
-	"type": "wasm-xcvm.interpreter.executed",
+	"type": "wasm-xcvm.executor.executed",
 	"attributes": [
 		{
 			"key": "program",
@@ -44,7 +44,7 @@ Note that these events will be yield from the router in production.
 
 ```json
 {
-	"type": "wasm-xcvm.interpreter.spawn",
+	"type": "wasm-xcvm.executor.spawn",
 	"attributes": [
 		{
 			"key": "origin_network_id",

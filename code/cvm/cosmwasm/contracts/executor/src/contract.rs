@@ -20,7 +20,9 @@ use num::Zero;
 use xc_core::{
 	apply_bindings,
 	gateway::{AssetReference, BridgeExecuteProgramMsg, BridgeForwardMsg},
-	service::dex::ExchangeId,
+	service::dex::{
+		osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute, ExchangeId,
+	},
 	shared, Amount, BindingValue, Destination, Funds, Instruction, NetworkId, Register,
 };
 
@@ -128,6 +130,8 @@ fn remove_owners(_: Authenticated, deps: DepsMut, owners: Vec<Addr>) -> Response
 /// The [`IP_REGISTER`] is updated accordingly.
 /// A final `executed` event is yield whenever a program come to completion (all it's instructions
 /// has been executed).
+/// If some step fails, its result is recorded in the [`RESULT_REGISTER`] and the execution is
+/// halted. Default behavior not to abort transaction.
 pub fn handle_execute_step(
 	_: Authenticated,
 	mut deps: DepsMut,
@@ -135,7 +139,7 @@ pub fn handle_execute_step(
 	Step { tip, instruction_pointer, mut program }: Step,
 ) -> Result {
 	Ok(if let Some(instruction) = program.instructions.pop_front() {
-		deps.api.debug(&format!("cvm::interpreter::execute:: {:?}", &instruction));
+		deps.api.debug(&format!("cvm::executor::execute:: {:?}", &instruction));
 		let response = match instruction {
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, &env, &tip, to, assets),
@@ -190,7 +194,7 @@ fn interpret_exchange(
 		.get_asset_by_id(deps.querier, give.0)
 		.map_err(ContractError::AssetNotFound)?;
 
-	let amount = deps.querier.query_balance(&sender, asset.denom())?;
+	let amount: Coin = deps.querier.query_balance(&sender, asset.denom())?;
 	let amount = give.1.apply(amount.amount.u128())?;
 	let give: xc_core::cosmos::Coin =
 		xc_core::cosmos::Coin { denom: asset.denom(), amount: amount.to_string() };
@@ -211,14 +215,14 @@ fn interpret_exchange(
 	};
 
 	let response = match exchange.exchange {
-		OsmosisCrossChainSwap(routes) => {
+		OsmosisCrossChainSwap { pool_id, .. } => {
 			let msg = MsgSwapExactAmountIn {
-				routes,
+				routes: vec![SwapAmountInRoute { pool_id, token_out_denom: want.denom }],
 				sender: sender.to_string(),
 				token_in: Some(give),
 				token_out_min_amount: want.amount,
 			};
-			deps.api.debug(&format!("cvm::interpreter::execute::exchange {:?}", &msg));
+			deps.api.debug(&format!("cvm::executor::execute::exchange {:?}", &msg));
 			let msg = CosmosMsg::Stargate {
 				type_url: MsgSwapExactAmountIn::PROTO_MESSAGE_URL.to_string(),
 				value: Binary::from(msg.encode_to_vec()),
@@ -410,7 +414,7 @@ pub fn interpret_transfer(
 	assets: Funds<Amount>,
 ) -> Result {
 	let Config { gateway_address: gateway, .. } = CONFIG.load(deps.storage)?;
-	deps.api.debug(&format!("cvm::interpreter::transfer:: to {:?}", &to));
+	deps.api.debug(&format!("cvm::executor::transfer:: to {:?}", &to));
 	let recipient = match to {
 		Destination::Account(account) => account.encode_cosmwasm(deps.api)?,
 		Destination::Tip => tip.into(),
@@ -494,13 +498,13 @@ fn handle_call_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 fn handle_exchange_result(deps: DepsMut, msg: Reply) -> StdResult<Response> {
-	deps.api.debug(&format!("cvm::interpreter::exchanged {:?}", &msg));
+	deps.api.debug(&format!("cvm::executor::exchanged {:?}", &msg));
 	let response = match &msg.result {
 		SubMsgResult::Ok(ok) => {
 			let exchange_id: ExchangeId = ok
 				.events
 				.iter()
-				.find(|x| x.ty == "cvm.interpreter.exchange.started")
+				.find(|x| x.ty == "cvm.executor.exchange.started")
 				.and_then(|x| x.attributes.iter().find(|x| x.key == "exchange_id"))
 				.map(|x| x.value.parse().unwrap())
 				.unwrap_or(ExchangeId::default());

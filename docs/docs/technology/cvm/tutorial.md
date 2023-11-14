@@ -13,11 +13,14 @@ Additionally, make sure you are well-versed in how to make Cosmos RPC calls via 
 Lastly, it's important to be aware of Bech32 encoding for accounts and the use of IBC prefixed assets within the Cosmos ecosystem. 
 
 ### On Mainnet
-
-| chain     | stage   | id                                                                  |
-| --------- | ------- | ------------------------------------------------------------------- |
-| osmosis-1 | mainnet | osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql     |
-| centauri-1  | mainnet | centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g |
+   
+| chain      | stage   | id  |
+| ---------- | ------- | --- |
+| osmosis-1  | mainnet |  osmo1ltevzdpc6ku5en4spjn887nnd7qt4mz0msn6jpk3s40rn80uz9yqa68crl   |
+| centauri-1 | mainnet |  centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d   |
+| picasso    | mainnet |     |
+| ethereum   | mainnet |     |
+| solana     | mainnet |     |
 
 If you are interacting with CVM contracts on the Devnet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 
@@ -60,7 +63,7 @@ For access to tokens on Devnet, you can request tokens via the #cvm-mantis-dev-c
 
 The following steps outline a user's transaction journey: sending PICA from Composable Cosmos to Osmosis swapping them for OSMO. Identifiers for a similar process with DOT will be released in the near future, but these steps must be manually replicated.
 
-Additionally, this documentation includes commonly utilised queries for obtaining the state of the CVM in both a general context and for specific users.
+Additionally, this documentation includes commonly utilized queries for obtaining the state of the CVM in both a general context and for specific users.
 
 Finally, a program to address situations where funds become stuck due to cross-chain message failures is given. This is simply a transfer program
 
@@ -73,7 +76,6 @@ DOT on Composable Cosmos is 158456325028528675187087900675
 PICA on Osmosis is 237684487542793012780631851009
 OSMO on Osmosis is 237684487542793012780631851010
 DOT on Osmosis is 237684487542793012780631851011
-
 
 PICA <-> OSMO on Osmosis is 237684489387467420151587012609
 PICA <-> DOT on Osmosis is 237684489387467420151587012610
@@ -206,17 +208,17 @@ All events raised by CVM are prefixed by `cvm.` All logs are prefixed by `cvm::`
 
 On the sender side, look for wasmd `cvm` prefixed events, specifically `cvm.gateway.bridge.track.added` if the packet was sent from Composable Cosmos.
 
-`cvm.interpreter.exchange.succeeded` indicates the swap was successful on Osmosis.
+`cvm.executor.exchange.succeeded` indicates the swap was successful on Osmosis.
 
-Events prefixed `cvm.interpreter.` trace deep execution of programs in the `interpeter`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
+Events prefixed `cvm.executor.` trace deep execution of programs in the `executor`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
 
 All CVM events are wrapped around by IBC and wasmd modules events as documented by relevant parties.
 
 Some `cvm` events are prefixed with `wasm-` by wasmd. 
 
-A very specific event is `wasm-cvm.interpreter.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
+A very specific event is `wasm-cvm.executor.instantiated` with `_contract_address`, which may be equal `centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl`. 
 
-This address will be used to query the state of the `interpreter`. 
+This address will be used to query the state of the `executor`. 
 
 In general, Celatone and other generalised indexers show execution very well. It occurs according to the sequence diagram in the CVM description.
 
@@ -226,10 +228,10 @@ After the schema is generated, you will be able to view all the queries that can
 
 You can use the `State` query in the Interpreter to dump the whole state of the interpreter.
 
-You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `interpreter` address.
+You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `executor` address.
 
 
-The following example is to retrieve the CVM state of the `interpreter`:
+The following example is to retrieve the CVM state of the `executor`:
 ```sh
 (devenv) bash-5.2$ $BINARY query wasm  contract-state smart centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl '{
 "state" : [] }'
@@ -248,11 +250,11 @@ Replace the asset id for DOT and DOT<->OSMO pool identifier identifier in `execu
 
 ### Unstuck funds
 
-Here is a program to release stuck funds on the `interpreter`.
+Here is a program to release stuck funds on the `executor`.
 
-This transfers 1 PICA to Osmosis, and than transfers some assets on the Osmosis `interpreter` to some account. 
+This transfers 1 PICA to Osmosis, and than transfers some assets on the Osmosis `executor` to some account. 
 
-Additionally, the `interpreter` includes a CW1 proxy contract, allowing users to recover stuck funds from Osmosis directly by simply sending CW20 or Bank transfer messages on behalf of the `interpreter`.
+Additionally, the `executor` includes a CW1 proxy contract, allowing users to recover stuck funds from Osmosis directly by simply sending CW20 or Bank transfer messages on behalf of the `executor`.
 
 
 

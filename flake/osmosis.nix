@@ -120,6 +120,10 @@
             dasel-genesis '.app_state.bank.denom_metadata.[2].name' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
             dasel-genesis '.app_state.bank.denom_metadata.[2].symbol' 'ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B'
 
+            dasel  put --type string --file "$GENESIS" --value "transfer" '.app_state.transfer.port_id'
+            dasel  put --type json --file "$GENESIS" --value "[{}]" '.app_state.transfer.denom_traces'
+            dasel  put --type string --file "$GENESIS" --value "transfer/channel-0" '.app_state.transfer.denom_traces.[0].path'
+            dasel  put --type string --file "$GENESIS" --value "ppica" '.app_state.transfer.denom_traces.[0].base_denom'
 
             dasel-genesis '.app_state.crisis.constant_fee.denom' 'uosmo'
             dasel-genesis '.app_state.gov.voting_params.voting_period' '30s'
@@ -159,7 +163,7 @@
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
-            add-genesis-account "${cosmosTools.xcvm.mnemonic}" "xcvm"
+            add-genesis-account "${cosmosTools.cvm.mnemonic}" "cvm"
             add-genesis-account "${cosmosTools.mnemonics.pools}" "pools"
 
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
@@ -205,18 +209,18 @@
           '';
         };
 
-        osmosisd-xcvm-init = pkgs.writeShellApplication {
-          name = "osmosisd-xcvm-init";
+        osmosisd-cvm-init = pkgs.writeShellApplication {
+          name = "osmosisd-cvm-init";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
             ${bashTools.export env.devnet}
 
             NETWORK_ID=3
-            KEY=${cosmosTools.xcvm.osmosis}
+            KEY=${cosmosTools.cvm.osmosis}
             BINARY=osmosisd
 
-            function init_xcvm() {              
+            function init_cvm() {              
               local INSTANTIATE=$1
               echo $NETWORK_ID
               "$BINARY" tx wasm store  "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
@@ -247,7 +251,7 @@
             EOF
             )
 
-            init_xcvm "$INSTANTIATE"           
+            init_cvm "$INSTANTIATE"           
           '';
         };
 
@@ -265,13 +269,13 @@
           '';
         };
 
-        osmosisd-xcvm-config = pkgs.writeShellApplication {
-          name = "osmosisd-xcvm-config";
+        osmosisd-cvm-config = pkgs.writeShellApplication {
+          name = "osmosisd-cvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
             ${bashTools.export env.devnet}
-            KEY=${cosmosTools.xcvm.osmosis}
+            KEY=${cosmosTools.cvm.osmosis}
 
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
             CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
@@ -435,16 +439,16 @@
                           }
                         }
                       }
-                    },
+                    },                    
                     {
                       "force_exchange": {
                         "exchange": {
-                          "osmosis_cross_chain_swap": [
+                          "osmosis_cross_chain_swap":
                             {
                               "pool_id": 1,
-                              "token_out_denom": "uosmo"
-                            }
-                          ]
+                              "token_a": "uosmo",
+                              "token_b": "ibc/3262D378E1636BE287EC355990D229DCEB828F0C60ED5049729575E235C60E8B"
+                            }                          
                         },
                         "exchange_id": "237684489387467420151587012609",
                         "network_id": 3
@@ -490,84 +494,6 @@
             "$BINARY" query wasm contract-state all "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
           '';
         };
-
-        xc-transfer-osmo-from--osmosis-to-centauri =
-          pkgs.writeShellApplication {
-            name = "xc-transfer-osmo-from--osmosis-to-centauri";
-            runtimeInputs = devnetTools.withBaseContainerTools
-              ++ [ osmosisd pkgs.jq ];
-            text = ''
-              HOME=/tmp/composable-devnet
-              export HOME
-              CHAIN_DATA="$HOME/.osmosisd"             
-              KEYRING_TEST=$CHAIN_DATA
-              CHAIN_ID="osmosis-dev"            
-              PORT=36657
-              BLOCK_SECONDS=5
-              FEE=uosmo
-              BINARY=osmosisd
-              GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
-
-              TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
-              {
-                  "execute_program": {
-                      "execute_program": {
-                          "salt": "737061776e5f776974685f6173736574",
-                          "program": {
-                              "tag": "737061776e5f776974685f6173736574",
-                              "instructions": [
-                                  {
-                                      "spawn": {
-                                          "network": 2,
-                                          "salt": "737061776e5f776974685f6173736574",
-                                          "assets": [
-                                              [
-                                                  "158456325028528675187087901673",
-                                                  {
-                                                      "amount": {
-                                                          "intercept": "1234567890",
-                                                          "slope": "0"
-                                                      },
-                                                      "is_unit": false
-                                                  }
-                                              ]
-                                          ],
-                                          "program": {
-                                              "tag": "737061776e5f776974685f6173736574",
-                                              "instructions": []
-                                          }
-                                      }
-                                  }
-                              ]
-                          },
-                          "assets": [
-                              [
-                                  "237684487542793012780631852009",
-                                  "1234567890"
-                              ]
-                          ]
-                      },
-                      "tip": "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"
-                  }
-              }
-              EOF
-              )                  
-
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-              sleep "$BLOCK_SECONDS"
-            '';
-          };
-        osmosis-tx = pkgs.writeShellApplication {
-          name = "osmosis-tx";
-          runtimeInputs = devnetTools.withBaseContainerTools
-            ++ [ osmosisd pkgs.jq ];
-
-          text = ''
-            ${bashTools.export env.devnet}
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 centauri1qq0k7d56juu7h49arelzgw09jccdk8sujrcrjd 42100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.xcvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
-          '';
-        };
-
       };
     };
 }

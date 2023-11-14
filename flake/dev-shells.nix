@@ -101,7 +101,7 @@
               DIR = "devnet/.centaurid";
               BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
@@ -130,7 +130,7 @@
               DIR = "testnet/.centaurid";
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
@@ -171,7 +171,7 @@
           modules = [{
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.mainnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
@@ -189,7 +189,7 @@
           modules = [{
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
@@ -204,7 +204,7 @@
           modules = [rec {
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
@@ -234,7 +234,7 @@
           modules = [rec {
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.remote-devnet // {
-              INTERPRETER_WASM_FILE =
+              EXECUTOR_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
                 "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
