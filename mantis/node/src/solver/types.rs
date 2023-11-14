@@ -16,6 +16,12 @@ pub struct SellToken(pub Amount);
 #[repr(transparent)]
 pub struct Price(pub Amount);
 
+impl Price {
+    pub fn new_float(amount: f64) -> Self {
+        Price(Decimal::from_f64_retain(amount).unwrap())
+    }
+}
+
 /// this is buy sell in terms of token1/token2 or A/B. just 2 sides of the orderbook.
 /// not Buy and Sell orders which differ in limit definition(in limit vs out limit).
 #[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr, Display)]
@@ -61,7 +67,7 @@ pub struct Order<Id> {
 impl<Id: Copy + PartialEq> Order<Id> {
     pub fn print(&self) {
         println!(
-            "[{}]-{}- Limit Price: {}, In: {}, Filled: {}, Filled price: {}, Out: {}",
+            "[{}]-{}- Limit Price: {:0.3}, In: {}, Filled: {}, Filled price: {}, Out: {}",
             self.order_type,
             self.status,
             self.limit_price,

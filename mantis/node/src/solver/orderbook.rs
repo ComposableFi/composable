@@ -13,7 +13,7 @@ pub struct OrderList<Id> {
 
 impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
     pub fn is_empty(&self) -> bool {
-        self.is_empty()
+        self.value.is_empty()
     }
     fn apply_filter<P>(&self, expr: P) -> Self
     where

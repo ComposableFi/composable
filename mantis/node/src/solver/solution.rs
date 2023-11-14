@@ -24,7 +24,6 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         } else {
             dec!(0.0)
         };
-
         let sell_volume = order_list.sell().amount_out();
         let buy_volume = order_list.buy().amount_in();
 
@@ -71,6 +70,7 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
 
     pub fn match_orders(&mut self, price: Price) -> Solution<Id> {
         let mut orders = self.orders.clone();
+        
         orders.value.sort_by(|a, b| {
             a.limit_price
                 .partial_cmp(&b.limit_price)
@@ -80,7 +80,6 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         let matched = orders.is_acceptable_price(price);
         let mut buy_orders = matched.buy();
         let mut sell_orders = matched.sell();
-
         let buy_volume = buy_orders.token1_sum(price);
         let sell_volume = sell_orders.token1_sum(price);
 
@@ -93,12 +92,7 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         }
 
         /// for now retaining "bad" design when solution has no price, there should no be solution without, will fix after testing correctness
-        let mut solution = Solution {
-            orders: matched.filled(),
-            matched_price: Price(Decimal::new(0, 0)),
-            buy_volume: BuyToken(Decimal::new(0, 0)),
-            sell_volume: SellToken(Decimal::new(0, 0)),
-        };
+        let mut solution = Solution::new(matched.filled().value);
 
         solution.check_constraints();
         solution
