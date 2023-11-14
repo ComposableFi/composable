@@ -13,12 +13,14 @@ Additionally, make sure you are well-versed in how to make Cosmos RPC calls via 
 Lastly, it's important to be aware of Bech32 encoding for accounts and the use of IBC prefixed assets within the Cosmos ecosystem. 
 
 ### On Mainnet
-
-| chain     | stage   | id                                                                  |
-| --------- | ------- | ------------------------------------------------------------------- |
-| osmosis-1 | mainnet |      |
-| centauri-1  | mainnet |  |
-| picasso  | mainnet |  |
+   
+| chain      | stage   | id  |
+| ---------- | ------- | --- |
+| osmosis-1  | mainnet |  osmo1ltevzdpc6ku5en4spjn887nnd7qt4mz0msn6jpk3s40rn80uz9yqa68crl   |
+| centauri-1 | mainnet |  centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d   |
+| picasso    | mainnet |     |
+| ethereum   | mainnet |     |
+| solana     | mainnet |     |
 
 If you are interacting with CVM contracts on the Devnet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 

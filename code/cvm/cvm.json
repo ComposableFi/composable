@@ -10,8 +10,8 @@
           },
           "gateway": {
             "cosm_wasm": {
-              "contract": "osmo126n3wcpf2l8hkv26lr4uc8vmx2daltra5ztxn9gpfu854dkfqrcqzdk8ql",
-              "interpreter_code_id": 164,
+              "contract": "osmo1ltevzdpc6ku5en4spjn887nnd7qt4mz0msn6jpk3s40rn80uz9yqa68crl",
+              "interpreter_code_id": 273,
               "admin": "osmo1u2sr0p2j75fuezu92nfxg5wm46gu22yw9ezngh"
             }
           },
@@ -38,8 +38,8 @@
           },
           "gateway": {
             "cosm_wasm": {
-              "contract": "centauri1c676xpc64x9lxjfsvpn7ajw2agutthe75553ws45k3ld46vy8pts0w203g",
-              "interpreter_code_id": 12,
+              "contract": "centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d",
+              "interpreter_code_id": 16,
               "admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k"
             }
           },
@@ -88,12 +88,11 @@
           }
         }
       },
-
       {
         "force_asset": {
           "asset_id": "237684487542793012780631851009",
           "network_id": 3,
-          "metadata":"Picasso PICA Layer PICA on Osmosis",
+          "metadata": "Picasso PICA Layer PICA on Osmosis",
           "local": {
             "native": {
               "denom": "ibc/56D7C03B8F6A07AD322EEE1BEF3AE996E09D1C1E34C27CF37E0D4A0AC5972516"
@@ -127,7 +126,7 @@
             }
           }
         }
-      },            
+      },
       {
         "force_asset": {
           "asset_id": "158456325028528675187087900673",
@@ -191,7 +190,7 @@
         "force_asset": {
           "asset_id": "237684487542793012780631851010",
           "network_id": 3,
-          "metadata":"Osmosis OSMO",
+          "metadata": "Osmosis OSMO",
           "local": {
             "native": {
               "denom": "uosmo"
@@ -202,34 +201,29 @@
       {
         "force_exchange": {
           "exchange": {
-            "osmosis_cross_chain_swap":
-              {
-                "pool_id": 1057,
-                "token_a": "uosmo",
-                "token_b": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244"
-              }            
+            "osmosis_cross_chain_swap": {
+              "pool_id": 1057,
+              "token_a": "uosmo",
+              "token_b": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244"
+            }
           },
           "exchange_id": "237684489387467420151587012609",
           "network_id": 3
         }
       },
-      
       {
         "force_exchange": {
           "exchange": {
-            "osmosis_cross_chain_swap": 
-              {
-                "pool_id": 1069,
-                "token_a": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244",
-                "token_b": "uosmo"
-              }            
+            "osmosis_cross_chain_swap": {
+              "pool_id": 1069,
+              "token_a": "ibc/6B2B19D874851F631FF0AF82C38A20D4B82F438C7A22F41EDA33568345397244",
+              "token_b": "uosmo"
+            }
           },
           "exchange_id": "237684489387467420151587012610",
           "network_id": 3
         }
       },
-
-
       {
         "force_asset_to_network_map": {
           "this_asset": "158456325028528675187087900675",
