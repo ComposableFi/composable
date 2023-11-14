@@ -8,8 +8,6 @@ version = "1.0.0"
 
 [dependencies]
 cfg-if = "1.0"
-grandpa-client-primitives = { package = "grandpa-light-client-primitives", git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", default-features = false }
-grandpa-prover = { git = "https://github.com/ComposableFi/composable-ibc", branch = "lsd-relayer", default-features = false }
 tokio = { version = "1.22.0", features = ["full"] }
 jsonrpsee = { version = "0.16.2", features = [
   "async-client",
@@ -28,8 +26,8 @@ futures-util = { version = "0.3.19", default-features = false, features = [
   "io",
 ] }
 hex = "0.4.3"
+
 [features]
-default = ["std"]
-std = ["grandpa-client-primitives/std"]
+default = ["picasso"]
 composable = []
 picasso = []
