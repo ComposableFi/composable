@@ -738,6 +738,69 @@ fn test_on_initialize_work() {
 	})
 }
 
+// #[test]
+fn test_set_staking_ledger_work() {
+	todo!()
+    new_test_ext().execute_with(|| {
+        let derivative_index = 0u16;
+        let bond_amount = 100;
+        let bond_extra_amount = 50;
+        let mut staking_ledger = <StakingLedger<AccountId, BalanceOf<Test>>>::new(
+            LiquidStaking::derivative_sovereign_account_id(derivative_index),
+            bond_amount,
+        );
+        assert_noop!(
+            LiquidStaking::set_staking_ledger(
+                RuntimeOrigin::signed(ALICE),
+                derivative_index,
+                staking_ledger.clone(),
+                get_mock_proof_bytes()
+            ),
+            Error::<Test>::NotBonded
+        );
+        StakingLedgers::<Test>::insert(derivative_index, staking_ledger.clone());
+        assert_eq!(
+            LiquidStaking::staking_ledger(derivative_index).unwrap(),
+            staking_ledger.clone()
+        );
+        staking_ledger.bond_extra(bond_extra_amount);
+        assert_noop!(
+            LiquidStaking::set_staking_ledger(
+                RuntimeOrigin::signed(ALICE),
+                derivative_index,
+                staking_ledger.clone(),
+                get_mock_proof_bytes()
+            ),
+            Error::<Test>::InvalidProof
+        );
+        LiquidStaking::on_finalize(1);
+        assert_ok!(LiquidStaking::set_staking_ledger(
+            RuntimeOrigin::signed(ALICE),
+            derivative_index,
+            get_mock_staking_ledger(derivative_index),
+            get_mock_proof_bytes()
+        ));
+
+        assert_noop!(
+            LiquidStaking::set_staking_ledger(
+                RuntimeOrigin::signed(ALICE),
+                derivative_index,
+                staking_ledger.clone(),
+                get_mock_proof_bytes()
+            ),
+            Error::<Test>::StakingLedgerLocked
+        );
+
+        LiquidStaking::on_finalize(1);
+        assert_eq!(
+            LiquidStaking::staking_ledger(derivative_index)
+                .unwrap()
+                .total,
+            MOCK_LEDGER_AMOUNT
+        );
+    })
+}
+
 #[test]
 fn test_force_set_era_start_block_work() {
 	new_test_ext().execute_with(|| {
