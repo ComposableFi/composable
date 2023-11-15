@@ -1,3 +1,0 @@
-🗣️ If you think it should have worked, please open an issue at https://github.com/chevdor/subwasm/issues
-and attach your runtime and mention using subwasmlib v0.20.0
-The source was "result/lib/runtime.optimized.wasm" 
