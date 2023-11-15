@@ -887,3 +887,173 @@ fn cancel_unstake_works() {
 		assert_eq!(LiquidStaking::fast_unstake_requests(&ALICE), 0);
 	})
 }
+
+// #[test]
+fn test_charge_commission_work() {
+	todo!();
+	new_test_ext().execute_with(|| {
+		let derivative_index = 0u16;
+		let bond_amount = ksm(200f64);
+		let staking_ledger = <StakingLedger<AccountId, BalanceOf<Test>>>::new(
+			LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			bond_amount,
+		);
+		StakingLedgers::<Test>::insert(derivative_index, staking_ledger.clone());
+		assert_ok!(LiquidStaking::update_commission_rate(
+			RuntimeOrigin::root(),
+			Rate::from_rational(1, 100)
+		));
+		LiquidStaking::on_finalize(1);
+
+		// liquid_amount_to_fee=TotalLiquidCurrency *
+		// (commission_rate*total_rewards/(TotalStakeCurrency+(1-commission_rate)*total_rewards))
+		let commission_rate = CommissionRate::<Test>::get();
+		let total_rewards = MOCK_LEDGER_AMOUNT - bond_amount;
+		let commission_staking_amount = commission_rate.saturating_mul_int(total_rewards);
+		let issurance = <Test as Config>::Assets::total_issuance(SKSM);
+		let matching_ledger = LiquidStaking::matching_pool();
+		let total_active_bonded: u128 = StakingLedgers::<Test>::iter_values()
+			.fold(Zero::zero(), |acc, ledger| acc.saturating_add(ledger.active));
+		let total_bonded = total_active_bonded + matching_ledger.total_stake_amount.total -
+			matching_ledger.total_unstake_amount.total;
+		let inflate_rate = Rate::checked_from_rational(
+			commission_staking_amount,
+			total_bonded + total_rewards - commission_staking_amount,
+		)
+		.unwrap();
+
+		let inflate_liquid_amount = inflate_rate.saturating_mul_int(issurance);
+
+		assert_ok!(LiquidStaking::set_staking_ledger(
+			RuntimeOrigin::signed(ALICE),
+			derivative_index,
+			get_mock_staking_ledger(derivative_index),
+			get_mock_proof_bytes()
+		));
+
+		assert_eq!(
+			LiquidStaking::staking_ledger(derivative_index).unwrap().total,
+			MOCK_LEDGER_AMOUNT
+		);
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(SKSM, &DefaultProtocolFeeReceiver::get()),
+			inflate_liquid_amount
+		)
+	})
+}
+
+#[test]
+fn test_complete_fast_match_unstake_work() {
+	new_test_ext().execute_with(|| {
+		let reserve_factor = LiquidStaking::reserve_factor();
+		let xcm_fees = XcmFees::get();
+		let bond_amount = ksm(10f64);
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(BOB), bond_amount));
+		let total_stake_amount = bond_amount - xcm_fees - reserve_factor.mul_floor(bond_amount);
+
+		let fast_unstake_amount = ksm(3f64);
+		assert_ok!(LiquidStaking::unstake(
+			RuntimeOrigin::signed(BOB),
+			fast_unstake_amount,
+			UnstakeProvider::MatchingPool
+		));
+		assert_ok!(LiquidStaking::fast_match_unstake(RuntimeOrigin::signed(BOB), [BOB].to_vec(),));
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(SKSM, &DefaultProtocolFeeReceiver::get()),
+			MatchingPoolFastUnstakeFee::get().saturating_mul_int(fast_unstake_amount)
+		);
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(SKSM, &BOB),
+			total_stake_amount - fast_unstake_amount
+		);
+		let pool_stake_amount = total_stake_amount -
+			Rate::one()
+				.saturating_sub(MatchingPoolFastUnstakeFee::get())
+				.saturating_mul_int(fast_unstake_amount);
+		assert_eq!(
+			LiquidStaking::matching_pool(),
+			MatchingLedger {
+				total_stake_amount: ReservableAmount { total: pool_stake_amount, reserved: 0 },
+				total_unstake_amount: Default::default(),
+			}
+		);
+	})
+}
+
+#[test]
+fn test_partial_fast_match_unstake_work() {
+	new_test_ext().execute_with(|| {
+		let reserve_factor = LiquidStaking::reserve_factor();
+		let xcm_fees = XcmFees::get();
+		let bond_amount = ksm(5f64);
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), bond_amount));
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(BOB), bond_amount));
+
+		let alice_stake_amount = bond_amount - xcm_fees - reserve_factor.mul_floor(bond_amount);
+		let bob_stake_amount = alice_stake_amount;
+
+		// default exchange_rate is 1
+		let alice_fast_unstake_amount = ksm(10f64);
+		let bob_fast_unstake_amount = ksm(1f64);
+		assert_ok!(LiquidStaking::unstake(
+			RuntimeOrigin::signed(ALICE),
+			alice_fast_unstake_amount,
+			UnstakeProvider::MatchingPool
+		));
+		assert_ok!(LiquidStaking::unstake(
+			RuntimeOrigin::signed(BOB),
+			bob_fast_unstake_amount,
+			UnstakeProvider::MatchingPool
+		));
+		assert_ok!(LiquidStaking::fast_match_unstake(
+			RuntimeOrigin::signed(BOB),
+			[BOB, ALICE].to_vec(),
+		));
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(SKSM, &BOB),
+			bob_stake_amount - bob_fast_unstake_amount
+		);
+
+		let bob_matched_amount = Rate::one()
+			.saturating_sub(MatchingPoolFastUnstakeFee::get())
+			.saturating_mul_int(bob_fast_unstake_amount);
+
+		let available_amount = (alice_stake_amount + bob_stake_amount - bob_matched_amount)
+			.min(alice_fast_unstake_amount);
+		let alice_matched_amount = Rate::one()
+			.saturating_sub(MatchingPoolFastUnstakeFee::get())
+			.saturating_mul_int(available_amount);
+
+		// mint in mock
+		let alice_initial_amount = ksm(100f64);
+		assert_eq!(
+			<Test as Config>::Assets::balance(SKSM, &ALICE),
+			alice_initial_amount + alice_stake_amount - available_amount
+		);
+
+		assert_eq!(
+			LiquidStaking::matching_pool(),
+			MatchingLedger {
+				total_stake_amount: ReservableAmount {
+					total: alice_stake_amount + bob_stake_amount -
+						bob_matched_amount - alice_matched_amount,
+					reserved: 0
+				},
+				total_unstake_amount: Default::default(),
+			}
+		);
+		assert_eq!(
+			LiquidStaking::fast_unstake_requests(&ALICE),
+			alice_fast_unstake_amount - available_amount
+		);
+
+		assert_ok!(with_transaction(|| -> TransactionOutcome<DispatchResult> {
+			assert_ok!(LiquidStaking::do_matching());
+			TransactionOutcome::Commit(Ok(()))
+		}));
+	})
+}
