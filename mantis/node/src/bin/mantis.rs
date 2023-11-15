@@ -13,14 +13,21 @@ async fn main() {
             address: args.order_contract.clone(),
             query_data: r###"{ "get_all_orders": {} }"###.as_bytes().to_vec(),
         };
-        let orders_response = client
+        let orders = client
             .smart_contract_state(orders_request)
             .await
-            .expect("orders obtained");
-    
+            .expect("orders obtained")
+            .into_inner();
+        cw_mantis_order::
+
+        
         // just print them for now
-        println!("orders: {:?}", orders_response);
+        println!("orders: {:?}", orders);
     }
+}
+
+
+    // ================= work in progress =================
     //     // connect to orders node
 
     //     // request all orders
@@ -47,9 +54,6 @@ async fn main() {
     //         solve(orders_client, args.wallet, args.order_contract).await;
     //     }
     // }
-
-}
-
 // fn solve(orders_client: Client, wallet: String, order_contract: String) {
 //     // get orders
 //     // call bruno solver with formed data
