@@ -254,7 +254,7 @@ pub mod pallet {
 					asset_id: currency,
 					is_error: true,
 				});
-				return None;
+				return None
 			};
 			//if para id is none then parent is 1 if para id is some then parent is 0
 			let parent = if para_id.is_some() { 0 } else { 1 };
@@ -577,7 +577,7 @@ pub mod pallet {
 					route_id,
 					reason: MultihopEventReason::MultiHopRouteDoesNotExist,
 				});
-				return None;
+				return None
 			};
 
 			let route_len = route.len();
@@ -592,7 +592,7 @@ pub mod pallet {
 					route_id,
 					reason: MultihopEventReason::MultiHopRouteExistButNotConfigured,
 				});
-				return None;
+				return None
 			};
 
 			if addresses.len() != route_len {
@@ -616,7 +616,7 @@ pub mod pallet {
 						route_id,
 						reason: MultihopEventReason::FailedToDeriveCosmosAddressFromBytes,
 					});
-					return None;
+					return None
 				};
 
 				let Ok(name) = String::from_utf8(chain_name.into()) else {
@@ -625,7 +625,7 @@ pub mod pallet {
 						route_id,
 						reason: MultihopEventReason::FailedToDeriveChainNameFromUtf8,
 					});
-					return None;
+					return None
 				};
 
 				let Ok(name) = bech32_no_std::encode(&name, data, bech32_no_std::Variant::Bech32)
@@ -635,7 +635,7 @@ pub mod pallet {
 						route_id,
 						reason: MultihopEventReason::FailedToEncodeBech32Address,
 					});
-					return None;
+					return None
 				};
 
 				MultiAddress::<AccoindIdOf<T>>::Raw(name.into_bytes())
@@ -648,7 +648,7 @@ pub mod pallet {
 						route_id,
 						reason: MultihopEventReason::FailedToDecodeDestAccountId,
 					});
-					return None;
+					return None
 				};
 				MultiAddress::<AccoindIdOf<T>>::Id(account_id_from)
 			};
@@ -669,7 +669,7 @@ pub mod pallet {
 					route_id,
 					reason: MultihopEventReason::FailedToDecodeSenderAccountId,
 				});
-				return None;
+				return None
 			};
 			let signed_account_id = RawOrigin::Signed(account_id_from.clone());
 
@@ -680,7 +680,7 @@ pub mod pallet {
 					route_id,
 					reason: MultihopEventReason::DoesNotSupportNonFungible,
 				});
-				return None;
+				return None
 			};
 
 			let mut memo: Option<<T as pallet_ibc::Config>::MemoMessage> = None;
@@ -700,7 +700,7 @@ pub mod pallet {
 					route_id,
 					reason: MultihopEventReason::FailedCreateMemo,
 				});
-				return None;
+				return None
 			};
 			if let Some(memo_data) = memo_data {
 				let memo_result = <T as pallet_ibc::Config>::MemoMessage::try_from(
@@ -714,7 +714,7 @@ pub mod pallet {
 						reason:
 							MultihopEventReason::FailedToConvertMemoIntoPalletIbcMemoMessageType,
 					});
-					return None;
+					return None
 				};
 				memo = Some(memo_result)
 			}
