@@ -1,7 +1,7 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
 use crate::sv::ExecMsg;
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, schemars};
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
@@ -20,6 +20,7 @@ use sylvia::{
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
+use cvm::network::NetworkId;
 pub type Amount = Uint128;
 pub type OrderId = Uint128;
 
@@ -191,7 +192,7 @@ pub struct OrderContract<'a> {
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
 	pub cvm_address: Item<'a, String>,
-	pub admin : cw_controllers::Admin::new("admin"),
+	pub admin : cw_controllers::Admin<'a>,
 }
 
 /// when solution is applied to order item,
