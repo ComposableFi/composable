@@ -85,23 +85,12 @@
         let
           config = mkZombienet {
             relaychain = relaychainBase;
-            parachains = [
-              {
-                command = pkgs.lib.meta.getExe self'.packages.composable-node;
-                inherit chain;
-                id = 2087;
-                collators = 3;
-              }
-
-              {
-                command = pkgs.lib.meta.getExe self'.packages.acala-node;
-                chain = "karura-dev";
-                id = 2000;
-                collators = 1;
-                ws_port = 9999;
-                rpc_port = 32210;
-              }
-            ];
+            parachains = [{
+              command = pkgs.lib.meta.getExe self'.packages.composable-node;
+              inherit chain;
+              id = 2087;
+              collators = 3;
+            }];
           };
         in zombieTools.writeZombienetShellApplication name config;
 
