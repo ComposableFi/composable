@@ -15,6 +15,7 @@ use sp_trie::StorageProof;
 use xcm_simulator::TestExt;
 
 use crate::{mock::*, types::*, *};
+use parity_scale_codec::Encode;
 
 #[test]
 fn stake_should_work() {
@@ -465,3 +466,504 @@ fn test_transact_withdraw_unbonded_work() {
 		assert_eq!(ledger.unlocking.len(), 0);
 	});
 }
+
+#[test]
+fn test_transact_rebond_work() {
+	TestNet::reset();
+	let derivative_index = 0u16;
+	ParaA::execute_with(|| {
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), ksm(6000f64),));
+		assert_ok!(LiquidStaking::unstake(
+			RuntimeOrigin::signed(ALICE),
+			ksm(1000f64),
+			Default::default()
+		));
+		let bond_amount = ksm(10f64);
+		assert_ok!(LiquidStaking::bond(
+			RuntimeOrigin::signed(ALICE),
+			derivative_index,
+			bond_amount,
+			RewardDestination::Staked
+		));
+
+		assert_ok!(LiquidStaking::notification_received(
+			pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+			0,
+			Response::ExecutionResult(None),
+		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(10f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
+		assert_ok!(LiquidStaking::unbond(
+			RuntimeOrigin::signed(ALICE),
+			derivative_index,
+			ksm(5f64)
+		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Unbonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(5f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
+		assert_ok!(LiquidStaking::rebond(
+			RuntimeOrigin::signed(ALICE),
+			derivative_index,
+			ksm(3f64)
+		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(3f64),
+		}));
+		let ledger =
+			RelayStaking::ledger(LiquidStaking::derivative_sovereign_account_id(derivative_index))
+				.unwrap();
+		assert_eq!(ledger.total, ksm(10f64));
+		assert_eq!(ledger.active, ksm(8f64));
+	});
+}
+
+#[test]
+fn test_transact_nominate_work() {
+    TestNet::reset();
+    let derivative_index = 0u16;
+    ParaA::execute_with(|| {
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(4000f64),
+        ));
+        let bond_amount = ksm(10f64);
+        assert_ok!(LiquidStaking::bond(
+            RuntimeOrigin::signed(ALICE),
+            derivative_index,
+            bond_amount,
+            RewardDestination::Staked
+        ));
+
+        assert_ok!(LiquidStaking::notification_received(
+            pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+            0,
+            Response::ExecutionResult(None),
+        ));
+
+        assert_ok!(LiquidStaking::nominate(
+            RuntimeOrigin::signed(ALICE),
+            derivative_index,
+            vec![ALICE, BOB],
+        ));
+    });
+
+    Relay::execute_with(|| {
+        let ledger = RelayStaking::ledger(LiquidStaking::derivative_sovereign_account_id(
+            derivative_index,
+        ))
+        .unwrap();
+        assert_eq!(ledger.total, ksm(10f64));
+        let nominators = RelayStaking::nominators(LiquidStaking::derivative_sovereign_account_id(
+            derivative_index,
+        ))
+        .unwrap();
+        assert_eq!(nominators.targets, vec![ALICE, BOB]);
+    });
+}
+
+#[test]
+fn test_transfer_bond() {
+    TestNet::reset();
+    let xcm_transfer_amount = ksm(10f64);
+    let derivative_index = 0u16;
+    ParaA::execute_with(|| {
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(2000f64),
+        ));
+        assert_ok!(LiquidStaking::bond(
+            RuntimeOrigin::signed(ALICE),
+            derivative_index,
+            xcm_transfer_amount,
+            RewardDestination::Staked
+        ));
+    });
+    Relay::execute_with(|| {
+        let ledger = RelayStaking::ledger(LiquidStaking::derivative_sovereign_account_id(
+            derivative_index,
+        ))
+        .unwrap();
+        assert_eq!(ledger.total, xcm_transfer_amount);
+        assert_eq!(
+            RelayBalances::free_balance(LiquidStaking::derivative_sovereign_account_id(
+                derivative_index
+            )),
+            xcm_transfer_amount
+        );
+        assert_eq!(
+            RelayBalances::usable_balance(LiquidStaking::derivative_sovereign_account_id(
+                derivative_index
+            )),
+            0
+        );
+    });
+}
+
+#[test]
+fn update_staking_ledger_cap_should_not_work_if_with_invalid_param() {
+    new_test_ext().execute_with(|| {
+        assert_noop!(
+            LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::root(), Zero::zero()),
+            Error::<Test>::InvalidCap
+        );
+    })
+}
+
+#[test]
+fn update_reserve_factor_should_not_work_if_with_invalid_param() {
+    new_test_ext().execute_with(|| {
+        assert_noop!(
+            LiquidStaking::update_reserve_factor(RuntimeOrigin::root(), Ratio::zero()),
+            Error::<Test>::InvalidFactor
+        );
+        assert_noop!(
+            LiquidStaking::update_reserve_factor(RuntimeOrigin::root(), Ratio::one()),
+            Error::<Test>::InvalidFactor
+        );
+    })
+}
+
+#[test]
+fn claim_for_should_work() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(10f64)
+        ));
+        assert_eq!(<Test as Config>::Assets::balance(KSM, &ALICE), ksm(90f64));
+
+        assert_ok!(LiquidStaking::unstake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(1f64),
+            Default::default()
+        ));
+        assert_ok!(LiquidStaking::unstake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(3.95f64),
+            Default::default()
+        ));
+        assert_eq!(
+            Unlockings::<Test>::get(ALICE).unwrap(),
+            vec![UnlockChunk {
+                value: ksm(4.95f64),
+                era: 4
+            },]
+        );
+
+        assert_noop!(
+            LiquidStaking::claim_for(RuntimeOrigin::signed(BOB), Id(ALICE)),
+            Error::<Test>::NothingToClaim
+        );
+
+        let derivative_index = 0u16;
+        assert_ok!(with_transaction(
+            || -> TransactionOutcome<DispatchResult> {
+                assert_ok!(LiquidStaking::do_advance_era(4));
+                assert_ok!(LiquidStaking::do_matching());
+                TransactionOutcome::Commit(Ok(()))
+            }
+        ));
+        assert_ok!(LiquidStaking::notification_received(
+            pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+            0,
+            Response::ExecutionResult(None),
+        ));
+        assert_ok!(LiquidStaking::withdraw_unbonded(
+            RuntimeOrigin::root(),
+            derivative_index,
+            0
+        ));
+        assert_ok!(LiquidStaking::notification_received(
+            pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+            1,
+            Response::ExecutionResult(None),
+        ));
+
+        assert_ok!(LiquidStaking::claim_for(
+            RuntimeOrigin::signed(BOB),
+            Id(ALICE)
+        ));
+        assert_eq!(
+            <Test as Config>::Assets::balance(KSM, &ALICE),
+            ksm(90f64) + ksm(4.95f64)
+        );
+
+        assert!(Unlockings::<Test>::get(ALICE).is_none());
+    })
+}
+
+// #[test]
+fn test_on_initialize_work() {
+	todo!();
+    new_test_ext().execute_with(|| {
+        let derivative_index = 0u16;
+        let xcm_fees = XcmFees::get();
+        let reserve_factor = LiquidStaking::reserve_factor();
+
+        // 1.1 stake
+        let bond_amount = ksm(10f64);
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            bond_amount
+        ));
+        let total_stake_amount = bond_amount - xcm_fees - reserve_factor.mul_floor(bond_amount);
+
+        // 1.2 on_initialize_bond
+        let total_era_blocknumbers = <Test as Config>::EraLength::get();
+        assert_eq!(total_era_blocknumbers, 10);
+		assert_ok!(LiquidStaking::force_advance_era(
+            RuntimeOrigin::root(),
+            1
+        ));
+        RelayChainValidationDataProvider::set(total_era_blocknumbers);
+		System::set_block_number(System::block_number() + 1);
+		LiquidStaking::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+        LiquidStaking::on_initialize(System::block_number());
+        assert_eq!(EraStartBlock::<Test>::get(), total_era_blocknumbers);
+        assert_eq!(CurrentEra::<Test>::get(), 1);
+        assert_eq!(LiquidStaking::staking_ledger(derivative_index), None);
+        assert_eq!(
+            LiquidStaking::matching_pool(),
+            MatchingLedger {
+                total_stake_amount: ReservableAmount {
+                    total: total_stake_amount,
+                    reserved: total_stake_amount
+                },
+                total_unstake_amount: Default::default(),
+            }
+        );
+
+        // 1.3 notification_received bond
+        assert_ok!(LiquidStaking::notification_received(
+            pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+            0,
+            Response::ExecutionResult(None),
+        ));
+
+        let staking_ledger = <StakingLedger<AccountId, BalanceOf<Test>>>::new(
+            LiquidStaking::derivative_sovereign_account_id(derivative_index),
+            total_stake_amount,
+        );
+        assert_eq!(
+            LiquidStaking::staking_ledger(derivative_index).unwrap(),
+            staking_ledger
+        );
+
+        assert_eq!(LiquidStaking::matching_pool(), MatchingLedger::default());
+    })
+}
+
+#[test]
+fn test_force_set_era_start_block_work() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(EraStartBlock::<Test>::get(), 0);
+        assert_ok!(LiquidStaking::force_set_era_start_block(
+            RuntimeOrigin::root(),
+            11
+        ));
+        assert_eq!(EraStartBlock::<Test>::get(), 11);
+    })
+}
+
+#[test]
+fn test_force_set_current_era_work() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(CurrentEra::<Test>::get(), 0);
+        assert_ok!(LiquidStaking::force_set_current_era(
+            RuntimeOrigin::root(),
+            12
+        ));
+        assert_eq!(CurrentEra::<Test>::get(), 12);
+    })
+}
+
+#[test]
+fn test_force_notification_received_work() {
+    new_test_ext().execute_with(|| {
+        let derivative_index = 0u16;
+        let bond_amount = ksm(10f64);
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(20f64),
+        ));
+
+        assert_ok!(LiquidStaking::bond(
+            RuntimeOrigin::signed(ALICE),
+            derivative_index,
+            bond_amount,
+            RewardDestination::Staked
+        ));
+
+        let query_id = 0;
+        assert_eq!(
+            XcmRequests::<Test>::get(query_id),
+            Some(XcmRequest::Bond {
+                index: derivative_index,
+                amount: bond_amount,
+            })
+        );
+        assert_noop!(
+            LiquidStaking::notification_received(
+                RuntimeOrigin::signed(ALICE),
+                query_id,
+                Response::ExecutionResult(None),
+            ),
+            BadOrigin
+        );
+        assert_ok!(LiquidStaking::notification_received(
+            RuntimeOrigin::root(),
+            query_id,
+            Response::ExecutionResult(None),
+        ));
+        assert_eq!(XcmRequests::<Test>::get(query_id), None);
+    })
+}
+
+#[test]
+fn test_storage_proof_approach_should_work() {
+    let relay_root = sp_core::hash::H256::from_slice(&hex::decode(ROOT_HASH).unwrap());
+    let key = hex::decode(MOCK_KEY).unwrap();
+    let value = hex::decode(MOCK_DATA).unwrap();
+    let relay_proof = StorageProof::new(get_mock_proof_bytes());
+    let result = sp_state_machine::read_proof_check::<BlakeTwo256, _>(
+        relay_root,
+        relay_proof.clone(),
+        [key.clone()],
+    )
+    .unwrap();
+    assert_eq!(
+        result.into_iter().collect::<Vec<_>>(),
+        vec![(key, Some(value))],
+    );
+}
+
+#[test]
+fn test_verify_trie_proof_work() {
+    type LayoutV1 = sp_trie::LayoutV1<BlakeTwo256>;
+    let relay_root = sp_core::hash::H256::from_slice(&hex::decode(ROOT_HASH).unwrap());
+    let key = hex::decode(MOCK_KEY).unwrap();
+    let value = hex::decode(MOCK_DATA).unwrap();
+    let relay_proof = StorageProof::new(get_mock_proof_bytes());
+    let db = relay_proof.into_memory_db();
+    let result = sp_trie::read_trie_value::<LayoutV1, _>(&db, &relay_root, &key, None, None)
+        .unwrap()
+        .unwrap();
+    assert_eq!(result, value);
+}
+
+// #[test]
+fn test_verify_merkle_proof_work() {
+	todo!();
+    new_test_ext().execute_with(|| {
+        let derivative_index = 0u16;
+        let staking_ledger = get_mock_staking_ledger(derivative_index);
+        let key = LiquidStaking::get_staking_ledger_key(derivative_index);
+        let value = staking_ledger.encode();
+        assert_eq!(hex::encode(&value), MOCK_DATA);
+        LiquidStaking::on_finalize(1);
+        assert!(LiquidStaking::verify_merkle_proof(
+            key,
+            value,
+            get_mock_proof_bytes()
+        ));
+    })
+}
+
+#[test]
+fn reduce_reserves_works() {
+    new_test_ext().execute_with(|| {
+        // Stake 1000 KSM, 0.5% for reserves
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(100f64)
+        ));
+        assert_eq!(LiquidStaking::total_reserves(), ksm(0.5f64));
+        // Reduce 20 KSM reserves
+        assert_ok!(LiquidStaking::reduce_reserves(
+            RuntimeOrigin::root(),
+            Id(ALICE),
+            ksm(0.2f64)
+        ));
+        assert_eq!(LiquidStaking::total_reserves(), ksm(0.3f64));
+
+        // should failed if exceed the cap
+        assert_noop!(
+            LiquidStaking::reduce_reserves(RuntimeOrigin::root(), Id(ALICE), ksm(0.31f64)),
+            Underflow
+        );
+    })
+}
+
+#[test]
+fn cancel_unstake_works() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(LiquidStaking::stake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(10f64)
+        ));
+        assert_ok!(LiquidStaking::unstake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(6f64),
+            UnstakeProvider::MatchingPool
+        ));
+
+        assert_eq!(LiquidStaking::fast_unstake_requests(&ALICE), ksm(6f64));
+
+        // Check storage is correct
+        assert_eq!(ExchangeRate::<Test>::get(), Rate::one());
+        assert_eq!(
+            MatchingPool::<Test>::get(),
+            MatchingLedger {
+                total_stake_amount: ReservableAmount {
+                    total: ksm(9.95f64),
+                    reserved: 0
+                },
+                total_unstake_amount: ReservableAmount {
+                    total: 0,
+                    reserved: 0
+                }
+            }
+        );
+
+        assert_ok!(LiquidStaking::cancel_unstake(
+            RuntimeOrigin::signed(ALICE),
+            ksm(6f64)
+        ));
+        assert_eq!(
+            MatchingPool::<Test>::get(),
+            MatchingLedger {
+                total_stake_amount: ReservableAmount {
+                    total: ksm(9.95f64),
+                    reserved: 0
+                },
+                total_unstake_amount: ReservableAmount {
+                    total: 0,
+                    reserved: 0
+                }
+            }
+        );
+
+        assert_eq!(LiquidStaking::fast_unstake_requests(&ALICE), 0);
+    })
+}
+
