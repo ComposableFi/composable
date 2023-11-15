@@ -1,6 +1,6 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
-use crate::sv::ExecMsg;
+use crate::sv::{ExecMsg, QueryMsg};
 use cosmwasm_schema::{cw_serde, schemars};
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
@@ -192,7 +192,7 @@ pub struct OrderContract<'a> {
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
 	pub cvm_address: Item<'a, String>,
-	pub admin : cw_controllers::Admin<'a>,
+	pub admin: cw_controllers::Admin<'a>,
 }
 
 /// when solution is applied to order item,
@@ -238,10 +238,10 @@ impl Default for OrderContract<'_> {
 			next_order_id: Item::new("next_order_id"),
 			cvm_address: Item::new("cvm_address"),
 			solutions: solutions(),
+			admin: cw_controllers::Admin::new("admin"),
 		}
 	}
 }
-
 
 #[entry_points]
 #[contract]
@@ -252,9 +252,12 @@ impl OrderContract<'_> {
 	#[msg(instantiate)]
 	pub fn instantiate(
 		&self,
-		ctx: InstantiateCtx, 
-
+		mut ctx: InstantiateCtx,
+		admin: Option<Addr>,
+		cvm_address: Addr,
 	) -> StdResult<Response> {
+		self.cvm_address.save(ctx.deps.storage, &cvm_address.into_string());
+		self.admin.set(ctx.deps.branch(), Some(admin.unwrap_or(ctx.info.sender)))?;
 		Ok(Response::default())
 	}
 
@@ -331,9 +334,15 @@ impl OrderContract<'_> {
 		);
 
 		let cvm = Self::traverse_route(msg.route);
-
-
-		Ok(Response::default())
+		let cvm = cvm::gateway::ExecuteMsg::ExecuteProgram(cvm::gateway::ExecuteProgramMsg {
+			salt: vec![],
+			program: cvm,
+			assets: <_>::default(),
+			tip: None,
+		});
+		let contract = self.cvm_address.load(ctx.deps.storage)?;
+		let cvm = wasm_execute(ctx.env.contract.address, &cvm, vec![])?;
+		Ok(Response::default().add_message(cvm))
 	}
 
 	/// converts high level route to CVM program
@@ -588,7 +597,7 @@ fn solves_cows_via_bank(
 		transfers.push((amount, order.order.order_id));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
 	}
 	Ok(transfers)
 }
