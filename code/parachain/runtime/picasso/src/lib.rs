@@ -731,7 +731,7 @@ parameter_types! {
 
 impl pallet_xcm_helper::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type Assets = Assets;
 	type XcmSender = crate::xcmp::XcmRouter;
 	type RelayNetwork = RelayNetwork;
@@ -807,8 +807,8 @@ impl pallet_liquid_staking::Config for Runtime {
 	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
 	type SelfParaId = ParachainInfo;
 	type Assets = Assets;
-	type RelayOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RelayOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type DerivativeIndexList = DerivativeIndexList;
 	type XcmFees = XcmFees;
 	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
