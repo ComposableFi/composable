@@ -13,7 +13,8 @@
             "cargo build --release --package ${name}-runtime-wasm --target wasm32-unknown-unknown"
             + pkgs.lib.strings.optionalString (features != "")
             (" --features=${features}");
-          # From parity/wasm-builder
+          # From parity-tech/polkdot-sdk/wasm-builder
+          # See also https://github.com/paritytech/polkadot-sdk/issues/1755      
           RUSTFLAGS =
             "-C target-cpu=mvp -C target-feature=-sign-ext -C link-arg=--export-table -Clink-arg=--export=__heap_base -C link-arg=--import-memory";
         });
@@ -29,9 +30,8 @@
           installPhase = ''
             mkdir --parents $out/lib
             # https://github.com/paritytech/substrate/blob/30cb4d10b3118d1b3aa5b2ae7fa8429b2c4f28de/utils/wasm-builder/src/wasm_project.rs#L694
-            #wasm-opt ${runtime}/lib/${name}_runtime.wasm -o $out/lib/runtime.optimized.wasm -Os --strip-dwarf --debuginfo --mvp-features            
-            #${pkgs.subwasm}/bin/subwasm compress $out/lib/runtime.optimized.wasm $out/lib/runtime.optimized.wasm
-            cp ${runtime}/lib/${name}_runtime.wasm $out/lib/runtime.optimized.wasm
+            wasm-opt ${runtime}/lib/${name}_runtime.wasm -o $out/lib/runtime.optimized.wasm -Os --strip-dwarf --debuginfo --mvp-features            
+            ${pkgs.subwasm}/bin/subwasm compress $out/lib/runtime.optimized.wasm $out/lib/runtime.optimized.wasm
           '';
         };
 
