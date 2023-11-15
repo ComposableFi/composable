@@ -1,5 +1,6 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
+use crate::sv::ExecMsg;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
@@ -21,7 +22,6 @@ use num_rational::BigRational;
 
 pub type Amount = Uint128;
 pub type OrderId = Uint128;
-pub type NetworkId = u32;
 
 /// block moment (analog of timestamp)
 pub type Block = u64;
@@ -191,6 +191,7 @@ pub struct OrderContract<'a> {
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
 	pub cvm_address: Item<'a, String>,
+	pub admin : cw_controllers::Admin::new("admin"),
 }
 
 /// when solution is applied to order item,
@@ -240,6 +241,7 @@ impl Default for OrderContract<'_> {
 	}
 }
 
+
 #[entry_points]
 #[contract]
 impl OrderContract<'_> {
@@ -249,7 +251,8 @@ impl OrderContract<'_> {
 	#[msg(instantiate)]
 	pub fn instantiate(
 		&self,
-		_ctx: InstantiateCtx, /* i think we would need admin, gateway, scoring/fee parameters */
+		ctx: InstantiateCtx, 
+
 	) -> StdResult<Response> {
 		Ok(Response::default())
 	}
@@ -326,7 +329,8 @@ impl OrderContract<'_> {
 			"so here we add route execution tracking to storage and map route to CVM program",
 		);
 
-		let _cvm = Self::traverse_route(msg.route);
+		let cvm = Self::traverse_route(msg.route);
+
 
 		Ok(Response::default())
 	}
