@@ -597,7 +597,7 @@ fn solves_cows_via_bank(
 		transfers.push((amount, order.order.order_id));
 	}
 	if a_total_in < BigRational::default() || b_total_in < BigRational::default() {
-		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"));
+		return Err(StdError::generic_err("SolutionForCowsViaBankIsNotBalanced"))
 	}
 	Ok(transfers)
 }

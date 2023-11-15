@@ -1,4 +1,4 @@
-use crate::{prelude::*, asset::Funds};
+use crate::{asset::Funds, prelude::*};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, derive_more::From)]
 #[serde(rename_all = "snake_case")]
@@ -7,7 +7,6 @@ pub enum ExecuteMsg {
 	/// Sent by the user to execute a program on their behalf.
 	ExecuteProgram(ExecuteProgramMsg),
 }
-
 
 /// Definition of a program to be executed including its context.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

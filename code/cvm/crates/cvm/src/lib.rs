@@ -2,10 +2,10 @@
 extern crate alloc;
 
 pub mod asset;
+pub mod gateway;
 pub mod instruction;
 pub mod network;
 pub mod packet;
 mod prelude;
 pub mod program;
 pub mod shared;
-pub mod gateway;
