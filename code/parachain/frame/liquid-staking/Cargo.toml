@@ -68,6 +68,7 @@ pallet-assets = { path = "../assets" }
 orml-tokens = { workspace = true }
 composable-support = { path = "../composable-support", default-features = false }
 pallet-message-queue = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
+composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
 default = ["std"]

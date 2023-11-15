@@ -28,6 +28,8 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::{IsSystem, Sibling};
 pub type Price = FixedU128;
 use crate::types::ValidationDataProvider;
+use composable_support::collections::vec::bounded::BiBoundedVec;
+use composable_traits::{assets::AssetInfo, rational};
 use sp_runtime::FixedU128;
 
 // use pallet_loans::{InterestRateModel, JumpModel, Market, MarketState};
@@ -67,7 +69,6 @@ pub use kusama_runtime;
 use primitives::currency::CurrencyId;
 
 const KSM: CurrencyId = CurrencyId::KSM;
-const KSM_U: CurrencyId = CurrencyId::vKSM;
 const SKSM: CurrencyId = CurrencyId::xKSM;
 const PICA: CurrencyId = CurrencyId::PICA;
 
@@ -547,7 +548,6 @@ parameter_types! {
 	pub const MinUnstake: Balance = 0;
 	pub const StakingCurrency: CurrencyId = KSM;
 	pub const LiquidCurrency: CurrencyId = SKSM;
-	pub const CollateralCurrency: CurrencyId = KSM_U;
 	pub const XcmFees: Balance = 0;
 	pub LoansInstantUnstakeFee: Rate = Rate::saturating_from_rational(8u32, 1000u32);
 	pub MatchingPoolFastUnstakeFee: Rate = Rate::saturating_from_rational(1u32, 1000u32);
@@ -747,73 +747,44 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
-		// Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     KSM.into(),
-		//     b"Kusama".to_vec(),
-		//     b"KSM".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
-		// Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     SKSM.into(),
-		//     b"Parallel Kusama".to_vec(),
-		//     b"sKSM".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
-		// Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     KSM_U.into(),
-		//     b"Kusama Ubonding".to_vec(),
-		//     b"KSM_U".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
+		let name = Some(BiBoundedVec::from_vec(b"Kusama".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"KSM".to_vec()).unwrap());
+		let asset_info = AssetInfo {
+			name,
+			symbol,
+			decimals: Some(12),
+			existential_deposit: 375000000,
+			ratio: Some(rational!(42 / 123)),
+		};
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info);
 
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(ALICE),
-		//     ksm(100f64),
-		// )
-		// .unwrap();
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     SKSM.into(),
-		//     Id(ALICE),
-		//     ksm(100f64),
-		// )
-		// .unwrap();
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(BOB),
-		//     ksm(20000f64),
-		// )
-		// .unwrap();
+		let name = Some(BiBoundedVec::from_vec(b"Liquid Staked Kusama".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"LSKSM".to_vec()).unwrap());
+		let asset_info = AssetInfo {
+			name,
+			symbol,
+			decimals: Some(12),
+			existential_deposit: 375000000,
+			ratio: Some(rational!(42 / 123)),
+		};
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info);
+
+		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(ALICE), ksm(100f64))
+			.unwrap();
+		Assets::mint_into(RuntimeOrigin::signed(ALICE), SKSM.into(), Id(ALICE), ksm(100f64))
+			.unwrap();
+		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(BOB), ksm(20000f64))
+			.unwrap();
 		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::signed(BOB), ksm(10000f64))
 			.unwrap();
 
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(XcmHelper::account_id()),
-		//     ksm(100f64),
-		// )
-		// .unwrap();
-
-		// Loans::add_market(RuntimeOrigin::root(), KSM, market_mock(PKSM)).unwrap();
-		// Loans::activate_market(RuntimeOrigin::root(), KSM).unwrap();
-		// Loans::add_market(RuntimeOrigin::root(), KSM_U, market_mock(PKSM_U)).unwrap();
-		// Loans::activate_market(RuntimeOrigin::root(), KSM_U).unwrap();
+		Assets::mint_into(
+			RuntimeOrigin::signed(ALICE),
+			KSM.into(),
+			Id(XcmHelper::account_id()),
+			ksm(100f64),
+		)
+		.unwrap();
 
 		System::set_block_number(1);
 		Timestamp::set_timestamp(6000);
@@ -889,62 +860,40 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
-		// Assets::force_create(RuntimeOrigin::root(), KSM.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     KSM.into(),
-		//     b"Kusama".to_vec(),
-		//     b"KSM".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
-		// Assets::force_create(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     SKSM.into(),
-		//     b"Parallel Kusama".to_vec(),
-		//     b"sKSM".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
-		// Assets::force_create(RuntimeOrigin::root(), KSM_U.into(), Id(ALICE), true, 1).unwrap();
-		// Assets::force_set_metadata(
-		//     RuntimeOrigin::root(),
-		//     KSM_U.into(),
-		//     b"Kusama Ubonding".to_vec(),
-		//     b"KSM_U".to_vec(),
-		//     12,
-		//     false,
-		// )
-		// .unwrap();
+		let name = Some(BiBoundedVec::from_vec(b"Kusama".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"KSM".to_vec()).unwrap());
+		let asset_info = AssetInfo {
+			name,
+			symbol,
+			decimals: Some(12),
+			existential_deposit: 375000000,
+			ratio: Some(rational!(42 / 123)),
+		};
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info);
 
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(ALICE),
-		//     ksm(10000f64),
-		// )
-		// .unwrap();
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(BOB),
-		//     ksm(20000f64),
-		// )
-		// .unwrap();
-		// Assets::mint(
-		//     RuntimeOrigin::signed(ALICE),
-		//     KSM.into(),
-		//     Id(XcmHelper::account_id()),
-		//     ksm(30f64),
-		// )
-		// .unwrap();
+		let name = Some(BiBoundedVec::from_vec(b"Liquid Staked Kusama".to_vec()).unwrap());
+		let symbol = Some(BiBoundedVec::from_vec(b"LSKSM".to_vec()).unwrap());
+		let asset_info = AssetInfo {
+			name,
+			symbol,
+			decimals: Some(12),
+			existential_deposit: 375000000,
+			ratio: Some(rational!(42 / 123)),
+		};
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info);
 
-		// Loans::add_market(RuntimeOrigin::root(), KSM, market_mock(PKSM)).unwrap();
-		// Loans::activate_market(RuntimeOrigin::root(), KSM).unwrap();
-		// Loans::add_market(RuntimeOrigin::root(), KSM_U, market_mock(PKSM_U)).unwrap();
+		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(ALICE), ksm(10000f64))
+			.unwrap();
+		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(BOB), ksm(20000f64))
+			.unwrap();
+		Assets::mint_into(
+			RuntimeOrigin::signed(ALICE),
+			KSM.into(),
+			Id(XcmHelper::account_id()),
+			ksm(30f64),
+		)
+		.unwrap();
+
 		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::signed(BOB), ksm(10000f64))
 			.unwrap();
 
@@ -982,24 +931,3 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 pub fn ksm(n: f64) -> Balance {
 	((n * 1000000f64) as u128) * KSM_DECIMAL / 1000000u128
 }
-
-// pub const fn market_mock(ptoken_id: u32) -> Market<Balance> {
-//     Market {
-//         close_factor: Ratio::from_percent(50),
-//         collateral_factor: Ratio::from_percent(50),
-//         liquidation_threshold: Ratio::from_percent(55),
-//         liquidate_incentive: Rate::from_inner(Rate::DIV / 100 * 110),
-//         liquidate_incentive_reserved_factor: Ratio::from_percent(3),
-//         state: MarketState::Pending,
-//         rate_model: InterestRateModel::Jump(JumpModel {
-//             base_rate: Rate::from_inner(Rate::DIV / 100 * 2),
-//             jump_rate: Rate::from_inner(Rate::DIV / 100 * 10),
-//             full_rate: Rate::from_inner(Rate::DIV / 100 * 32),
-//             jump_utilization: Ratio::from_percent(80),
-//         }),
-//         reserve_factor: Ratio::from_percent(15),
-//         supply_cap: 1_000_000_000_000_000_000_000u128, // set to 1B
-//         borrow_cap: 1_000_000_000_000_000_000_000u128, // set to 1B
-//         ptoken_id,
-//     }
-// }
