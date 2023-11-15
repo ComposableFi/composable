@@ -867,7 +867,8 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 			existential_deposit: 375000000,
 			ratio: Some(rational!(42 / 123)),
 		};
-		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info);
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info)
+			.unwrap();
 
 		let name = Some(BiBoundedVec::from_vec(b"Liquid Staked Kusama".to_vec()).unwrap());
 		let symbol = Some(BiBoundedVec::from_vec(b"LSKSM".to_vec()).unwrap());
@@ -878,22 +879,20 @@ pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
 			existential_deposit: 375000000,
 			ratio: Some(rational!(42 / 123)),
 		};
-		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info);
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info)
+			.unwrap();
 
-		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(ALICE), ksm(10000f64))
-			.unwrap();
-		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(BOB), ksm(20000f64))
-			.unwrap();
+		Assets::mint_into(RuntimeOrigin::root(), KSM.into(), Id(ALICE), ksm(10000f64)).unwrap();
+		Assets::mint_into(RuntimeOrigin::root(), KSM.into(), Id(BOB), ksm(20000f64)).unwrap();
 		Assets::mint_into(
-			RuntimeOrigin::signed(ALICE),
+			RuntimeOrigin::root(),
 			KSM.into(),
 			Id(XcmHelper::account_id()),
 			ksm(30f64),
 		)
 		.unwrap();
 
-		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::signed(BOB), ksm(10000f64))
-			.unwrap();
+		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::root(), ksm(10000f64)).unwrap();
 
 		System::set_block_number(1);
 		Timestamp::set_timestamp(6000);
