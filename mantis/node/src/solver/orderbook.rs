@@ -1,8 +1,4 @@
 //! Solving just order book without cross chain routing.
-
-
-use itertools::Itertools;
-
 use crate::prelude::*;
 use crate::solver::types::*;
 
@@ -73,8 +69,11 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
         &self.value
     }
 
-    /// finds the price in which $max(x*y)$ is satisfied according limit
-    pub fn compute_optimal_price(&self, num_range: i32) -> Price {
+    /// Computes the optimal price that will maximize the transacted volume in batch auction.
+    /// Finds the price in which $max(x*y)$ is satisfied according limit.
+    /// `num_range` - amid min and max price, how many quantization point to consider.
+    /// All price outliers are pruned to avoid computational attack.
+    pub fn compute_optimal_price(&self, num_range: u16) -> Price {
         let mut optimal_price = Price(Decimal::new(-1, 0));
         let mut max_volume = BuyToken(Decimal::new(-1, 0));
         let (min_price, max_price) = match self.value.iter().map(|x| x.limit_price).minmax() {
@@ -116,7 +115,6 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
     }
 
     pub fn resolve_predominant(
-        &mut self,
         predominant_orders: &mut OrderList<Id>,
         other_orders: &mut OrderList<Id>,
         price: Price,
@@ -133,6 +131,6 @@ impl<Id: Copy + PartialEq + Debug> OrderList<Id> {
             }
             order.fill(order.amount_in, price);
             filled.0 += order.amount_in;
-        }
+        }        
     }
 }

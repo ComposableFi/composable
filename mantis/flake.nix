@@ -23,14 +23,21 @@
               python-packages = ps: with ps; [
                 numpy
                 cvxpy
+                wheel
+                virtualenv
               ];
               python = pkgs.python3.withPackages python-packages;
             in
             pkgs.mkShell {
+              # VIRTUALENV_PYTHON="${python}/bin/python3.11";
+              VIRTUAL_ENV=1;
+              nativeBuildInputs = [python];
               buildInputs = with pkgs; [
                 python
+                virtualenv
+                conda
                 rustc
-                pyo3-pack 
+                pyo3-pack
                 cargo
               ];
             };

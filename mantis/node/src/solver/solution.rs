@@ -18,20 +18,20 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
                 .partial_cmp(&b.limit_price)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        let order_list = OrderList { value: orders };
-        let matched_price = if !order_list.is_empty() {
-            order_list.value[0].filled_price
-        } else {
-            dec!(0.0)
-        };
-        let sell_volume = order_list.sell().amount_out();
-        let buy_volume = order_list.buy().amount_in();
+        let orders = OrderList { value: orders };
+        let matched_price = orders
+            .value
+            .get(0)
+            .map(|x| x.filled_price)
+            .unwrap_or_default();
+        let buy_volume = orders.sell().amount_out().0.into();
+        let sell_volume = orders.buy().amount_out().0.into();
 
         Self {
-            orders: order_list,
+            orders,
             matched_price: Price(matched_price),
-            buy_volume: buy_volume,
-            sell_volume: sell_volume,
+            buy_volume,
+            sell_volume,
         }
     }
 
@@ -68,9 +68,11 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         println!("{} End Solution {}", "#".repeat(20), "#".repeat(20));
     }
 
+    /// Fills order according `price`
+    /// If order is not OK the provided `price`, not filled.
     pub fn match_orders(&mut self, price: Price) -> Solution<Id> {
         let mut orders = self.orders.clone();
-        
+
         orders.value.sort_by(|a, b| {
             a.limit_price
                 .partial_cmp(&b.limit_price)
@@ -86,12 +88,18 @@ impl<Id: Copy + PartialEq + Debug> Solution<Id> {
         let is_buy_predominant = buy_volume > sell_volume;
 
         if is_buy_predominant {
-            orders.resolve_predominant(&mut buy_orders, &mut sell_orders, price);
+            OrderList::resolve_predominant(&mut buy_orders, &mut sell_orders, price);
         } else {
-            orders.resolve_predominant(&mut sell_orders, &mut buy_orders, price);
+            OrderList::resolve_predominant(&mut sell_orders, &mut buy_orders, price);
         }
 
         /// for now retaining "bad" design when solution has no price, there should no be solution without, will fix after testing correctness
+        let matched = OrderList {
+            value: [buy_orders.value, sell_orders.value]
+                .concat()
+                .into_iter()
+                .collect(),
+        };
         let mut solution = Solution::new(matched.filled().value);
 
         solution.check_constraints();
