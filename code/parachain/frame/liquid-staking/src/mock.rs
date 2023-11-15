@@ -68,9 +68,9 @@ use crate::{distribution::AverageDistribution, types::StakingLedger, BalanceOf};
 pub use kusama_runtime;
 use primitives::currency::CurrencyId;
 
-const KSM: CurrencyId = CurrencyId::KSM;
-const SKSM: CurrencyId = CurrencyId::xKSM;
-const PICA: CurrencyId = CurrencyId::PICA;
+pub const KSM: CurrencyId = CurrencyId::KSM;
+pub const SKSM: CurrencyId = CurrencyId::xKSM;
+pub const PICA: CurrencyId = CurrencyId::PICA;
 
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = Weight::from_ref_time(WEIGHT_REF_TIME_PER_SECOND.saturating_div(4));
@@ -756,7 +756,8 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 			existential_deposit: 375000000,
 			ratio: Some(rational!(42 / 123)),
 		};
-		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info);
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 99, None, asset_info)
+			.unwrap();
 
 		let name = Some(BiBoundedVec::from_vec(b"Liquid Staked Kusama".to_vec()).unwrap());
 		let symbol = Some(BiBoundedVec::from_vec(b"LSKSM".to_vec()).unwrap());
@@ -767,19 +768,16 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 			existential_deposit: 375000000,
 			ratio: Some(rational!(42 / 123)),
 		};
-		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info);
+		AssetsRegistry::register_asset(RuntimeOrigin::root(), [0; 4], 20, None, asset_info)
+			.unwrap();
 
-		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(ALICE), ksm(100f64))
-			.unwrap();
-		Assets::mint_into(RuntimeOrigin::signed(ALICE), SKSM.into(), Id(ALICE), ksm(100f64))
-			.unwrap();
-		Assets::mint_into(RuntimeOrigin::signed(ALICE), KSM.into(), Id(BOB), ksm(20000f64))
-			.unwrap();
-		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::signed(BOB), ksm(10000f64))
-			.unwrap();
+		Assets::mint_into(RuntimeOrigin::root(), KSM.into(), Id(ALICE), ksm(100f64)).unwrap();
+		Assets::mint_into(RuntimeOrigin::root(), SKSM.into(), Id(ALICE), ksm(100f64)).unwrap();
+		Assets::mint_into(RuntimeOrigin::root(), KSM.into(), Id(BOB), ksm(20000f64)).unwrap();
+		LiquidStaking::update_staking_ledger_cap(RuntimeOrigin::root(), ksm(10000f64)).unwrap();
 
 		Assets::mint_into(
-			RuntimeOrigin::signed(ALICE),
+			RuntimeOrigin::root(),
 			KSM.into(),
 			Id(XcmHelper::account_id()),
 			ksm(100f64),
@@ -799,7 +797,7 @@ decl_test_parachain! {
 		Runtime = Test,
 		XcmpMessageHandler = XcmpQueue,
 		DmpMessageHandler = DmpQueue,
-		new_ext = para_ext(2085),
+		new_ext = para_ext(2087),
 	}
 }
 
@@ -836,7 +834,7 @@ pub type RelayEvent = kusama_runtime::RuntimeEvent;
 pub type ParaSystem = frame_system::Pallet<Test>;
 
 pub fn para_a_id() -> ParaId {
-	ParaId::from(2085)
+	ParaId::from(2087)
 }
 
 pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {

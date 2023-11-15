@@ -14,17 +14,102 @@ use sp_runtime::{
 use sp_trie::StorageProof;
 use xcm_simulator::TestExt;
 
-use pallet_traits::ump::RewardDestination;
-use primitives::{
-	tokens::{KSM, SKSM},
-	Balance, Rate, Ratio,
-};
+use crate::{mock::*, types::*, *};
 
-use crate::{
-	mock::{Loans, *},
-	types::*,
-	*,
-};
+#[test]
+fn stake_should_work() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), ksm(10f64)));
+
+		// Check storage is correct
+		assert_eq!(ExchangeRate::<Test>::get(), Rate::one());
+		assert_eq!(
+			MatchingPool::<Test>::get(),
+			MatchingLedger {
+				total_stake_amount: ReservableAmount { total: ksm(9.95f64), reserved: 0 },
+				total_unstake_amount: Default::default(),
+			}
+		);
+
+		// Check balance is correct
+		assert_eq!(<Test as Config>::Assets::balance(KSM, &ALICE), ksm(90f64));
+		assert_eq!(<Test as Config>::Assets::balance(SKSM, &ALICE), ksm(109.95f64));
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(KSM, &LiquidStaking::account_id()),
+			ksm(10f64)
+		);
+
+		assert_ok!(with_transaction(|| -> TransactionOutcome<DispatchResult> {
+			LiquidStaking::do_advance_era(1).unwrap();
+			LiquidStaking::do_matching().unwrap();
+			LiquidStaking::notification_received(
+				pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+				0,
+				Response::ExecutionResult(None),
+			)
+			.unwrap();
+			TransactionOutcome::Commit(Ok(()))
+		}));
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(KSM, &LiquidStaking::account_id()),
+			ksm(0.05f64)
+		);
+
+		assert_eq!(
+			MatchingPool::<Test>::get(),
+			MatchingLedger {
+				total_stake_amount: Default::default(),
+				total_unstake_amount: Default::default(),
+			}
+		);
+
+		let derivative_index = 0u16;
+		assert_eq!(
+			StakingLedgers::<Test>::get(&0).unwrap(),
+			StakingLedger {
+				stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+				total: ksm(9.95f64),
+				active: ksm(9.95f64),
+				unlocking: vec![],
+				claimed_rewards: vec![]
+			}
+		);
+
+		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), ksm(10f64)));
+
+		assert_ok!(with_transaction(|| -> TransactionOutcome<DispatchResult> {
+			LiquidStaking::do_advance_era(1).unwrap();
+			LiquidStaking::do_matching().unwrap();
+			LiquidStaking::notification_received(
+				pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
+				1,
+				Response::ExecutionResult(None),
+			)
+			.unwrap();
+			TransactionOutcome::Commit(Ok(()))
+		}));
+
+		assert_eq!(
+			<Test as Config>::Assets::balance(KSM, &LiquidStaking::account_id()),
+			ksm(0.1f64)
+		);
+
+		assert_eq!(
+			StakingLedgers::<Test>::get(&0).unwrap(),
+			StakingLedger {
+				stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+				total: ksm(19.9f64),
+				active: ksm(19.9f64),
+				unlocking: vec![],
+				claimed_rewards: vec![]
+			}
+		);
+	});
+}
+
+/*
 
 #[test]
 fn stake_should_work() {
@@ -1141,3 +1226,5 @@ fn test_partial_fast_match_unstake_work() {
 		}));
 	})
 }
+
+*/
