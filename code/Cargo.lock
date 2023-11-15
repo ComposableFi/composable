@@ -10605,6 +10605,7 @@ name = "pallet-liquid-staking"
 version = "1.0.0"
 dependencies = [
  "composable-support",
+ "composable-traits",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
