@@ -22,7 +22,9 @@ use num_rational::BigRational;
 pub type Amount = Uint128;
 pub type OrderId = Uint128;
 pub type NetworkId = u32;
-pub type Blocks = u32;
+
+/// block moment (analog of timestamp)
+pub type Block = u64;
 
 /// each CoW solver locally, is just transfer from shared pair bank with referenced order
 type CowFilledOrder = (Coin, OrderId);
@@ -60,7 +62,7 @@ pub struct OrderSubMsg {
 	/// This allow to to CoWs for assets not on this chain.
 	pub transfer: Option<TransferRoute>,
 	/// how much blocks to wait for solution, if none, then cleaned up
-	pub timeout: Blocks,
+	pub timeout: Block,
 	/// if ok with partial fill, what is the minimum amount
 	pub min_fill: Option<Ratio>,
 }
@@ -95,7 +97,7 @@ pub struct SolutionSubMsg {
 	pub route: Option<ExchangeRoute>,
 
 	/// after some time, solver will not commit to success
-	pub timeout: Blocks,
+	pub timeout: Block,
 }
 
 /// after cows solved, need to route remaining cross chain
@@ -275,15 +277,29 @@ impl OrderContract<'_> {
 		Ok(Response::default().add_event(order_created))
 	}
 
-	/// hook/crank for cleanup
+	/// Hook/crank for cleanup.
+	/// Caller receives small reward for doing so.
+	/// This is to prevent spamming of old orders.
+	/// If input collections are empty, one clean ups ALL orders
 	#[msg(exec)]
 	pub fn timeout(
 		&self,
-		_ctx: ExecCtx,
+		ctx: ExecCtx,
 		_orders: Vec<OrderId>,
 		_solutions: Vec<Addr>,
 	) -> StdResult<Response> {
-		todo!("remove order and send even permissionlessly")
+		let orders: Vec<_> = self
+			.orders
+			.range(ctx.deps.storage, None, None, Order::Ascending)
+			.filter(|x| {
+				let (_id, order) = x.as_ref().unwrap();
+				order.msg.timeout < ctx.env.block.height
+			})
+			.collect();
+		for order in orders {
+			self.orders.remove(ctx.deps.storage, order?.0);
+		}
+		Ok(Response::default())
 	}
 
 	/// until order/solution in execution can cancel

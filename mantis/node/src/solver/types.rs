@@ -1,21 +1,30 @@
 //! Basic types with simple checks and domain, no heavy math or solving.
 use crate::prelude::*;
-use derive_more::From;
+use derive_more::{Display, From};
 use strum_macros::AsRefStr;
 
 pub type Amount = Decimal;
 
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, From)]
+#[repr(transparent)]
 pub struct BuyToken(pub Amount);
 #[derive(Debug, Clone, Copy, Ord, Eq, PartialEq, PartialOrd, Default, From)]
+#[repr(transparent)]
 pub struct SellToken(pub Amount);
 
-#[derive(Debug, Clone, Copy, From, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, From, PartialEq, PartialOrd, Default, Display)]
+#[repr(transparent)]
 pub struct Price(pub Amount);
+
+impl Price {
+    pub fn new_float(amount: f64) -> Self {
+        Price(Decimal::from_f64_retain(amount).unwrap())
+    }
+}
 
 /// this is buy sell in terms of token1/token2 or A/B. just 2 sides of the orderbook.
 /// not Buy and Sell orders which differ in limit definition(in limit vs out limit).
-#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr, Display)]
 pub enum OrderType {
     Buy,
     Sell,
@@ -30,14 +39,14 @@ impl OrderType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, AsRefStr, Display)]
 pub enum OrderStatus {
     Pending,
     PartiallyFilled,
     Filled,
 }
 
-#[derive(Debug, PartialEq, Eq, AsRefStr)]
+#[derive(Debug, PartialEq, Eq, AsRefStr, Display)]
 pub enum OrderBookStatus {
     Pending,
     Matched,
@@ -56,6 +65,18 @@ pub struct Order<Id> {
 }
 
 impl<Id: Copy + PartialEq> Order<Id> {
+    pub fn print(&self) {
+        println!(
+            "[{}]-{}- Limit Price: {:0.3}, In: {}, Filled: {}, Filled price: {}, Out: {}",
+            self.order_type,
+            self.status,
+            self.limit_price,
+            self.amount_in,
+            self.amount_filled,
+            self.filled_price,
+            self.amount_out
+        );
+    }
     pub fn new(amount_in: Amount, limit_price: Price, order_type: OrderType, id: Id) -> Self {
         Order {
             amount_in,
