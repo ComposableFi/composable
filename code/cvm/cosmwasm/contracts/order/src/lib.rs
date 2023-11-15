@@ -1,6 +1,6 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
-use crate::sv::{ExecMsg, QueryMsg};
+pub use crate::sv::{ExecMsg, QueryMsg};
 use cosmwasm_schema::{cw_serde, schemars};
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
