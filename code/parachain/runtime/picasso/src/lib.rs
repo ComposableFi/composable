@@ -731,7 +731,7 @@ parameter_types! {
 
 impl pallet_xcm_helper::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type Assets = Assets;
 	type XcmSender = crate::xcmp::XcmRouter;
 	type RelayNetwork = RelayNetwork;
