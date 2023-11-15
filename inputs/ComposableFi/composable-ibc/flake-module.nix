@@ -122,22 +122,6 @@
           build-optimized-wasm "ics10-grandpa-cw" ics10-grandpa-cw-src
           "ics10_grandpa_cw";
 
-        centauri-codegen = crane.stable.buildPackage (subnix.subenv // rec {
-          name = "centauri-codegen";
-          pname = "codegen";
-          version = "0.1";
-          cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
-            src = composable-ibc;
-            cargoExtraArgs = "--package codegen";
-            cargoTestCommand = "";
-            version = "0.1";
-            pname = "codegen";
-          });
-          src = composable-ibc;
-          cargoExtraArgs = "--package codegen";
-          cargoTestCommand = "";
-          meta = { mainProgram = "codegen"; };
-        });
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
           version = "0.1";
