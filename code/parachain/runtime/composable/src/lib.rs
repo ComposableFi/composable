@@ -639,7 +639,7 @@ impl pallet_liquid_staking::Config for Runtime {
 	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
 	type SelfParaId = ParachainInfo;
 	type Assets = Assets;
-	type RelayOrigin = EnsureRootOrHalfCouncil;
+	type RelayOrigin = EnsureRoot<AccountId>;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type DerivativeIndexList = DerivativeIndexList;
 	type XcmFees = XcmFees;
