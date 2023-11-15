@@ -9,16 +9,17 @@ async fn main() {
     let mut client = create_wasm_query_client(&args.centauri).await;
 
     while (true) {
+        let query = cw_mantis_order::QueryMsg::GetAllOrders {};
         let orders_request = QuerySmartContractStateRequest {
             address: args.order_contract.clone(),
-            query_data: r###"{ "get_all_orders": {} }"###.as_bytes().to_vec(),
+            query_data:  serde_json_wasm::to_vec(&query).expect("json"),
         };
         let orders = client
             .smart_contract_state(orders_request)
             .await
             .expect("orders obtained")
             .into_inner();
-        cw_mantis_order::
+        cw_mantis_order::c
 
         
         // just print them for now

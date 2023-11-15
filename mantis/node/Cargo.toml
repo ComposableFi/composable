@@ -11,10 +11,11 @@ tokio = { version = "1.34.0", features = ["full"] }
 cosmos-sdk-proto = { version = "0.20.0", features = ["grpc-transport"] }
 tonic = { version = "0.10.2" }
 rand = { version = "0.8.5", default-features = false }
-rust_decimal = "1.32"
-rust_decimal_macros = "1.32"
+rust_decimal = "1.33"
+rust_decimal_macros = "1.33"
 rand_distr = "0.4.3"
 strum = "0.25"
-strum_macros = "0.25"
-itertools = "0.11.0"
-derive_more = "0.99.17"
+strum_macros = "^0.25"
+itertools = "^0.12.0"
+derive_more = "^0.99.17"
+serde-json-wasm = {version = "1.0"}
