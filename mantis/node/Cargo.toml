@@ -19,3 +19,4 @@ strum_macros = "^0.25"
 itertools = "^0.12.0"
 derive_more = "^0.99.17"
 serde-json-wasm = {version = "1.0"}
+tuples ={ version = "^1.12.0"}

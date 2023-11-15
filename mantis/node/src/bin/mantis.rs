@@ -1,11 +1,12 @@
-use std::env;
-use std::fmt::Write;
-
 use cosmos_sdk_proto::cosmwasm::wasm::v1::QuerySmartContractStateRequest;
 use cosmrs::cosmwasm::*;
 use cosmrs::rpc::{Client, HttpClient, HttpClientUrl};
 use cw_mantis_order::OrderItem;
-use mantis_node::mantis::{args::*, cosmos::*};
+use mantis_node::{
+    mantis::{args::*, cosmos::*},
+    prelude::*,
+};
+use std::fmt::Write;
 
 #[tokio::main]
 async fn main() {
@@ -55,6 +56,13 @@ async fn solve(read: ReadClient, write: WriteClient, order_contract: String, cvm
         .data;
     let orders: Vec<OrderItem> = serde_json_wasm::from_slice(&orders).expect("orders");
 
-    // just print them for now
-    println!("orders: {:?}", orders);
+    let orders = orders
+        .into_iter()
+        .group_by(|x| (x.given.denom, x.msg.wants.denom).into_iter().sorted());
+    for pair in orders {
+        // solve here !
+        // post solution
+        // just print them for now
+        println!("orders: {:?}", orders);
+    }
 }

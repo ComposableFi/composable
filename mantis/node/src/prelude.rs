@@ -13,4 +13,4 @@ pub use std::collections::HashMap;
 pub use std::fmt::format;
 pub use std::fmt::Debug;
 pub use std::str::FromStr;
-
+pub use tuples::*;
