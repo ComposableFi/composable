@@ -34,6 +34,8 @@
 #![feature(associated_type_defaults)] // https://github.com/Rust-for-Linux/linux/issues/2
 #![feature(trait_alias)] // complete
 #![feature(const_trait_impl)]
+#![feature(cfg_version)]
+// for solving wasm vs not builds
 // https://github.com/Rust-for-Linux/linux/issues/2
 // #![feature(effects)] // from 1.75 nightly for future proof const support
 #![feature(adt_const_params)] // avoids write own serde and bit shifts for Rational64

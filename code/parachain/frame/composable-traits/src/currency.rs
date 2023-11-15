@@ -191,6 +191,7 @@ pub struct Rational64 {
 	pub d: u64,
 }
 
+#[cfg(version("1.73"))]
 impl core::marker::ConstParamTy for Rational64 {}
 
 pub trait RationalLike<const N: u64, const D: u64> {
