@@ -73,6 +73,8 @@
               taplo
               xorriso
               zlib.out
+              centaurid
+              osmosisd
             ]);
           devcontainer.enable = false;
           inherit env;
