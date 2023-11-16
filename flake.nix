@@ -69,11 +69,7 @@
         "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
 
-    cvm-src = {
-      flake = false;
-      url =
-        "github:ComposableFi/cvm";
-    };
+    cvm = { url = "github:ComposableFi/cvm"; };
 
     instrumental = {
       url =
@@ -161,7 +157,7 @@
         ./flake/subxt.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
-        ./inputs/bifrost-finance/bifrost/flake-module.nix        
+        ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/ComposableFi/composable-ibc/flake-module.nix
         ./inputs/CosmWasm/flake-module.nix
         ./inputs/notional-labs/composable-centauri/flake-module.nix

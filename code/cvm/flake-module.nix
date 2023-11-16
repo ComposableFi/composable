@@ -36,10 +36,14 @@
       packages = rec {
         cw-xc-executor = mkCvmContract "cw-xc-executor";
         cw-xc-gateway = mkCvmContract "cw-xc-gateway";
-       
+
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
-          paths = [ cw-xc-executor cw-xc-gateway cw-mantis-order ];
+          paths = [
+            cw-xc-executor
+            cw-xc-gateway
+            self.inputs.cvm.packages.${system}.cw-mantis-order
+          ];
         };
         cvm-deps = crane.nightly.buildDepsOnly (systemCommonRust.common-attrs
           // {
