@@ -473,6 +473,9 @@ jobs:
   publish-flake:
     needs: draft-release-check
     runs-on: ubuntu-latest
+    permissions:
+      id-token: "write"
+      contents: "read"    
     concurrency:
       group: ${{ inputs.github_workflow }}-publish-flake-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
