@@ -3,12 +3,9 @@
     packages = rec {
 
       all-deps = pkgs.linkFarmFromDrvs "all-deps" (with self'.packages; [
-        acala-node
-        bifrost-node
         rococo-runtime-from-dep
         polkadot-parachain
         zombienet
-        subxt
         bech32cli
       ]);
 

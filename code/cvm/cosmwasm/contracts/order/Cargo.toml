@@ -7,24 +7,25 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cosmwasm-std = { version = "^1.2.5", features = [
+cosmwasm-std = { version = "^1.5.0", features = [
   "iterator",
 ], default-features = false }
-sylvia = { version = "^0.6.1", default-features = false }
-schemars = { version = "0.8.12", default-features = false }
-cosmwasm-schema = { version = "^1.2.5", default-features = false }
+cw-controllers = {version = "^1.1.1", default-features = false}
+sylvia = { version = "^0.9.0", default-features = false }
+schemars = { workspace = true, default-features = false, optional = true }
+cosmwasm-schema = { version = "^1.5.0", default-features = false }
 serde = { workspace = true, default-features = false }
-cw-storage-plus = { version = "^1.1.0", features = [
+cw-storage-plus = { version = "^1.2.0", features = [
   "iterator",
 ], default-features = false }
-itertools = { version = "0.11.0", features = [
+itertools = { workspace = true, features = [
   "use_std",
 ], default-features = false }
 num-rational = { version = "0.4.1", default-features = false, features = [
   "num-bigint-std",
   "std",
 ] }
-num-integer = { version = "0.1.45", default-features = false, features = [
+num-integer = { version = "^0.1.45", default-features = false, features = [
   "std",
 ] }
 

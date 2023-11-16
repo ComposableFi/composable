@@ -3,9 +3,14 @@
     , cargoTools, ... }:
     let
       rustSrc = cargoTools.mkRustSrc ./.;
+      # https://github.com/paritytech/polkadot-sdk/issues/1755  
+      rust = (self.inputs.crane.mkLib pkgs).overrideToolchain
+        (pkgs.rust-bin.nightly."2023-03-09".default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        });
       # Build a wasm runtime, unoptimized
       mkRuntime = name: features: cargoArtifacts:
-        crane.nightly.buildPackage (systemCommonRust.common-attrs // {
+        rust.buildPackage (systemCommonRust.common-attrs // {
           pname = "${name}-runtime";
           src = rustSrc;
           inherit cargoArtifacts;
@@ -13,7 +18,7 @@
             "cargo build --release --package ${name}-runtime-wasm --target wasm32-unknown-unknown"
             + pkgs.lib.strings.optionalString (features != "")
             (" --features=${features}");
-          # From parity/wasm-builder
+          # From parity-tech/polkdot-sdk/wasm-builder
           RUSTFLAGS =
             "-C target-cpu=mvp -C target-feature=-sign-ext -C link-arg=--export-table -Clink-arg=--export=__heap_base -C link-arg=--import-memory";
         });

@@ -7,6 +7,7 @@ use cw_mantis_order::*;
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(clippy::disallowed_methods)]
 fn main() {
+	use cw_mantis_order::sv::*;
 	write_api! {
 		instantiate: InstantiateMsg,
 		query: QueryMsg,

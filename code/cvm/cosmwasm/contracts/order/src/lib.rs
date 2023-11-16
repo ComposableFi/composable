@@ -1,6 +1,7 @@
 #![allow(clippy::disallowed_methods)] // does unwrap inside
 
-use cosmwasm_schema::cw_serde;
+pub use crate::sv::{ExecMsg, QueryMsg};
+use cosmwasm_schema::{cw_serde, schemars};
 use cosmwasm_std::{
 	wasm_execute, Addr, BankMsg, Coin, Event, Order, StdError, Storage, Uint128, Uint64,
 };
@@ -19,9 +20,9 @@ use sylvia::{
 /// so this is just to make code easy to read, we will optimize later
 use num_rational::BigRational;
 
+use cvm::network::NetworkId;
 pub type Amount = Uint128;
 pub type OrderId = Uint128;
-pub type NetworkId = u32;
 
 /// block moment (analog of timestamp)
 pub type Block = u64;
@@ -191,6 +192,7 @@ pub struct OrderContract<'a> {
 	pub next_order_id: Item<'a, u128>,
 	/// address for CVM contact to send routes to
 	pub cvm_address: Item<'a, String>,
+	pub admin: cw_controllers::Admin<'a>,
 }
 
 /// when solution is applied to order item,
@@ -236,6 +238,7 @@ impl Default for OrderContract<'_> {
 			next_order_id: Item::new("next_order_id"),
 			cvm_address: Item::new("cvm_address"),
 			solutions: solutions(),
+			admin: cw_controllers::Admin::new("admin"),
 		}
 	}
 }
@@ -249,8 +252,12 @@ impl OrderContract<'_> {
 	#[msg(instantiate)]
 	pub fn instantiate(
 		&self,
-		_ctx: InstantiateCtx, /* i think we would need admin, gateway, scoring/fee parameters */
+		mut ctx: InstantiateCtx,
+		admin: Option<Addr>,
+		cvm_address: Addr,
 	) -> StdResult<Response> {
+		self.cvm_address.save(ctx.deps.storage, &cvm_address.into_string());
+		self.admin.set(ctx.deps.branch(), Some(admin.unwrap_or(ctx.info.sender)))?;
 		Ok(Response::default())
 	}
 
@@ -326,9 +333,16 @@ impl OrderContract<'_> {
 			"so here we add route execution tracking to storage and map route to CVM program",
 		);
 
-		let _cvm = Self::traverse_route(msg.route);
-
-		Ok(Response::default())
+		let cvm = Self::traverse_route(msg.route);
+		let cvm = cvm::gateway::ExecuteMsg::ExecuteProgram(cvm::gateway::ExecuteProgramMsg {
+			salt: vec![],
+			program: cvm,
+			assets: <_>::default(),
+			tip: None,
+		});
+		let contract = self.cvm_address.load(ctx.deps.storage)?;
+		let cvm = wasm_execute(ctx.env.contract.address, &cvm, vec![])?;
+		Ok(Response::default().add_message(cvm))
 	}
 
 	/// converts high level route to CVM program

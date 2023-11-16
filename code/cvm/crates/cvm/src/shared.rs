@@ -1,7 +1,7 @@
 use crate::{asset::*, prelude::*};
 
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{from_binary, to_binary, Binary, StdResult};
+use cosmwasm_std::{from_json, to_json_binary, Binary, StdResult};
 
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Serialize};
@@ -18,12 +18,12 @@ pub type XcProgram = crate::program::Program<Vec<XcInstruction>>;
 
 #[cfg(feature = "cosmwasm")]
 pub fn encode_base64<T: Serialize>(x: &T) -> StdResult<String> {
-	Ok(to_binary(x)?.to_base64())
+	Ok(to_json_binary(x)?.to_base64())
 }
 
 #[cfg(feature = "cosmwasm")]
 pub fn decode_base64<S: AsRef<str>, T: DeserializeOwned>(encoded: S) -> StdResult<T> {
-	from_binary::<T>(&Binary::from_base64(encoded.as_ref())?)
+	from_json::<T>(&Binary::from_base64(encoded.as_ref())?)
 }
 
 /// A wrapper around any address in canonical form
