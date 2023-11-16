@@ -64,3 +64,9 @@ resource "github_actions_secret" "CACHIX_AUTH_TOKEN" {
   secret_name      = "CACHIX_AUTH_TOKEN"
   plaintext_value  = var.CACHIX_AUTH_TOKEN
 }
+
+resource "github_actions_secret" "cvm_CACHIX_AUTH_TOKEN" {
+  repository       = "cvm"
+  secret_name      = "CACHIX_AUTH_TOKEN"
+  plaintext_value  = var.CACHIX_AUTH_TOKEN
+}

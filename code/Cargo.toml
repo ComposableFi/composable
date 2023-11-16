@@ -54,9 +54,7 @@ members = [
   "utils/price-feed",
   "cvm/cosmwasm/contracts/gateway",
   "cvm/cosmwasm/contracts/executor",
-  "cvm/cosmwasm/contracts/order",  
   "cvm/lib/core/",
-  "cvm/crates/cvm/",
 ]
 resolver = "2"
 

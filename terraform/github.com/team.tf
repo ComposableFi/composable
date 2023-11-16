@@ -33,23 +33,13 @@ resource "github_repository_collaborators" "roles" {
   }
 
   user {
-    permission = "push"
+    permission = "maintain"
     username   = "JafarAz"
   }
 
   user {
-    permission = "push"
-    username   = "NOOB6942069"
-  }
-
-  user {
-    permission = "maintain"
-    username   = "kkast"
-  }
-
-  user {
     permission = "admin"
-    username   = "itsbobbyzz"
+    username   = "kkast"
   }
 
   user {
@@ -58,12 +48,12 @@ resource "github_repository_collaborators" "roles" {
   }
 
   team {
-    permission = "admin"
+    permission = "maintain"
     team_id    = data.github_team.product.slug
   }
 
   team {
-    permission = "admin"
+    permission = "maintain"
     team_id    = data.github_team.sre.slug
   }
 }
