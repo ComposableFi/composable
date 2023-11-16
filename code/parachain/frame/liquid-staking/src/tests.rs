@@ -685,9 +685,8 @@ fn claim_for_should_work() {
 	})
 }
 
-// #[test]
+#[test]
 fn test_on_initialize_work() {
-	todo!();
 	new_test_ext().execute_with(|| {
 		let derivative_index = 0u16;
 		let xcm_fees = XcmFees::get();
@@ -701,14 +700,15 @@ fn test_on_initialize_work() {
 		// 1.2 on_initialize_bond
 		let total_era_blocknumbers = <Test as Config>::EraLength::get();
 		assert_eq!(total_era_blocknumbers, 10);
-		assert_ok!(LiquidStaking::force_advance_era(RuntimeOrigin::root(), 1));
 		RelayChainValidationDataProvider::set(total_era_blocknumbers);
 		System::set_block_number(System::block_number() + 1);
 		LiquidStaking::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
 		LiquidStaking::on_initialize(System::block_number());
 		assert_eq!(EraStartBlock::<Test>::get(), total_era_blocknumbers);
-		assert_eq!(CurrentEra::<Test>::get(), 1);
+		// ValidationDataProvider return relay_parent_number = 100
+		// total_era_blocknumbers  = 10 so the current era is 10
+		assert_eq!(CurrentEra::<Test>::get(), 10);
 		assert_eq!(LiquidStaking::staking_ledger(derivative_index), None);
 		assert_eq!(
 			LiquidStaking::matching_pool(),
