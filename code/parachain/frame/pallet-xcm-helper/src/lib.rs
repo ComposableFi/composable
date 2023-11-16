@@ -45,7 +45,6 @@ use frame_support::traits::tokens::{Fortitude, Precision, Preservation};
 // #[cfg(test)]
 // mod tests;
 
-#[allow(deprecated)]
 pub mod weights;
 pub use weights::WeightInfo;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;

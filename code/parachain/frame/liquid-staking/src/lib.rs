@@ -31,7 +31,6 @@ use pallet_xcm_helper::ump::RewardDestination;
 
 // mod benchmarking;
 
-#[allow(deprecated)]
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -40,7 +39,6 @@ mod tests;
 pub mod distribution;
 // pub mod migrations;
 pub mod types;
-#[allow(deprecated)]
 pub mod weights;
 pub use weights::WeightInfo;
 
