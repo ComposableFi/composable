@@ -147,7 +147,7 @@
         "type": "github"
       }
     },
-    "composable-ibc": {
+    "composable-ibc-src": {
       "flake": false,
       "locked": {
         "lastModified": 1698427447,
@@ -354,6 +354,22 @@
         "owner": "crescent-network",
         "ref": "v1.0.0-rc3",
         "repo": "crescent",
+        "type": "github"
+      }
+    },
+    "cvm-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1700139721,
+        "narHash": "sha256-RWKeVhyWovpRVPp03pIuEdjy9ow50ZGyqBst173pS4I=",
+        "owner": "ComposableFi",
+        "repo": "cvm",
+        "rev": "1ba1738d62497f014d7c3cf5fd5ce8427e24fb40",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ComposableFi",
+        "repo": "cvm",
         "type": "github"
       }
     },
@@ -2072,9 +2088,10 @@
       "inputs": {
         "bech32cli": "bech32cli",
         "bundlers": "bundlers",
-        "composable-ibc": "composable-ibc",
+        "composable-ibc-src": "composable-ibc-src",
         "cosmos": "cosmos",
         "crane": "crane",
+        "cvm-src": "cvm-src",
         "darwin": "darwin",
         "devenv": "devenv",
         "eth-pos-devnet-src": "eth-pos-devnet-src",

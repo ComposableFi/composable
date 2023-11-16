@@ -36,7 +36,7 @@
       packages = rec {
         cw-xc-executor = mkCvmContract "cw-xc-executor";
         cw-xc-gateway = mkCvmContract "cw-xc-gateway";
-        cw-mantis-order = mkMantisContract "cw-mantis-order";
+       
         xc-cw-contracts = pkgs.symlinkJoin {
           name = "xc-cw-contracts";
           paths = [ cw-xc-executor cw-xc-gateway cw-mantis-order ];
