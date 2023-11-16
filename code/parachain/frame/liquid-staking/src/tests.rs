@@ -738,9 +738,8 @@ fn test_on_initialize_work() {
 	})
 }
 
-// #[test]
+#[test]
 fn test_set_staking_ledger_work() {
-	todo!();
 	new_test_ext().execute_with(|| {
 		let derivative_index = 0u16;
 		let bond_amount = 100;
@@ -882,9 +881,8 @@ fn test_verify_trie_proof_work() {
 	assert_eq!(result, value);
 }
 
-// #[test]
+#[test]
 fn test_verify_merkle_proof_work() {
-	todo!();
 	new_test_ext().execute_with(|| {
 		let derivative_index = 0u16;
 		let staking_ledger = get_mock_staking_ledger(derivative_index);
@@ -949,9 +947,8 @@ fn cancel_unstake_works() {
 	})
 }
 
-// #[test]
+#[test]
 fn test_charge_commission_work() {
-	todo!();
 	new_test_ext().execute_with(|| {
 		let derivative_index = 0u16;
 		let bond_amount = ksm(200f64);

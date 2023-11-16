@@ -63,7 +63,6 @@ use xcm_executor::{traits::ConvertOrigin, Config, XcmExecutor};
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 pub type AccountId = AccountId32;
-// pub type CurrencyId = u64;
 use crate::{distribution::AverageDistribution, types::StakingLedger, BalanceOf};
 pub use kusama_runtime;
 use primitives::currency::CurrencyId;
@@ -797,7 +796,7 @@ decl_test_parachain! {
 		Runtime = Test,
 		XcmpMessageHandler = XcmpQueue,
 		DmpMessageHandler = DmpQueue,
-		new_ext = para_ext(2087),
+		new_ext = para_ext(2085),
 	}
 }
 
@@ -834,7 +833,8 @@ pub type RelayEvent = kusama_runtime::RuntimeEvent;
 pub type ParaSystem = frame_system::Pallet<Test>;
 
 pub fn para_a_id() -> ParaId {
-	ParaId::from(2087)
+	//do not change para id because in other case you need to change all the proofs
+	ParaId::from(2085)
 }
 
 pub fn para_ext(para_id: u32) -> sp_io::TestExternalities {
