@@ -156,6 +156,7 @@
         ./flake/mantis.nix
         ./flake/rust.nix
         ./flake/subxt.nix
+        ./iac/mainnet/flake-module.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
