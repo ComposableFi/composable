@@ -68,12 +68,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # virtual machine images - assembling VM is simple and fast as OCI image :) 
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    
     composable-ibc-src = {
       flake = false;
       url =
@@ -167,7 +161,6 @@
         ./flake/mantis.nix
         ./flake/rust.nix
         ./flake/subxt.nix
-        ./terraform/mainnet/flake-module.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix

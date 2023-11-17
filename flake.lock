@@ -111,17 +111,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1691404134,
+        "lastModified": 1696008049,
         "narHash": "sha256-EUuqcY+ONGygESASMmmZ/H09FH+kQHTnizrgb1Rt0LA=",
-        "owner": "dzmitry-lahoda-forks",
+        "owner": "strangelove-ventures",
         "repo": "bech32cli",
-        "rev": "7e5bd85b131834fbde8e079bbab4d1cbc98de4e9",
+        "rev": "90054971ace4222e10db250f184b7f8bab2d9ca6",
         "type": "github"
       },
       "original": {
-        "owner": "dzmitry-lahoda-forks",
+        "owner": "strangelove-ventures",
         "repo": "bech32cli",
-        "rev": "7e5bd85b131834fbde8e079bbab4d1cbc98de4e9",
         "type": "github"
       }
     },
@@ -2581,6 +2580,42 @@
         "type": "github"
       }
     },
+    "nixlib": {
+      "locked": {
+        "lastModified": 1693701915,
+        "narHash": "sha256-waHPLdDYUOHSEtMKKabcKIMhlUOHPOOPQ9UyFeEoovs=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "f5af57d3ef9947a70ac86e42695231ac1ad00c25",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "nixos-generators": {
+      "inputs": {
+        "nixlib": "nixlib",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1696058303,
+        "narHash": "sha256-eNqKWpF5zG0SrgbbtljFOrRgFgRzCc4++TMFADBMLnc=",
+        "owner": "nix-community",
+        "repo": "nixos-generators",
+        "rev": "150f38bd1e09e20987feacb1b0d5991357532fb5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixos-generators",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1620055814,
@@ -3204,6 +3239,7 @@
         "home-manager": "home-manager",
         "instrumental": "instrumental",
         "nix-std": "nix-std_3",
+        "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs_9",
         "nixpkgs-latest": "nixpkgs-latest",
         "npm-buildpackage": "npm-buildpackage",

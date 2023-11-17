@@ -1,6 +1,15 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri
-    , osmosis, ... }:
+  perSystem =
+    { config
+    , self'
+    , inputs'
+    , pkgs
+    , system
+    , systemCommonRust
+    , centauri
+    , osmosis
+    , ...
+    }:
     let
       env = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
@@ -37,8 +46,6 @@
           sad
           self'.packages.bech32cli
           subwasm
-          opentofu
-          terraform-ls
           typescript
           websocat
           yarn
@@ -59,10 +66,7 @@
             with self'.packages; [
               bacon
               devenv
-              google-cloud-sdk
               lldb
-              terranix
-              opentofu
               llvmPackages_latest.bintools
               llvmPackages_latest.lld
               llvmPackages_latest.llvm
@@ -82,7 +86,8 @@
           inherit env;
         }];
       };
-    in {
+    in
+    {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;
