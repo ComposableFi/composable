@@ -54,15 +54,26 @@
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
+    };
 
+    # virtual machine images - assembling VM is simple and fast as OCI image :) 
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     bech32cli = {
       url =
-        "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
+        "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # virtual machine images - assembling VM is simple and fast as OCI image :) 
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    
     composable-ibc-src = {
       flake = false;
       url =
@@ -156,7 +167,7 @@
         ./flake/mantis.nix
         ./flake/rust.nix
         ./flake/subxt.nix
-        ./iac/mainnet/flake-module.nix
+        ./terraform/mainnet/flake-module.nix
         ./flake/zombienet.nix
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix

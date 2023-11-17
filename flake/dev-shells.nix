@@ -61,6 +61,8 @@
               devenv
               google-cloud-sdk
               lldb
+              terranix
+              opentofu
               llvmPackages_latest.bintools
               llvmPackages_latest.lld
               llvmPackages_latest.llvm
