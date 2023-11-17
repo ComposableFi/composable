@@ -111,11 +111,6 @@ const config = {
 						label: 'Explorer',
 						position: 'right',
 					},
-					{
-						href: 'https://composablefi.medium.com/',
-						label: 'Medium',
-						position: 'right',
-					},
 				],
 			},
 			footer: {
@@ -150,10 +145,6 @@ const config = {
 						title: 'More',
 						items: [
 							{
-								label: 'GitHub',
-								href: 'https://github.com/ComposableFi/composable',
-							},
-							{
 								label: 'Composable Medium',
 								href: 'https://composablefi.medium.com',
 							},
@@ -164,6 +155,14 @@ const config = {
 							{
 								label: 'Press Kit',
 								href: 'https://docs.composable.finance/ecosystem/press-kit',
+							},
+							{
+								label: 'Risk Factors'
+								href: 'https://docs.composable.finance/faqs/risk-factors'
+							},
+							{
+								label: 'Terms of Use'
+								href: 'https://docs.composable.finance/faqs/terms-of-use'
 							},
 						],
 					},
