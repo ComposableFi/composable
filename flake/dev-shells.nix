@@ -1,15 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { config
-    , self'
-    , inputs'
-    , pkgs
-    , system
-    , systemCommonRust
-    , centauri
-    , osmosis
-    , ...
-    }:
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri
+    , osmosis, ... }:
     let
       env = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
@@ -35,7 +26,6 @@
           jq
           nix-tree
           nixfmt
-          nixos-rebuild
           nodejs
           nodePackages.npm
           openssl
@@ -86,8 +76,7 @@
           inherit env;
         }];
       };
-    in
-    {
+    in {
       packages = {
         devenv = self.inputs.devenv.packages.${system}.devenv;
         devprofile = pkgs.linkFarmFromDrvs "devprofile" tools;

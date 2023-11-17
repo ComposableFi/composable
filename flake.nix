@@ -56,15 +56,8 @@
       inputs.rust-overlay.follows = "rust-overlay";
     };
 
-    # virtual machine images - assembling VM is simple and fast as OCI image :) 
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     bech32cli = {
-      url =
-        "github:strangelove-ventures/bech32cli";
+      url = "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -152,7 +145,6 @@
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
-        ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
         ./flake/xapps.nix
         ./flake/overlays.nix
