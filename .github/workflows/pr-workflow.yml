@@ -470,25 +470,6 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"               
 
-  publish-flake:
-    needs: draft-release-check
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: "write"
-      contents: "read"    
-    concurrency:
-      group: ${{ inputs.github_workflow }}-publish-flake-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v20
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: "DeterminateSystems/flakehub-push@main"
-        with:
-          visibility: "public"
-          rolling: true       
-
   draft-release-check:
       name: "draft-release-check"
       if: ${{ failure() || cancelled() || success() }}
