@@ -8,7 +8,7 @@ on:
       github_event_name:
         required: true
         type: string
-      github_event_pull_request_head_repo_id :
+      github_event_pull_request_head_repo_id:
         required: true
         type: number
       github_workflow:
@@ -22,12 +22,12 @@ on:
         type: string
       sha_to_check:
         required: true
-        type: string                
+        type: string
     secrets:
       NIXBUILD_TOKEN:
         required: true
       CACHIX_AUTH_TOKEN:
-        required: true    
+        required: true
       DOCKER_HUB_USERNAME:
         required: true
       DOCKER_HUB_ACCESS_TOKEN:
@@ -38,19 +38,19 @@ on:
         required: true
       CANCEL_GITHUB_TOKEN:
         required: true
-          
-permissions: 
+
+permissions:
   pull-requests: write
 
 jobs:
-  dependency-review:     
+  dependency-review:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}     
+      ok: ${{ steps.ok.outputs.ok }}
     concurrency:
       group: ${{ inputs.github_workflow }}-dependency-review-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true  
+      cancel-in-progress: true
     needs:
-      - privilege-check  
+      - privilege-check
     runs-on:
       - ubuntu-latest
     steps:
@@ -65,7 +65,7 @@ jobs:
           subjectPatternError: |
             https://regexper.com/#%28.*%5Ba-zA-Z%5D.*%29%7B16%2C%7D
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}            
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: dependency-review
         if: ${{ inputs.github_event_name != 'merge_group' && inputs.github_event_name != 'push' }}
@@ -76,20 +76,20 @@ jobs:
           # GHSA-fjx5-qpf4-xjf2 is ignored because it is a transitive dependencies still used by the master branch of ibc-proto-rs. Please remove when ibc-rs-proto updates it.
           allow-ghsas: GHSA-pfrx-2q88-qq97, GHSA-w5p7-h5w8-2hfq, GHSA-wcg3-cvx6-7396, GHSA-969w-q74q-9j8v, GHSA-44mr-8vmm-wjhg, GHSA-wh6w-3828-g9qf, GHSA-ff4p-7xrq-q5r8, GHSA-xm67-587q-r2vw, GHSA-fjx5-qpf4-xjf2
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   privilege-check:
     name: "privilege-check"
-    if: ${{ inputs.flow == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}    
+    if: ${{ inputs.flow == 'push' || inputs.github_event_name == 'merge_group' || (inputs.github_event_name == 'pull_request_target' && inputs.github_event_pull_request_head_repo_id != 383289760) || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
     continue-on-error: false
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
     steps:
       - run: |
           echo "${{ inputs.github_event_name }}"" 
           echo "${{ inputs.flow }}"" 
           echo "${{ github.ref_name }}"
-          echo "${{ inputs.github_event_pull_request_head_repo_id }}" 
-      
+          echo "${{ inputs.github_event_pull_request_head_repo_id }}"
+
   lfs-check:
     name: lfs-check
     needs:
@@ -131,16 +131,16 @@ jobs:
   nix-flake-check:
     name: "nix-flake-check"
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
+      ok: ${{ steps.ok.outputs.ok }}
     needs:
-      - privilege-check      
+      - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     continue-on-error: false
     concurrency:
       group: ${{ inputs.github_workflow }}-nix-flake-check-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    steps:            
+    steps:
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
@@ -159,12 +159,12 @@ jobs:
           nix run .#nix-flake-check --accept-flake-config
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
-          
+
   build-all-production-deps:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-all-production-deps
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
@@ -186,7 +186,7 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: Build all packages 
+      - name: Build all packages
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
@@ -194,12 +194,11 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
-
   build-devnet-xc:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-devnet-xc
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - aarch64-linux-80C-128GB-2048GB
@@ -221,19 +220,19 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: Build all packages 
+      - name: Build all packages
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' }}
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#devnet-xc-image
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"        
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-cosmos-cosmwasm:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-cosmos-cosmwasm
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
@@ -247,51 +246,50 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false          
-      - name: Build all packages 
+          persist-credentials: false
+      - name: Build all packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#cvm-mount
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT" 
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-evm:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}   
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-evm
-    needs: 
+    needs:
       - privilege-check
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ inputs.github_workflow }}-build-evm-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
-      - uses: nixbuild/nix-quick-install-action@v24          
+      - uses: nixbuild/nix-quick-install-action@v24
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false          
+          persist-credentials: false
       - uses: nixbuild/nixbuild-action@v19
         with:
           nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
-          generate_summary_for: 'job'
-      - run:
-          nix build .#evm-cvm-gateway --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
+          generate_summary_for: "job"
+      - run: nix build .#evm-cvm-gateway --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"  
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-ci-packages:
     name: build-all-ci-packages
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}       
+      ok: ${{ steps.ok.outputs.ok }}
     continue-on-error: false
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
@@ -305,13 +303,13 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false          
-      - name: Build all packages 
+          persist-credentials: false
+      - name: Build all packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-ci-packages
@@ -320,21 +318,21 @@ jobs:
         with:
           command: nix -- build --no-link ".#homeConfigurations.vscode.activationPackage"
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT" 
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-rust-qa-packages:
     continue-on-error: false
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}       
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-all-rust-qa-packages
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-rust-qa-packages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    steps:     
+    steps:
       - name: Set up Cachix
         if: ${{ inputs.flow != 'push' }}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
@@ -342,14 +340,14 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         if: ${{ inputs.flow != 'push' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: build-all-rust-qa-packages 
+      - name: build-all-rust-qa-packages
         if: ${{ inputs.flow != 'push' }}
         uses: "./.github/templates/watch-exec"
         with:
@@ -360,9 +358,9 @@ jobs:
   build-all-misc-packages:
     name: build-all-misc-packages
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}     
+      ok: ${{ steps.ok.outputs.ok }}
     continue-on-error: false
-    needs: 
+    needs:
       - privilege-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
@@ -377,60 +375,60 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: build-all-misc-packages 
+      - name: build-all-misc-packages
         if: ${{ inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork'}}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-misc       
+          command: nix -- build .#all-misc
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"   
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-deps-packages:
     name: build-all-deps-packages
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}        
-    needs: 
+      ok: ${{ steps.ok.outputs.ok }}
+    needs:
       - privilege-check
     runs-on:
-      - x86_64-linux-32C-128GB-2TB      
+      - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-build-all-deps-packages-${{ matrix.runner }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - name: Set up Cachix
-        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}      
+        if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: build-all-deps-packages 
+      - name: build-all-deps-packages
         if: ${{ inputs.flow == 'push' || inputs.flow == 'pr_from_branch' || inputs.flow == 'pr_from_fork' }}
         uses: "./.github/templates/watch-exec"
         with:
-          command: nix -- build .#all-deps   
+          command: nix -- build .#all-deps
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"              
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   build-all-docs-packages:
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}    
+      ok: ${{ steps.ok.outputs.ok }}
     name: build-all-docs-packages
-    needs: 
+    needs:
       - lfs-check
     runs-on:
       - ubuntu-latest
@@ -454,7 +452,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
       - name: Add tools needed for non-nix steps
-        run: |  
+        run: |
           nix-channel --add https://nixos.org/channels/nixos-22.11 nixpkgs
           nix-channel --update
           nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker nixpkgs.coreutils
@@ -463,69 +461,69 @@ jobs:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: build-all-docs-packages 
+      - name: build-all-docs-packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#all-docs
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"               
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
   draft-release-check:
-      name: "draft-release-check"
-      if: ${{ failure() || cancelled() || success() }}
-      continue-on-error: false
-      runs-on: ubuntu-latest    
-      needs:
-        - build-all-rust-qa-packages
-        - build-all-ci-packages
-        - build-all-docs-packages
-        - build-all-misc-packages
-        - build-all-production-deps
-        - build-cosmos-cosmwasm
-        - dependency-review
-        - nix-flake-check
-        - devnet-integration-tests
-      steps:           
-        - run: |
-           echo "nix-flake-check" ${{ needs.nix-flake-check.outputs.ok }}
-           echo "dependency-review" ${{ needs.dependency-review.outputs.ok }}
-           echo "build-all-production-deps" ${{ needs.build-all-production-deps.outputs.ok }}
-           echo "build-all-misc-packages" ${{ needs.build-all-misc-packages.outputs.ok }}
-           echo "build-all-docs-packages" ${{ needs.build-all-docs-packages.outputs.ok }}
-           echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
-           echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
-           echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-           echo "build-cosmos-cosmwasm" ${{ needs.build-cosmos-cosmwasm.outputs.ok  }}
-        - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true' }}
-          run: |
-            echo "All dependencies built well"
-            exit 0
-        - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true') }}
-          run: |
-            echo "Some of dependencies (see jobs graph, needs attributes, and output of this job) failed"      
-            exit 42
+    name: "draft-release-check"
+    if: ${{ failure() || cancelled() || success() }}
+    continue-on-error: false
+    runs-on: ubuntu-latest
+    needs:
+      - build-all-rust-qa-packages
+      - build-all-ci-packages
+      - build-all-docs-packages
+      - build-all-misc-packages
+      - build-all-production-deps
+      - build-cosmos-cosmwasm
+      - dependency-review
+      - nix-flake-check
+      - devnet-integration-tests
+    steps:
+      - run: |
+          echo "nix-flake-check" ${{ needs.nix-flake-check.outputs.ok }}
+          echo "dependency-review" ${{ needs.dependency-review.outputs.ok }}
+          echo "build-all-production-deps" ${{ needs.build-all-production-deps.outputs.ok }}
+          echo "build-all-misc-packages" ${{ needs.build-all-misc-packages.outputs.ok }}
+          echo "build-all-docs-packages" ${{ needs.build-all-docs-packages.outputs.ok }}
+          echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
+          echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
+          echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
+          echo "build-cosmos-cosmwasm" ${{ needs.build-cosmos-cosmwasm.outputs.ok  }}
+      - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true' }}
+        run: |
+          echo "All dependencies built well"
+          exit 0
+      - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true') }}
+        run: |
+          echo "Some of dependencies (see jobs graph, needs attributes, and output of this job) failed"      
+          exit 42
 
   draft-release-artifacts:
-    name: "draft-release-artifacts"    
+    name: "draft-release-artifacts"
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     needs:
       - draft-release-check
-    if: ${{ inputs.github_event_name == 'push' }}  
-    permissions:  
+    if: ${{ inputs.github_event_name == 'push' }}
+    permissions:
       pull-requests: write
-      contents: write      
+      contents: write
     concurrency:
-      group:  ${{ inputs.github_workflow }}-draft-release-artifacts-${{ github.ref }}
-      cancel-in-progress: true      
-    steps:      
+      group: ${{ inputs.github_workflow }}-draft-release-artifacts-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true             
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -554,28 +552,28 @@ jobs:
 
   push-docker-images:
     name: push-docker-images
-    if: ${{ inputs.flow == 'push' }}   
-    needs: 
+    if: ${{ inputs.flow == 'push' }}
+    needs:
       - draft-release-check
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{inputs.flow}}-${{ inputs.github_workflow }}-push-docker-images-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: false
-    steps:          
+    steps:
       - name: Set up Cachix
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
         with:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true          
+          skipAddingSubstituter: true
       - uses: actions/checkout@v3
         with:
           lfs: true
           ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
           persist-credentials: false
-      - name: Build all packages 
+      - name: Build all packages
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#docker-images-to-push
@@ -617,17 +615,17 @@ jobs:
           artifact: hyperspace-composable-polkadot-picasso-kusama:latest
 
   devnet-integration-tests:
-    name: devnet-integration-tests       
+    name: devnet-integration-tests
     outputs:
-      ok: ${{ steps.ok.outputs.ok }}       
-    needs: 
+      ok: ${{ steps.ok.outputs.ok }}
+    needs:
       - build-all-ci-packages
     runs-on:
       - x86_64-linux-32C-128GB-2TB
     concurrency:
       group: ${{ inputs.github_workflow }}-devnet-integration-tests-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    steps: 
+    steps:
       - name: Set up Cachix
         if: ${{ inputs.flow == 'merge_queue_check' || inputs.flow == 'pr_from_branch'}}
         uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
@@ -645,6 +643,4 @@ jobs:
         run: |
           nix run .#devnet-integration-tests --accept-flake-config
       - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"            
-          
-   
+        run: echo "ok=true" >> "$GITHUB_OUTPUT"
