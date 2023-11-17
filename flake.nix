@@ -153,6 +153,7 @@
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
+        ./flake/mantis.nix
         ./flake/rust.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix

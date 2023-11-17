@@ -626,16 +626,17 @@
       "inputs": {
         "cosmos": "cosmos_2",
         "crane": "crane_2",
+        "devour-flake": "devour-flake",
         "flake-parts": "flake-parts_2",
         "nixpkgs": "nixpkgs_4",
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1700153845,
-        "narHash": "sha256-FoiyQsab0gQqp2+9uHaG3i7vT5J0MeLIpnErjuhp8i8=",
+        "lastModified": 1700167420,
+        "narHash": "sha256-K0DBDycPq0/DqVs2vk3OnaP/ksYD68Jn6AexvTlu694=",
         "owner": "ComposableFi",
         "repo": "cvm",
-        "rev": "1ea32ce8bd7f91716661bdec73b73e33c61bb979",
+        "rev": "3e312b3dcbb371c600bd6be806eabba98d964fb7",
         "type": "github"
       },
       "original": {
@@ -687,6 +688,22 @@
       }
     },
     "devour-flake": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1699722684,
+        "narHash": "sha256-LapKkHNZ8D3k/uLaJjmGxx7GuYRinGBxEkIAGb/8pCo=",
+        "owner": "srid",
+        "repo": "devour-flake",
+        "rev": "c89ad7a611caef31899292bc8f9aae9e7aa251cb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "srid",
+        "repo": "devour-flake",
+        "type": "github"
+      }
+    },
+    "devour-flake_2": {
       "flake": false,
       "locked": {
         "lastModified": 1694098737,
@@ -743,7 +760,7 @@
     },
     "ethereum": {
       "inputs": {
-        "devour-flake": "devour-flake",
+        "devour-flake": "devour-flake_2",
         "devshell": "devshell",
         "flake-compat": "flake-compat_4",
         "flake-parts": "flake-parts_3",

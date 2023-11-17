@@ -22,9 +22,9 @@ Lastly, it's important to be aware of Bech32 encoding for accounts and the use o
 | ethereum   | mainnet |     |
 | solana     | mainnet |     |
 
-If you are interacting with CVM contracts on the Devnet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
+If you are interacting with CVM contracts on the DevNet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 
-All of the latest idenfiers and mapping can be found in the [CVM global configration file](https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.json).
+All of the latest identifiers and mapping can be found in the [CVM global configuration file](https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.json).
 
 ### Shells
 
@@ -32,13 +32,13 @@ Ensure that you have diligently followed the official setup guides provided for 
 
 Optionally, for those familiar with Nix and interested in leveraging it, consult the [Nix documentation](../../docs/docs/nix.md) for detailed instructions. To run a development network shell, you can execute the following commands:
 
-For Composable Cosmos Devnet:
+For Composable Cosmos DevNet:
 
 ```
 nix develop "composable#centauri-devnet" --impure
 ```
 
-For Osmosis Devnet:
+For Osmosis DevNet:
 ```
 nix develop "composable#osmosis-devnet" --impure
 ```

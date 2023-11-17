@@ -7,11 +7,12 @@
         bech32cli = self.inputs.bech32cli.packages.${system}.default;
       };
       _module.args.cosmosTools = rec {
-        mnemonics = {
-          pools =
-            "traffic cool olive pottery elegant innocent aisle dial genuine install shy uncle ride federal soon shift flight program cave famous provide cute pole struggle";
-        };
         devnet-root-directory = "/tmp/composable-devnet";
+        pools = {
+          mnemonic =
+            "traffic cool olive pottery elegant innocent aisle dial genuine install shy uncle ride federal soon shift flight program cave famous provide cute pole struggle";
+
+        };
         validators = {
           mnemonic =
             "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
@@ -19,7 +20,12 @@
           moniker = "validator";
           osmosis = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
         };
-
+        mantis = {
+          mnemonic =
+            "green inch denial draw output great truth source dad summer betray price used claim lab garment scout twice increase buyer banana sniff forum salad";
+          moniker = "mantis";
+          centauri = "centauri1apckrk2dfpp32qrklk5cne5shdlekundvcdzxz";
+        };
         cvm = {
           mnemonic =
             "apart ahead month tennis merge canvas possible cannon lady reward traffic city hamster monitor lesson nasty midnight sniff enough spatial rare multiply keep task";
