@@ -50,7 +50,7 @@
         picasso-runtime-dev = pkgs.stdenv.mkDerivation ({
           name = "picasso-runtime-dev";
           dontUnpack = true;
-          buildInputs = with self'.packages; [ subwasm subxt ];
+          buildInputs = with self'.packages; with pkgs; [ subwasm subxt ];
           patchPhase = "";
           dontStrip = true;
           installPhase = ''
@@ -67,7 +67,7 @@
         composable-runtime-dev = pkgs.stdenv.mkDerivation ({
           name = "composable-runtime-dev";
           dontUnpack = true;
-          buildInputs = with self'.packages; [ subwasm subxt ];
+          buildInputs = with self'.packages; with pkgs; [ subwasm subxt ];
           patchPhase = "";
           dontStrip = true;
           installPhase = ''
