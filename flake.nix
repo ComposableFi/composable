@@ -54,12 +54,10 @@
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
-
     };
 
     bech32cli = {
-      url =
-        "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
+      url = "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -147,7 +145,6 @@
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
-        ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
         ./flake/xapps.nix
         ./flake/overlays.nix

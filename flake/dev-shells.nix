@@ -26,7 +26,6 @@
           jq
           nix-tree
           nixfmt
-          nixos-rebuild
           nodejs
           nodePackages.npm
           openssl
@@ -37,8 +36,6 @@
           sad
           self'.packages.bech32cli
           subwasm
-          opentofu
-          terraform-ls
           typescript
           websocat
           yarn
@@ -59,7 +56,6 @@
             with self'.packages; [
               bacon
               devenv
-              google-cloud-sdk
               lldb
               llvmPackages_latest.bintools
               llvmPackages_latest.lld

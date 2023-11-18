@@ -111,17 +111,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1691404134,
+        "lastModified": 1696008049,
         "narHash": "sha256-EUuqcY+ONGygESASMmmZ/H09FH+kQHTnizrgb1Rt0LA=",
-        "owner": "dzmitry-lahoda-forks",
+        "owner": "strangelove-ventures",
         "repo": "bech32cli",
-        "rev": "7e5bd85b131834fbde8e079bbab4d1cbc98de4e9",
+        "rev": "90054971ace4222e10db250f184b7f8bab2d9ca6",
         "type": "github"
       },
       "original": {
-        "owner": "dzmitry-lahoda-forks",
+        "owner": "strangelove-ventures",
         "repo": "bech32cli",
-        "rev": "7e5bd85b131834fbde8e079bbab4d1cbc98de4e9",
         "type": "github"
       }
     },
