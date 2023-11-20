@@ -188,6 +188,26 @@
       },
       {
         "force_asset": {
+          "asset_id": "158456325028528675187087900676",
+          "network_id": 2,
+          "metadata": "Cosmos Hub ATOM on Layer",
+          "local": {
+            "native": {
+              "denom": "ibc/EF48E6B1A1A19F47ECAEA62F5670C37C0580E86A9E88498B7E393EB6F49F33C0"
+            }
+          },
+          "bridged": {
+            "location_on_network": {
+              "ibc_ics20": {
+                "trace_path": "transfer/channel-4",
+                "base_denom": "uatom"
+              }
+            }
+          }
+        }
+      },      
+      {
+        "force_asset": {
           "asset_id": "237684487542793012780631851010",
           "network_id": 3,
           "metadata": "Osmosis OSMO",
