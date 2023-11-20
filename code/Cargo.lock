@@ -9192,6 +9192,7 @@ name = "pallet-liquid-staking"
 version = "1.0.0"
 dependencies = [
  "composable-support",
+ "composable-traits",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
@@ -9200,6 +9201,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "kusama-runtime",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
@@ -9218,8 +9220,10 @@ dependencies = [
  "pallet-xcm-helper",
  "parachain-info",
  "parity-scale-codec",
+ "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
+ "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
  "serde",
@@ -9232,6 +9236,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xcm-simulator",
 ]
 
 [[package]]
@@ -17359,7 +17364,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -17559,9 +17564,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
@@ -19256,6 +19261,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.39",
+]
+
+[[package]]
+name = "xcm-simulator"
+version = "0.9.43"
+source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.43#ba42b9ce51d25bdaf52d2c61e0763a6e3da50d25"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "paste 1.0.14",
+ "polkadot-core-primitives",
+ "polkadot-parachain",
+ "polkadot-runtime-parachains",
+ "sp-io",
+ "sp-std 5.0.0",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]

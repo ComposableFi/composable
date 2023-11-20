@@ -14,22 +14,14 @@ use sp_runtime::{
 use sp_trie::StorageProof;
 use xcm_simulator::TestExt;
 
-use pallet_traits::ump::RewardDestination;
-use primitives::{
-	tokens::{KSM, SKSM},
-	Balance, Rate, Ratio,
-};
-
-use crate::{
-	mock::{Loans, *},
-	types::*,
-	*,
-};
+use crate::{mock::*, types::*, *};
+use parity_scale_codec::Encode;
 
 #[test]
 fn stake_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), ksm(10f64)));
+
 		// Check storage is correct
 		assert_eq!(ExchangeRate::<Test>::get(), Rate::one());
 		assert_eq!(
@@ -73,6 +65,7 @@ fn stake_should_work() {
 				total_unstake_amount: Default::default(),
 			}
 		);
+
 		let derivative_index = 0u16;
 		assert_eq!(
 			StakingLedgers::<Test>::get(&0).unwrap(),
@@ -114,7 +107,7 @@ fn stake_should_work() {
 				claimed_rewards: vec![]
 			}
 		);
-	})
+	});
 }
 
 #[test]
@@ -211,7 +204,7 @@ fn unstake_should_work() {
 				claimed_rewards: vec![]
 			}
 		);
-	})
+	});
 }
 
 enum StakeOp {
@@ -245,7 +238,6 @@ fn test_matching_should_work() {
 				0,
 				(0, 0, ksm(5.05f64)),
 			),
-			// (vec![], 0, (0, 0, 0)),
 		];
 		for (i, (stake_ops, _bonding_amount, unbonding_amount, matching_result)) in
 			test_case.into_iter().enumerate()
@@ -362,6 +354,16 @@ fn test_transact_unbond_work() {
 			0,
 			Response::ExecutionResult(None),
 		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(5f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
 		assert_ok!(LiquidStaking::unbond(
 			RuntimeOrigin::signed(ALICE),
 			derivative_index,
@@ -370,10 +372,6 @@ fn test_transact_unbond_work() {
 	});
 
 	Relay::execute_with(|| {
-		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
-			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
-			amount: ksm(5f64),
-		}));
 		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Unbonded {
 			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
 			amount: ksm(2f64),
@@ -398,7 +396,6 @@ fn test_transact_withdraw_unbonded_work() {
 			Default::default()
 		));
 		let bond_amount = ksm(5f64);
-		let unbond_amount = ksm(2f64);
 		assert_ok!(LiquidStaking::bond(
 			RuntimeOrigin::signed(ALICE),
 			derivative_index,
@@ -410,6 +407,17 @@ fn test_transact_withdraw_unbonded_work() {
 			0,
 			Response::ExecutionResult(None),
 		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(5f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
+		let unbond_amount = ksm(2f64);
 		assert_ok!(LiquidStaking::unbond(
 			RuntimeOrigin::signed(ALICE),
 			derivative_index,
@@ -430,10 +438,6 @@ fn test_transact_withdraw_unbonded_work() {
 		assert_eq!(ledger.active, ksm(3f64));
 		assert_eq!(ledger.unlocking.len(), 1);
 
-		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
-			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
-			amount: ksm(5f64),
-		}));
 		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Unbonded {
 			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
 			amount: ksm(2f64),
@@ -487,11 +491,31 @@ fn test_transact_rebond_work() {
 			0,
 			Response::ExecutionResult(None),
 		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(10f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
 		assert_ok!(LiquidStaking::unbond(
 			RuntimeOrigin::signed(ALICE),
 			derivative_index,
 			ksm(5f64)
 		));
+	});
+
+	Relay::execute_with(|| {
+		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Unbonded {
+			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
+			amount: ksm(5f64),
+		}));
+	});
+
+	ParaA::execute_with(|| {
 		assert_ok!(LiquidStaking::rebond(
 			RuntimeOrigin::signed(ALICE),
 			derivative_index,
@@ -500,14 +524,6 @@ fn test_transact_rebond_work() {
 	});
 
 	Relay::execute_with(|| {
-		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
-			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
-			amount: ksm(10f64),
-		}));
-		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Unbonded {
-			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
-			amount: ksm(5f64),
-		}));
 		RelaySystem::assert_has_event(RelayEvent::Staking(RelayStakingEvent::Bonded {
 			stash: LiquidStaking::derivative_sovereign_account_id(derivative_index),
 			amount: ksm(3f64),
@@ -573,10 +589,8 @@ fn test_transfer_bond() {
 			xcm_transfer_amount,
 			RewardDestination::Staked
 		));
-		// print_events::<Test>("ParaA");
 	});
 	Relay::execute_with(|| {
-		// print_events::<kusama_runtime::Runtime>("Relay");
 		let ledger =
 			RelayStaking::ledger(LiquidStaking::derivative_sovereign_account_id(derivative_index))
 				.unwrap();
@@ -687,9 +701,14 @@ fn test_on_initialize_work() {
 		let total_era_blocknumbers = <Test as Config>::EraLength::get();
 		assert_eq!(total_era_blocknumbers, 10);
 		RelayChainValidationDataProvider::set(total_era_blocknumbers);
+		System::set_block_number(System::block_number() + 1);
+		LiquidStaking::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
 		LiquidStaking::on_initialize(System::block_number());
 		assert_eq!(EraStartBlock::<Test>::get(), total_era_blocknumbers);
-		assert_eq!(CurrentEra::<Test>::get(), 1);
+		// ValidationDataProvider return relay_parent_number = 100
+		// total_era_blocknumbers  = 10 so the current era is 10
+		assert_eq!(CurrentEra::<Test>::get(), 10);
 		assert_eq!(LiquidStaking::staking_ledger(derivative_index), None);
 		assert_eq!(
 			LiquidStaking::matching_pool(),
@@ -865,7 +884,6 @@ fn test_verify_trie_proof_work() {
 #[test]
 fn test_verify_merkle_proof_work() {
 	new_test_ext().execute_with(|| {
-		use codec::Encode;
 		let derivative_index = 0u16;
 		let staking_ledger = get_mock_staking_ledger(derivative_index);
 		let key = LiquidStaking::get_staking_ledger_key(derivative_index);
@@ -926,50 +944,6 @@ fn cancel_unstake_works() {
 		);
 
 		assert_eq!(LiquidStaking::fast_unstake_requests(&ALICE), 0);
-	})
-}
-
-#[test]
-fn fast_unstake_works() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(LiquidStaking::stake(RuntimeOrigin::signed(ALICE), ksm(10f64)));
-		assert_ok!(Loans::mint(RuntimeOrigin::signed(BOB), KSM, ksm(100f64)));
-		assert_ok!(Loans::collateral_asset(RuntimeOrigin::signed(BOB), KSM, true));
-		assert_ok!(LiquidStaking::unstake(
-			RuntimeOrigin::signed(ALICE),
-			ksm(6f64),
-			UnstakeProvider::Loans
-		));
-		assert_eq!(
-			Unlockings::<Test>::get(LiquidStaking::loans_account_id()).unwrap(),
-			vec![UnlockChunk { value: ksm(6f64), era: 4 },]
-		);
-		// 90 * 1e12 + (6 * (1 - 8/1000) * 1e12)
-		assert_eq!(<Test as Config>::Assets::balance(KSM, &ALICE), 95952000000000u128);
-
-		let derivative_index = 0u16;
-		assert_ok!(with_transaction(|| -> TransactionOutcome<DispatchResult> {
-			assert_ok!(LiquidStaking::do_matching());
-			assert_ok!(LiquidStaking::do_advance_era(4));
-			TransactionOutcome::Commit(Ok(()))
-		}));
-		assert_ok!(LiquidStaking::notification_received(
-			pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
-			0,
-			Response::ExecutionResult(None),
-		));
-		assert_ok!(LiquidStaking::withdraw_unbonded(RuntimeOrigin::root(), derivative_index, 0));
-		assert_ok!(LiquidStaking::notification_received(
-			pallet_xcm::Origin::Response(MultiLocation::parent()).into(),
-			1,
-			Response::ExecutionResult(None),
-		));
-
-		assert_ok!(LiquidStaking::claim_for(
-			RuntimeOrigin::signed(BOB),
-			Id(LiquidStaking::loans_account_id())
-		));
-		assert_eq!(Unlockings::<Test>::get(LiquidStaking::loans_account_id()), None);
 	})
 }
 

@@ -31,10 +31,10 @@ use pallet_xcm_helper::ump::RewardDestination;
 
 // mod benchmarking;
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 pub mod distribution;
 // pub mod migrations;
