@@ -1,69 +1,32 @@
-# UX flow
+# Overview
 
+This document outlines the user experience flow for MANTIS, a cryptocurrency trading platform. It details the process from the initial user intent submission to the final execution of orders, emphasizing features like batch auctions for volume optimization, dynamic price matching, and cross-chain executions.
 
+## Cryptocurrency Trading Platform: User Experience Flow
 
+### 1. **Intent Submission**:
+   - **User-Driven Transactions**: Users specify their transaction requirements, typically involving an exchange of a certain amount of one cryptocurrency (Token A) for another (Token B).
+   - **Assisted Order Formulation**: The platform assists in setting up order limits, providing suggestions for the exchange amount of Token B. The exchange rate will not be less than the user-defined A/B ratio.
+   - **Confirmation and Blockchain Registration**: Users review, confirm, and sign their transaction details for blockchain recording.
+   - **Timeout vs. Price Limits**: A balance between price limits and matching times is maintained, with tighter limits possibly leading to longer wait times for order matching.
 
-`I want to get 100 of A for 90 of B` is `intent`.
+### 2. **Order Execution Observation**:
+   - **Status Monitoring**: Users can track the status of their orders post-placement.
+   - **Possible Outcomes**: Orders may be fully executed, partially filled, canceled, or timed out.
+   - **Handling Partial Fills**: Partially filled orders result in users receiving a portion of the requested amount, with the remainder being canceled or expiring based on the order settings.
 
+### 3. **Single-Chain Execution Scenario**:
+   - **Efficient Execution**: The platform swiftly matches orders in a single transaction block for prompt fulfillment.
+   - **Batch Auctions**: Batch Auctions process multiple orders simultaneously, maximizing the product of exchanged amounts (A * B) for efficient matching.
 
-Solvable by:
-1. Liquidity pools with curve (lending, CFMM, stable pools, staking, provide liquidity) 
-2. Orders - other user wants opposite.
+**Order Pricing**:
+   - **Dynamic Price Matching**: The platform matches orders to achieve optimal trading volume without violating user-set limits.
+   - **Execution at Optimal Prices**: Execution occurs at a price that maximizes volume, ensuring efficiency.
 
-### Orderbooks
+### 4. **Cross-Chain Solutions**:
+   - **Multi-Chain Execution**: Certain orders are executed using liquidity pools across multiple blockchain networks, involving several blocks and chains.
+   - **Cross-Chain Virtual Machine (CVM) Program**: The CVM facilitates these transactions, ensuring efficient multi-chain swaps.
+   - **Monitoring Interface**: A detailed interface provides real-time updates for multi-chain transactions.
+   - **Cross-Chain Transfers**: Includes straightforward cross-chain transfers.
 
-1. FIFO which optimizes for fairness
-2. Optimized for volume `max(A * B)` - Coincidence of Wants solved by Batch Auctions (many orders solved at a time).
-
-### CoW Batch Auction order book
-
-`intent` on chain is `order` with order identifier and some conditions:
-- timeout after which order is canceled
-- partial fill of order is okey or not. example, I am ok to solve 50% of my order.
-
-`Order` of user is solved until timeout or full fill.
-
-### Order price
-
-We do not use on chain oracles to form limits (examples are price A/B or slippages).
-
-But FE must suggest user some limit using indexer of TWAP Oracles out there.
-
-Example, `A/B` is `price` on Osmosis is `0.50`. 
-Than user default order formed by frontend can be like `0.45`.
-That defines limit like slippage. 
-It prevents user from being totally rugged. 
-But more tight limit is more chances order to be timeout.
-
-
-### How actually it is swapped?
-
-Background trustless solvers run by some random people,
-find overlapping prices and post `solutions` if orders match.
-
-Examples, order `K` A to B price is `0.5` and order `L` price is B to A `0.45`.
-If `K<L` than `solution` can salify limits and match orders.
-
-If there are many many orders and several solutions, than solution with maximum volume is accepted by contract.
-
-It tries to make sure user gets more than limit.
-
-Solver compete for highest volume so that they improve upon user limits.
-
-### On chain and cross chain parts
-
-What is there is not satisfying counter order? 
-And there liquidity on order contract chain.
-
-In this case solvers form CVM cross chain routing program which swaps on pools.
-
-It also solves just transfer order, because transfer is just "bridge pool minus bridge fees".
-
-In this case amount in user order is not settled in single block,
-but should be observer in multiple blocks on several chain.  
-
-Many orders can be grouped in single CVM batch,
-so that gas fees are shared.
-
-# TODO: bind in event order to solution
-
+This document provides a structured overview of MANTIS's approach to cryptocurrency trading, focusing on efficiency, user assistance, and advanced technological solutions.
