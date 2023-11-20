@@ -158,11 +158,11 @@ const config = {
 							},
 							{
 								label: 'Risk Factors'
-								href: 'https://docs.composable.finance/faqs/risk-factors'
+								href: 'https://docs.composable.finance/faqs/risk-factors',
 							},
 							{
 								label: 'Terms of Use'
-								href: 'https://docs.composable.finance/faqs/terms-of-use'
+								href: 'https://docs.composable.finance/faqs/terms-of-use',
 							},
 						],
 					},
