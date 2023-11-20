@@ -685,6 +685,20 @@
                 namespace = "ibc";
               };
 
+              mantis-simulate-solve = {
+                command = self'.packages.mantis-simulate-solve;
+                depends_on = {
+                  "centauri-cvm-config".condition =
+                    "process_completed_successfully";
+                  "osmosis-centauri-hermes-init".condition =
+                    "process_completed_successfully";
+                };
+                log_location =
+                  "${devnet-root-directory}/mantis-simulate-solve.log";
+                availability = { restart = relay; };
+                namespace = "xapp";
+              };
+
               xapp-osmosis-osmo-to-centauri = {
                 command = self'.packages.xapp-osmosis-osmo-to-centauri;
                 depends_on = {

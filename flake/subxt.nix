@@ -5,15 +5,14 @@
         pkgs.stdenv.mkDerivation (subnix.subenv // {
           inherit name;
           dontUnpack = true;
-          buildInputs =
-            [ self'.packages.centauri-codegen parachain-runtime relay-runtime ];
+          buildInputs = with self'.packages; with pkgs; [ subwasm subxt ];
 
           installPhase = ''
-            mkdir --parents $out
-            ${pkgs.lib.meta.getExe self'.packages.centauri-codegen} \
-              --path $out \
-              --parachain-wasm=${parachain-runtime}/lib/runtime.optimized.wasm \
-              --relaychain-wasm=${relay-runtime}/lib/relay_runtime.compact.compressed.wasm
+            mkdir --parents $out/lib
+            subwasm metadata ${parachain-runtime}/lib/runtime.optimized.wasm --format scale > $out/lib/parachain.scale
+            subwasm metadata ${relay-runtime}/lib/relay_runtime.compact.compressed.wasm --format scale > $out/lib/relaychain.scale
+            subxt codegen --file $out/lib/parachain.scale > $out/parachain.rs
+            subxt codegen --file $out/lib/relaychain.scale > $out/relaychain.rs
           '';
         });
     in {

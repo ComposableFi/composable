@@ -72,10 +72,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response> {
 fn handle_transfer_sent(deps: DepsMut, msg: Reply) -> Result {
 	deps.api.debug(&format!("cvm::gateway::handle_transfer_sent {:?}", msg.result));
 	let SubMsgResult::Ok(SubMsgResponse { data: Some(b), .. }) = msg.result else {
-		return Err(ContractError::FailedIBCTransfer(format!(
-			"cvm::failed reply: {:?}",
-			msg.result
-		)));
+		return Err(ContractError::FailedIBCTransfer(format!("cvm::failed reply: {:?}", msg.result)))
 	};
 
 	use prost::Message;

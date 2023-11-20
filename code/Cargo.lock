@@ -397,7 +397,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "hashbrown 0.13.2",
- "itertools 0.10.5",
+ "itertools",
  "num-traits",
  "rayon",
  "zeroize",
@@ -465,7 +465,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "digest 0.10.7",
- "itertools 0.10.5",
+ "itertools",
  "num-bigint",
  "num-traits",
  "paste 1.0.14",
@@ -1596,12 +1596,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bnum"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "128a44527fc0d6abf05f9eda748b9027536e12dff93f5acc8449f51583309350"
-
-[[package]]
 name = "borsh"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2225,7 +2219,7 @@ dependencies = [
  "bs58 0.5.0",
  "composable-support",
  "composable-traits",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "cumulus-pallet-xcm",
  "cumulus-primitives-core",
  "derive_more 0.99.17",
@@ -2248,7 +2242,7 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "smallvec 1.11.0",
  "sp-consensus-aura",
  "sp-core 7.0.0",
@@ -2518,7 +2512,7 @@ dependencies = [
  "bitflags 1.3.2",
  "composable-support",
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "frame-support",
  "frame-system",
  "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/composable-ibc?rev=d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8)",
@@ -2580,12 +2574,6 @@ name = "const_fn"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbdcdcb6d86f71c5e97409ad45898af11cbc995b4ee8112d59095a28d376c935"
-
-[[package]]
-name = "const_panic"
-version = "0.2.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6051f239ecec86fde3410901ab7860d458d160371533842974fc61f96d15879b"
 
 [[package]]
 name = "constant_time_eq"
@@ -2734,31 +2722,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-crypto"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6fb22494cf7d23d0c348740e06e5c742070b2991fd41db77bba0bcfbae1a723"
-dependencies = [
- "digest 0.10.7",
- "ed25519-zebra",
- "k256 0.13.1",
- "rand_core 0.6.4",
- "thiserror",
-]
-
-[[package]]
 name = "cosmwasm-derive"
 version = "1.2.5"
 source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
-dependencies = [
- "syn 1.0.109",
-]
-
-[[package]]
-name = "cosmwasm-derive"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e199424486ea97d6b211db6387fd72e26b4a439d40cc23140b2d8305728055b"
 dependencies = [
  "syn 1.0.109",
 ]
@@ -2800,11 +2766,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fef683a9c1c4eabd6d31515719d0d2cc66952c4c87f7eb192bfc90384517dc34"
+checksum = "0df41ea55f2946b6b43579659eec048cc2f66e8c8e2e3652fc5e5e476f673856"
 dependencies = [
- "cosmwasm-schema-derive 1.4.1",
+ "cosmwasm-schema-derive 1.5.0",
  "schemars",
  "serde",
  "serde_json",
@@ -2823,9 +2789,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.4.1"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9567025acbb4c0c008178393eb53b3ac3c2e492c25949d3bf415b9cbe80772d8"
+checksum = "43609e92ce1b9368aa951b334dd354a2d0dd4d484931a5f83ae10e12a26c8ba9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2838,37 +2804,17 @@ version = "1.2.5"
 source = "git+https://github.com/dzmitry-lahoda-forks/cosmwasm?rev=1277597cbf380a8d04dbe676d9cb344ca31634b6#1277597cbf380a8d04dbe676d9cb344ca31634b6"
 dependencies = [
  "base64 0.13.1",
- "cosmwasm-crypto 1.2.5",
- "cosmwasm-derive 1.2.5",
+ "cosmwasm-crypto",
+ "cosmwasm-derive",
  "derivative",
  "forward_ref",
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "sha2 0.10.7",
  "thiserror-core",
  "uint 0.9.5 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "cosmwasm-std"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d89d680fb60439b7c5947b15f9c84b961b88d1f8a3b20c4bd178a3f87db8bae"
-dependencies = [
- "base64 0.21.2",
- "bnum",
- "cosmwasm-crypto 1.4.1",
- "cosmwasm-derive 1.4.1",
- "derivative",
- "forward_ref",
- "hex",
- "schemars",
- "serde",
- "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "sha2 0.10.7",
- "thiserror",
 ]
 
 [[package]]
@@ -2876,7 +2822,7 @@ name = "cosmwasm-vm"
 version = "0.2.0"
 source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "log 0.4.19",
  "num",
  "serde",
@@ -2888,7 +2834,7 @@ name = "cosmwasm-vm-wasmi"
 version = "0.2.0"
 source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=1cc47415577d67448ff483ad530b889cceafde77#1cc47415577d67448ff483ad530b889cceafde77"
 dependencies = [
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "cosmwasm-vm",
  "either",
  "hex",
@@ -3025,7 +2971,7 @@ dependencies = [
  "cranelift-codegen",
  "cranelift-entity",
  "cranelift-frontend",
- "itertools 0.10.5",
+ "itertools",
  "log 0.4.19",
  "smallvec 1.11.0",
  "wasmparser 0.102.0",
@@ -3853,53 +3799,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
-name = "cvm"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.4.1",
- "derive_more 1.0.0-beta.2",
- "hex",
- "num",
- "prost-build",
- "schemars",
- "serde",
- "serde-json-wasm 1.0.0",
-]
-
-[[package]]
-name = "cw-mantis-order"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema 1.4.1",
- "cosmwasm-std 1.4.1",
- "cvm",
- "cw-storage-plus 1.1.0",
- "itertools 0.11.0",
- "num-integer",
- "num-rational",
- "schemars",
- "serde",
- "sylvia",
-]
-
-[[package]]
 name = "cw-storage-plus"
 version = "1.0.2"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-storage-plus?rev=d0a2cf126cae3e3960c787ebcfc9baa54f59f71c#d0a2cf126cae3e3960c787ebcfc9baa54f59f71c"
 dependencies = [
- "cosmwasm-std 1.2.5",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw-storage-plus"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f0e92a069d62067f3472c62e30adedb4cab1754725c0f2a682b3128d2bf3c79"
-dependencies = [
- "cosmwasm-std 1.4.1",
+ "cosmwasm-std",
  "schemars",
  "serde",
 ]
@@ -3909,8 +3813,8 @@ name = "cw-utils"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.4.1",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-schema 1.5.0",
+ "cosmwasm-std",
  "cw2",
  "schemars",
  "semver 1.0.18",
@@ -3923,8 +3827,8 @@ name = "cw-xc-executor"
 version = "0.2.0"
 dependencies = [
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
+ "cosmwasm-std",
+ "cw-storage-plus",
  "cw-utils",
  "cw2",
  "cw20",
@@ -3933,8 +3837,8 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-cw-value 0.7.0 (git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595)",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-cw-value",
+ "serde-json-wasm",
  "serde_json",
  "thiserror-core",
  "xc-core",
@@ -3945,8 +3849,8 @@ name = "cw-xc-gateway"
 version = "0.1.0"
 dependencies = [
  "bech32",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
+ "cosmwasm-std",
+ "cw-storage-plus",
  "cw-utils",
  "cw-xc-executor",
  "cw2",
@@ -3956,7 +3860,7 @@ dependencies = [
  "prost",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "thiserror-core",
  "xc-core",
 ]
@@ -3966,9 +3870,9 @@ name = "cw2"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.4.1",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
+ "cosmwasm-schema 1.5.0",
+ "cosmwasm-std",
+ "cw-storage-plus",
  "schemars",
  "serde",
  "thiserror-core",
@@ -3979,8 +3883,8 @@ name = "cw20"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
 dependencies = [
- "cosmwasm-schema 1.4.1",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-schema 1.5.0",
+ "cosmwasm-std",
  "cw-utils",
  "schemars",
  "serde",
@@ -5212,7 +5116,7 @@ dependencies = [
  "frame-system",
  "gethostname",
  "handlebars",
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "linked-hash-map",
  "log 0.4.19",
@@ -5387,7 +5291,7 @@ dependencies = [
  "cfg-expr",
  "derive-syn-parse",
  "frame-support-procedural-tools",
- "itertools 0.10.5",
+ "itertools",
  "proc-macro-warning",
  "proc-macro2",
  "quote",
@@ -6416,7 +6320,7 @@ dependencies = [
  "ics08-wasm 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics10-grandpa 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics11-beefy 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
- "itertools 0.10.5",
+ "itertools",
  "light-client-common 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "log 0.4.19",
  "once_cell",
@@ -6462,7 +6366,7 @@ dependencies = [
  "ibc-rpc 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics07-tendermint 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics08-wasm 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
- "itertools 0.10.5",
+ "itertools",
  "k256 0.11.6",
  "log 0.4.19",
  "pallet-ibc 0.0.1 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
@@ -6531,7 +6435,7 @@ dependencies = [
  "ibc-rpc 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics10-grandpa 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
  "ics11-beefy 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
- "itertools 0.10.5",
+ "itertools",
  "jsonrpsee 0.16.2",
  "jsonrpsee-ws-client",
  "light-client-common 0.1.0 (git+https://github.com/ComposableFi/composable-ibc?branch=lsd-relayer)",
@@ -6695,7 +6599,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "serde_derive",
  "sha2 0.10.7",
  "subtle-encoding",
@@ -7442,15 +7346,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7774,7 +7669,6 @@ dependencies = [
  "elliptic-curve 0.13.5",
  "once_cell",
  "sha2 0.10.7",
- "signature 2.0.0",
 ]
 
 [[package]]
@@ -7795,33 +7689,6 @@ dependencies = [
  "winapi 0.2.8",
  "winapi-build",
 ]
-
-[[package]]
-name = "konst"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "030400e39b2dff8beaa55986a17e0014ad657f569ca92426aafcb5e8e71faee7"
-dependencies = [
- "const_panic",
- "konst_kernel",
- "konst_proc_macros",
- "typewit",
-]
-
-[[package]]
-name = "konst_kernel"
-version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3376133edc39f027d551eb77b077c2865a0ef252b2e7d0dd6b6dc303db95d8b5"
-dependencies = [
- "typewit",
-]
-
-[[package]]
-name = "konst_proc_macros"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e28ab1dc35e09d60c2b8c90d12a9a8d9666c876c10a3739a3196db0103b6043"
 
 [[package]]
 name = "kusama-runtime"
@@ -9616,7 +9483,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2871aadd82a2c216ee68a69837a526dfe788ecbe74c4c5038a6acdbff6653066"
 dependencies = [
  "expander 0.0.6",
- "itertools 0.10.5",
+ "itertools",
  "petgraph",
  "proc-macro-crate 1.3.1",
  "proc-macro2",
@@ -10179,7 +10046,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "frame-benchmarking",
@@ -11800,7 +11667,7 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "cosmwasm-runtime-api",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
  "crowdloan-rewards-runtime-api",
@@ -11878,7 +11745,7 @@ dependencies = [
  "reward",
  "reward-rpc-runtime-api",
  "scale-info",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "smallvec 1.11.0",
  "sp-api 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43)",
  "sp-block-builder",
@@ -12721,7 +12588,7 @@ dependencies = [
  "fatality",
  "futures 0.3.28",
  "futures-channel",
- "itertools 0.10.5",
+ "itertools",
  "kvdb",
  "lru 0.9.0",
  "parity-db",
@@ -13295,7 +13162,7 @@ checksum = "59230a63c37f3e18569bdb90e4a89cbf5bf8b06fea0b84e65ea10cc4df47addd"
 dependencies = [
  "difflib",
  "float-cmp",
- "itertools 0.10.5",
+ "itertools",
  "normalize-line-endings",
  "predicates-core",
  "regex",
@@ -13405,13 +13272,13 @@ version = "1.0.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "cosmwasm-std 1.2.5",
+ "cosmwasm-std",
  "frame-support",
  "ibc 0.43.1",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-json-wasm",
  "sp-core 7.0.0",
  "sp-runtime 7.0.0",
  "sp-std 5.0.0",
@@ -13578,7 +13445,7 @@ checksum = "119533552c9a7ffacc21e099c24a0ac8bb19c2a2a3f363de84cd9b844feab270"
 dependencies = [
  "bytes 1.4.0",
  "heck 0.4.1",
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "log 0.4.19",
  "multimap",
@@ -13599,7 +13466,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5d2d8d10f3c6ded6da8b05b5fb3b8a5082514344d56c9f871412d29b4e075b4"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -14026,7 +13893,7 @@ checksum = "3bd8f48b2066e9f69ab192797d66da804d1935bf22763204ed3675740cb0f221"
 dependencies = [
  "derive_more 0.99.17",
  "fs-err",
- "itertools 0.10.5",
+ "itertools",
  "static_init 0.5.2",
  "thiserror",
 ]
@@ -16177,9 +16044,9 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "0.8.12"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02c613288622e5f0c3fdc5dbd4db1c5fbe752746b1d1a56a0630b78fd00de44f"
+checksum = "45a28f4c49489add4ce10783f7911893516f15afe45d015608d41faca6bc4d29"
 dependencies = [
  "dyn-clone",
  "schemars_derive",
@@ -16189,9 +16056,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "0.8.12"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "109da1e6b197438deb6db99952990c7f959572794b80ff93707d55a232545e7c"
+checksum = "c767fd6fa65d9ccf9cf026122c1b555f2ef9a4f0cea69da4d7dbc3e258d30967"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -16425,15 +16292,6 @@ dependencies = [
 [[package]]
 name = "serde-cw-value"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-cw-value"
-version = "0.7.0"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595#b91ac6d797fd24c00758ad3995a55dc820279595"
 dependencies = [
  "schemars",
@@ -16443,25 +16301,7 @@ dependencies = [
 [[package]]
 name = "serde-json-wasm"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16a62a1fad1e1828b24acac8f2b468971dade7b8c3c2e672bcadefefb1f8c137"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-json-wasm"
-version = "0.5.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81#8a7e522c0e4de36a6dfb535766f26a9941017d81"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-json-wasm"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83c37d03f3b0f6b5f77c11af1e7c772de1c9af83e50bef7bb6069601900ba67b"
 dependencies = [
  "serde",
 ]
@@ -17356,7 +17196,7 @@ dependencies = [
  "hash-db",
  "hash256-std-hasher",
  "impl-serde 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "libsecp256k1",
  "log 0.4.19",
@@ -19253,36 +19093,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sylvia"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "244466d32c81f9421db755e437924126233815cd0f17fca0dd7472d1045eb4c1"
-dependencies = [
- "cosmwasm-schema 1.4.1",
- "cosmwasm-std 1.4.1",
- "konst",
- "schemars",
- "serde",
- "serde-cw-value 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde-json-wasm 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "sylvia-derive",
-]
-
-[[package]]
-name = "sylvia-derive"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b9a418ce96b68c6cf770edea4bb6049a7d2ed20f85e03560bfe375494ccfcd3"
-dependencies = [
- "convert_case 0.6.0",
- "proc-macro-crate 1.3.1",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -20532,21 +20342,6 @@ name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
-
-[[package]]
-name = "typewit"
-version = "1.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6779a69cc5f9a7388274a0a8a353eb1c9e45195f9ae74a26690b055a7cf9592a"
-dependencies = [
- "typewit_proc_macros",
-]
-
-[[package]]
-name = "typewit_proc_macros"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e36a83ea2b3c704935a01b4642946aadd445cea40b10935e3f8bd8052b8193d6"
 
 [[package]]
 name = "ucd-trie"
@@ -22248,8 +22043,8 @@ version = "0.1.0"
 dependencies = [
  "bech32",
  "cosmwasm-schema 1.2.5",
- "cosmwasm-std 1.2.5",
- "cw-storage-plus 1.0.2",
+ "cosmwasm-std",
+ "cw-storage-plus",
  "cw20",
  "derive_more 1.0.0-beta.2",
  "hex",
@@ -22263,8 +22058,8 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde-cw-value 0.7.0 (git+https://github.com/dzmitry-lahoda-forks/serde-cw-value?rev=b91ac6d797fd24c00758ad3995a55dc820279595)",
- "serde-json-wasm 0.5.1 (git+https://github.com/dzmitry-lahoda-forks/serde-json-wasm?rev=8a7e522c0e4de36a6dfb535766f26a9941017d81)",
+ "serde-cw-value",
+ "serde-json-wasm",
  "sha2 0.10.7",
  "strum 0.25.0",
  "thiserror-core",

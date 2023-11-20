@@ -130,7 +130,7 @@
 
           INSTANTIATE=$(cat << EOF
               {
-                  "admin" : "$KEY", 
+                  "admin" : "$KPEY", 
                   "network_id" : $NETWORK_ID
               }                                 
           EOF
@@ -502,6 +502,7 @@
             add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
             add-genesis-account ${validator-key}
             add-genesis-account ${cosmosTools.cvm.centauri}
+            add-genesis-account ${cosmosTools.mantis.centauri}
             add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
             add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d
             add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu

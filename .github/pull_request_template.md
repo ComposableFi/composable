@@ -1,7 +1,7 @@
 
 Required for merge:
 - [ ] `pr-workflow-check / draft-release-check` is ✅ success
-- Other rules GitHub shows you, or can be read in [configuration](../terraform/github.com/branches.tf) 
+- Other rules GitHub shows you, or can be read in [configuration](github.com/ComposableFi/env/terraform/github.com/branches.tf) 
 
 Makes review faster:
 - [ ] PR title is my best effort to provide summary of changes and has clear text to be part of release notes 

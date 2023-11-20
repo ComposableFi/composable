@@ -1,12 +1,4 @@
-## Guide
-
-1. Use dedicated non cloud hardware for heavy jobs (32 CPUs) for Linux
-2. Use dedicated non cloud hardware for Mac jobs
-3. Use one to one hardware as used in production for benchmarks
-4. Use Nix native services (Hercules, Nixbuild, Hydra) for immutable pure nix builds (they are fastest for Nix and with best debugging experience)
-5. Use default GH runners for super light jobs (2 CPU cores).
-6. Use BlueJet or GH Larger runners for light jobs (4-8 CPU cores).
-7. Observer jobs via dashboards (Trunk) and optimize
+## How to setup new dedicated machine
 
 ## Image
 
@@ -97,7 +89,3 @@ tar xzf ./actions-runner-linux-arm64-2.307.1.tar.gz
 ```bash
 ./svc.sh install actions-runner && ./svc.sh start && systemctl daemon-reload
 ```
-
-## Notes
- 
-Sure do not do this in production. Solution is to nixos-generators custom image with public ssh and github runner built in and using `nix rebuild` via ssh on remote to update config (or can use home-manager on ubuntu).
