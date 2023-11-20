@@ -944,6 +944,25 @@ pub mod pallet {
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
 				<<T as Config>::MultiCurrency>::burn_from(asset, who, amount, precision, force)
 			}
+
+			fn transfer(
+				asset: Self::AssetId,
+				source: &T::AccountId,
+				dest: &T::AccountId,
+				amount: Self::Balance,
+				preservation: Preservation,
+			) -> Result<Self::Balance, DispatchError> {
+				if asset == T::NativeAssetId::get() {
+					return <<T as Config>::NativeCurrency>::transfer(
+						source,
+						dest,
+						amount,
+						preservation,
+					)
+				}
+				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
+				<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, preservation)
+			}
 		}
 
 		impl<T: Config> Inspect<T::AccountId> for Pallet<T>
