@@ -327,7 +327,7 @@ pub fn common_exchange_failure(
 			AssetAmount::new(init_second_amount.asset_id, 0),
 			false
 		),
-		TokenError::FundsUnavailable
+		orml_tokens::module::Error::<Test>::BalanceTooLow
 	);
 
 	// error as the expected value is more that input
