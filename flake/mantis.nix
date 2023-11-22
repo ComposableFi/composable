@@ -10,10 +10,11 @@
           name = "mantis-simulate-solve";
           text = ''
             CHAIN_DATA="${cosmosTools.devnet-root-directory}/.centaurid"
-            KEY=${cosmosTools.cvm.centauri}
+            WALLET=${cosmosTools.cvm.centauri}
             ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
             GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
-            RUST_TRACE=${log} mantis --centauri "http://localhost:26657" --osmosis "localhost:36657" --neutron "localhost:46657" --cvm-contract "$GATEWAY_CONTRACT_ADDRESS" --wallet "$KEY" --order-contract "$ORDER_CONTRACT_ADDRESS"
+
+            RUST_TRACE=trace mantis --rpc-centauri "http://localhost:26657" --grpc-centauri "http://localhost:9090" --osmosis "http://127.0.0.1:36657" --neutron "http://127.0.0.1:46657" --cvm-contract "$GATEWAY_CONTRACT_ADDRESS" --wallet "$WALLET" --order-contract "$ORDER_CONTRACT_ADDRESS" --simulate "100ppica,100pdemo"
           '';
         };
       };

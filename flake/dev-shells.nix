@@ -160,7 +160,7 @@
               mkdir --parents ~/.centauri/config
               echo 'keyring-backend = "os"' >> ~/.centauri/config/client.toml
               echo 'output = "json"' >> ~/.centauri/config/client.toml
-              echo 'node = "https://rpc-composable-ia.cosmosia.notional.ventures:443"' >> ~/.centauri/config/client.toml
+              echo 'node = "https://composable-rpc.polkachu.com:443"' >> ~/.centauri/config/client.toml
               echo 'chain-id = "centauri-1"' >> ~/.centauri/config/client.toml
             '';
           }];

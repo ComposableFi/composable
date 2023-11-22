@@ -27,6 +27,6 @@ This document outlines the user experience flow for MANTIS, a cryptocurrency tra
    - **Multi-Chain Execution**: Certain orders are executed using liquidity pools across multiple blockchain networks, involving several blocks and chains.
    - **Cross-Chain Virtual Machine (CVM) Program**: The CVM facilitates these transactions, ensuring efficient multi-chain swaps.
    - **Monitoring Interface**: A detailed interface provides real-time updates for multi-chain transactions.
-   - **Cross-Chain Transfers**: Includes straightforward cross-chain transfers.
+   - **Cross-Chain Transfers**: Includes straightforward cross-chain transfers. Solvers find several transfers which they batch into one cross chain message sharing costs of cross chain transfer amid several users.
 
 This document provides a structured overview of MANTIS's approach to cryptocurrency trading, focusing on efficiency, user assistance, and advanced technological solutions.
