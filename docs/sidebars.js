@@ -299,17 +299,6 @@
        id: "audits/audit-results-recommendations-and-remediations",
      },
      {
-       type: "category",
-       label: "Legal Disclaimers and Disclosures",
-       collapsible: true,
-       collapsed: true,
-       items: [
-         "faqs/disclaimers-disclosures-for-composable-tokens",
-         "faqs/risk-factors",
-         "faqs/terms-of-use",
-       ],
-     },
-     {
       "type": "category",
       "label": "Archived",
       "collapsible": true,

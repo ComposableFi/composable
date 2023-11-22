@@ -61,4 +61,4 @@ LAYR release schedule is shown below:
 
 ![LAYR_release](./LAYR-release-schedule.png)
 
-*All terms related to token allocations are subject to change. [Legal disclosures apply.](../../faqs/disclaimers-disclosures-for-composable-tokens.md)
+*All terms related to token allocations are subject to change. [Legal disclosures apply.](https://docs.composable.finance/faqs/disclaimers-disclosures-for-composable-tokens)
