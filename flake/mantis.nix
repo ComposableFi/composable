@@ -10,7 +10,7 @@
           name = "mantis-simulate-solve";
           text = ''
             CHAIN_DATA="${cosmosTools.devnet-root-directory}/.centaurid"
-            KEY=${cosmosTools.cvm.centauri}
+            WALLET=${cosmosTools.cvm.centauri}
             ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
             GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
 
