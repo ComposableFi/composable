@@ -1,4 +1,4 @@
-use frame_support::traits::{fungible::Credit, tokens::Imbalance, OnUnbalanced, Currency};
+use frame_support::traits::{fungible::Credit, tokens::Imbalance, Currency, OnUnbalanced};
 
 use super::*;
 
@@ -8,8 +8,12 @@ type MaxLocks = ConstU32<64>;
 
 pub struct MoveDustToTreasury;
 
-impl OnUnbalanced<Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>> for MoveDustToTreasury {
-	fn on_nonzero_unbalanced(amount: Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>) {
+impl OnUnbalanced<Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>>
+	for MoveDustToTreasury
+{
+	fn on_nonzero_unbalanced(
+		amount: Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>,
+	) {
 		let _ = <Balances as Currency<AccountId>>::deposit_creating(
 			&TreasuryPalletId::get().into_account_truncating(),
 			amount.peek(),
