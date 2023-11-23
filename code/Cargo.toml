@@ -6,7 +6,7 @@ name = "composable"
 version = { workspace = true }
 
 [workspace.package]
-version = "8.10035.2"
+version = "9.10041.2"
 
 [[bin]]
 name = "composable"
@@ -42,9 +42,9 @@ exclude = [
   "integration-tests",
   "parachain/frame/vesting/cli",
   "parachain/frame/cosmwasm/cli",
+  "parachain/frame/liquid-staking/relayer"
 ]
 members = [
-  "parachain/frame/liquid-staking/relayer",
   "parachain/frame/*",
   "parachain/node",
   "parachain/runtime/*",
@@ -54,9 +54,7 @@ members = [
   "utils/price-feed",
   "cvm/cosmwasm/contracts/gateway",
   "cvm/cosmwasm/contracts/executor",
-  "cvm/cosmwasm/contracts/order",  
   "cvm/lib/core/",
-  "cvm/crates/cvm/",
 ]
 resolver = "2"
 
@@ -340,14 +338,16 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
-schemars = { version = "0.8.12", default-features = false }
+
+itertools = { version = "^0.12.0", default-features = false }
+
+schemars = { version = "^0.8.16", default-features = false }
 
 prost = { version = "0.11.0", default-features = false, features = [
   "prost-derive",
 ] }
 prost-types = { version = "0.11.1", default-features = false }
 prost-build = "0.11.9"
-
 
 parity-scale-codec = { version = "3.5.0", default-features = false }
 
@@ -401,4 +401,4 @@ num = { version = "0.4.0", default-features = false }
 half = { version = "2.2.1", default-features = false }
 
 
-thiserror = { version = "1.0.38", package = "thiserror-core", default-features = false }
+thiserror = { version = "1.0.50", package = "thiserror-core", default-features = false }

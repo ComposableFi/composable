@@ -164,7 +164,7 @@
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RELAYER_MNEMONIC" "relayer"
             add-genesis-account "${cosmosTools.cvm.mnemonic}" "cvm"
-            add-genesis-account "${cosmosTools.mnemonics.pools}" "pools"
+            add-genesis-account "${cosmosTools.pools.mnemonic}" "pools"
 
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
             osmosisd collect-gentxs --home "$CHAIN_DATA"

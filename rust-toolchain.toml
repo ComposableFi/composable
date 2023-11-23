@@ -1,14 +1,7 @@
 [toolchain]
-# ideally as close is possible to https://github.com/paritytech/scripts/blob/master/dockerfiles/ci-unified/Dockerfile
-# update to 1.70 requires code changes unfortunately
+# ideally as close is possible(above) to https://github.com/paritytech/scripts/blob/master/dockerfiles/ci-unified/Dockerfile
 channel = "nightly-2023-03-09"
-components = [
-  "clippy",
-  "llvm-tools-preview",
-  "rust-analyzer",
-  "rustfmt",
-  "rust-src",
-]
+components = ["clippy", "llvm-tools", "rust-analyzer", "rustfmt", "rust-src"]
 targets = [
   "wasm32-unknown-unknown",
   # that is the way to test that it checks and builds againt no_std target

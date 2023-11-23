@@ -1,8 +1,25 @@
+use frame_support::traits::{fungible::Credit, tokens::Imbalance, Currency, OnUnbalanced};
+
 use super::*;
 
 pub type BalanceIdentifier = [u8; 8];
 
 type MaxLocks = ConstU32<64>;
+
+pub struct MoveDustToTreasury;
+
+impl OnUnbalanced<Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>>
+	for MoveDustToTreasury
+{
+	fn on_nonzero_unbalanced(
+		amount: Credit<<Runtime as frame_system::Config>::AccountId, balances::Pallet<Runtime>>,
+	) {
+		let _ = <Balances as Currency<AccountId>>::deposit_creating(
+			&TreasuryPalletId::get().into_account_truncating(),
+			amount.peek(),
+		);
+	}
+}
 
 impl balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
@@ -10,7 +27,7 @@ impl balances::Config for Runtime {
 	type ReserveIdentifier = BalanceIdentifier;
 	type Balance = Balance;
 	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
+	type DustRemoval = MoveDustToTreasury;
 	type ExistentialDeposit = NativeExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;

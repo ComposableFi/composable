@@ -26,7 +26,6 @@
           jq
           nix-tree
           nixfmt
-          nixos-rebuild
           nodejs
           nodePackages.npm
           openssl
@@ -37,8 +36,6 @@
           sad
           self'.packages.bech32cli
           subwasm
-          opentofu
-          terraform-ls
           typescript
           websocat
           yarn
@@ -59,7 +56,6 @@
             with self'.packages; [
               bacon
               devenv
-              google-cloud-sdk
               lldb
               llvmPackages_latest.bintools
               llvmPackages_latest.lld
@@ -73,6 +69,8 @@
               taplo
               xorriso
               zlib.out
+              centaurid
+              osmosisd
             ]);
           devcontainer.enable = false;
           inherit env;
@@ -151,6 +149,9 @@
               STAKING_WASM_FILE = "${
                   self.inputs.instrumental.packages."${system}".staking
                 }/lib/staking.wasm";
+              ORDER_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-mantis-order
+                }/lib/cw_mantis_order.wasm";
               FEE = "ppica";
             };
 
@@ -159,7 +160,7 @@
               mkdir --parents ~/.centauri/config
               echo 'keyring-backend = "os"' >> ~/.centauri/config/client.toml
               echo 'output = "json"' >> ~/.centauri/config/client.toml
-              echo 'node = "https://rpc-composable-ia.cosmosia.notional.ventures:443"' >> ~/.centauri/config/client.toml
+              echo 'node = "https://composable-rpc.polkachu.com:443"' >> ~/.centauri/config/client.toml
               echo 'chain-id = "centauri-1"' >> ~/.centauri/config/client.toml
             '';
           }];

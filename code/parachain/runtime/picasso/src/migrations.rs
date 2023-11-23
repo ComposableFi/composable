@@ -86,16 +86,14 @@ pub mod migrate_gov {
 		let relayer_address = sp_runtime::MultiAddress::Id(AccountId32::from(hex!(
 			"868232e15789eaae263d655db7d222fcf5ffa5f6f8da4e46d32609312fcf6e60"
 		)));
-		membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(
+		let _ = membership::pallet::Pallet::<Runtime, NativeRelayerMembership>::add_member(
 			frame_system::RawOrigin::Root.into(),
 			relayer_address.clone(),
-		)
-		.expect("should add");
-		membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(
+		);
+		let _ = membership::pallet::Pallet::<Runtime, NativeTechnicalMembership>::remove_member(
 			frame_system::RawOrigin::Root.into(),
 			relayer_address,
-		)
-		.expect("should remove");
+		);
 		let accounts = balances::pallet::Locks::<Runtime>::iter()
 			.filter(|(_key, locks)| locks.iter().any(|a| a.id == DEMOCRACY_ID))
 			.map(|(key, _locks)| key)

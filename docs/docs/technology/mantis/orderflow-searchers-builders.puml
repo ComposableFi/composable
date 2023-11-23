@@ -1,0 +1,65 @@
+@startuml
+
+title Maximizes IBC transfer privacy and exeuction speed
+
+node Solver {
+
+}
+
+node PrivateMevRelayer {
+    collections UserTransactions
+    collections IBCPacketsFromFromTransactions
+    collections RoutesOfTransfersAndSwapsFromIBCPackets
+}
+
+node Centauri {
+    file CosmosBeginOfBlock
+    file CosmosMiddleOfBlock
+    file CosmosEndOfBlock
+}
+
+node IBCRelayer {
+
+}
+
+node EthereumBlockSpaceAuction {
+
+}
+
+node IBCRelayer {
+
+}
+
+node Etherum {
+    file EthereumBeginOfBlock
+    file EthereumMiddleOfBlock
+    file EthereumEndOfBlock
+}
+
+node SolanaBlockSpaceAuction {
+
+}
+
+node Solana {
+    file SolanaBeginOfBlock
+    file SolanaMiddleOfBlock
+    file SolanaEndOfBlock
+}
+
+Solver -.-> PrivateMevRelayer : find suitable order
+
+PrivateMevRelayer -> CosmosEndOfBlock : put ordered transactions generating IBC packets into the end of block
+
+PrivateMevRelayer -.->  EthereumBlockSpaceAuction : book start of in future 
+
+PrivateMevRelayer -.->  SolanaBlockSpaceAuction : book start of in future
+
+IBCRelayer -.-> EthereumBeginOfBlock : tx
+
+IBCRelayer -.-> SolanaBeginOfBlock : tx
+
+IBCRelayer -.-> Centauri : listen finalization from gossip
+
+IBCRelayer -.-> Centauri : grab reward for ordered delivery
+
+@enduml

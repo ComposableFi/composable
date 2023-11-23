@@ -13,7 +13,6 @@ jsonrpsee = { version = "0.16.2", features = [
   "async-client",
   "jsonrpsee-ws-client",
 ] }
-
 subxt = { git = "https://github.com/paritytech/subxt", tag = "v0.29.0", features = [
   "substrate-compat",
 ] }

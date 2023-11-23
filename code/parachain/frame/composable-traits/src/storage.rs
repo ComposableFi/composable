@@ -51,7 +51,7 @@ impl<T> From<Option<T>> for UpdateValue<T> {
 	}
 }
 
-impl<T> const Default for UpdateValue<T> {
+impl<T> Default for UpdateValue<T> {
 	fn default() -> Self {
 		Self::Ignore
 	}

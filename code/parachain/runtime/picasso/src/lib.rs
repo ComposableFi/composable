@@ -731,7 +731,7 @@ parameter_types! {
 
 impl pallet_xcm_helper::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type Assets = Assets;
 	type XcmSender = crate::xcmp::XcmRouter;
 	type RelayNetwork = RelayNetwork;
@@ -758,6 +758,7 @@ parameter_types! {
 	pub const MinNominatorBond: Balance = 100_000_000_000; // 0.1KSM
 	pub const NumSlashingSpans: u32 = 0;
 	pub const ElectionSolutionStoredOffset: BlockNumber = 3150;
+	pub LsdProtocolFeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex!("a3e194e1abc02bdd10ce919fe2c3d33b5c9291b3aaa3f75035c65fcdf1b8f129"));
 }
 
 pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
@@ -807,8 +808,8 @@ impl pallet_liquid_staking::Config for Runtime {
 	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
 	type SelfParaId = ParachainInfo;
 	type Assets = Assets;
-	type RelayOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RelayOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type DerivativeIndexList = DerivativeIndexList;
 	type XcmFees = XcmFees;
 	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
@@ -825,7 +826,7 @@ impl pallet_liquid_staking::Config for Runtime {
 	type Members = Members<AccountId>; // ..LiquidStakingAgentsMembership;
 	type NumSlashingSpans = NumSlashingSpans;
 	type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
-	type ProtocolFeeReceiver = TreasuryAccount;
+	type ProtocolFeeReceiver = LsdProtocolFeeAccount;
 	type Decimal = Decimal;
 	type NativeCurrency = NativeAssetId;
 }

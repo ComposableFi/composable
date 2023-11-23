@@ -54,20 +54,20 @@
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
-
     };
 
     bech32cli = {
-      url =
-        "github:dzmitry-lahoda-forks/bech32cli/7e5bd85b131834fbde8e079bbab4d1cbc98de4e9";
+      url = "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    composable-ibc = {
+    composable-ibc-src = {
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
     };
+
+    cvm = { url = "github:ComposableFi/cvm"; };
 
     instrumental = {
       url =
@@ -145,12 +145,12 @@
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
-        ./flake/nixos-configuration.nix
         ./flake/osmosis.nix
         ./flake/xapps.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
         ./flake/release.nix
+        ./flake/mantis.nix
         ./flake/rust.nix
         ./flake/subxt.nix
         ./flake/zombienet.nix

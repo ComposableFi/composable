@@ -10,7 +10,7 @@ slug: /
       <a href="/networks/picasso-parachain-overview">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300392/Frame-1_wkr6kl.png" alt="Networks" alt="Networks"/>
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212572/Networks_g8sles.png" alt="Networks" alt="Networks"/>
           </div>
           <div class="card__body">
             <h3>Networks</h3>
@@ -23,7 +23,7 @@ slug: /
       <a href="/technology/ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206885/Frame_2_mtjzkc.png" alt="Networks" alt="Architecture" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Architecture_jyrrsj.png" alt="Networks" alt="Architecture" />
           </div>
           <div class="card__body">
             <h3>Architecture</h3>
@@ -36,7 +36,7 @@ slug: /
       <a href="/develop/build-on-composable">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1696206944/Frame_4_gepwoe.png" alt="Networks" alt="Develop" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212546/Develop_nvdomh.png" alt="Networks" alt="Develop" />
           </div>
           <div class="card__body">
             <h3>Develop</h3>
@@ -49,7 +49,7 @@ slug: /
       <a href="/ecosystem/composable-ecosystem">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300391/Frame-5_lyc6as.png" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Ecosystem_emvgmt.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>Ecosystem</h3>
@@ -62,7 +62,7 @@ slug: /
       <a href="/user-guides">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1692300392/Frame-6_tscayb.png" alt="Networks" alt="Networks" />
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212583/User_guides_mpt7el.png" alt="Networks" alt="Networks" />
           </div>
           <div class="card__body">
             <h3>User Guides</h3>
