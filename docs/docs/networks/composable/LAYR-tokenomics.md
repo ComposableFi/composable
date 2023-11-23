@@ -1,40 +1,37 @@
 # LAYR Tokenomics 
 
+LAYR, the token native to Composable Polkadot, acts as the lifeblood to the platform allowing for a wide range of utility for users and market participants. These functions include, solver onboarding, user staking, transaction fees & bidding, flash loans, and restaking value accrual. In addition, LAYR secures Composable Polkadot as a governance token and powering collator staking.
+
 ## LAYR use cases 
 
-### Gas fees 
+### Universal Gas Token
+LAYR serves as Composable’s native gas token amongst transaction fees and orderflow auctions. Transaction fees are collected by the network in order to complete a given transaction, while orderflow auctions serve as a gated process for which searchers bid for their transaction bundles to be included in a block by builders. 
 
-Transaction fees (or gas) are payable in LAYR. 
-
-
-### Governance
-
-LAYR will be used in voting to decide on key governance decisions, including: 
+An additional auction may occur between builders, where these providers send additional LAYR to validators in order to have their block given priority for validation within the network. Under circumstances where a gas token aside from LAYR is required to complete a transaction (eg. OSMO for a swap on Osmosis DEX), LAYR may be swapped for the necessary token to complete the order.
 
 
+### Solver Bonds
+In order to onboard as a solver, a LAYR deposit needs to be made by the market participant. The solver will then be approved to operate within the protocol and participate in orderflow auctions. Securing a bond from a solver acts as a form of safeguarding for the protocol in the event of malicious behavior, or inability to repay a borrow (more detail in the flash loan section). If either of these cases are encountered, a solver bond will be slashed and will need to be topped up to continue engagement within the protocol.
 
-* Pallet onboarding: which pallets can be incorporated on the Composable  Parachain
-* Ecosystem growth: directing Treasury towards different initiatives in the ecosystem such as grants and incentivizing 
-  usage of the initial decentralized apps (dApps) on the network.
-* Public goods infrastructure: powering infrastructure providers, block explorers, wallets, and other key ecosystem 
-  partners.
+### LAYR Staking
+Users will be able to stake their LAYR to create a pool accessible by solvers to allow for flash loans towards fees and tips. In return for staking their LAYR, users receive access to vaults within the platform. Vaults will accrue revenue via protocol fees, MEV share, and restaking fees. Rewards will be claimable in the form of ETH.
 
+### Flash Loans / Borrowing
+To reduce overhead for orderflow participants, solvers will be granted access to flash loans from the LAYR pool created by stakers. These loans may be taken by solvers to supplement gas fees and tips when sending transaction bundles to blockbuilders. Ideally, this reduces the need for solvers to hold active inventory of LAYR on top of their already committed bond. 
+
+LAYR borrowed from the pool is to be repaid upon successful completion of a block from which the solver can direct a portion of any profit earned through MEV to repay the pool. In the event that a solver does not generate profit from a given set of transactions, or ends up with losing PnL from their solution, the solvers bond will be slashed to replenish any LAYR that has been borrowed.
+
+### Restaking
+Composable supports network restaking, initially in the form of liquid staked DOT. LSDOT is Composable’s implementation of liquid staked DOT, a receipt token representing DOT staked through Composable. Tokens staked to a PoS network, such as Polkadot, receive rewards for validating blocks within the network. A portion of these rewards are charged as a fee and collected by Composable, from which X% are routed to LAYR stakers. 
+
+In the future, Composable will allow restaking of additional PoS tokens which will accrue block rewards that will be split with the protocol and distributed to LAYR stakers in the same fashion as LSDOT rewards.
+
+### Composable Polkadot OpenGov
+
+Similar to OpenGov on Picasso, Composable Polkadot will adopt the OpenGov governance framework and powered by LAYR will for voting on all governance decisions. Specific tracks, parameters and OpenGov behaviours will be released shortly before going live.
 
 ### Collator staking 
-
-Collators for the Composable Parachain are required to put down a stake to earn transaction fees.
-
-
-### Oracle staking
-
-Oracle operators are required to put down stakes to provide price feeds. They will be rewarded/ slashed according to the 
-accuracy of the data they provide.
-
-
-### Liquidity provisioning
-
-Users can provide liquidity for yield through LAYR LP pairs on the Pablo DEX. 
-
+Transaction fees generated on Composable Polkadot are split between network collators, the treasury, and LAYR stakers. Of these fees, 25% are distributed to collators while the remaining 75% of those fees are split between LAYR stakers and the Composable treasury. 
 
 ## Total supply and genesis token distribution
 

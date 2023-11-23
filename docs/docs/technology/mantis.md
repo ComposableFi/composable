@@ -16,8 +16,6 @@ So, how can the supply chain be optimised so that there is the remote possibilit
 
 ## The Solution: MANTIS
 
-### Architecture
-
 MANTIS is comprised of the following components:
 
 **Solvers**
