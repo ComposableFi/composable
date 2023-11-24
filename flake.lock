@@ -631,11 +631,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1700656155,
-        "narHash": "sha256-lfuQSOvme1zM298+rAI/NQs4HIYA6aoaN3TPLBFlCGI=",
+        "lastModified": 1700697192,
+        "narHash": "sha256-TqQWWUPpEp6mffnJR/61xoi8zyLbm6aLANYOj0suVXE=",
         "owner": "ComposableFi",
         "repo": "cvm",
-        "rev": "c078c9615b678eec9d281b14910bcb436e2f9617",
+        "rev": "416d59568b4c188719ae7b1d6b6de3a896a0e56d",
         "type": "github"
       },
       "original": {
