@@ -16,3 +16,6 @@
 [submodule "code/cvm/evm/lib/yui-ibc-solidity"]
 	path = code/cvm/evm/lib/yui-ibc-solidity
 	url = https://github.com/hyperledger-labs/yui-ibc-solidity
+[submodule "code/cvm/cvm"]
+	path = code/cvm/cvm
+	url = https://github.com/ComposableFi/cvm.git
