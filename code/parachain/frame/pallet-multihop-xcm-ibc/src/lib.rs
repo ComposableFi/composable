@@ -256,22 +256,33 @@ pub mod pallet {
 				});
 				return None
 			};
-			//if para id is none then parent is 1 if para id is some then parent is 0
-			let parent = if para_id.is_some() { 0 } else { 1 };
+			// parent always 1 because we are going from parachain up
+			let parent = 1;
+			//if para id is none then location to relaychain if para id is some, then transfer to
+			// parachain
+			let location = if let Some(parachain_id) = para_id {
+				xcm::latest::MultiLocation::new(
+					parent, //parent
+					xcm::latest::Junctions::X2(
+						xcm::latest::Junction::Parachain(parachain_id),
+						xcm::latest::Junction::AccountId32 { id, network: None },
+					),
+				)
+			} else {
+				xcm::latest::MultiLocation::new(
+					parent, //parent
+					xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 {
+						id,
+						network: None,
+					}),
+				)
+			};
+
 			let result = orml_xtokens::Pallet::<T>::transfer(
 				signed_account_id.into(),
 				currency.into(),
 				amount.into(),
-				Box::new(
-					xcm::latest::MultiLocation::new(
-						parent, //parent
-						xcm::latest::Junctions::X1(xcm::latest::Junction::AccountId32 {
-							id,
-							network: None,
-						}),
-					)
-					.into(),
-				),
+				Box::new(location.into()),
 				WeightLimit::Unlimited,
 			);
 
