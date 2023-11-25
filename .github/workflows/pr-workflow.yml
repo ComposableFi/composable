@@ -120,11 +120,6 @@ jobs:
             **/*.nix
             **/*.sol
             **/*.toml
-            code/cvm/evm/lib/forge-std
-            code/cvm/evm/lib/openzeppelin-contracts
-            code/cvm/evm/lib/protobuf3-solidity-lib
-            code/cvm/evm/lib/yui-ibc-solidity
-            code/cvm/evm/lib/solidity-bytes-utils
             flake/eth-pos-devnet
       - run: echo ${{ steps.lfs-warning.outputs.lfsFiles }}
 
@@ -225,62 +220,6 @@ jobs:
         uses: "./.github/templates/watch-exec"
         with:
           command: nix -- build .#devnet-xc-image
-      - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"
-
-  build-cosmos-cosmwasm:
-    outputs:
-      ok: ${{ steps.ok.outputs.ok }}
-    name: build-cosmos-cosmwasm
-    needs:
-      - privilege-check
-    runs-on:
-      - x86_64-linux-32C-128GB-2TB
-    concurrency:
-      group: ${{ inputs.github_workflow }}-build-cosmos-cosmwasm-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Set up Cachix
-        uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
-        with:
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable
-          installCommand: "true"
-          skipAddingSubstituter: true
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false
-      - name: Build all packages
-        uses: "./.github/templates/watch-exec"
-        with:
-          command: nix -- build .#cvm-mount
-      - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"
-
-  build-evm:
-    outputs:
-      ok: ${{ steps.ok.outputs.ok }}
-    name: build-evm
-    needs:
-      - privilege-check
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ inputs.github_workflow }}-build-evm-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
-    steps:
-      - uses: nixbuild/nix-quick-install-action@v24
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false
-      - uses: nixbuild/nixbuild-action@v19
-        with:
-          nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
-          generate_summary_for: "job"
-      - run: nix build .#evm-cvm-gateway --no-update-lock-file --accept-flake-config --extra-experimental-features "flakes nix-command"
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
@@ -479,7 +418,6 @@ jobs:
       - build-all-docs-packages
       - build-all-misc-packages
       - build-all-production-deps
-      - build-cosmos-cosmwasm
       - dependency-review
       - nix-flake-check
       - devnet-integration-tests
@@ -493,12 +431,11 @@ jobs:
           echo "build-all-ci-packages" ${{ needs.build-all-ci-packages.outputs.ok }}
           echo "build-all-rust-qa-packages" ${{ needs.build-all-rust-qa-packages.outputs.ok }}
           echo "devnet-integration-tests" ${{ needs.devnet-integration-tests.outputs.ok  }}
-          echo "build-cosmos-cosmwasm" ${{ needs.build-cosmos-cosmwasm.outputs.ok  }}
-      - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true' }}
+      - if: ${{ needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true'  }}
         run: |
           echo "All dependencies built well"
           exit 0
-      - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' && needs.build-cosmos-cosmwasm.outputs.ok == 'true') }}
+      - if: ${{ !(needs.nix-flake-check.outputs.ok == 'true' && needs.dependency-review.outputs.ok == 'true' && needs.build-all-production-deps.outputs.ok == 'true' && needs.build-all-misc-packages.outputs.ok == 'true' && needs.build-all-docs-packages.outputs.ok == 'true' && needs.build-all-ci-packages.outputs.ok == 'true' && needs.build-all-rust-qa-packages.outputs.ok == 'true' && needs.devnet-integration-tests.outputs.ok == 'true' ) }}
         run: |
           echo "Some of dependencies (see jobs graph, needs attributes, and output of this job) failed"      
           exit 42
