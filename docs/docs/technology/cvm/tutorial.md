@@ -329,3 +329,9 @@ You can find types and simple client and CosmWasm JSON schemas in https://www.np
 Example of usage located in https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.ts .
 
 If you are using React, consider generating React `state` and `query` integrations using the CosmWasm client generator from JSON schemas.
+
+## Tech Talk
+
+https://discord.com/channels/828751308060098601/1162324949277622333
+
+https://discord.com/channels/828751308060098601/1163404253537247283
