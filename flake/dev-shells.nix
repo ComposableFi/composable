@@ -100,9 +100,9 @@
               BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
             enterShell = ''
               rm --force --recursive ~/.centauri
@@ -129,9 +129,9 @@
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
           }];
         };
@@ -143,9 +143,9 @@
             packages = [ self'.packages.centaurid ];
             env = centauri.env.mainnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               STAKING_WASM_FILE = "${
                   self.inputs.instrumental.packages."${system}".staking
                 }/lib/staking.wasm";
@@ -173,9 +173,9 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.mainnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
             enterShell = ''
               rm ~/.osmosisd/config/client.toml 
@@ -191,9 +191,9 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               FEE = "uatom";
             };
           }];
@@ -206,9 +206,9 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
               NODE = "tcp://localhost:36657";
               FEE = "uatom";
             };
@@ -236,9 +236,9 @@
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.remote-devnet // {
               EXECUTOR_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_executor.wasm";
               GATEWAY_WASM_FILE =
-                "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
+                "${self.inputs.cvm.packages."${system}".xc-cw-contracts}/lib/cw_xc_gateway.wasm";
             };
             enterShell = ''
               osmosisd set-env localnet

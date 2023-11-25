@@ -95,12 +95,7 @@
             cp ${packages.composable-testfast-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/composable_testfast_runtime_${
               subwasm-version packages.composable-testfast-runtime
             }.wasm
-
-
-            # CVM
-            cp ${packages.cw-xc-gateway}/lib/cw_xc_gateway.wasm release-artifacts/to-upload/cw_xc_gateway.wasm
-            cp ${packages.cw-xc-executor}/lib/cw_xc_executor.wasm release-artifacts/to-upload/cw_xc_executor.wasm
-
+            
             echo "Generate node packages"
             cp ${
               make-bundle "toRPM" packages.composable-node
