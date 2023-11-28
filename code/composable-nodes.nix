@@ -29,10 +29,10 @@
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand = "cargo build --release --package ${name}";
           cargoExtraArgs = "--features=builtin-wasm";
-          CW_XC_GATEWAY_WASM_PATH =
-            "${self'.packages.xc-cw-contracts}/lib/cw_xc_gateway.wasm";
-          CW_XC_EXECUTOR_WASM_PATH =
-            "${self'.packages.xc-cw-contracts}/lib/cw_xc_executor.wasm";
+          cw_cvm_gateway_WASM_PATH =
+            "${self'.packages.cosmwasm-contracts}/lib/cw_cvm_gateway.wasm";
+          cw_cvm_executor_WASM_PATH =
+            "${self'.packages.cosmwasm-contracts}/lib/cw_cvm_executor.wasm";
           CW_20_BASE_WASM_PATH = self'.packages.cw20_base;
           PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
