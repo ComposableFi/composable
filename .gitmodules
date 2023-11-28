@@ -1,18 +1,3 @@
-[submodule "code/cvm/evm/lib/openzeppelin-contracts"]
-	path = code/cvm/evm/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "code/cvm/evm/lib/protobuf3-solidity-lib"]
-	path = code/cvm/evm/lib/protobuf3-solidity-lib
-	url = https://github.com/lazyledger/protobuf3-solidity-lib
-[submodule "code/cvm/evm/lib/forge-std"]
-	path = code/cvm/evm/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
 [submodule "flake/eth-pos-devnet"]
 	path = flake/eth-pos-devnet
 	url = https://github.com/OffchainLabs/eth-pos-devnet.git
-[submodule "code/cvm/evm/lib/solidity-bytes-utils"]
-	path = code/cvm/evm/lib/solidity-bytes-utils
-	url = https://github.com/GNSPS/solidity-bytes-utils
-[submodule "code/cvm/evm/lib/yui-ibc-solidity"]
-	path = code/cvm/evm/lib/yui-ibc-solidity
-	url = https://github.com/hyperledger-labs/yui-ibc-solidity

@@ -1,9 +1,0 @@
-disallowed-types = [
-  # { path = "usize", reason = "variable size" }, # cannot on now, because serde, even if there is no usize in type
-  { path = "f64", resdason = "harware dependant" },
-  { path = "f32", reason = "harware dependant" },
-  { path = "num_traits::float::*", reason = "harware dependant" },
-  { path = "serde_json::to_string", reason = "use serde_json_wasm::* and serde_cw_value::*" },
-]
-
-disallowed-methods = ["std::time::Duration::as_secs_f64"]

@@ -61,3 +61,10 @@ Documentation to run solver node is located in https://github.com/ComposableFi/c
 Solver observer user orders on chain, and find matches, so they can exchange. 
 
 If solver does not find match, formulates cross chain route.
+
+
+## Tech Talk
+
+https://discord.com/channels/828751308060098601/1162324949277622333
+
+https://discord.com/channels/828751308060098601/1163404253537247283

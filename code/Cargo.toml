@@ -52,8 +52,6 @@ members = [
   "utils/collator-sidecar",
   "utils/common",
   "utils/price-feed",
-  "cvm/cosmwasm/contracts/gateway",
-  "cvm/cosmwasm/contracts/executor",
   "cvm/lib/core/",
 ]
 resolver = "2"
@@ -147,7 +145,6 @@ ibc-proto = { git = "https://github.com/cosmos/ibc-proto-rs.git", rev = "af385af
 democracy = { package = "pallet-democracy", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 indices = { package = "pallet-indices", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
-
 
 sc-consensus-beefy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sc-consensus-beefy-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }

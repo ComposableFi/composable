@@ -3275,49 +3275,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-xc-executor"
-version = "0.2.0"
-dependencies = [
- "cosmwasm-schema 1.2.5",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20",
- "hex",
- "num",
- "prost",
- "schemars",
- "serde",
- "serde-cw-value",
- "serde-json-wasm",
- "serde_json",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
-name = "cw-xc-gateway"
-version = "0.1.0"
-dependencies = [
- "bech32",
- "cosmwasm-std",
- "cw-storage-plus",
- "cw-utils",
- "cw-xc-executor",
- "cw2",
- "cw20",
- "enumn",
- "ibc 0.43.1",
- "prost",
- "schemars",
- "serde",
- "serde-json-wasm",
- "thiserror-core",
- "xc-core",
-]
-
-[[package]]
 name = "cw2"
 version = "1.0.1"
 source = "git+https://github.com/dzmitry-lahoda-forks/cw-plus?rev=458e2eb014253d2131219e518c64475a8348c5a3#458e2eb014253d2131219e518c64475a8348c5a3"
