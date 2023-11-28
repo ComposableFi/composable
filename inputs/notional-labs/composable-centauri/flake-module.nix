@@ -93,11 +93,11 @@
 
           function init_cvm() {
               local INSTANTIATE=$1
-              "$BINARY" tx wasm store  "${self.inputs.cvm.packages."${system}".cosmwasm-contracts}/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${self.inputs.cvm.packages."${system}".cosmwasm-contracts}/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"

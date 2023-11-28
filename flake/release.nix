@@ -147,7 +147,7 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
-            INTERPRETER_WASM_FILE="${packages.cosmwasm-contracts}/lib/cw_cvm_executor.wasm"
+            INTERPRETER_WASM_FILE="${packages.cw-cvm-executor}/lib/cw_cvm_executor.wasm"
             INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
             DESCRIPTION=$(cat ${./release-gov-osmosis-proposal-cvm-upload.md})
 
@@ -161,7 +161,7 @@
                --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
                 tee .secret/$DIR/INTERPRETER_PROPOSAL
 
-             GATEWAY_WASM_FILE="${packages.cosmwasm-contracts}/lib/cw_cvm_gateway.wasm"
+             GATEWAY_WASM_FILE="${packages.cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
              GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
 
              sleep "$BLOCK_SECONDS" 
@@ -192,8 +192,8 @@
             rm --force --recursive .secret/$DIR 
             mkdir --parents .secret/$DIR
 
-            EXECUTOR="${packages.cosmwasm-contracts}/lib/cw_cvm_executor.wasm"
-            GATEWAY="${packages.cosmwasm-contracts}/lib/cw_cvm_gateway.wasm"
+            EXECUTOR="${packages.cw-cvm-executor}/lib/cw_cvm_executor.wasm"
+            GATEWAY="${packages.cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
 
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
