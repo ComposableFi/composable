@@ -95,7 +95,7 @@
             cp ${packages.composable-testfast-runtime}/lib/runtime.optimized.wasm release-artifacts/to-upload/composable_testfast_runtime_${
               subwasm-version packages.composable-testfast-runtime
             }.wasm
-            
+
             echo "Generate node packages"
             cp ${
               make-bundle "toRPM" packages.composable-node

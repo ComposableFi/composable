@@ -99,10 +99,12 @@
               DIR = "devnet/.centaurid";
               BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
             };
             enterShell = ''
               rm --force --recursive ~/.centauri
@@ -128,10 +130,12 @@
               DIR = "testnet/.centaurid";
               BINARY = "centaurid";
               NODE = "https://rpc-t.composable.nodestake.top:443";
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
             };
           }];
         };
@@ -142,10 +146,12 @@
           modules = [{
             packages = [ self'.packages.centaurid ];
             env = centauri.env.mainnet // {
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
               STAKING_WASM_FILE = "${
                   self.inputs.instrumental.packages."${system}".staking
                 }/lib/staking.wasm";
@@ -172,10 +178,12 @@
           modules = [{
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.mainnet // {
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
             };
             enterShell = ''
               rm ~/.osmosisd/config/client.toml 
@@ -190,10 +198,12 @@
           modules = [{
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
               FEE = "uatom";
             };
           }];
@@ -205,10 +215,12 @@
           modules = [rec {
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.testnet // {
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
               NODE = "tcp://localhost:36657";
               FEE = "uatom";
             };
@@ -235,10 +247,12 @@
           modules = [rec {
             packages = [ self'.packages.osmosisd ];
             env = osmosis.env.remote-devnet // {
-              EXECUTOR_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE =
-                "${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
             };
             enterShell = ''
               osmosisd set-env localnet
