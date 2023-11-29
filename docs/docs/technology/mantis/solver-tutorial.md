@@ -31,3 +31,8 @@ In case of failure - read error. Usually it is:
 ## GTP bot
 
 You may consider train the bot by asking questions here https://discord.com/channels/828751308060098601/1163404253537247283
+
+## How it works
+
+- [degen math](./degen-math.md)
+- [problem solver flow](./problem-solver-flow.md)
