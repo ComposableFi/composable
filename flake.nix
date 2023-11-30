@@ -146,6 +146,9 @@
         ./flake/ibc.nix
         ./flake/live.nix
         ./flake/osmosis.nix
+        ./flake/cosmos-hub.nix
+        ./flake/neutron.nix
+        ./flake/xapps.nix
         ./flake/xapps.nix
         ./flake/overlays.nix
         ./flake/process-compose.nix
