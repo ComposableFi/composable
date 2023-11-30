@@ -221,7 +221,9 @@
               GATEWAY_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
-              NODE = "tcp://localhost:36657";
+              NODE = "tcp://localhost:${
+                  builtins.toString pkgs.networksLib.osmosis.devnet.PORT
+                }";
               FEE = "uatom";
             };
             enterShell = ''

@@ -144,7 +144,7 @@
 
           INSTANTIATE=$(cat << EOF
               {
-                  "admin" : "$KPEY", 
+                  "admin" : "$KEY", 
                   "network_id" : $NETWORK_ID
               }                                 
           EOF

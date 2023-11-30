@@ -30,7 +30,7 @@
              rm --force --recursive "$CHAIN_DATA" 
             fi
 
-            PORT=36657
+            PORT=${pkgs.networksLib.osmosis.devnet.PORT}
             KEYRING_TEST=$CHAIN_DATA
             CHAIN_ID="osmosis-dev"
             VALIDATOR_MONIKER="${cosmosTools.validators.moniker}"

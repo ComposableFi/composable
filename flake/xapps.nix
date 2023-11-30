@@ -18,7 +18,7 @@
                             CHAIN_DATA="$HOME/.osmosisd"             
                             KEYRING_TEST=$CHAIN_DATA
                             CHAIN_ID="osmosis-dev"            
-                            PORT=36657
+                            PORT=${pkgs.networksLib.osmosis.devnet.PORT}
                             BLOCK_SECONDS=5
                             FEE=uosmo
                             BINARY=osmosisd
