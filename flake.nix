@@ -69,6 +69,8 @@
 
     cvm = { url = "github:ComposableFi/cvm"; };
 
+    networks = { url = "github:ComposableFi/networks"; };
+
     instrumental = {
       url =
         "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";

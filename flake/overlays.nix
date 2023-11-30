@@ -11,6 +11,7 @@
         rust-overlay.overlays.default
         zombienet.overlays.default
         process-compose.overlays.default
+        networks.overlays.default
         sbt-derivation.overlays.default
       ];
     };
