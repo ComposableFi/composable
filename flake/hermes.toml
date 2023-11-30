@@ -53,7 +53,7 @@ key_store_type = 'Test'
 
 [[chains]]
 id = 'osmosis-dev'
-rpc_addr = 'http://127.0.0.1:36657'
+rpc_addr = 'http://127.0.0.1:26757'
 grpc_addr = 'http://127.0.0.1:19090'
 #event_source = { mode = 'push', url = 'ws://127.0.0.1:36657/websocket', batch_delay = '1000ms' }
 event_source = { mode = 'pull', interval = '1s' }
