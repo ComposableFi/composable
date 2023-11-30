@@ -66,12 +66,12 @@ Regarding the whitelisted track, if you want to include the hash of a proposal, 
 The Council is an on-chain entity made up of 11 senior team members and supporters.
 
 Each council member is represented as an on-chain account on Polkadot.js. Members of the Council consist of:
-- 0xBrainJar, Composable Founder/CEO
+- Henry Love, Executive Director of Composable Foundation
+- 0xBrainJar, Composable Founder & Research Director
 - Blas Rodriguez Irizar, Composable Co-Founder & CTO
 - Joe DeTommasso, Composable Head of Governance & Strategy
 - Miguel Santefé, Composable Co-Founder & Head of Design
 - Jafar Azam, Composable Devrel
-- Henry Love, Fundamental Labs Managing Partner
 - Jacob Gadikian, Notional Ventures Founder & CEO
 - Jesse Abramowitz, Entropy Lead Software and Protocol Engineer
 - Will Pankiewicz, Parity Master of Validators
