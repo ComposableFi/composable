@@ -533,39 +533,6 @@
         '';
       };
     in {
-      _module.args.centauri = rec {
-        env = {
-          mainnet = {
-            FEE = "ppica";
-            NETWORK_ID = 2;
-            CHAIN_ID = "centauri-1";
-            DIR = "prod/.centaurid";
-            BINARY = "centaurid";
-            NODE = "https://rpc.composable.nodestake.top:443";
-            BLOCK_TIME = 7;
-          };
-          testnet = {
-            FEE = "ppica";
-            NETWORK_ID = 2;
-            CHAIN_ID = "banksy-testnet-3";
-            DIR = "testnet/.centaurid";
-            BINARY = "centaurid";
-            NODE = "https://rpc-t.composable.nodestake.top:443";
-            BLOCK_TIME = 7;
-          };
-          devnet = rec {
-            FEE = "ppica";
-            NETWORK_ID = 2;
-            PORT = 26657;
-            CHAIN_ID = "centauri-dev";
-            DIR = "testnet/.centaurid";
-            BINARY = "centaurid";
-            NODE = "tcp://localhost:${builtins.toString PORT}";
-            BLOCK_TIME = 7;
-          };
-        };
-      };
-
       packages = rec {
         inherit centaurid centaurid-gen centaurid-init centaurid-gen-fresh
           ics10-grandpa-cw-proposal centaurid-cvm-init centaurid-cvm-config
