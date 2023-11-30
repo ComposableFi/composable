@@ -1,6 +1,6 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , cosmosTools, bashTools, ... }:
+    , cosmosTools, bashTools, networksLib, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
@@ -172,7 +172,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${bashTools.export env.devnet}
+            ${bashTools.export networksLib.osmosis.devnet}
 
             NETWORK_ID=3
             KEY=${cosmosTools.cvm.osmosis}
@@ -222,7 +222,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${bashTools.export env.devnet}
+            ${bashTools.export networksLib.osmosis.devnet}
 
             "$BINARY" tx gamm create-pool --pool-file=${
               ./osmosis-gamm-pool-pica-osmo.json
@@ -236,7 +236,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
-            ${bashTools.export env.devnet}
+            ${bashTools.export networksLib.osmosis.devnet}
             KEY=${cosmosTools.cvm.osmosis}
 
             CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
