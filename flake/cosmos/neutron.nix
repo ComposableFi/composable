@@ -81,9 +81,7 @@
             sed -i -e "s/\"denom\": \"stake\",/\"denom\": \"$STAKEDENOM\",/g" "$GENESIS_FILE"
             sed -i -e "s/\"mint_denom\": \"stake\",/\"mint_denom\": \"$STAKEDENOM\",/g" "$GENESIS_FILE"
             sed -i -e "s/\"bond_denom\": \"stake\"/\"bond_denom\": \"$STAKEDENOM\"/g" "$GENESIS_FILE"
-            sed -i -e 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/g' "$CHAIN_DATA/config/app.toml"     
-
-
+            sed -i -e 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/g' "$CHAIN_DATA/config/app.toml"
 
             CONTRACTS_BINARIES_DIR="${inputs.neutron-src}/contracts"
             THIRD_PARTY_CONTRACTS_DIR="${inputs.neutron-src}/contracts_thirdparty"

@@ -49,8 +49,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/daf53bad2f41e2c879e1c8c5a3f01206de030b66";
-      inputs.flake-utils.follows = "flake-utils";
+        "github:dzmitry-lahoda-forks/cosmos.nix/17f8112536eeca482e567b70bfd1dd2e8ba7265f";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -88,7 +87,7 @@
         "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
     };
 
-    neutron-src.url = "github:neutron-org/neutron/v1.0.4";
+    neutron-src.url = "github:neutron-org/neutron/v2.0.0";
     neutron-src.flake = false;
 
     ethereum = { url = "github:nix-community/ethereum.nix"; };
