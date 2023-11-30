@@ -98,12 +98,9 @@
             MAX_TOTAL_BYPASS_MIN_FEE_MSG_GAS_USAGE=''${MAX_TOTAL_BYPASS_MIN_FEE_MSG_GAS_USAGE:-"$MAX_TOTAL_BYPASS_MIN_FEE_MSG_GAS_USAGE_DEFAULT"}
 
             GENESIS_PATH="$CHAIN_DIR/config/genesis.json"
-            echo "ASDSADSADSADSADASDSADASDSADASA"
             ADMIN_ADDRESS=$($BINARY keys show demowallet1 -a --home "$CHAIN_DIR" --keyring-backend test)
             echo "$ADMIN_ADDRESS"
-            echo "ffffffffffffffffffF"
             SECOND_MULTISIG_ADDRESS=$($BINARY keys show demowallet2 -a --home "$CHAIN_DIR" --keyring-backend test)
-            echo "asdsadsasadsadsadsadasdasdassd"
             # MAIN_DAO
             DAO_CONTRACT=$CONTRACTS_BINARIES_DIR/cwd_core.wasm
             PRE_PROPOSAL_CONTRACT=$CONTRACTS_BINARIES_DIR/cwd_pre_propose_single.wasm
