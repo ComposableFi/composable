@@ -2445,11 +2445,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1701372453,
-        "narHash": "sha256-Y0mLrvXgujqZJ62X37c/8QMipdf7qwJQIDnujt+6VNk=",
+        "lastModified": 1701376815,
+        "narHash": "sha256-OP6J8ZzR7bauFhVDTNXn1n+KadKs/SGsUvc+pZ9+rK8=",
         "owner": "ComposableFi",
         "repo": "networks",
-        "rev": "3d28f133d619017fb23bfa7ffa33ed41f34ade1e",
+        "rev": "70038d9c6b2a435998386b18dfe3f6b6b599a3d8",
         "type": "github"
       },
       "original": {
@@ -2488,6 +2488,23 @@
       "original": {
         "owner": "neutron-org",
         "ref": "v1.0.2",
+        "repo": "neutron",
+        "type": "github"
+      }
+    },
+    "neutron-src_3": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1689686537,
+        "narHash": "sha256-JnGovejgL+dEiZupzS+tPaUl2br4eGntiEfMKGUPEps=",
+        "owner": "neutron-org",
+        "repo": "neutron",
+        "rev": "780486095bf657f7b94b4474cb39fd137cf93c98",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neutron-org",
+        "ref": "v1.0.4",
         "repo": "neutron",
         "type": "github"
       }
@@ -3235,6 +3252,7 @@
         "home-manager": "home-manager",
         "instrumental": "instrumental",
         "networks": "networks",
+        "neutron-src": "neutron-src_3",
         "nix-std": "nix-std_3",
         "nixpkgs": "nixpkgs_10",
         "nixpkgs-latest": "nixpkgs-latest",
