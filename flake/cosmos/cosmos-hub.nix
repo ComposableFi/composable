@@ -4,7 +4,7 @@
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
     in {
-      _module.args.neutron = rec { inherit env; };
+
 
       packages = rec {
         gaiad = pkgs.writeShellApplication {
