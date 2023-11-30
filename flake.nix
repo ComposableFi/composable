@@ -157,8 +157,8 @@
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/ComposableFi/composable-ibc/flake-module.nix
+        ./inputs/ComposableFi/composable-cosmos/flake-module.nix
         ./inputs/CosmWasm/flake-module.nix
-        ./inputs/notional-labs/composable-centauri/flake-module.nix
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix
