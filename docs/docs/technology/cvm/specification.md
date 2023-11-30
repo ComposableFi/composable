@@ -585,21 +585,27 @@ The following example program performs an operation, and rewards the tip address
 <Transfer> <Tip> { USDC: 15000000000000 }
 ```
 
-## Configuration registry
+## Configuration and routing registry
 
-This stores the mapping of native identifiers to CVM such as an asset.
+Registry stores information about the mapping of native identifiers to CVM such as an asset and inter chain connectivity on chain.
+
+### Routing
+
+The `Spawn` instruction uses the registry to lookup CVM cross chain capability with connection.
+Per chain registry stores its immediate neiborhood info, and may store more hops.  
+
+Propagating updates across registries is handled by the `CVM` too.
 
 ### Assets and other CVM identifiers
 
-Each asset identifier `AssetId` is 128 bit number in which the iniital bytes represent the network identifier `NetworkId`. 
-
-Each chain contains data which maps assets to their local representations, such as erc20 addresses. The `Transfer` instruction uses this registry to look up the correct identifiers. Executor instances can be reconfigured by the owner to use alternative registries.
-
+Each asset identifier `AssetId` is 128 bit number in which the 32 initial bits represent the network identifier `NetworkId`. 
 It is impossible for a scenario where the same asset id is different on another chain. To put it simply, it will not be possible that on one chain 123213 means PEPA and on other chains 123213 means SHIB.
-
 The Prefix allows you to find which network to look at for asset information as each chain introduces new assets independently.
 
-Propagating updates across registries is handled by the `CVM` too. We will go more in-depth on how we bootstrap this system in a later specification.
+**Local**
+
+Each chain contains data which maps assets to their local representations, such as ERC20 address. 
+The `Transfer` instruction uses the registry to look up the correct identifiers. 
 
 ## Security Considerations
 
@@ -641,10 +647,6 @@ In this case, a program can be executed if it was sent by several chains.
 
 For operations of high importance, the EDSCA signature of the program can be propagated from the sending chain and verified on the target chain.  
 
-### Bridges
-
-CVM does not have any hardcoded requirement for bridge to be trustless or trustful.
-
 ## Cross chain Transfer
 
 Transfer is most common operation in blockchain, that why it deserver to be more detailed.
@@ -652,7 +654,6 @@ Transfer is most common operation in blockchain, that why it deserver to be more
 CVM on CW Cosmos to Cosmos uses ICS20 for value transfers. Each ICS20 channel must be upserted into CVM config.
 
 CVM uses ICS-20 assets transfers on Cosmos chains. On Polkadot and Ethereum it uses escrow/mint, path dependant semantics compatible with ICS-20.
-
 
 ## Data encoding
 
@@ -662,8 +663,6 @@ But encoding is always deterministic(like SCALE) or using deterministic subset o
 
 Specific encoding usage is subject to price, performance and usability constraints decided per chain to chain connection. 
 Please look into code and/or indexers. 
-
-
 
 ## Deployments
 

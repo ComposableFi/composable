@@ -18,7 +18,7 @@
                             CHAIN_DATA="$HOME/.osmosisd"             
                             KEYRING_TEST=$CHAIN_DATA
                             CHAIN_ID="osmosis-dev"            
-                            PORT=36657
+                            PORT=${pkgs.networksLib.osmosis.devnet.PORT}
                             BLOCK_SECONDS=5
                             FEE=uosmo
                             BINARY=osmosisd
@@ -79,7 +79,7 @@
             ++ [ self'.packages.osmosisd pkgs.jq ];
 
           text = ''
-            ${bashTools.export osmosis.env.devnet}
+            ${bashTools.export pkgs.networksLib.osmosis.devnet}
             osmosisd tx ibc-transfer transfer transfer channel-0 ${cosmosTools.cvm.centauri} 66642100500uosmo --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
@@ -92,7 +92,7 @@
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"      
             KEYRING_TEST="$CHAIN_DATA/keyring-test"            
-            ${bashTools.export centauri.env.devnet}
+            ${bashTools.export pkgs.networksLib.pica.devnet}
             centaurid tx ibc-transfer transfer transfer channel-0 ${cosmosTools.cvm.centauri} 1366642100500ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
           '';
         };
@@ -103,7 +103,7 @@
             ++ [ self'.packages.centaurid ];
           text = ''
             sleep 12 # just stupid wait for previous transfer of osmo, need to improve
-            ${bashTools.export centauri.env.devnet}
+            ${bashTools.export pkgs.networksLib.pica.devnet}
             CHAIN_DATA="${devnet-root-directory}/.centaurid"          
             KEYRING_TEST="$CHAIN_DATA/keyring-test"            
             GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
@@ -145,7 +145,7 @@
               ++ [ self'.packages.centaurid ];
             text = ''
               sleep 12 # just stupid wait for previous transfer of osmo, need to improve
-              ${bashTools.export centauri.env.devnet}
+              ${bashTools.export pkgs.networksLib.pica.devnet}
               CHAIN_DATA="${devnet-root-directory}/.centaurid"          
               KEYRING_TEST="$CHAIN_DATA/keyring-test"            
               GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
@@ -240,7 +240,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.centaurid pkgs.jq ];
           text = ''
-            ${bashTools.export centauri.env.devnet}
+            ${bashTools.export pkgs.networksLib.pica.devnet}
             CHAIN_DATA="${devnet-root-directory}/.centaurid"          
             KEYRING_TEST="$CHAIN_DATA/keyring-test"            
             GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")

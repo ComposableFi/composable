@@ -54,17 +54,6 @@ $BINARY tx wasm store $ORDER_WASM_FILE --from dz --gas=auto -y
 $BINARY tx wasm instantiate 30 '{"admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k", "cvm_address" : "centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d"}' --label "mantis_order_7s" --admin centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k --gas=auto --from=dz -y
 ```
 
-## Solver node
+## GTP bot
 
-Documentation to run solver node is located in https://github.com/ComposableFi/cvm/tree/main/mantis 
-
-Solver observer user orders on chain, and find matches, so they can exchange. 
-
-If solver does not find match, formulates cross chain route.
-
-
-## Tech Talk
-
-https://discord.com/channels/828751308060098601/1162324949277622333
-
-https://discord.com/channels/828751308060098601/1163404253537247283
+You may consider train the bot by asking questions here https://discord.com/channels/828751308060098601/1162324949277622333
