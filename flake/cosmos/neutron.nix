@@ -19,7 +19,14 @@
           name = "neutrond-gen";
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ neutrond ];
           text = ''
-          
+              ${bashTools.export networksLib.neutron.devnet}
+              if test "''${1-reuse} == "fresh"; then
+                killall 
+                killall "s$BINARY"
+                rm -rf "$CHAIN_DATA"                
+              fi
+
+              mkdir --parents "$CHAIN_DATADIR"
           '';
         };   
       };
