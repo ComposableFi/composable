@@ -1,5 +1,15 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', system, ... }: {
+  perSystem = { config, self', inputs', system, pkgs, ... }: {
+    packages = {
+      up = pkgs.writeShellApplication {
+        name = "up";
+        text = ''
+          nix flake lock --update-input networks
+          nix flake lock --update-input cosmos
+          nix flake lock --update-input cvm
+        '';
+      };
+    };
     _module.args.pkgs = import self.inputs.nixpkgs {
       inherit system;
       overlays = with self.inputs; [

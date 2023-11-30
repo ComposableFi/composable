@@ -145,7 +145,7 @@
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix
-        ./flake/osmosis.nix
+        ./flake/cosmos/osmosis.nix
         ./flake/cosmos/cosmos-hub.nix
         ./flake/cosmos/neutron.nix
         ./flake/xapps.nix
