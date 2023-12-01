@@ -29,7 +29,7 @@
             ++ [ gaiad pkgs.jq ];
           text = ''
             ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
-            ${bashTools.export pkgs.networksLib.devnet.mnemonics}s
+            ${bashTools.export pkgs.networksLib.devnet.mnemonics}
             if test "''${1-fresh}" == "fresh"; then
               if pgrep "^gaiad$"; then
                 killall "$BINARY"
@@ -37,6 +37,8 @@
               rm -rf "$CHAIN_DATA"                
             fi
             mkdir --parents "$CHAIN_DATA"
+
+
           '';
         };
       };
