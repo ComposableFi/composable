@@ -1,22 +1,11 @@
 { self, inputs, ... }: {
-  perSystem =
-    { self'
-    , pkgs
-    , systemCommonRust
-    , subnix
-    , lib
-    , system
-    , devnetTools
-    , cosmosTools
-    , bashTools
-    , ...
-    }:
+  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
+    , cosmosTools, bashTools, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.neutron;
 
-    in
-    {
+    in {
       packages = rec {
         neutrond = pkgs.writeShellApplication {
           name = "neutrond";
@@ -33,7 +22,7 @@
           text = ''
             ${bashTools.export pkgs.networksLib.neutron.devnet}
               $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace 2>&1 | tee "$CHAIN_DIR/$CHAINID.log"
-        '';
+          '';
         };
 
         neutrond-gen = pkgs.writeShellApplication {
@@ -51,9 +40,7 @@
               fi
               rm -rf "$CHAIN_DATA"                
             fi
-
             mkdir --parents "$CHAIN_DATA"
-
             $BINARY init test --home "$CHAIN_DATA" --chain-id="$CHAIN_ID"
 
             echo "Adding genesis accounts..."
