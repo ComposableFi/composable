@@ -16,7 +16,7 @@
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME
             RUST_LOG='${RUST_LOG}'
-            export "$RUST_LOG"
+            export RUST_LOG
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-picasso-kusama-to-centauri-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-centauri-to-picasso-kusama-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/picasso-centauri-ibc/config-core.toml"                
@@ -85,9 +85,9 @@
           text = ''
             HOME="/tmp/composable-devnet/picasso-centauri-ibc"
             export HOME
-            RUST_LOG="${RUST_LOG}"
+            RUST_LOG='${RUST_LOG}'
             export RUST_LOG
-            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml
+            RUST_LOG='${RUST_LOG}' ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml
           '';
         };
 
