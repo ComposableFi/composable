@@ -16,7 +16,7 @@
       centaurid = pkgs.writeShellApplication {
         name = "centaurid";
         text = ''
-          ${self.inputs.cosmos.packages.${system}.centauri}/bin/centaurid "$@"
+          ${self.inputs.cosmos-old.packages.${system}.centauri}/bin/centaurid "$@"
         '';
       };
 

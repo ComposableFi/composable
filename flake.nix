@@ -56,6 +56,11 @@
       inputs.rust-overlay.follows = "rust-overlay";
     };
 
+    cosmos-old = {
+      url =
+        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
+    };
+
     bech32cli = {
       url = "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";

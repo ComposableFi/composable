@@ -54,7 +54,7 @@
           name = "osmosisd";
           runtimeInputs = devnetTools.withBaseContainerTools;
           text = ''
-            ${self.inputs.cosmos.packages.${system}.osmosis}/bin/osmosisd "$@"
+            ${self.inputs.cosmos-old.packages.${system}.osmosis}/bin/osmosisd "$@"
           '';
         };
 

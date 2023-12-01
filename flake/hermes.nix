@@ -7,7 +7,7 @@
       log = "trace";
     in {
       packages = rec {
-        hermes = self.inputs.cosmos.packages.${system}.hermes;
+        hermes = self.inputs.cosmos-old.packages.${system}.hermes;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-init";
