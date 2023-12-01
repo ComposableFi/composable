@@ -18,7 +18,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ gaiad pkgs.jq ];
           text = ''
-            ${bashTools.export pkgs.networksLib.neutron.devnet}
+            ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
               $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace 2>&1 | tee "$CHAIN_DIR/$CHAINID.log"
           '';
         };
