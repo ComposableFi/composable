@@ -48,8 +48,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cosmos = {
-      url =
-        "github:informalsystems/cosmos.nix";
+      url = "github:informalsystems/cosmos.nix";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
