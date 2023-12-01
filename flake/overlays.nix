@@ -1,12 +1,10 @@
 { self, ... }: {
   perSystem = { config, self', inputs', system, pkgs, ... }: {
     packages = {
-      up = pkgs.writeShellApplication {
+      update-input = pkgs.writeShellApplication {
         name = "up";
         text = ''
-          nix flake lock --update-input networks
-          nix flake lock --update-input cosmos
-          nix flake lock --update-input cvm
+          nix flake lock --update-input networks --update-input cosmos --update-input cvm --update-input cosmos
         '';
       };
     };
