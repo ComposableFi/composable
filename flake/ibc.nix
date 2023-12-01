@@ -5,7 +5,7 @@
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       RUST_LOG =
-        "hyperspace=info,hyperspace_parachain=info,hyperspace_cosmos=info";
+        "hyperspace=debug,hyperspace_parachain=debug,hyperspace_cosmos=debug";
     in {
       packages = rec {
         picasso-centauri-ibc-init = pkgs.writeShellApplication {
@@ -50,7 +50,7 @@
           text = ''
             HOME="${devnet-root-directory}/composable-picasso-ibc"
             export HOME                
-            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            RUST_LOG="hyperspace=debug,hyperspace_parachain=debug,hyperspace_cosmos=debug"
             export RUST_LOG      
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10
           '';
@@ -62,7 +62,7 @@
           text = ''
             HOME="${devnet-root-directory}/composable-picasso-ibc"
             export HOME       
-            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            RUST_LOG="hyperspace=debug,hyperspace_parachain=debug,hyperspace_cosmos=debug"
             export RUST_LOG
             ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
           '';
@@ -109,7 +109,7 @@
           text = ''
             HOME="/tmp/composable-devnet/composable-picasso-ibc"
             export HOME
-            RUST_LOG="hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug"
+            RUST_LOG="hyperspace=debug,hyperspace_parachain=debug,hyperspace_cosmos=debug"
             export RUST_LOG
             sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-a.toml"
             sed -i "s/private_key = \"\/\/Alice\"/private_key = \"\/\/Bob\"/" "/tmp/composable-devnet/composable-picasso-ibc/config-chain-b.toml"

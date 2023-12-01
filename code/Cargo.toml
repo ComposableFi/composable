@@ -6,7 +6,7 @@ name = "composable"
 version = { workspace = true }
 
 [workspace.package]
-version = "9.10041.3"
+version = "9.10041.2"
 
 [[bin]]
 name = "composable"
@@ -119,11 +119,11 @@ orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-modu
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "7ecebeab7e3dbc2226ed58d32ee159271a8176ae", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
-ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "698146a5a66ce9e5e7a21633ef60e39fa1c8840e", default-features = false }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "698146a5a66ce9e5e7a21633ef60e39fa1c8840e", default-features = false }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable-ibc", rev = "698146a5a66ce9e5e7a21633ef60e39fa1c8840e", default-features = false }
+ibc-runtime-api = { git = "https://github.com/ComposableFi/composable-ibc", rev = "698146a5a66ce9e5e7a21633ef60e39fa1c8840e", default-features = false }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable-ibc", rev = "698146a5a66ce9e5e7a21633ef60e39fa1c8840e", default-features = false }
 
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }

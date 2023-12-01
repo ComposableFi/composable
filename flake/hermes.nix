@@ -4,7 +4,7 @@
     let
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-      log = "debug";
+      log = "trace";
     in {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes;
