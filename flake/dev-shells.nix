@@ -87,7 +87,7 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
-        centauri-devnet = self.inputs.devenv.lib.mkShell {
+        centauri-1net = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
           modules = [rec {
@@ -95,7 +95,7 @@
             env = {
               FEE = "ppica";
               NETWORK_ID = 2;
-              CHAIN_ID = "centauri-dev";
+              CHAIN_ID = "centauri-1";
               DIR = "devnet/.centaurid";
               BINARY = "centaurid";
               NODE = "tcp://localhost:26657";

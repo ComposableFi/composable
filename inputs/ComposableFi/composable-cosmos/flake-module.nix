@@ -58,7 +58,7 @@
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
-          CHAIN_ID="centauri-dev"
+          CHAIN_ID="centauri-1"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           VALIDATOR_KEY=${validator-key}
           PORT=26657
@@ -90,7 +90,7 @@
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
-          CHAIN_ID="centauri-dev"
+          CHAIN_ID="centauri-1"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           KEY=${cosmosTools.cvm.centauri}
           PORT=26657
@@ -170,7 +170,7 @@
           KEY=${cosmosTools.cvm.centauri}
 
           CHAIN_DATA="$HOME/.centaurid"
-          CHAIN_ID="centauri-dev"
+          CHAIN_ID="centauri-1"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           BLOCK_SECONDS=5
@@ -400,7 +400,7 @@
           ++ [ centaurid pkgs.jq ];
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-          CHAIN_ID="centauri-dev"
+          CHAIN_ID="centauri-1"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           FEE=ppica
@@ -434,7 +434,7 @@
           ++ [ centaurid pkgs.jq pkgs.dasel ];
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
-          CHAIN_ID="centauri-dev"
+          CHAIN_ID="centauri-1"
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
 
           if test "''${1-reuse}" == "fresh"; then
@@ -549,7 +549,7 @@
 
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"
-            CHAIN_ID="centauri-dev"
+            CHAIN_ID="centauri-1"
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
             FEE=ppica 
@@ -566,7 +566,7 @@
 
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"
-            CHAIN_ID="centauri-dev"
+            CHAIN_ID="centauri-1"
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
             FEE=ppica 

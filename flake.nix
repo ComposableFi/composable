@@ -48,7 +48,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     cosmos = {
-      url = "github:informalsystems/cosmos.nix";
+      url = "github:dzmitry-lahoda-forks/cosmos.nix/7cf7bfd84ff5769d9eafa96cdf7c24ebc348f741";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -139,10 +139,9 @@
         ./flake/dev-shells.nix
         ./flake/devnet-tools.nix
         ./flake/devnet.nix
-        ./flake/docker.nix
         ./flake/ethereum.nix
         ./flake/fmt.nix
-        ./flake/hermes.nix
+        ./flake/cosmos/hermes.nix
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix

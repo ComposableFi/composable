@@ -42,7 +42,7 @@
         rpc_url = "http://${host}:26657";
         grpc_url = "http://${host}:9090";
         websocket_url = "ws://${host}:26657/websocket";
-        chain_id = "centauri-dev";
+        chain_id = "centauri-1";
         client_id = "07-tendermint-0";
         connection_id = "connection-0";
         account_prefix = "centauri";

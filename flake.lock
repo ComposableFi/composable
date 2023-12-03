@@ -344,16 +344,17 @@
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1701457684,
-        "narHash": "sha256-Tx3WsOM9scTXDHFyL5vNcQnCmT7Mx0dYg1Nmz8cFwt4=",
-        "owner": "informalsystems",
+        "lastModified": 1701604079,
+        "narHash": "sha256-rY1Oga+S/4L91+eUZkZxQGgUXXFO8lUO2VlOg345QvA=",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "c0bb979a518aa08ba064112a85e03fbc7a7d2869",
+        "rev": "7cf7bfd84ff5769d9eafa96cdf7c24ebc348f741",
         "type": "github"
       },
       "original": {
-        "owner": "informalsystems",
+        "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
+        "rev": "7cf7bfd84ff5769d9eafa96cdf7c24ebc348f741",
         "type": "github"
       }
     },
@@ -2476,11 +2477,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1701467470,
-        "narHash": "sha256-hz4u+/ZydNzwyUFoxjj8EaPKFTN9GqiS5M+/JPHkyfM=",
+        "lastModified": 1701609204,
+        "narHash": "sha256-RbqMRvv6zXGpu4LPadgt4RL0pLAq0DRAcpr43ccM1jY=",
         "owner": "ComposableFi",
         "repo": "networks",
-        "rev": "875b6f0d889637993c193a80b880b56a0b02197e",
+        "rev": "270a179dbece0db1d24e472008cf2b48e4bbd61f",
         "type": "github"
       },
       "original": {
