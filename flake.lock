@@ -344,17 +344,17 @@
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1701604079,
-        "narHash": "sha256-rY1Oga+S/4L91+eUZkZxQGgUXXFO8lUO2VlOg345QvA=",
+        "lastModified": 1701612969,
+        "narHash": "sha256-6yJV3Njo+59V2dqPGKdumkN4wdx5+guEP7zqzXeRgVE=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "7cf7bfd84ff5769d9eafa96cdf7c24ebc348f741",
+        "rev": "117e19c4f103e170cb2a9721f5b06cff363cf5bd",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "7cf7bfd84ff5769d9eafa96cdf7c24ebc348f741",
+        "rev": "117e19c4f103e170cb2a9721f5b06cff363cf5bd",
         "type": "github"
       }
     },
