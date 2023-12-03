@@ -5,19 +5,19 @@
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       log = "debug";
-      centauri-osmosis-ibc-hermes = 
-      (cosmosLib.evalHermesModule {
+      centauri-osmosis-ibc-hermes =
+        (cosmosLib.evalHermesModule {
           modules = [
             {
               config.hermes.global.log_level = "trace";
               config.mode.clients.misbehaviour = false;
-              config.mode.packets = 
-              {
-                enabled = true;
-                clear_interval = 0;
-                clear_on_start = false;
-                tx_confirmation = true;
-              };
+              config.mode.packets =
+                {
+                  enabled = true;
+                  clear_interval = 0;
+                  clear_on_start = false;
+                  tx_confirmation = true;
+                };
               config.rest = {
                 enabled = true;
                 host = "127.0.0.1";
@@ -30,83 +30,62 @@
               };
               config.hermes.chains = [
                 {
-                  id = "a";
-                  rpc_addr = http://127.0.0.1:26657;
-                  grpc_addr = http://127.0.0.1:9090;
-                  account_prefix = "cosmos";
-                  address_type = {derivation = "cosmos";};
-                  event_source = {
-                    mode = "pull";
-                    interval = "1s";
-                  };
-                  gas_price = {
-                    price = 1.0;
-                    denom = "stake";
-                  };
-                  key_name = "cosmos";
-                  trust_threshold = {
-                    numerator = 1;
-                    denominator = 3;
-                  };
+                  id = 'centauri-1';
+                  rpc_addr = 'http://127.0.0.1:26657';
+                  grpc_addr = 'http://127.0.0.1:9090';
+                  event_source = { mode = "pull"; interval = "1s"; };
+                  rpc_timeout = "30s";
+                  account_prefix = "centauri";
+                  key_name = "centauri-1";
+                  store_prefix = "ibc";
+                  default_gas = 100000000;
+                  max_gas = 40000000000;
+                  gas_price = { price = 1; denom = "ppica"; };
+                  gas_multiplier = 1.3;
+                  max_msg_num = 5;
+                  max_tx_size = 4097152;
+                  clock_drift = "10s";
+                  max_block_time = "30s";
+                  trusting_period = "640s";
+                  trust_threshold = { numerator = 1; denominator = 3; };
+                  type = "CosmosSdk";
+                  address_type = { derivation = "cosmos"; };
+                  trusted_node = true;
+                  key_store_type = "Test";
+
                 }
               ];
             }
           ];
-        })
-        .config
-        .hermes
-        .toml;
+        }).config.hermes.toml;
       centauri-osmosis-ibc-hermes1 = ''
-[[chains]]
-id = 'centauri-1'
-rpc_addr = 'http://127.0.0.1:26657'
-grpc_addr = 'http://127.0.0.1:9090'
-event_source = { mode = 'pull', interval = '1s' }
-rpc_timeout = '30s'
-account_prefix = 'centauri'
-key_name = 'centauri-1'
-store_prefix = 'ibc'
-default_gas = 100000000
-max_gas = 40000000000
-gas_price = { price = 1, denom = 'ppica' }
-gas_multiplier = 1.3
-max_msg_num = 5
-max_tx_size = 4097152
-clock_drift = '10s'
-max_block_time = '30s'
-trusting_period = '640s'
-trust_threshold = { numerator = '1', denominator = '3' }
-type = 'CosmosSdk'
-address_type = { derivation = 'cosmos' }
-trusted_node = true
-key_store_type = 'Test'
-
-[[chains]]
-id = 'osmosis-dev'
-rpc_addr = 'http://127.0.0.1:26757'
-grpc_addr = 'http://127.0.0.1:19090'
-#event_source = { mode = 'push', url = 'ws://127.0.0.1:36657/websocket', batch_delay = '1000ms' }
-event_source = { mode = 'pull', interval = '1s' }
-rpc_timeout = '20s'
-account_prefix = 'osmo'
-key_name = 'osmosis-dev'
-store_prefix = 'ibc'
-key_store_type = 'Test'
-default_gas = 10000000
-max_gas = 4000000000
-gas_price = { price = 1, denom = 'uosmo' }
-gas_multiplier = 1.1
-max_msg_num = 5
-max_tx_size = 4097152
-clock_drift = '10s'
-max_block_time = '30s'
-trusting_period = '640s'
-trust_threshold = { numerator = '1', denominator = '3' }
-type = 'CosmosSdk'
-address_type = { derivation = 'cosmos' }
-trusted_node = true
-'';
-    in {
+        [[chains]]
+        id = 'osmosis-dev'
+        rpc_addr = 'http://127.0.0.1:26757'
+        grpc_addr = 'http://127.0.0.1:19090'
+        #event_source = { mode = 'push', url = 'ws://127.0.0.1:36657/websocket', batch_delay = '1000ms' }
+        event_source = { mode = 'pull', interval = '1s' }
+        rpc_timeout = '20s'
+        account_prefix = 'osmo'
+        key_name = 'osmosis-dev'
+        store_prefix = 'ibc'
+        key_store_type = 'Test'
+        default_gas = 10000000
+        max_gas = 4000000000
+        gas_price = { price = 1, denom = 'uosmo' }
+        gas_multiplier = 1.1
+        max_msg_num = 5
+        max_tx_size = 4097152
+        clock_drift = '10s'
+        max_block_time = '30s'
+        trusting_period = '640s'
+        trust_threshold = { numerator = '1', denominator = '3' }
+        type = 'CosmosSdk'
+        address_type = { derivation = 'cosmos' }
+        trusted_node = true
+      '';
+    in
+    {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
