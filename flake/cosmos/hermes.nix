@@ -1,15 +1,6 @@
 { self, ... }: {
-  perSystem =
-    { self'
-    , pkgs
-    , systemCommonRust
-    , subnix
-    , lib
-    , system
-    , devnetTools
-    , bashTools
-    , ...
-    }:
+  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
+    , bashTools, ... }:
     let
       networks = pkgs.networksLib;
       cosmos = self.inputs.cosmos.lib {
@@ -155,8 +146,12 @@
             }
             {
               id = networks.cosmos-hub.devnet.CHAIN_ID;
-              rpc_addr = "http://127.0.0.1:${builtins.toString networks.cosmos-hub.devnet.PORT}";
-              grpc_addr = "http://127.0.0.1:${builtins.toString networks.cosmos-hub.devnet.GRPCPORT}}";
+              rpc_addr = "http://127.0.0.1:${
+                  builtins.toString networks.cosmos-hub.devnet.PORT
+                }";
+              grpc_addr = "http://127.0.0.1:${
+                  builtins.toString networks.cosmos-hub.devnet.GRPCPORT
+                }";
               event_source = {
                 mode = "pull";
                 interval = "1s";
@@ -167,22 +162,27 @@
               store_prefix = "ibc";
               default_gas = 100000;
               max_gas = 3000000;
-              gas_price = { price = 0.0025; denom = "uatom"; };
+              gas_price = {
+                price = 2.5e-3;
+                denom = "uatom";
+              };
               gas_multiplier = 1.5;
               max_msg_num = 30;
               max_tx_size = 2097152;
               clock_drift = "5s";
               max_block_time = "10s";
               trusting_period = "14days";
-              trust_threshold = { numerator = "1"; denominator = "3"; };
+              trust_threshold = {
+                numerator = "1";
+                denominator = "3";
+              };
               address_type = { derivation = "cosmos"; };
             }
           ];
         }];
       }).config.hermes.toml;
 
-    in
-    {
+    in {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
@@ -233,6 +233,30 @@
           '';
         };
 
+        neutron-cosmos-hub-hermes-init = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "neutron-cosmos-hub-hermes-init";
+          text = ''
+            ${bashTools.export pkgs.networksLib.devnet.mnemonics}
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/neutron-cosmos-hub"            
+            HOME=${devnet-root-directory}/neutron-cosmos-hub
+            export HOME
+            MNEMONIC_FILE="$HOME/.hermes/mnemonics/relayer.txt"
+            export MNEMONIC_FILE
+            echo "$HOME/.hermes/mnemonics/"
+            mkdir --parents "$HOME/.hermes/mnemonics/"
+            cp --dereference --no-preserve=mode,ownership --force ${
+              builtins.toFile "hermes-config.toml" hermes-config
+            } "$HOME/.hermes/config.toml"
+            echo "$RLY_MNEMONIC_1" > "$MNEMONIC_FILE"
+            hermes keys add --chain ${networks.cosmos-hub.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.cosmos-hub.devnet.CHAIN_ID} --overwrite
+            hermes keys add --chain ${networks.neutron.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.neutron.devnet.CHAIN_ID} --overwrite
+            export RUST_LOG
+            hermes create channel --a-chain ${networks.cosmos-hub.devnet.CHAIN_ID} --b-chain ${networks.neutron.devnet.CHAIN_ID} --a-port transfer --b-port transfer --new-client-connection --yes
+          '';
+        };
+
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
@@ -259,6 +283,18 @@
           '';
         };
 
+        neutron-cosmos-hub-hermes-relay = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "neutron-cosmos-hub-hermes-relay";
+          text = ''
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/neutron-cosmos-hub"            
+            HOME=${devnet-root-directory}/neutron-cosmos-hub
+            export HOME
+            export RUST_LOG
+            hermes start
+          '';
+        };
       };
     };
 }

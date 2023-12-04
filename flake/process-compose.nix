@@ -643,19 +643,42 @@
                 namespace = "full-node";
               };
 
-
-              neutron-centauri-init = {
-                command = self'.packages.neutron-centauri-hermes-init;
+              neutron-cosmos-hub-init = {
+                command = self'.packages.neutron-cosmos-hub-hermes-init;
                 log_location =
-                  "${devnet-root-directory}/neutron-centauri-init.log";
+                  "${devnet-root-directory}/neutron-cosmos-hub-init.log";
                 availability = { restart = relay; };
                 depends_on."neutron".condition = "process_healthy";
-                depends_on."osmosis-centauri-hermes-init".condition =
+                depends_on."cosmos-hub".condition = "process_healthy";
+                namespace = "trustless-relay";
+              };
+
+              cosmos-hub-neutron-relay = {
+                command = self'.packages.neutron-cosmos-hub-hermes-relay;
+                log_location =
+                  "${devnet-root-directory}/cosmos-hub-neutron-relay.log";
+                availability = { restart = relay; };
+                depends_on."neutron".condition = "process_healthy";
+                depends_on."cosmos-hub".condition = "process_healthy";
+                depends_on."neutron-cosmos-hub-init".condition =
                   "process_completed_successfully";
                 namespace = "trustless-relay";
               };
 
-              centauri-neutron-hermes-relay = {
+              centauri-neutron-init = {
+                command = self'.packages.neutron-centauri-hermes-init;
+                log_location =
+                  "${devnet-root-directory}/centauri-neutron-init.log";
+                availability = { restart = relay; };
+                depends_on."neutron".condition = "process_healthy";
+                depends_on."osmosis-centauri-init".condition =
+                  "process_completed_successfully";
+                depends_on."neutron-cosmos-hub-init".condition =
+                  "process_completed_successfully";
+                namespace = "trustless-relay";
+              };
+
+              centauri-neutron-relay = {
                 command = self'.packages.centauri-neutron-hermes-relay;
                 log_location =
                   "${devnet-root-directory}/neutron-centauri-relay.log";
@@ -725,7 +748,7 @@
                 namespace = "osmosis";
               };
 
-              osmosis-centauri-hermes-init = {
+              osmosis-centauri-init = {
                 command = self'.packages.osmosis-centauri-hermes-init;
                 depends_on = {
                   "centauri-init".condition = "process_completed_successfully";
@@ -733,18 +756,18 @@
                 };
                 namespace = "trustless-relay";
                 log_location =
-                  "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
+                  "${devnet-root-directory}/osmosis-centauri-init.log";
                 availability = { restart = relay; };
               };
 
-              osmosis-centauri-hermes-relay = {
+              osmosis-centauri-relay = {
                 command = self'.packages.osmosis-centauri-hermes-relay;
                 depends_on = {
-                  "osmosis-centauri-hermes-init".condition =
+                  "osmosis-centauri-init".condition =
                     "process_completed_successfully";
                 };
                 log_location =
-                  "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
+                  "${devnet-root-directory}/osmosis-centauri-relay.log";
                 availability = { restart = relay; };
                 namespace = "trustless-relay";
               };
@@ -754,7 +777,7 @@
                 depends_on = {
                   "centauri-cvm-config".condition =
                     "process_completed_successfully";
-                  "osmosis-centauri-hermes-init".condition =
+                  "osmosis-centauri-init".condition =
                     "process_completed_successfully";
                 };
                 log_location =
@@ -766,7 +789,7 @@
               xapp-osmosis-osmo-to-centauri = {
                 command = self'.packages.xapp-osmosis-osmo-to-centauri;
                 depends_on = {
-                  "osmosis-centauri-hermes-init".condition =
+                  "osmosis-centauri-init".condition =
                     "process_completed_successfully";
                 };
                 log_location =
@@ -777,7 +800,7 @@
               xapp-centauri-pica-to-osmosis = {
                 command = self'.packages.xapp-centauri-pica-to-osmosis;
                 depends_on = {
-                  "osmosis-centauri-hermes-init".condition =
+                  "osmosis-centauri-init".condition =
                     "process_completed_successfully";
                 };
                 log_location =
