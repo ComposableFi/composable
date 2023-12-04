@@ -170,10 +170,10 @@
             {
               id = networks.neutron.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.osmosis.devnet.PORT
+                  builtins.toString networks.neutron.devnet.PORT
                 }";
               grpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.osmosis.devnet.GRPCPORT
+                  builtins.toString networks.neutron.devnet.GRPCPORT
                 }";
               event_source = {
                 mode = "pull";
@@ -266,8 +266,8 @@
           name = "osmosis-centauri-hermes-relay";
           text = ''
             RUST_LOG=${log}
-            mkdir --parents "${devnet-root-directory}"            
-            HOME=${devnet-root-directory}
+            mkdir --parents "${devnet-root-directory}/osmosis-centauri"            
+            HOME=${devnet-root-directory}/osmosis-centauri
             export HOME
             export RUST_LOG
             hermes start
