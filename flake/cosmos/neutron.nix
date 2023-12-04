@@ -4,6 +4,7 @@
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.neutron;
+      devnetConfig  = pkgs.networksLib.neutron.devnet;
 
     in {
       packages = rec {
@@ -20,10 +21,10 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ neutrond pkgs.jq ];
           text = ''
-            ${bashTools.export pkgs.networksLib.neutron.devnet}
-              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 --api.address="tcp://0.0.0.0:$RESTPORT" -p2p.laddr "tcp://0.0.0.0:${
-              builtins.toString pkgs.networksLib.neutron.devnet.P2PPORT
-            }" | tee "$CHAIN_DIR/$CHAINID.log"
+            ${bashTools.export devnetConfig}
+              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace --api.address="tcp://0.0.0.0:$RESTPORT" --p2p.laddr "tcp://0.0.0.0:${
+              builtins.toString devnetConfig.P2PPORT
+            }" 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
 
@@ -32,7 +33,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ neutrond pkgs.jq ];
           text = ''
-            ${bashTools.export pkgs.networksLib.neutron.devnet}
+            ${bashTools.export devnetConfig}
             ${bashTools.export pkgs.networksLib.devnet.mnemonics}
 
             if test "''${1-fresh}" == "fresh"; then
@@ -43,6 +44,7 @@
             fi
             mkdir --parents "$CHAIN_DATA"
             $BINARY init test --home "$CHAIN_DATA" --chain-id="$CHAIN_ID"
+            CONFIG_FOLDER=$CHAIN_DATA/config
 
             echo "Adding genesis accounts..."
             echo "$VAL_MNEMONIC_2" | $BINARY keys add val2 --home "$CHAIN_DATA" --recover --keyring-backend=test
@@ -76,6 +78,19 @@
             sed -i -e 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:'"$RPCPORT"'"#g' "$CHAIN_DATA/config/config.toml"
             sed -i -e 's#"tcp://localhost:1317"#"tcp://0.0.0.0:'"$RESTPORT"'"#g' "$CHAIN_DATA/config/app.toml"
             sed -i -e 's#"tcp://0.0.0.0:1317"#"tcp://0.0.0.0:'"$RESTPORT"'"#g' "$CHAIN_DATA/config/app.toml"
+
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$PORT" '.rpc.laddr'
+
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
+                builtins.toString devnetConfig.GRPCPORT
+              }" '.grpc.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
+                builtins.toString devnetConfig.GRPCWEB
+              }" '.grpc-web.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:${
+                builtins.toString devnetConfig.RESTPORT
+              }" '.api.address'
+
 
             GENESIS_FILE="$CHAIN_DATA/config/genesis.json"
 

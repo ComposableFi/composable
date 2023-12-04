@@ -257,6 +257,31 @@
           '';
         };
 
+
+        centauri-cosmos-hub-hermes-init = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "centauri-cosmos-hub-hermes-init";
+          text = ''
+            ${bashTools.export pkgs.networksLib.devnet.mnemonics}
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/centauri-cosmos-hub"            
+            HOME=${devnet-root-directory}/centauri-cosmos-hub
+            export HOME
+            MNEMONIC_FILE="$HOME/.hermes/mnemonics/relayer.txt"
+            export MNEMONIC_FILE
+            echo "$HOME/.hermes/mnemonics/"
+            mkdir --parents "$HOME/.hermes/mnemonics/"
+            cp --dereference --no-preserve=mode,ownership --force ${
+              builtins.toFile "hermes-config.toml" hermes-config
+            } "$HOME/.hermes/config.toml"
+            echo "$RLY_MNEMONIC_2" > "$MNEMONIC_FILE"
+            hermes keys add --chain ${networks.cosmos-hub.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.cosmos-hub.devnet.CHAIN_ID} --overwrite
+            hermes keys add --chain ${networks.pica.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.pica.devnet.CHAIN_ID} --overwrite
+            export RUST_LOG
+            hermes create channel --a-chain ${networks.cosmos-hub.devnet.CHAIN_ID} --b-chain ${networks.pica.devnet.CHAIN_ID} --a-port transfer --b-port transfer --new-client-connection --yes
+          '';
+        };        
+
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
@@ -283,6 +308,20 @@
           '';
         };
 
+        centauri-cosmos-hub-hermes-relay = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "centauri-cosmos-hub-hermes-relay";
+          text = ''
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/centauri-cosmos-hub"            
+            HOME=${devnet-root-directory}/centauri-cosmos-hub
+            export HOME
+            export RUST_LOG
+            hermes start
+          '';
+        };
+
+
         neutron-cosmos-hub-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "neutron-cosmos-hub-hermes-relay";
@@ -294,7 +333,7 @@
             export RUST_LOG
             hermes start
           '';
-        };
+        };        
       };
     };
 }
