@@ -19,7 +19,7 @@
             ++ [ gaiad pkgs.jq ];
           text = ''
             ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
-              $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
+              $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace  --p2p.pex false --p2p.upnp false --p2p.seed_mode true --log_level trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
 

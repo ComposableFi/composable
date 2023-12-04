@@ -140,7 +140,9 @@
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
               builtins.toString pkgs.networksLib.osmosis.devnet.GRPCWEB
             }" '.grpc-web.address'
-            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:11317" '.api.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:#${
+              builtins.toString pkgs.networksLib.osmosis.devnet.RESTPORT
+            }" '.api.address'
 
             dasel put --type string --file $CONFIG_FOLDER/config.toml --value "*" '.rpc.cors_allowed_origins.[]'
             dasel put --type string --file $CONFIG_FOLDER/config.toml --value "Accept-Encoding" '.rpc.cors_allowed_headers.[]'
@@ -159,7 +161,9 @@
 
             osmosisd start --home "$CHAIN_DATA" --rpc.unsafe --rpc.laddr tcp://0.0.0.0:$PORT --pruning=nothing --grpc.address localhost:${
               builtins.toString pkgs.networksLib.osmosis.devnet.GRPCPORT
-            } --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:36656" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --log_level trace --trace
+            } --address "tcp://0.0.0.0:36658" --p2p.external-address 43421 --p2p.laddr "tcp://0.0.0.0:${
+              builtins.toString pkgs.networksLib.osmosis.devnet.P2PPORT
+            }" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --log_level trace --trace
           '';
         };
 
