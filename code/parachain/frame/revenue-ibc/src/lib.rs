@@ -62,7 +62,7 @@ pub mod pallet {
 	use pallet_ibc::{MultiAddress, TransferParams};
 
 	use sp_runtime::{
-		traits::{AccountIdConversion, Zero},
+		traits::{AccountIdConversion, CheckedSub, Zero},
 		AccountId32, Perbill,
 	};
 	pub use sp_std::{prelude::*, str::FromStr, vec};
@@ -288,31 +288,46 @@ pub mod pallet {
 					);
 					let old_balance = TokenPrevPeriodBalance::<T>::get(asset_id);
 					let asset_ed_res = T::AssetsRegistry::existential_deposit(asset_id.clone());
+					let mut skip = true;
+					// asset has ED
 					if let Ok(asset_ed) = asset_ed_res {
-						if new_balance > old_balance &&
-							percentage * (new_balance - old_balance) >= asset_ed
-						{
-							let amount = percentage * (new_balance - old_balance);
-							match T::Assets::transfer(
-								asset_id.clone(),
-								&<T as Config>::FeeAccount::get(),
-								&Self::pallet_account_id(),
-								percentage * (new_balance - old_balance),
-								Preservation::Expendable,
-							) {
-								Ok(_) => Self::deposit_event(Event::<T>::TransferSuccess {
-									asset_id: asset_id.clone(),
-									amount,
-								}),
-								Err(_) => Self::deposit_event(Event::<T>::TransferFail {
-									asset_id: asset_id.clone(),
-									amount,
-								}),
-							};
-							TokenPrevPeriodBalance::<T>::insert(asset_id, new_balance - amount);
+						let checked_revenue = new_balance.checked_sub(&old_balance);
+						// new balance is larger than the previous
+						if let Some(revenue) = checked_revenue {
+							// amount to transfer
+							let amount = percentage * revenue;
+							// balance after the percentage of revenue is transferred
+							let checked_prev_period_balance = new_balance.checked_sub(&amount);
+							if let Some(prev_period_balance) = checked_prev_period_balance {
+								if new_balance > old_balance && amount >= asset_ed {
+									match T::Assets::transfer(
+										asset_id.clone(),
+										&<T as Config>::FeeAccount::get(),
+										&Self::pallet_account_id(),
+										amount,
+										Preservation::Expendable,
+									) {
+										Ok(_) => Self::deposit_event(Event::<T>::TransferSuccess {
+											asset_id: asset_id.clone(),
+											amount,
+										}),
+										Err(_) => Self::deposit_event(Event::<T>::TransferFail {
+											asset_id: asset_id.clone(),
+											amount,
+										}),
+									};
+									TokenPrevPeriodBalance::<T>::insert(
+										asset_id,
+										prev_period_balance,
+									);
+									skip = false;
+								}
+							}
 						}
 					}
-					Self::deposit_event(Event::<T>::SkipAsset { asset_id: asset_id.clone() });
+					if skip {
+						Self::deposit_event(Event::<T>::SkipAsset { asset_id: asset_id.clone() });
+					}
 				});
 				if Self::transfer_from_intermediate().is_err() {
 					Self::deposit_event(Event::<T>::IntermediateTransferFail);

@@ -55,6 +55,11 @@
       inputs.rust-overlay.follows = "rust-overlay";
     };
 
+    cosmos-old = {
+      url =
+        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
+    };
+
     bech32cli = {
       url = "github:strangelove-ventures/bech32cli";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -63,7 +68,7 @@
     composable-ibc-src = {
       flake = false;
       url =
-        "github:ComposableFi/composable-ibc/d05ec4b3ebd32f4c86a392c0968f8af37ccb35d8";
+        "github:ComposableFi/composable-ibc/698146a5a66ce9e5e7a21633ef60e39fa1c8840e";
     };
 
     cvm = { url = "github:ComposableFi/cvm"; };
