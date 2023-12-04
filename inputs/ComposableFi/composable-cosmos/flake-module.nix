@@ -506,15 +506,27 @@
             echo "${cosmosTools.cvm.mnemonic}" | centaurid keys add ${cosmosTools.cvm.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+<<<<<<< Updated upstream
             echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             
+=======
+
+>>>>>>> Stashed changes
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              
+              "$BINARY" --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              
             }
 
-            # relayer
-            add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf 
+            function add-genesis-key () {
+              local ADDRESS
+              ADDRESS=$(echo "$1" | $BINARY keys add "$2" --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json |  dasel --read json .address | tr --delete \")
+              add-genesis-account "$ADDRESS"
+            }
+
+            add-genesis-key "$RLY_MNEMONIC_1" relayer1
+            add-genesis-key "$RLY_MNEMONIC_2" relayer2
+            add-genesis-key "$RLY_MNEMONIC_3" relayer3
+            add-genesis-key "$RLY_MNEMONIC_4" relayer4
 
             add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
             add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
@@ -523,7 +535,6 @@
             add-genesis-account ${cosmosTools.mantis.centauri}
             add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
             add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d
-            add-genesis-account centauri1qwexv7c6sm95lwhzn9027vyu2ccneaqapystyu
             centaurid --keyring-backend test --keyring-dir "$KEYRING_TEST" --home "$CHAIN_DATA" gentx ${cosmosTools.validators.moniker} "250000000000000ppica" --chain-id="$CHAIN_ID" --amount="250000000000000ppica"
             centaurid collect-gentxs --home "$CHAIN_DATA"  --gentx-dir "$CHAIN_DATA/config/gentx"
           else
