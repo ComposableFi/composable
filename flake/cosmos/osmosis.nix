@@ -140,7 +140,7 @@
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
               builtins.toString pkgs.networksLib.osmosis.devnet.GRPCWEB
             }" '.grpc-web.address'
-            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:#${
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:${
               builtins.toString pkgs.networksLib.osmosis.devnet.RESTPORT
             }" '.api.address'
 

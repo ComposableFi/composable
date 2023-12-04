@@ -21,7 +21,9 @@
             ++ [ neutrond pkgs.jq ];
           text = ''
             ${bashTools.export pkgs.networksLib.neutron.devnet}
-              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 --api.address="tcp://0.0.0.0:$RESTPORT" | tee "$CHAIN_DIR/$CHAINID.log"
+              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 --api.address="tcp://0.0.0.0:$RESTPORT" -p2p.laddr "tcp://0.0.0.0:${
+              builtins.toString pkgs.networksLib.neutron.devnet.P2PPORT
+            }" | tee "$CHAIN_DIR/$CHAINID.log"
           '';
         };
 
