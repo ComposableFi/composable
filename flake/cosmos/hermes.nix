@@ -257,7 +257,6 @@
           '';
         };
 
-
         centauri-cosmos-hub-hermes-init = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "centauri-cosmos-hub-hermes-init";
@@ -280,7 +279,7 @@
             export RUST_LOG
             hermes create channel --a-chain ${networks.cosmos-hub.devnet.CHAIN_ID} --b-chain ${networks.pica.devnet.CHAIN_ID} --a-port transfer --b-port transfer --new-client-connection --yes
           '';
-        };        
+        };
 
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
@@ -321,7 +320,6 @@
           '';
         };
 
-
         neutron-cosmos-hub-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "neutron-cosmos-hub-hermes-relay";
@@ -333,7 +331,7 @@
             export RUST_LOG
             hermes start
           '';
-        };        
+        };
       };
     };
 }

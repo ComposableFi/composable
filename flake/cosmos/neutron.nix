@@ -4,7 +4,7 @@
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.neutron;
-      devnetConfig  = pkgs.networksLib.neutron.devnet;
+      devnetConfig = pkgs.networksLib.neutron.devnet;
 
     in {
       packages = rec {
@@ -23,8 +23,8 @@
           text = ''
             ${bashTools.export devnetConfig}
               $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace --api.address="tcp://0.0.0.0:$RESTPORT" --p2p.laddr "tcp://0.0.0.0:${
-              builtins.toString devnetConfig.P2PPORT
-            }" 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
+                builtins.toString devnetConfig.P2PPORT
+              }" 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
 
@@ -82,14 +82,14 @@
             dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$PORT" '.rpc.laddr'
 
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
-                builtins.toString devnetConfig.GRPCPORT
-              }" '.grpc.address'
+              builtins.toString devnetConfig.GRPCPORT
+            }" '.grpc.address'
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
-                builtins.toString devnetConfig.GRPCWEB
-              }" '.grpc-web.address'
+              builtins.toString devnetConfig.GRPCWEB
+            }" '.grpc-web.address'
             dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:${
-                builtins.toString devnetConfig.RESTPORT
-              }" '.api.address'
+              builtins.toString devnetConfig.RESTPORT
+            }" '.api.address'
 
 
             GENESIS_FILE="$CHAIN_DATA/config/genesis.json"

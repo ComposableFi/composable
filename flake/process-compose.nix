@@ -678,6 +678,29 @@
                 namespace = "trustless-relay";
               };
 
+              centauri-cosmos-hub-init = {
+                command = self'.packages.centauri-cosmos-hub-hermes-init;
+                log_location =
+                  "${devnet-root-directory}/centauri-cosmos-hub-init.log";
+                availability = { restart = relay; };
+                depends_on."centauri".condition = "process_healthy";
+                depends_on."cosmos-hub".condition = "process_healthy";
+                depends_on."centauri-neutron-init".condition =
+                  "process_completed_successfully";
+                namespace = "trustless-relay";
+              };
+
+              centauri-cosmos-hub-relay = {
+                command = self'.packages.centauri-cosmos-hub-hermes-relay;
+                log_location =
+                  "${devnet-root-directory}/cosmos-hub-centauri-relay.log";
+                availability = { restart = relay; };
+                depends_on."cosmos-hub".condition = "process_healthy";
+                depends_on."cosmos-hub-centauri-init".condition =
+                  "process_completed_successfully";
+                namespace = "trustless-relay";
+              };
+
               centauri-neutron-relay = {
                 command = self'.packages.centauri-neutron-hermes-relay;
                 log_location =
