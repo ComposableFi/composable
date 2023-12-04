@@ -92,12 +92,8 @@
           inputs = self.inputs;
           modules = [rec {
             packages = [ self'.packages.centaurid ];
-            env = {
-              FEE = "ppica";
-              NETWORK_ID = 2;
-              CHAIN_ID = "centauri-dev";
+            env = pkgs.networksLib.pica.devnet // {
               DIR = "devnet/.centaurid";
-              BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor

@@ -49,7 +49,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/17f8112536eeca482e567b70bfd1dd2e8ba7265f";
+        "github:dzmitry-lahoda-forks/cosmos.nix/e398b4dc9fa8e44c9201d3285eb2818116c0b9d3";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -110,7 +110,6 @@
       "https://composable.cachix.org"
       "https://cosmos.cachix.org"
       "https://devenv.cachix.org"
-      "https://nix-community.cachix.org"
       "https://nixpkgs-update.cachix.org"
     ];
     extra-trusted-public-keys = [
@@ -118,7 +117,6 @@
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "cosmos.cachix.org-1:T5U9yg6u2kM48qAOXHO/ayhO8IWFnv0LOhNcq0yKuR8="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "nixpkgs-update.cachix.org-1:6y6Z2JdoL3APdu6/+Iy8eZX2ajf09e4EE9SnxSML1W8="
     ];
   };
@@ -145,10 +143,9 @@
         ./flake/dev-shells.nix
         ./flake/devnet-tools.nix
         ./flake/devnet.nix
-        ./flake/docker.nix
         ./flake/ethereum.nix
         ./flake/fmt.nix
-        ./flake/hermes.nix
+        ./flake/cosmos/hermes.nix
         ./flake/home-configurations.nix
         ./flake/ibc.nix
         ./flake/live.nix

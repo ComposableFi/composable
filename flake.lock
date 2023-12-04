@@ -234,17 +234,17 @@
     "centauri-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1699873949,
-        "narHash": "sha256-oJNkzBM0pD6+KkIH8ICVcl8yp94R2EoIsvb/i+t5c8c=",
-        "owner": "dzmitry-lahoda-forks",
-        "repo": "composable-centauri",
-        "rev": "c6736b946c3bc6c7c23788d499b2dff94ffd39f5",
+        "lastModified": 1701431373,
+        "narHash": "sha256-EpZ1CQN0gMU8W1u3CMbqlaHeeVpQO2i1GPg6pOyOQTc=",
+        "owner": "ComposableFi",
+        "repo": "composable-cosmos",
+        "rev": "387c96b434db9d96b0506aa7f14536d9bdec968c",
         "type": "github"
       },
       "original": {
-        "owner": "dzmitry-lahoda-forks",
-        "repo": "composable-centauri",
-        "rev": "c6736b946c3bc6c7c23788d499b2dff94ffd39f5",
+        "owner": "ComposableFi",
+        "repo": "composable-cosmos",
+        "rev": "387c96b434db9d96b0506aa7f14536d9bdec968c",
         "type": "github"
       }
     },
@@ -344,6 +344,7 @@
         "cosmos-sdk-src": "cosmos-sdk-src",
         "cosmwasm-src": "cosmwasm-src",
         "crescent-src": "crescent-src",
+        "cw-plus-src": "cw-plus-src",
         "evmos-src": "evmos-src",
         "flake-parts": "flake-parts_2",
         "gaia-main-src": "gaia-main-src",
@@ -411,17 +412,17 @@
         "wasmvm_1_beta7-src": "wasmvm_1_beta7-src"
       },
       "locked": {
-        "lastModified": 1701378956,
-        "narHash": "sha256-XRimUgq/QsTN0xl6klDQxod714Aw9Bfl75SuOLg92po=",
+        "lastModified": 1701683963,
+        "narHash": "sha256-YNfPSCZj0wT7/SA87Udt5Lbhvjx9MMNemiZh4R19BzU=",
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "17f8112536eeca482e567b70bfd1dd2e8ba7265f",
+        "rev": "e398b4dc9fa8e44c9201d3285eb2818116c0b9d3",
         "type": "github"
       },
       "original": {
         "owner": "dzmitry-lahoda-forks",
         "repo": "cosmos.nix",
-        "rev": "17f8112536eeca482e567b70bfd1dd2e8ba7265f",
+        "rev": "e398b4dc9fa8e44c9201d3285eb2818116c0b9d3",
         "type": "github"
       }
     },
@@ -653,16 +654,16 @@
     "cosmwasm-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1685975182,
-        "narHash": "sha256-6uhJijuDPXvEZG8mKBGyswsj/JR75Ui713BVx4XD7WI=",
+        "lastModified": 1698745412,
+        "narHash": "sha256-41s5jLFzw9Jo+dirAVOad1dtUqCBY6rIz/6TRc0frMw=",
         "owner": "CosmWasm",
         "repo": "cosmwasm",
-        "rev": "b8e9c03e744e8b84174477e20eb934529cad41e7",
+        "rev": "89891f0bb2de2c83d00600208695d0d5e1b617ac",
         "type": "github"
       },
       "original": {
         "owner": "CosmWasm",
-        "ref": "v1.2.6",
+        "ref": "v1.5.0",
         "repo": "cosmwasm",
         "type": "github"
       }
@@ -843,6 +844,23 @@
       "original": {
         "owner": "ComposableFi",
         "repo": "cvm",
+        "type": "github"
+      }
+    },
+    "cw-plus-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1700757493,
+        "narHash": "sha256-E5vkY+B4BDoTDtvuB+7Tm3k/5dCYPSjUujMWcgYsWf0=",
+        "owner": "CosmWasm",
+        "repo": "cw-plus",
+        "rev": "d33824679d5b91ca0b4615a8dede7e0028947486",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CosmWasm",
+        "ref": "v1.1.2",
+        "repo": "cw-plus",
         "type": "github"
       }
     },
@@ -2089,17 +2107,17 @@
     "gex-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1660333522,
-        "narHash": "sha256-7jtCpOTHamXAInfKYkMIDFKF4lViuPkusThj4ggGUbg=",
+        "lastModified": 1697704475,
+        "narHash": "sha256-lgJVxn7Q2I8TBdvbzyn7bl1MN5StEw3NvRzCvBFFuB8=",
         "owner": "cosmos",
         "repo": "gex",
-        "rev": "bc168741b2019745d343606d31b5c274f216fc3f",
+        "rev": "233d335dc9e8c89fb318d1081fae74435f6cac11",
         "type": "github"
       },
       "original": {
         "owner": "cosmos",
         "repo": "gex",
-        "rev": "bc168741b2019745d343606d31b5c274f216fc3f",
+        "rev": "233d335dc9e8c89fb318d1081fae74435f6cac11",
         "type": "github"
       }
     },
@@ -3172,11 +3190,11 @@
         "nixpkgs": "nixpkgs_11"
       },
       "locked": {
-        "lastModified": 1701376815,
-        "narHash": "sha256-OP6J8ZzR7bauFhVDTNXn1n+KadKs/SGsUvc+pZ9+rK8=",
+        "lastModified": 1701713114,
+        "narHash": "sha256-7GvC30xieNZh2Pj2FUFaGF8ttTGvgEdtQ5zwLCJHrlg=",
         "owner": "ComposableFi",
         "repo": "networks",
-        "rev": "70038d9c6b2a435998386b18dfe3f6b6b599a3d8",
+        "rev": "141f1a06b2086c6ffab2bafcf780585f231690c4",
         "type": "github"
       },
       "original": {

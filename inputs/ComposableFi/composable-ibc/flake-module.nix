@@ -39,10 +39,14 @@
       ibc-relayer-config-picasso-kusama-to-centauri-0-0 = {
         type = "cosmos";
         name = "centauri";
-        rpc_url = "http://${host}:26657";
-        grpc_url = "http://${host}:9090";
+        rpc_url = "http://${host}:${
+            builtins.toString pkgs.networksLib.pica.devnet.RPCPORT
+          }";
+        grpc_url = "http://${host}:${
+            builtins.toString pkgs.networksLib.pica.devnet.GRPCPORT
+          }";
         websocket_url = "ws://${host}:26657/websocket";
-        chain_id = "centauri-dev";
+        chain_id = pkgs.networksLib.pica.devnet.CHAIN_ID;
         client_id = "07-tendermint-0";
         connection_id = "connection-0";
         account_prefix = "centauri";
