@@ -507,8 +507,9 @@
             echo "${cosmosTools.cvm.mnemonic}" | centaurid keys add ${cosmosTools.cvm.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "$RLY_MNEMONIC_3" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "$RLY_MNEMONIC_4" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$RLY_MNEMONIC_2" | centaurid keys add relayer1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$RLY_MNEMONIC_3" | centaurid keys add relayer2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$RLY_MNEMONIC_4" | centaurid keys add relayer3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             
             function add-genesis-account () {
               centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              

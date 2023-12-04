@@ -22,9 +22,7 @@
             ++ [ neutrond pkgs.jq ];
           text = ''
             ${bashTools.export devnetConfig}
-              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace --api.address="tcp://0.0.0.0:$RESTPORT" --p2p.laddr "tcp://0.0.0.0:${
-                builtins.toString devnetConfig.P2PPORT
-              }" 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
+              $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
 
@@ -74,23 +72,16 @@
             sed -i -e 's/enabled = false/enabled = true/g' "$CHAIN_DATA/config/app.toml"
             sed -i -e 's/prometheus-retention-time = 0/prometheus-retention-time = 1000/g' "$CHAIN_DATA/config/app.toml"
 
-            sed -i -e 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:'"$P2PPORT"'"#g' "$CHAIN_DATA/config/config.toml"
-            sed -i -e 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:'"$RPCPORT"'"#g' "$CHAIN_DATA/config/config.toml"
-            sed -i -e 's#"tcp://localhost:1317"#"tcp://0.0.0.0:'"$RESTPORT"'"#g' "$CHAIN_DATA/config/app.toml"
-            sed -i -e 's#"tcp://0.0.0.0:1317"#"tcp://0.0.0.0:'"$RESTPORT"'"#g' "$CHAIN_DATA/config/app.toml"
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:$GRPCPORT" '.grpc.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:$GRPCWEB" '.grpc-web.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:$ROSETTA_PORT" '.rosetta.address'
+            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:$RESTPORT" '.api.address'
 
-            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$PORT" '.rpc.laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/client.toml" --value "tcp://localhost:$GRPCPORT" '.node'
 
-            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
-              builtins.toString devnetConfig.GRPCPORT
-            }" '.grpc.address'
-            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "0.0.0.0:${
-              builtins.toString devnetConfig.GRPCWEB
-            }" '.grpc-web.address'
-            dasel put --type string --file "$CONFIG_FOLDER/app.toml" --value "tcp://0.0.0.0:${
-              builtins.toString devnetConfig.RESTPORT
-            }" '.api.address'
-
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$CONSENSUS_GRPC_PORT" '.rpc.grpc_laddr'
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$P2PPORT" '.p2p.laddr'            
+            dasel put --type string --file "$CONFIG_FOLDER/config.toml" --value "tcp://0.0.0.0:$CONSENSUS_RPC_PORT" '.rpc.laddr'
 
             GENESIS_FILE="$CHAIN_DATA/config/genesis.json"
 
