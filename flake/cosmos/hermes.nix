@@ -71,7 +71,7 @@
             {
               id = "osmosis-dev";
               rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.osmosis.devnet.PORT
+                  builtins.toString networks.osmosis.devnet.CONSENSUS_RPC_PORT
                 }";
               grpc_addr = "http://127.0.0.1:${
                   builtins.toString networks.osmosis.devnet.GRPCPORT
@@ -109,7 +109,7 @@
             {
               id = networks.neutron.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.neutron.devnet.PORT
+                  builtins.toString networks.neutron.devnet.CONSENSUS_RPC_PORT
                 }";
               grpc_addr = "http://127.0.0.1:${
                   builtins.toString networks.neutron.devnet.GRPCPORT
@@ -147,7 +147,8 @@
             {
               id = networks.cosmos-hub.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.cosmos-hub.devnet.PORT
+                  builtins.toString
+                  networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT
                 }";
               grpc_addr = "http://127.0.0.1:${
                   builtins.toString networks.cosmos-hub.devnet.GRPCPORT

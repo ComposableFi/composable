@@ -615,7 +615,7 @@
                 command = self'.packages.neutron-start;
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
-                  port = networks.neutron.devnet.PORT;
+                  port = networks.neutron.devnet.CONSENSUS_RPC_PORT;
                 };
                 log_location = "${devnet-root-directory}/neutron-start.log";
                 availability = { restart = chain-restart; };
@@ -634,7 +634,7 @@
                 command = self'.packages.cosmos-hub-start;
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
-                  port = networks.cosmos-hub.devnet.PORT;
+                  port = networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT;
                 };
                 log_location = "${devnet-root-directory}/cosmos-hub-start.log";
                 availability = { restart = chain-restart; };
@@ -752,7 +752,7 @@
                 command = self'.packages.osmosisd-gen;
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
-                  port = pkgs.networksLib.osmosis.devnet.PORT;
+                  port = pkgs.networksLib.osmosis.devnet.CONSENSUS_RPC_PORT;
                 };
                 log_location = "${devnet-root-directory}/osmosis.log";
               };

@@ -1,7 +1,9 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
-    let devnet-root-directory = cosmosTools.devnet-root-directory;
+    let
+      devnet-root-directory = cosmosTools.devnet-root-directory;
+      devnet = pkgs.networksLib.cosmos-hub.devnet;
     in {
 
       packages = rec {
@@ -18,7 +20,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ gaiad pkgs.jq ];
           text = ''
-            ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
+            ${bashTools.export devnet}
               $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --trace  --p2p.pex false --p2p.upnp false --p2p.seed_mode true --log_level trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
@@ -28,7 +30,7 @@
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ gaiad pkgs.jq ];
           text = ''
-            ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
+            ${bashTools.export devnet}
             ${bashTools.export pkgs.networksLib.devnet.mnemonics}
             if test "''${1-fresh}" == "fresh"; then
               if pgrep "^gaiad$"; then

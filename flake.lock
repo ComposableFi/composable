@@ -2477,11 +2477,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1701711799,
-        "narHash": "sha256-ooDz7iiPoKF20wBJlavHbxyGV3NN8kc8w7lPVK02WNk=",
+        "lastModified": 1701713114,
+        "narHash": "sha256-7GvC30xieNZh2Pj2FUFaGF8ttTGvgEdtQ5zwLCJHrlg=",
         "owner": "ComposableFi",
         "repo": "networks",
-        "rev": "a13a366dc4fcf8870482251d07f9953c9621ffeb",
+        "rev": "141f1a06b2086c6ffab2bafcf780585f231690c4",
         "type": "github"
       },
       "original": {
