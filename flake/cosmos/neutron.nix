@@ -15,8 +15,8 @@
           '';
         };
 
-        neutrond-start = pkgs.writeShellApplication {
-          name = "neutrond-start";
+        neutron-start = pkgs.writeShellApplication {
+          name = "neutron-start";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ neutrond pkgs.jq ];
           text = ''
@@ -25,8 +25,8 @@
           '';
         };
 
-        neutrond-gen = pkgs.writeShellApplication {
-          name = "neutrond-gen";
+        neutron-gen = pkgs.writeShellApplication {
+          name = "neutron-gen";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ neutrond pkgs.jq ];
           text = ''
@@ -35,7 +35,6 @@
 
             if test "''${1-fresh}" == "fresh"; then
               if pgrep "^neutrond$"; then
-                echo "Neutrond is running, please stop it first"
                 killall "$BINARY"
               fi
               rm -rf "$CHAIN_DATA"                
@@ -51,6 +50,7 @@
             echo "$DEMO_MNEMONIC_3" | $BINARY keys add demowallet3 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_1" | $BINARY keys add rly1 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_2" | $BINARY keys add rly2 --home "$CHAIN_DATA" --recover --keyring-backend=test
+            echo "$RLY_MNEMONIC_4" | $BINARY keys add rly4 --home "$CHAIN_DATA" --recover --keyring-backend=test
 
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
@@ -59,6 +59,7 @@
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show demowallet3 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM,100000000000000$IBCATOMDENOM,100000000000000$IBCUSDCDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
+            $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly4 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
 
             sed -i -e 's/timeout_commit = "5s"/timeout_commit = "1s"/g' "$CHAIN_DATA/config/config.toml"
             sed -i -e 's/timeout_propose = "3s"/timeout_propose = "1s"/g' "$CHAIN_DATA/config/config.toml"

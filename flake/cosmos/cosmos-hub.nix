@@ -14,7 +14,7 @@
         };
 
         cosmos-hub-start = pkgs.writeShellApplication {
-          name = "neutrond-start";
+          name = "cosmos-hub-start";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ gaiad pkgs.jq ];
           text = ''

@@ -22,6 +22,7 @@
             ++ [ osmosisd pkgs.jq ];
 
           text = ''
+            ${bashTools.export pkgs.networksLib.devnet.mnemonics}
             HOME=${devnet-root-directory}
             export HOME
             CHAIN_DATA="$HOME/.osmosisd"
@@ -36,7 +37,6 @@
             VALIDATOR_MONIKER="${cosmosTools.validators.moniker}"
             VALIDATOR_MNEMONIC="${cosmosTools.validators.mnemonic}"
             FAUCET_MNEMONIC="increase bread alpha rigid glide amused approve oblige print asset idea enact lawn proof unfold jeans rabbit audit return chuckle valve rather cactus great"
-            RELAYER_MNEMONIC="black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken"
             CONFIG_FOLDER=$CHAIN_DATA/config
             GENESIS=$CONFIG_FOLDER/genesis.json
             mkdir --parents "$CHAIN_DATA/data/cs.wal"
@@ -120,7 +120,7 @@
 
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
-            add-genesis-account "$RELAYER_MNEMONIC" "relayer"
+            add-genesis-account "$RLY_MNEMONIC_3" "relayer"
             add-genesis-account "${cosmosTools.cvm.mnemonic}" "cvm"
             add-genesis-account "${cosmosTools.pools.mnemonic}" "pools"
 

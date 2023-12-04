@@ -58,7 +58,7 @@
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
-          CHAIN_ID="centauri-1"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           VALIDATOR_KEY=${validator-key}
           PORT=26657
@@ -90,7 +90,7 @@
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
 
-          CHAIN_ID="centauri-1"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           KEY=${cosmosTools.cvm.centauri}
           PORT=26657
@@ -170,7 +170,7 @@
           KEY=${cosmosTools.cvm.centauri}
 
           CHAIN_DATA="$HOME/.centaurid"
-          CHAIN_ID="centauri-1"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           BLOCK_SECONDS=5
@@ -400,7 +400,7 @@
           ++ [ centaurid pkgs.jq ];
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-          CHAIN_ID="centauri-1"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           FEE=ppica
@@ -433,8 +433,9 @@
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq pkgs.dasel ];
         text = ''
+          ${bashTools.export pkgs.networksLib.devnet.mnemonics}
           CHAIN_DATA="${devnet-root-directory}/.centaurid"
-          CHAIN_ID="centauri-1"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
 
           if test "''${1-reuse}" == "fresh"; then
@@ -506,8 +507,8 @@
             echo "${cosmosTools.cvm.mnemonic}" | centaurid keys add ${cosmosTools.cvm.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "symbol force gallery make bulk round subway violin worry mixture penalty kingdom boring survey tool fringe patrol sausage hard admit remember broken alien absorb" | centaurid keys add test3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "black frequent sponsor nice claim rally hunt suit parent size stumble expire forest avocado mistake agree trend witness lounge shiver image smoke stool chicken" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$RLY_MNEMONIC_3" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$RLY_MNEMONIC_4" | centaurid keys add relayer --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             
             function add-genesis-account () {
               centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              
@@ -549,7 +550,7 @@
 
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"
-            CHAIN_ID="centauri-1"
+            ${bashTools.export pkgs.networksLib.pica.devnet}
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
             FEE=ppica 
@@ -566,7 +567,7 @@
 
           text = ''
             CHAIN_DATA="${devnet-root-directory}/.centaurid"
-            CHAIN_ID="centauri-1"
+            ${bashTools.export pkgs.networksLib.pica.devnet}
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
             FEE=ppica 

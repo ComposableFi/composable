@@ -87,17 +87,13 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
-        centauri-1net = self.inputs.devenv.lib.mkShell {
+        centauri-devnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
           modules = [rec {
             packages = [ self'.packages.centaurid ];
-            env = {
-              FEE = "ppica";
-              NETWORK_ID = 2;
-              CHAIN_ID = "centauri-1";
+            env = pkgs.networksLib.pica.devnet // {
               DIR = "devnet/.centaurid";
-              BINARY = "centaurid";
               NODE = "tcp://localhost:26657";
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
