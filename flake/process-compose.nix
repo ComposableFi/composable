@@ -623,6 +623,27 @@
                   "process_completed_successfully";
               };
 
+              cosmos-hub-init = {
+                command = self'.packages.cosmos-hub-gen;
+                log_location = "${devnet-root-directory}/cosmos-hub-init.log";
+                availability = { restart = chain-restart; };
+                namespace = "full-node";
+              };
+
+              cosmos-hub = {
+                command = self'.packages.cosmos-hub-start;
+                readiness_probe.http_get = {
+                  host = "127.0.0.1";
+                  port = networks.cosmos-hub.devnet.PORT;
+                };
+                log_location = "${devnet-root-directory}/cosmos-hub-start.log";
+                availability = { restart = chain-restart; };
+                depends_on."cosmos-hub-init".condition =
+                  "process_completed_successfully";
+                namespace = "full-node";
+              };
+
+
               neutron-centauri-init = {
                 command = self'.packages.neutron-centauri-hermes-init;
                 log_location =
@@ -631,7 +652,7 @@
                 depends_on."neutron".condition = "process_healthy";
                 depends_on."osmosis-centauri-hermes-init".condition =
                   "process_completed_successfully";
-                namespace = "ibc";
+                namespace = "trustless-relay";
               };
 
               centauri-neutron-hermes-relay = {
@@ -642,7 +663,7 @@
                 depends_on."neutron".condition = "process_healthy";
                 depends_on."neutron-centauri-init".condition =
                   "process_completed_successfully";
-                namespace = "ibc";
+                namespace = "trustless-relay";
               };
 
               centauri-init = {
@@ -710,7 +731,7 @@
                   "centauri-init".condition = "process_completed_successfully";
                   "osmosis".condition = "process_healthy";
                 };
-                namespace = "ibc";
+                namespace = "trustless-relay";
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-init.log";
                 availability = { restart = relay; };
@@ -725,7 +746,7 @@
                 log_location =
                   "${devnet-root-directory}/osmosis-centauri-hermes-relay.log";
                 availability = { restart = relay; };
-                namespace = "ibc";
+                namespace = "trustless-relay";
               };
 
               mantis-simulate-solve = {

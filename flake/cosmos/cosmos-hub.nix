@@ -19,7 +19,7 @@
             ++ [ gaiad pkgs.jq ];
           text = ''
             ${bashTools.export pkgs.networksLib.cosmos-hub.devnet}
-              $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace 2>&1 | tee "$CHAIN_DIR/$CHAINID.log"
+              $BINARY start --log_level debug --log_format json --home "$CHAIN_DIR"  --pruning=nothing --grpc.address="0.0.0.0:$GRPCPORT"  --grpc-web.address="0.0.0.0:$GRPCWEB" --trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
           '';
         };
 
@@ -38,7 +38,7 @@
             fi
             mkdir --parents "$CHAIN_DATA"
 
-            $BINARY init test --home "$CHAIN_DIR" --chain-id="$CHAINID"
+            $BINARY init test --home "$CHAIN_DIR" --chain-id="$CHAIN_ID"
 
             echo "$VAL_MNEMONIC_1" | $BINARY keys add val1 --home "$CHAIN_DIR" --recover --keyring-backend=test
             echo "$VAL_MNEMONIC_2" | $BINARY keys add val2 --home "$CHAIN_DIR" --recover --keyring-backend=test
@@ -76,7 +76,7 @@
             sed -i -e "s/\"mint_denom\": \"stake\",/\"mint_denom\": \"$STAKEDENOM\",/g" "$GENESIS_FILE"
             sed -i -e "s/\"bond_denom\": \"stake\"/\"bond_denom\": \"$STAKEDENOM\"/g" "$GENESIS_FILE"
             sed -i -e 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/g' "$CHAIN_DIR/config/app.toml"
-            $BINARY gentx val1 "7000000000$STAKEDENOM" --home "$CHAIN_DIR" --chain-id "$CHAINID" --keyring-backend test
+            $BINARY gentx val1 "7000000000$STAKEDENOM" --home "$CHAIN_DIR" --chain-id "$CHAIN_ID" --keyring-backend test
             $BINARY collect-gentxs --home "$CHAIN_DIR"
 
             sed -i -e 's/\"allow_messages\":.*/\"allow_messages\": [\"\/cosmos.bank.v1beta1.MsgSend\", \"\/cosmos.staking.v1beta1.MsgDelegate\", \"\/cosmos.staking.v1beta1.MsgUndelegate\"]/g' "$CHAIN_DIR/config/genesis.json"

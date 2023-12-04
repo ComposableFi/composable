@@ -1,6 +1,15 @@
 { self, ... }: {
-  perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , bashTools, ... }:
+  perSystem =
+    { self'
+    , pkgs
+    , systemCommonRust
+    , subnix
+    , lib
+    , system
+    , devnetTools
+    , bashTools
+    , ...
+    }:
     let
       networks = pkgs.networksLib;
       cosmos = self.inputs.cosmos.lib {
@@ -144,11 +153,36 @@
               address_type = { derivation = "cosmos"; };
               trusted_node = true;
             }
+            {
+              id = networks.cosmos-hub.devnet.CHAIN_ID;
+              rpc_addr = "http://127.0.0.1:${builtins.toString networks.cosmos-hub.devnet.PORT}";
+              grpc_addr = "http://127.0.0.1:${builtins.toString networks.cosmos-hub.devnet.GRPCPORT}}";
+              event_source = {
+                mode = "pull";
+                interval = "1s";
+              };
+              rpc_timeout = "10s";
+              account_prefix = "cosmos";
+              key_name = networks.cosmos-hub.devnet.CHAIN_ID;
+              store_prefix = "ibc";
+              default_gas = 100000;
+              max_gas = 3000000;
+              gas_price = { price = 0.0025; denom = "uatom"; };
+              gas_multiplier = 1.5;
+              max_msg_num = 30;
+              max_tx_size = 2097152;
+              clock_drift = "5s";
+              max_block_time = "10s";
+              trusting_period = "14days";
+              trust_threshold = { numerator = "1"; denominator = "3"; };
+              address_type = { derivation = "cosmos"; };
+            }
           ];
         }];
       }).config.hermes.toml;
 
-    in {
+    in
+    {
       packages = rec {
         hermes = self.inputs.cosmos.packages.${system}.hermes;
         osmosis-centauri-hermes-init = pkgs.writeShellApplication {
