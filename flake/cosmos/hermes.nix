@@ -9,8 +9,8 @@
       };
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
-      log = "debug";
-      centauri-osmosis-ibc-hermes = (cosmos.evalHermesModule {
+      log = "trace";
+      hermes-config = (cosmos.evalHermesModule {
         modules = [{
           config.hermes.global.log_level = "trace";
           config.hermes.mode.clients.misbehaviour = false;
@@ -105,68 +105,7 @@
               address_type = { derivation = "cosmos"; };
               trusted_node = true;
             }
-          ];
-        }];
-      }).config.hermes.toml;
 
-      centauri-neutron-ibc-hermes = (cosmos.evalHermesModule {
-        modules = [{
-          config.hermes.global.log_level = "trace";
-          config.hermes.mode.clients.misbehaviour = false;
-          config.hermes.mode.packets = {
-            enabled = true;
-            clear_interval = 0;
-            clear_on_start = false;
-            tx_confirmation = true;
-          };
-          config.hermes.rest = {
-            enabled = true;
-            host = "127.0.0.1";
-            port = 30043;
-          };
-          config.hermes.telemetry = {
-            enabled = true;
-            host = "127.0.0.1";
-            port = 30044;
-          };
-          config.hermes.chains = [
-            {
-              id = networks.pica.devnet.CHAIN_ID;
-              rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.pica.devnet.PORT
-                }";
-              grpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.pica.devnet.GRPCPORT
-                }";
-              event_source = {
-                mode = "pull";
-                interval = "1s";
-              };
-              rpc_timeout = "30s";
-              account_prefix = "centauri";
-              key_name = networks.pica.devnet.CHAIN_ID;
-              store_prefix = "ibc";
-              default_gas = 100000000;
-              max_gas = 40000000000;
-              gas_price = {
-                price = 1.0;
-                denom = "ppica";
-              };
-              gas_multiplier = 1.3;
-              max_msg_num = 5;
-              max_tx_size = 4097152;
-              clock_drift = "10s";
-              max_block_time = "30s";
-              trusting_period = "640s";
-              trust_threshold = {
-                numerator = "1";
-                denominator = "3";
-              };
-              type = "CosmosSdk";
-              address_type = { derivation = "cosmos"; };
-              trusted_node = true;
-              key_store_type = "Test";
-            }
             {
               id = networks.neutron.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
@@ -179,23 +118,24 @@
                 mode = "pull";
                 interval = "1s";
               };
+              ccv_consumer_chain = true;
               rpc_timeout = "20s";
               account_prefix = networks.neutron.devnet.ACCOUNT_PREFIX;
               key_name = networks.neutron.devnet.CHAIN_ID;
               store_prefix = "ibc";
               key_store_type = "Test";
               default_gas = 10000000;
-              max_gas = 4000000000;
+              max_gas = 30000000;
               gas_price = {
-                price = 1.0;
+                price = 2.5e-3;
                 denom = networks.neutron.devnet.FEE;
               };
-              gas_multiplier = 1.1;
-              max_msg_num = 5;
+              gas_multiplier = 1.5;
+              max_msg_num = 30;
               max_tx_size = 4097152;
               clock_drift = "10s";
               max_block_time = "30s";
-              trusting_period = "640s";
+              trusting_period = "14days";
               trust_threshold = {
                 numerator = "1";
                 denominator = "3";
@@ -225,8 +165,7 @@
             echo "$HOME/.hermes/mnemonics/"
             mkdir --parents "$HOME/.hermes/mnemonics/"
             cp --dereference --no-preserve=mode,ownership --force ${
-              builtins.toFile "centauri-osmosis-ibc-hermes.toml"
-              centauri-osmosis-ibc-hermes
+              builtins.toFile "hermes-config.toml" hermes-config
             } "$HOME/.hermes/config.toml"
             echo "$RLY_MNEMONIC_3" > "$MNEMONIC_FILE"
             hermes keys add --chain ${networks.pica.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.pica.devnet.CHAIN_ID} --overwrite
@@ -250,8 +189,7 @@
             echo "$HOME/.hermes/mnemonics/"
             mkdir --parents "$HOME/.hermes/mnemonics/"
             cp --dereference --no-preserve=mode,ownership --force ${
-              builtins.toFile "centauri-neutron-ibc-hermes.toml"
-              centauri-neutron-ibc-hermes
+              builtins.toFile "hermes-config.toml" hermes-config
             } "$HOME/.hermes/config.toml"
             echo "$RLY_MNEMONIC_4" > "$MNEMONIC_FILE"
             hermes keys add --chain ${networks.pica.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.pica.devnet.CHAIN_ID} --overwrite
@@ -273,6 +211,20 @@
             hermes start
           '';
         };
+
+        centauri-neutron-hermes-relay = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "centauri-neutron-hermes-relay";
+          text = ''
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/centauri-neutron"            
+            HOME=${devnet-root-directory}/centauri-neutron
+            export HOME
+            export RUST_LOG
+            hermes start
+          '';
+        };
+
       };
     };
 }

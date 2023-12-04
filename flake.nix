@@ -49,7 +49,7 @@
     };
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/117e19c4f103e170cb2a9721f5b06cff363cf5bd";
+        "github:dzmitry-lahoda-forks/cosmos.nix/e398b4dc9fa8e44c9201d3285eb2818116c0b9d3";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";

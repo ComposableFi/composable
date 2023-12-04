@@ -625,10 +625,22 @@
 
               neutron-centauri-init = {
                 command = self'.packages.neutron-centauri-hermes-init;
-                log_location = "${devnet-root-directory}/neutron-centauri.log";
+                log_location =
+                  "${devnet-root-directory}/neutron-centauri-init.log";
                 availability = { restart = relay; };
                 depends_on."neutron".condition = "process_healthy";
                 depends_on."osmosis-centauri-hermes-init".condition =
+                  "process_completed_successfully";
+                namespace = "ibc";
+              };
+
+              centauri-neutron-hermes-relay = {
+                command = self'.packages.centauri-neutron-hermes-relay;
+                log_location =
+                  "${devnet-root-directory}/neutron-centauri-relay.log";
+                availability = { restart = relay; };
+                depends_on."neutron".condition = "process_healthy";
+                depends_on."neutron-centauri-init".condition =
                   "process_completed_successfully";
                 namespace = "ibc";
               };
