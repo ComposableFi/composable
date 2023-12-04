@@ -46,7 +46,7 @@
             builtins.toString pkgs.networksLib.pica.devnet.GRPCPORT
           }";
         websocket_url = "ws://${host}:26657/websocket";
-        chain_id = pkgs.networks.pica.devnet.CHAIN_ID;
+        chain_id = pkgs.networksLib.pica.devnet.CHAIN_ID;
         client_id = "07-tendermint-0";
         connection_id = "connection-0";
         account_prefix = "centauri";
