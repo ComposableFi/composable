@@ -91,12 +91,12 @@ A vote’s weight is defined by the following:
 | Lock Period After Enactment     | Conviction Multiplier    | Lock Time |
 |-----------------------|-------------------|--------------------------|
 | 0        | 0.1x        | None                   |
-| 1             | 1x             | 1 day                   |
-| 2             | 2x             | 2 days                   |
-| 4             | 3x             | 4 days                   |
-| 8             | 4x             | 8 days                   |
-| 16             | 5x             | 16 days                   |
-| 32             | 6x             | 32 days                   |
+| 1             | 1x             | 28 days                   |
+| 2             | 2x             | 56 days                   |
+| 4             | 3x             | 112 days                   |
+| 8             | 4x             | 224 days                   |
+| 16             | 5x             | 448 days                   |
+| 32             | 6x             | 896 days                   |
 
 
 #### Vote Delegation
