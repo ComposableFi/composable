@@ -31,3 +31,9 @@ In the search bar type “Composable”, choose the Composable chain and click �
 ![keplr-3](./images-keplr-guide/images-keplr-5.png)
 
 Congratulations! You have now integrated your Keplr account with Composable cosmos.
+
+## Add Composable Cosmos Testnet to Keplr
+
+If you're interacting with the Composable Cosmos Testnet which was previously referred to as Centauri and Bansky, simply add `centauri-testnet` similar to the previous step.
+
+![banksy](./images-keplr-guide/add-banksy.png)
