@@ -3,23 +3,12 @@
 Steps to claim your crowdloan rewards:
 
 1. Go to www.picasso.xyz connect your wallet and hit ‘claim’
-2. PICA tokens will go to your wallet but they **can’t be moved/transferred until TGE**
-3. On TGE you will not have to do anything, your tokens will be transferable
-4. The other 50% of tokens are subject to a vesting schedule found on docs.composable.finance.
-5. Based on the vesting pallet logic, the unvested tokens will be viewable in users’ wallets on the day of TGE.
-6. From that point, users can periodically visit the website and hit claim with the same wallet connected to claim the 
+2. Based on the vesting pallet logic, the unvested tokens will be viewable in users’ wallets on the day of TGE.
+3. From that point, users can periodically visit the website and hit claim with the same wallet connected to claim the 
    remaining crowdloan rewards, which converts unvested tokens into liquid tokens.
 
-Guide to Claim
 
-Those who have participated in our crowdloan and want to claim their rewards, first,
-need a wallet to connect to Picasso.
-Click the link to read our guides on how to create a Polkadot.js or Talisman wallet for Picasso.
-
-[https://docs.composable.finance/user-guides](https://docs.composable.finance/developer-guides)
-
-This guide will show you how to claim your crowdloan rewards. For the purpose of this guide, we chose to showcase the process using Polkadot.js.
-We recommend reading through the complete instructions at least once before following along.
+This guide will show you how to claim your crowdloan rewards. For the purpose of this guide, we chose to showcase the process using Polkadot.js. We recommend reading through the complete instructions at least once before following along.
 
 ## Connect Your Account to Picasso
 
