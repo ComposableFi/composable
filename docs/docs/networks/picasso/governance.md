@@ -1,71 +1,40 @@
 # Picasso OpenGov
 
-As we plan to completely decentralize the governance on the Picasso network, the decisions affecting the parachain will go through a democratic process as Picasso transitions from Governance V1 to OpenGov, a two-phase process that will empower the community holders. Previously, Picasso operated via Governance V1 with Sudo operations being executed with the approval of the Picasso council. Referenda can be proposed by anyone to ensure agreement from the wider community and to establish transparency when significant changes are made to Picasso.
+Governance mechanisms for Picasso are intended to ensure the growth and adaptation of the ecosystem in alignment with the wants and needs of the Picasso community. Therefore, all token holders are able to participate, with their votes being weighted by stake. Moreover, any alteration to Picasso must be approved by a referendum decided by PICA token holders.
 
-The new OpenGov structure for Picasso will be implemented in two phases.
+[Picasso’s Polkassembly](https://picasso.polkassembly.io/opengov) will serve as a governance forum where open discussion about the future of Picasso can occur. Here, proposals can be refined based on community input.  
 
-Phase 1: Implement OpenGov with governance handled by two collectives: The Picasso Council and the Technical Committee.
+The OpenGov structure for Picasso was implemented in two phases. Picasso has passed the first phase with phase 2 live in production.
 
-This phase lays the foundation for a more transparent and community-driven governance model while maintaining the speed and efficiency demonstrated by the recent launches and connections on Picasso, especially in preparation for our upcoming IBC connection to Ethereum.
+**Phase 1:** Implement OpenGov with governance handled by two collectives: The Picasso Council and the Technical Committee. The purpose of this phase was to maintain the speed and efficiency demonstrated by the recent launches and connections on Picasso.
 
-Phase 2: Release OpenGov to public PICA holders.
+**Phase 2:** Now, the second phase of Picasso OpenGov is live, a new era of decentralisation, allowing PICA holders to actively participate in governance and a new structure of collectives.
 
-The second phase will be implemented after the launch of the Ethereum ⬌ IBC connection which will be released in Q4 2023. Through OpenGov, the Picasso parachain will undergo a new era of decentralization, allowing PICA holders to actively participate in governance and a new structure of collectives.
+Picasso’s OpenGov structure and design is an adapted version of Polkadot OpenGov.
 
-## OpenGov Tracks
+## Core Tenets
 
-During Phase 1, Council members and the Technical Committee will be able to vote via a GOV token. The GOV token has no monetary value and held by the Picasso Council and Technical Committee members. Initially, there are two tracks, and four origins:
+Core principles guiding participation in the Picasso OpenGov process are as follows:
 
-- Root
-- Whitelisted Caller (Fast Track)
-
-Additional tracks are also planned to be added during Phase 1 such as General Admin, Treasury and more.
-
-The governance model during Phase 1 will introduce four separate roles, each serving a unique purpose:
-
-- Proposal Creation: Enabling the ability to create proposals, fostering innovation and community-driven development.
-- Voting: Allowing GOV holders to vote on proposals, ensuring that decisions reflect the collective will of the community.
-- Canceling Proposals: Implementing mechanisms to cancel proposals.
-- Expedition: Introducing measures to speed up the voting process when needed, ensuring timely decision-making without compromising on democratic principles.
-
-These tracks and origins are designed to ensure a balanced and fair approach, aligning with our commitment to transparency, decentralization, and community engagement.
-
-## OpenGov Parameters
-
-The following two tables provide information about the voting and decision-making processes for the two collectives. They summarize the support thresholds required for various actions, the time it takes for those actions to pass when specific support percentages are met, and the confirmation and decision periods for each track. 
+- Supporting engagement of token holders who are influenced by and in turn would like to influence Picasso governance, even when their opinions and desires differ from that of the Composable team
+- Prioritising the greater good of Picasso and its community over any individual interests
+- Upholding transparency and openness with the public
+- Acting morally and with a mind for consequences of action or inaction
+- Standing firmly against any malicious language, behaviour, and actions
 
 
-| Support Threshold | Whitelist Track Time (Passing) | Root Track Time (Passing) |
-|-------------------|--------------------------|----------------------|
-| 10%               | 12 hours        | 5 days 14 hours      |
-| 20%               | 3 hours 20 minutes       | 4 days 4 hours       |
-| 30%               | 1 hour 15 minutes        | 2 days 18 hours      |
+## On-Chain Governance
 
-With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
+Picasso’s hard governance involves on-chain mechanisms where the majority of tokens on Picasso determine key decisions. These decisions are made via token holders voting on proposed referenda, with individuals’ votes being weighted by staked token amount. 
 
-![whitelist-curve](../whitelist-track.png)
-*Approval curve for the Whitelist Track*
+Definitions and components for OpenGov of Picasso are detailed below:
 
-![root-curve](../root-track.png)
-*Approval curve for the Root Track*
+### OpenGov Committees
 
+The **Technical Committee** is a group of 5 core developers that are able to whitelist proposals. Its purpose is to provide technical review of urgent security issues and upgrades. The role of the Technical Committee includes, among others, ensuring the technical stability and critical safety measures of the parachain.
 
-| Track Type            | Confirm Period    | Decision Period (Voting) |
-|-----------------------|-------------------|--------------------------|
-| Whitelist        | 30 minutes        | 4 days                   |
-| Root             | 1 day             | 7 days                   |
+The **Treasury Committee** is an on-chain entity made up of 11 senior team members and supporters. Members of the Treasury committee consist of:
 
-Any member from the two collectives is allowed to submit a referenda.To cancel a specific referendum, you need a 1/3 approval from the Technical Committee. To Kill a referendum, 1/2 approval from the Council is necessary, particularly when the referendum is deemed malicious.
-
-Regarding the whitelisted track, if you want to include the hash of a proposal, you must obtain either 1/3 approval from the Technical Committee or 1/3 approval from the Council. This is the operational procedure for the whitelisted track. If a proposal passes but its hash isn't added to the whitelist, the proposal will fail to execute. The decision deposit for Root is 500,000 PICA whereas for Whitelist, its is 50,000 PICA. 
-
-## OpenGov Collectives
-
-### Picasso Council
-
-The Council is an on-chain entity made up of 11 senior team members and supporters.
-
-Each council member is represented as an on-chain account on Polkadot.js. Members of the Council consist of:
 - Henry Love, Executive Director of Composable Foundation
 - 0xBrainJar, Composable Founder & Research Director
 - Blas Rodriguez Irizar, Composable Co-Founder & CTO
@@ -78,116 +47,145 @@ Each council member is represented as an on-chain account on Polkadot.js. Member
 - Tamara Frankel, D1 Ventures Founding Partner
 - James Wo, Digital Finance Group (DFG) Founder & Chairman
 
-The Council members also control Picasso’s multi-sig wallets holding the allocation of the Treasury, Liquidity Programs and Ecosystem incentives. Please note that the funds from these wallets will only be transferred upon the approval of on-chain governance. For more details, look at the [PICA token transparency commitment statement](../picasso/token-transparency.md).
+The Treasury Committee also control Picasso’s multi-sig wallets holding the allocation for Liquidity Programs and Ecosystem incentives. Treasury spending can only be approved by this council; the funds from any of these wallets will only be transferred upon the approval of on-chain governance. For more details, refer to the PICA token transparency commitment statement.
 
-:::note
-The following sections include certain features of Governance V1 still active on Picasso such as Democracy Referenda, Emergency Measures and Emergency Proposals, this will be removed in the coming weeks as OpenGov is given time to be deemed effective and stable as more tracks are added. 
-:::
+The **Relayer Committee** involves accounts running the Hyperspace relayer.
 
-#### Emergency Measures
+## Definitions
 
-In case of extreme urgency, the Council may implement an “emergency measure”, 
-such as when a major security vulnerability is found or when the imminence of great prejudice to the token holders or the network is clear, 
-which does not need to be submitted as a proposal or for approval in a referendum. 
-In such a case, the emergency measure will be immediately executable and implemented as fast as the Council deems fit.
+#### Origins 
+An origin is an authorization-based dispatch source for an operation. This determines the Track that a referendum is posted in.
 
-### Technical Committee
+#### Pre-Image Deposit
+This is the amount of tokens that a proposer must bond to submit a pre-image. It is a base deposit per network plus a fee per byte of the proposed pre-image.
 
-Picasso’s Technical Committee consists of 5 core developers who are chosen by the Council. The role of the Technical Committee includes, among others, ensuring the technical stability and critical safety measures of the parachain. 
+#### Pre-Image Hash
+This is the hash of the proposal to be enacted. The first step to make a proposal is to submit a pre-image; the hash is its identifier. The proposer of the pre-image can be different than the user that proposes that pre-image as a formal proposal
 
-#### Emergency Proposals
+#### Proposals
+Proposals are an action or item (defined by the pre-image hash) proposed by a token holder and open for consideration/discussion by token holders.
 
-The Technical Committee may, along with the Council, submit an “emergency proposal”, 
-which should not be confused with an “emergency measure”. 
-An emergency proposal submitted by the technical committee will be submitted for immediate referendum, 
-along with fast-tracked voting and implementation. 
-This will be the method used for emergency bug fixes or rapid implementation of new features into the PICA network, 
-and in general, the strategic furtherance of Picasso Network’s technology.
+#### Referendum
+A referendum is a stake-based voting model. Each referendum is associated with an individual proposal for modifying Picasso in some way. This could include changes to code, parameters, or the governance of Picasso.
 
-## Democracy guidelines
+## Tracks
+This is a specific pipeline delineating the life cycle of a proposal. Tracks in Picasso OpenGov are Root, Whitelist Caller, General Admin, Referendum Canceller, and Referendum Killer:
 
-Proposals can be initiated by both the Community and the Council, 
-and are required for any action that would directly affect the parachain such as
-approving or rejecting a treasury payout, code upgrades, graduating pallets, and more. 
-The following table portrays the initial criterion for interacting with governance proposals on Picasso:
+| Track           | Description    | Example |
+|-----------------------|-------------------|--------------------------|
+| Root        | Highest Privileges        | Runtime Upgrades                   |
+| Whitelist Caller           | Proposals handled by technical committee             | Accelerated proposal  |
+| General Admin          | On-chain changes            | HRMP Channel Opening, XCM Fees, Staking parameters, Registrar         |
+| Referendum Canceller                 |  Canceling proposal                           |  Incorrect referendum      |
+| Referendum Killer            |  Canceling proposal + slashing deposits            |    Malicious referendum              |
 
-| Parameter                                          | Period/Number  |
-|----------------------------------------------------|----------------|
-| Referendum voting period                           | 3 days         |
-| Enactment delay of an approved referendum          | 0.5 days       |
-| Cool-off period after a proposal has been rejected | 3 days         |
-| Maximum pending community proposals                | 100 |
 
-#### Adaptive Quorum Voting
+### Voting
+Token holders can approve or reject proposals. 
 
-There are different voting thresholds for the approval of any proposal in a referendum. 
-The threshold would depend on: (1) whether it is the Community or Council that initiated the proposal and (2) whether, 
-in the case of the Council, there was a unanimous or simple majority approval of the proposal:
+A vote’s weight is defined by the following:
 
-|        Entity         |                                                                                                                                                                                   Metric                                                                                                                                                                                  |
-|:---------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|       Community       | Positive Turnout Bias (Super-Majority Approve) <br/><br/> A voting requirement with a *positive turnout bias*, whereby a heavy super-majority of *aye* votes is required to carry at low turnouts. However, as the voting turnout increases towards one hundred (100%), the required number of *aye* votes to approve the proposal gradually lowers to a simple majority. |
-|  Council (Unanimous)  |  Negative Turnout Bias (Super-Majority Against) <br/><br/> A voting requirement with a *negative turnout bias*, whereby a heavy super-majority of *nay* votes is required to reject at low turnouts. However, as the voting turnout inches towards one hundred (100%), the required number of *nay* votes to reject the proposal gradually lowers to a simple majority.   |
-|  Council (Majority)   |                                       Simple Majority <br/><br/> If there are more aye votes than *nay*, then the proposal is carried. Conversely, if there are more nay votes than *aye*, then the proposal is rejected. Determining the existence of a simple majority entails a simple comparison of votes in a simple majority.                                       |                                                                                   
+1. The number of tokens a user commits to a vote
+2. The lock period of the vote; in Picasso OpenGov, users can voluntarily lock tokens to increase their voting power, with longer lock periods associated with a conviction multiplier on vote weight: 
 
-### Community Proposals
+| Lock Period After Enactment     | Conviction Multiplier    | Lock Time |
+|-----------------------|-------------------|--------------------------|
+| 0        | 0.1x        | None                   |
+| 1             | 1x             | 28 days                   |
+| 2             | 2x             | 56 days                   |
+| 4             | 3x             | 112 days                   |
+| 8             | 4x             | 224 days                   |
+| 16             | 5x             | 448 days                   |
+| 32             | 6x             | 896 days                   |
 
-Any token holder has the ability to initiate a proposal for a vote from the entire community 
-by locking up a minimum deposit of 100 PICA for a certain period and posting a vote on our governance forum. 
-Other token holders can endorse proposals by locking up a matching deposit. 
-The proposal with the highest amount of bonded PICA will be passed as a referendum in the next voting cycle. 
-There can be a maximum of 100 community proposals in the queue at a given time.
 
-Unlike proposals made by a Council, 
-the Community can submit proposals for referendum without need of undergoing a qualifying vote;
-however, the amount of bonded support would determine the proposal’s 
-priority in terms of the time it is submitted for a referendum. 
-The higher the bonded support, the sooner the proposal gets considered for a referendum.
+#### Vote Delegation
+Voters can delegate voting power (including conviction multiplier) to other token holders (“delegates”). This feature exists to allow tokens to be delegated to those who may be more knowledgeable about the Picasso network and thus able to make more informed decisions on specific referenda.
 
-In the case of community proposals, a super majority must approve the referendum in order for it to pass.
+#### Multirole Delegation
+Voting power can be delegated based on tracks, e.g. token holders can specify different delegates for each track.
 
-### Council Proposals
+#### Approval
+This is the minimum number of votes for passing a referendum, as a percentage of total conviction-weighted votes needed to approve the referendum.
 
-While the Council may submit their own proposals for referendum, 
-these proposals must have While the Council may submit their own proposals for referendum, 
-these proposals must have previously received a majority vote within the Council itself. 
-Afterwards, the referendum will be submitted for voting by the Community. There are then two potential outcomes:
+#### Support
+This is the minimum number of votes for passing a referendum (NOT taking into consideration conviction-weighted votes) needed to approve the referendum.
 
-1. In the case of a unanimous decision by the Council, 
-   a super majority vote from the Community to overrule the Council’s referendum.
-2. In the case of a simple majority decision by the Council, 
-   a simple majority vote from the Community will decide the outcome of the Council’s referendum.
+#### Lead-In Period
+This is the initial period of discussion and voting on a proposal. During this period, proposals are undecided until they pass the criteria for a Track, which include:
 
-### Canceling a referendum 
+- The prepare period, or the minimum time a referendum needs to wait before it can progress to the next phase after submission
+- Capacity, or the limit for a number of referenda on a given track that can be decided at once
+- Decision deposit, or the minimum deposit amount needed for a referendum to progress to the decision phase after the lead-in period ends; this deposit is larger than the submission deposit in order to limit spam proposals/referenda
 
-Once a proposal has been submitted for referendum, 
-the referendum cannot be canceled until it has entered a voting round, 
-unless proposals are found and deemed malicious (for example, faults in code additions) 
-by a 60% supermajority of the Picasso council or a unanimous decision of the Technical committee, 
-in which case the referendum shall be revoked. All tokens locked by supporters of the proposal would be burned.
+Details on the lead-in period (specifically, the prepare period) for each track are found in the OpenGov Parameters section of this documentation.
 
-### Vote Power Calculation
+#### Decision Period
+During this period, token holders continue to vote on the referendum. If a referendum does not pass by the end of the period, it will be rejected, and the Decision Deposit will be refunded.
+Details on the decision period for each track are found in the OpenGov Parameters section of this documentation.
 
-The voting power of a token holder is determined by two factors: 
-the amount of tokens and the length of time it is bonded or locked. 
-This refers to when users lock their tokens for an extended period in order to gain increased voting power such that:
+#### Confirm Period
+This is a period of time within the decision period where the referendum needs to have maintained enough Approval and Support to be approved and move to the enactment period. 
 
-    Voting power = PICA tokens * vote multiplier
+Details on the confirm period for each track are found in the OpenGov Parameters section of this documentation.
 
-| Lock Period | Vote Multiplier |
-|:-----------:|:---------------:|
-|      0      |       0.1       |
-|      1      |        1        |
-|      2      |        2        |
-|      4      |        3        |
-|      8      |        4        |
-|     16      |        5        |
-|     32      |        6        |
+#### Enactment Period
+This is a specified time, defined at the time the proposal was created, that an approved referendum waits before it can be dispatched. 
+There is a minimum amount of time for each Track. Details on the enactment period for each track are found in the OpenGov Parameters section of this documentation.
+## OpenGov Parameters
+Governance parameters (for each referenda track) are as follows:
 
-The lock periods are fixed which means that a PICA token holder cannot lock PICA tokens for a lock period of, say, f5 or 20.
-The default lock period shall be seven (7) days which is counted starting from the end of the referendum or the end of the default period for the enactment day. 
-If an approved referendum has an enactment delay of other than seven (7) days, its lock period would be equal to the specific period of that enactment delay. 
-While a token is locked, it can still be used for voting and staking but it cannot be transferred to another account. 
+| Track | Track ID | Concurrent Proposals | Decision Deposit |
+| -------- | -------- | --- | -------- |
+| Root         |  0   | 5    | 5,000,000 PICA         |
+| Whitelist Caller   |   1   | 25    | 500,000 PICA      |
+| General Admin   |   2       | 10    |  1,000,000 PICA    |
+| Referendum Canceller    |  3   | 10    | 1,000,000 PICA   |
+| Referendum Killer  |   4       | 25    | 1,000,000 PICA   |
 
-Votes are tallied at the end of the voting period.
-All of the voters who win the proposal will have their PICA locked into the chain for the duration of the enactment of the proposal and losing voters have no lock up period. 
+## Period Parameters by Track
+
+| Track    |Prepare Period     | Decision Period | Confirm Period | Min. enactments |
+| --- | --- | -------- | -------- | -------- |
+| Root    | 1 day 2 Hours (600 Blocks)    |  10 Days (72000 Blocks)        | 1 Day (7200 Blocks)      | 1 day         |
+| Whitelist Caller    |  10 mins (50 Blocks)   | 10 Days (72000 Blocks)         |  30 mins (150 Blocks)        | 10 mins         |
+| General Admin    | 1 hour (300 blocks)    | 10 Days (72000 Blocks)         |  1 Day (7200 Blocks)        |   1 day       |
+| Referendum Canceller    | 1 hour 1 Day (7200 Blocks)    | 10 Days (72000 Blocks)         | 3 Hours (3600 Blocks)         | 10 mins   |
+| Referendum Killer    | 1 hour 1 Day (7200 Blocks)    | 10 Days (72000 Blocks)         | 3 Hours (3600 Blocks)         |  10 mins        |
+
+## Approval Curves
+With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
+
+![whitelist-curve](../whitelist-track.png)
+*Approval curve for the Whitelist Track*
+
+![root-curve](../root-track.png)
+*Approval curve for the Root Track*
+                                                                                                             
+## Proposal Roadmap
+
+1. A proposal author should submit their idea to Picasso’s Polkassembly governance forum, where they should be open to community feedback for at least five days before moving forward
+2. Taking into account feedback, the proposal author can submit their proposal on-chain
+   - The proposer must first submit the preimage (if you need assistance with creating the preimage or would like secondary approval, reach out to our team on Discord)
+   - Note: your preimage deposit will be returned once via unnoting after the proposal is submitted
+   - The proposer then can submit the Referendum, and place the decision deposit (which covers the on-chain storage cost of the proposal)
+3. Thus veins the lead-in period, where the community can begin voting
+4. The proposal will then move to the decision period when the following are met:
+   - The referenda waits the duration of the prepare period (ensuring enough time for discussion)
+   - There is capacity in the chosen track
+   - A decision deposit has been submitted and meets the minimum requirements of the track
+5. During the decision period, voting continues and the referendum has a set amount of days to reach approval.
+   - If the Referendum is rejected, the decision deposit will be returned
+6. If the Referendum is approved, it enters the confirm period where it must remain approved for the duration of this period.
+   - If the referendum fails to meet these requirements at any time, it moves back to the decide period; if it again meets these requirements, it moves back to the confirm period and the decide period is delayed until the end of the confirm period
+7. If the referendum receives enough approval and support throughout the confirm period, it will be approved and move to the enactment period
+8. Once the enactment period elapses, the referendum will be executed
+
+## Proposal Cancellations
+If a proposal in the voting stage is found to have an issue, it may be necessary to prevent its approval. This could be due to malicious activity or technical issues that void the proposal.
+
+Cancellations must be voted on by the network. Cancellation proposals are expedited, as they must be decided before the enactment of the proposal they seek to cancel. However, the same process as standard referenda applies.
+
+Moreover, a cancellation Origin called the Emergency Canceller exists for use against any referendum with an unanticipated issue. The Emergency Canceller Origin and the Root Origin can cancel referenda. Regardless of the Origin, if a proposal is cancelled, it is rejected and the decision deposit is refunded.
+
+The Kill Origin called Emergency Killer exists for use against malicious referenda. The Emergency Killer Origin and the Root Origin have the ability to kill referenda. The difference between killing and cancelling a referenda is that in the case of a kill, not only is the proposal cancelled, but also the Decision Deposit is slashed, meaning the deposit amount is burned regardless of the Origin.
