@@ -475,7 +475,7 @@
 
         devnet-cosmos = import ./cosmos.nix {
           inherit pkgs devnet-root-directory self' chain-restart
-            parachain-startup relay devnetTools;
+            parachain-startup relay devnetTools networks;
         };
 
         devnet-cosmos-background = devnet-cosmos // { tui = false; };

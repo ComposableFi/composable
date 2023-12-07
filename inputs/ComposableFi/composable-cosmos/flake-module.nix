@@ -99,7 +99,46 @@
         '';
       };
 
-      centaurid-cvm-init = pkgs.writeShellApplication {
+      centaurid-cvm-config = pkgs.writeShellApplication {
+        name = "centaurid-cvm-config";
+        runtimeInputs = devnetTools.withBaseContainerTools ++ [
+          centaurid
+          pkgs.jq
+          self.inputs.cvm.packages."${system}".cw-cvm-executor
+          self.inputs.cvm.packages."${system}".cw-cvm-gateway
+        ];
+
+        text = ''
+
+          HOME=${devnet-root-directory}
+          export HOME
+          KEY=${cosmosTools.cvm.centauri}
+
+          CHAIN_DATA="$HOME/.centaurid"
+          ${bashTools.export pkgs.networksLib.pica.devnet}
+          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          PORT=26657
+          BLOCK_SECONDS=5
+          FEE=ppica
+          BINARY=centaurid
+
+          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)
+          CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
+          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
+          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
+
+          FORCE_CONFIG=$(cat << EOF
+              ${builtins.readFile ../../../flake/cvm.json}
+          EOF
+          )
+
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+          sleep $BLOCK_SECONDS
+          "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+        '';
+      };
+
+            centaurid-cvm-init = pkgs.writeShellApplication {
         name = "centaurid-cvm-init";
         runtimeInputs = devnetTools.withBaseContainerTools ++ [
           centaurid
@@ -172,45 +211,6 @@
           )
 
           init_cvm "$INSTANTIATE"
-        '';
-      };
-
-      centaurid-cvm-config = pkgs.writeShellApplication {
-        name = "centaurid-cvm-config";
-        runtimeInputs = devnetTools.withBaseContainerTools ++ [
-          centaurid
-          pkgs.jq
-          self.inputs.cvm.packages."${system}".cw-cvm-executor
-          self.inputs.cvm.packages."${system}".cw-cvm-gateway
-        ];
-
-        text = ''
-
-          HOME=${devnet-root-directory}
-          export HOME
-          KEY=${cosmosTools.cvm.centauri}
-
-          CHAIN_DATA="$HOME/.centaurid"
-          ${bashTools.export pkgs.networksLib.pica.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          PORT=26657
-          BLOCK_SECONDS=5
-          FEE=ppica
-          BINARY=centaurid
-
-          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)
-          CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
-          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
-          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
-
-          FORCE_CONFIG=$(cat << EOF
-
-          EOF
-          )
-
-          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-          sleep $BLOCK_SECONDS
-          "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
         '';
       };
 

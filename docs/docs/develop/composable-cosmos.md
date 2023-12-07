@@ -1,10 +1,10 @@
 # Composable Cosmos Mainnet
 
 ## Information
-- Network information: https://github.com/notional-labs/composable-centauri
+- Network information: https://github.com/ComposableFi/composable-cosmos
 - Chain ID: centauri-1
 - Genesis: https://github.com/notional-labs/composable-networks/blob/main/mainnet/genesis.json
-- Binary: https://github.com/notional-labs/composable-centauri/releases/tag/v6.3.1
+- Binary: https://github.com/ComposableFi/composable-cosmos/releases/tag/v6.3.1
 - Current version: v6.3.1 (check the repository for the latest release)
 - Public Notional endpoints:
   - RPC: https://composable-rpc.polkachu.com/ (1) https://api-composable-ia.cosmosia.notional.ventures (2)
@@ -20,16 +20,16 @@ Quad core or larger amd64 CPU
 ```
 ## Binary
 
-Mainnet launch version: v2.3.5, precompiled binary for linux-amd64 could be found here: https://github.com/notional-labs/composable-centauri/releases/tag/v2.3.5
+Mainnet launch version: v2.3.5, precompiled binary for linux-amd64 could be found here: https://github.com/ComposableFi/composable-cosmos/releases/tag/v2.3.5
 
 ```
-git clone https://github.com/notional-labs/composable-centauri
+git clone https://github.com/ComposableFi/composable-cosmos
 cd composable-centauri
 git checkout v5.2.2
 make install
 ```
 :::note
-Ensure you are running the latest release, head to the [repository](https://github.com/notional-labs/composable-centauri) for the Composable Cosmos chain for assurance. 
+Ensure you are running the latest release, head to the [repository](https://github.com/ComposableFi/composable-cosmos) for the Composable Cosmos chain for assurance. 
 :::
 
 ## Genesis
