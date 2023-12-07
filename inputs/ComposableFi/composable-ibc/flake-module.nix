@@ -121,9 +121,8 @@
       packages = rec {
         composable-ibc-relayer-src = self.inputs.composable-ibc-relayer-src;
 
-        ics10-grandpa-cw =
-          build-optimized-wasm "ics10-grandpa-cw" composable-ibc-light-client-src
-          "ics10_grandpa_cw";
+        ics10-grandpa-cw = build-optimized-wasm "ics10-grandpa-cw"
+          self.inputs.composable-ibc-light-client-src "ics10_grandpa_cw";
 
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
