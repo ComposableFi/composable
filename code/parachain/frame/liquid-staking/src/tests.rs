@@ -705,7 +705,8 @@ fn test_on_initialize_work() {
 		LiquidStaking::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
 		LiquidStaking::on_initialize(System::block_number());
-		assert_eq!(EraStartBlock::<Test>::get(), total_era_blocknumbers);
+		let current_era: u64 = CurrentEra::<Test>::get() as u64;
+		assert_eq!(EraStartBlock::<Test>::get(), total_era_blocknumbers * current_era);
 		// ValidationDataProvider return relay_parent_number = 100
 		// total_era_blocknumbers  = 10 so the current era is 10
 		assert_eq!(CurrentEra::<Test>::get(), 10);
