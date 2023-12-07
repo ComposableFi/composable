@@ -21,7 +21,7 @@
         name = "centauri";
         version = "v6.3.1";
         src = self.inputs.composable-cosmos-src;
-        vendorHash = "sha256-MRADQxw+T8lVJujJn2yEaZOEs1AYGgaiBbYJUI3cugA=";
+        vendorHash = "sha256-MRADQxw+T8lVJujJn2yEaZOEs6AYGgaiBbYJUI3cugA=";
         tags = [ "netgo" ];
         engine = "cometbft/cometbft";
         excludedPackages = [ "interchaintest" "simd" ];
