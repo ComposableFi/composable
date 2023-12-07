@@ -13,10 +13,31 @@
       };
       native_denom = "ppica";
       name = "centaurid";
+      cosmosLib = self.inputs.cosmos.lib {
+        inherit pkgs;
+        cosmwasm-check = self.inputs.cosmos.packages."${system}".cosmwasm-check;
+      };
+      centauri = cosmosLib.mkCosmosGoApp {
+        name = "centauri";
+        version = "v6.3.1";
+        src = self.inputs.composable-cosmos-src;
+        vendorHash = "sha256-MRADQxw+T8lVJujJn2yEaZOEs6AYGgaiBbYJUI3cugA=";
+        tags = [ "netgo" ];
+        engine = "cometbft/cometbft";
+        excludedPackages = [ "interchaintest" "simd" ];
+        preFixup = ''
+          ${cosmosLib.wasmdPreFixupPhase
+          self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 "centaurid"}
+        '';
+        buildInputs = [ self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 ];
+        proxyVendor = true;
+        doCheck = false;
+      };
+
       centaurid = pkgs.writeShellApplication {
         name = "centaurid";
         text = ''
-          ${self.inputs.cosmos.packages.${system}.centauri}/bin/centaurid "$@"
+          ${centauri}/bin/centaurid "$@"
         '';
       };
 
@@ -69,11 +90,11 @@
           "$BINARY" tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep $BLOCK_SECONDS
           "$BINARY" query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:$PORT --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
-          PROPOSAL_ID=1          
-          "$BINARY" tx gov vote $PROPOSAL_ID yes --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json          
-          sleep 20          
+          PROPOSAL_ID=1
+          "$BINARY" tx gov vote $PROPOSAL_ID yes --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
+          sleep 20
           "$BINARY" query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:$PORT --home "$CHAIN_DATA" | jq '.status'
-          sleep $BLOCK_SECONDS         
+          sleep $BLOCK_SECONDS
           "$BINARY" query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CHAIN_DATA" --output json --node tcp://localhost:$PORT | jq '.code_ids[0]' --raw-output | tee "$CHAIN_DATA/code_id"
         '';
       };
@@ -95,7 +116,7 @@
           KEY=${cosmosTools.cvm.centauri}
           PORT=26657
           BLOCK_SECONDS=5
-          FEE=ppica 
+          FEE=ppica
           NETWORK_ID=2
           BINARY=centaurid
 
@@ -126,31 +147,31 @@
               }/lib/staking.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               # INSTRUMENTAL_STAKING_CODE_ID=5
 
-              sleep $BLOCK_SECONDS             
+              sleep $BLOCK_SECONDS
               "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
-              sleep $BLOCK_SECONDS             
-              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{}" "1234" --label "mantis-order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
-                                          
               sleep $BLOCK_SECONDS
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
-              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"        
+              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{}" "1234" --label "mantis-order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
-              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)      
-              echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"        
-              
-              echo "2" > "$CHAIN_DATA/interpreter_code_id"                
+              sleep $BLOCK_SECONDS
+              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+
+              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"
+
+              echo "2" > "$CHAIN_DATA/interpreter_code_id"
           }
 
           INSTANTIATE=$(cat << EOF
               {
-                  "admin" : "$KEY", 
+                  "admin" : "$KEY",
                   "network_id" : $NETWORK_ID
-              }                                 
+              }
           EOF
           )
 
-          init_cvm "$INSTANTIATE"        
+          init_cvm "$INSTANTIATE"
         '';
       };
 
@@ -174,13 +195,13 @@
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           BLOCK_SECONDS=5
-          FEE=ppica 
+          FEE=ppica
           BINARY=centaurid
 
-          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
+          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)
           CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
-          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")  
-          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")  
+          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
+          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
 
           FORCE_CONFIG=$(cat << EOF
             {
@@ -348,7 +369,7 @@
                             "pool_id": 1,
                             "token_a": "uosmo",
                             "token_b": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518"
-                          }                        
+                          }
                       },
                       "exchange_id": "237684489387467420151587012609",
                       "network_id": 3
@@ -399,7 +420,7 @@
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"          
+          CHAIN_DATA="${devnet-root-directory}/.centaurid"
           ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
@@ -412,7 +433,7 @@
           "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" --log_level info --from cvm-admin  --trace --log_level trace 
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" --log_level info --from cvm-admin  --trace --log_level trace
 
           sleep $BLOCK_SECONDS
           "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"2","cow_amount":"100000","given":"100000"},{"order_id":"3","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" --log_level info --from cvm-admin  --trace --log_level trace
@@ -444,32 +465,32 @@
           fi
           PICA_CHANNEL_ID=''${2-1}
 
-          if [[ ! -d "$CHAIN_DATA" ]]; then            
+          if [[ ! -d "$CHAIN_DATA" ]]; then
             mkdir --parents "$CHAIN_DATA"
             mkdir --parents "$CHAIN_DATA/config/gentx"
             mkdir --parents "$KEYRING_TEST"
-            echo "${validator-mnemonic}" | centaurid init "$CHAIN_ID" --chain-id "$CHAIN_ID" --default-denom ${native_denom} --home "$CHAIN_DATA"  --recover           
+            echo "${validator-mnemonic}" | centaurid init "$CHAIN_ID" --chain-id "$CHAIN_ID" --default-denom ${native_denom} --home "$CHAIN_DATA"  --recover
 
             function jq-genesis() {
               jq -r  "$1"  > "$CHAIN_DATA/config/genesis-update.json"  < "$CHAIN_DATA/config/genesis.json"
               mv --force "$CHAIN_DATA/config/genesis-update.json" "$CHAIN_DATA/config/genesis.json"
             }
 
-            jq-genesis '.consensus_params.block.max_gas |= "-1"'  
-            jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'  
-            jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'  
+            jq-genesis '.consensus_params.block.max_gas |= "-1"'
+            jq-genesis '.app_state.gov.params.voting_period |= "${gov.voting_period}"'
+            jq-genesis '.app_state.gov.params.max_deposit_period |= "${gov.max_deposit_period}"'
 
            function pica_setup() {
-              jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'            
-              jq-genesis ".app_state.transmiddleware.token_infos[0].channel_id |= \"channel-$PICA_CHANNEL_ID\""  
+              jq-genesis '.app_state.transmiddleware.token_infos[0].ibc_denom |= "ibc/632DBFDB06584976F1351A66E873BF0F7A19FAA083425FEC9890C90993E5F0A4"'
+              jq-genesis ".app_state.transmiddleware.token_infos[0].channel_id |= \"channel-$PICA_CHANNEL_ID\""
               jq-genesis '.app_state.transmiddleware.token_infos[0].native_denom |= "ppica"'
               jq-genesis '.app_state.transmiddleware.token_infos[0].asset_id |= "1"'
            }
            pica_setup
 
            function dasel-genesis() {
-             dasel put --type string --file "$CHAIN_DATA/config/genesis.json" --value "$2" "$1"   
-           }             
+             dasel put --type string --file "$CHAIN_DATA/config/genesis.json" --value "$2" "$1"
+           }
 
 
            register_asset () {
@@ -486,21 +507,21 @@
            dasel put --type json --file "$CHAIN_DATA/config/genesis.json" --value "[{},{}]" 'app_state.bank.denom_metadata'
            register_asset 0 "ptest"
            register_asset 1 "pdemo"
-            
+
 
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
-            sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"            
+            sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
             sed -i 's/output = "text"/output = "json"/' "$CHAIN_DATA/config/client.toml"
             sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" "$CHAIN_DATA/config/config.toml"
-            sed -i "s/swagger = false/swagger = true/" "$CHAIN_DATA/config/app.toml"           
+            sed -i "s/swagger = false/swagger = true/" "$CHAIN_DATA/config/app.toml"
             sed -i "s/rpc-max-body-bytes = 1000000/rpc-max-body-bytes = 10000000/" "$CHAIN_DATA/config/app.toml"
             sed -i "s/max_body_bytes = 1000000/max_body_bytes = 10000000/" "$CHAIN_DATA/config/config.toml"
             sed -i "s/max_header_bytes = 1048576/max_header_bytes = 10485760/" "$CHAIN_DATA/config/config.toml"
             sed -i "s/max_tx_bytes = 1048576/max_tx_bytes = 10485760/" "$CHAIN_DATA/config/config.toml"
             sed -i 's/minimum-gas-prices = "0stake"/minimum-gas-prices = "0stake"/' "$CHAIN_DATA/config/client.toml"
 
-            echo "document prefer nurse marriage flavor cheese west when knee drink sorry minimum thunder tilt cherry behave cute stove elder couch badge gown coral expire" | centaurid keys add alice --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true    
+            echo "document prefer nurse marriage flavor cheese west when knee drink sorry minimum thunder tilt cherry behave cute stove elder couch badge gown coral expire" | centaurid keys add alice --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "bleak slush nose opinion document sample embark couple cabbage soccer cage slow father witness canyon ring distance hub denial topic great beyond actress problem" | centaurid keys add bob --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "coffee hospital claim ability wrap load display submit lecture solid secret law base barrel miss tattoo desert want wall bar ketchup sauce real unknown" | centaurid keys add charlie --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "${validator-mnemonic}" | centaurid keys add ${cosmosTools.validators.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
@@ -510,13 +531,13 @@
             echo "$RLY_MNEMONIC_2" | centaurid keys add relayer1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_3" | centaurid keys add relayer2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_4" | centaurid keys add relayer3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            
+
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"                              
+              centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"
             }
 
             # relayer
-            add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf 
+            add-genesis-account centauri1qvdeu4x34rapp3wc8fym5g4wu343mswxxgc6wf
 
             add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
             add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
@@ -556,11 +577,11 @@
             ${bashTools.export pkgs.networksLib.pica.devnet}
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
-            FEE=ppica 
+            FEE=ppica
             BINARY=centaurid
             GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)
             MSG=$1
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           '';
         };
         centauri-tx = pkgs.writeShellApplication {
@@ -573,9 +594,9 @@
             ${bashTools.export pkgs.networksLib.pica.devnet}
             KEYRING_TEST="$CHAIN_DATA/keyring-test"
             PORT=26657
-            FEE=ppica 
+            FEE=ppica
             BINARY=centaurid
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           '';
         };
       };
