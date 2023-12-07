@@ -51,7 +51,7 @@
         connection_id = "connection-0";
         account_prefix = "centauri";
         fee_denom = "ppica";
-        fee_amount = "100000000";
+        fee_amount = "10000000000000000";
         gas_limit = 9223372036854775806;
         store_prefix = "ibc";
         max_tx_size = 20000000;
