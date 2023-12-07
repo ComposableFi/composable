@@ -87,6 +87,35 @@
         xc = pkgs.mkShell {
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
+
+
+                
+        neutron-devnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [rec {
+            packages = [ self'.packages.neutrond ];
+            env = pkgs.networksLib.neutron.devnet // {
+              DIR = "devnet/.neutrond";
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              GATEWAY_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
+            };
+            enterShell = ''
+              rm --force --recursive ~/.neutrond
+              mkdir --parents ~/.neutrond/config
+              echo 'keyring-backend = "test"' >> ~/.neutrond/config/client.toml
+              echo 'output = "json"' >> ~/.neutrond/config/client.toml
+              echo 'node = "${env.NODE}"' >> ~/.neutrond/config/client.toml
+              echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.neutrond/config/client.toml               
+              echo ${pkgs.networksLib.devnet.mnemonics.APP_1} | "$BINARY" keys add APP_1 --recover --keyring-backend test --output json            
+            '';
+          }];
+        };
+
         centauri-devnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;

@@ -31,59 +31,42 @@
         runtimeInputs = devnetTools.withBaseContainerTools ++ [
           neutrond
           pkgs.jq
-          self.inputs.cvm.packages."${system}".cw-cvm-executor
-          self.inputs.cvm.packages."${system}".cw-cvm-gateway
         ];
 
         text = ''
           CHAIN_DATA="${devnet-root-directory}/.neutrond"
           ${bashTools.export pkgs.networksLib.neutron.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          KEY=${cosmosTools.cvm.centauri}
 
           function init_cvm() {
               local INSTANTIATE=$1
               "$BINARY" tx wasm store  "${
                 self.inputs.cvm.packages."${system}".cw-cvm-gateway
-              }/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              }/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  "${
                 self.inputs.cvm.packages."${system}".cw-cvm-executor
-              }/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              }/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${
-                self.inputs.cvm.packages."${system}".cw-mantis-order
-              }/lib/cw_mantis_order.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
-              ORDER_CODE_ID=4
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${
-                self.inputs.instrumental.packages."${system}".staking
-              }/lib/staking.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
-              # INSTRUMENTAL_STAKING_CODE_ID=5
-
-              sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
-
-              sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{}" "1234" --label "mantis-order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
-
-              sleep $BLOCK_SECONDS
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
               echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
 
-              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
               echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"
 
               echo "2" > "$CHAIN_DATA/interpreter_code_id"
           }
 
+          KEY="$($BINARY keys  show APP_1 | jq .address --raw)"
           INSTANTIATE=$(cat << EOF
               {
                   "admin" : "$KEY",
@@ -123,6 +106,7 @@
             echo "$RLY_MNEMONIC_1" | $BINARY keys add rly1 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_2" | $BINARY keys add rly2 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_4" | $BINARY keys add rly4 --home "$CHAIN_DATA" --recover --keyring-backend=test
+            echo "$APP_1" | $BINARY keys add APP_1 --home "$CHAIN_DATA" --recover --keyring-backend=test
 
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
@@ -132,6 +116,7 @@
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly4 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
+            $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show APP_1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
 
             sed -i -e 's/timeout_commit = "5s"/timeout_commit = "1s"/g' "$CHAIN_DATA/config/config.toml"
             sed -i -e 's/timeout_propose = "3s"/timeout_propose = "1s"/g' "$CHAIN_DATA/config/config.toml"
