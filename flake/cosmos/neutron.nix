@@ -42,7 +42,7 @@
               local INSTANTIATE=$1
               "$BINARY" tx wasm store  "${
                 self.inputs.cvm.packages."${system}".cw-cvm-gateway
-              }/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              }/lib/cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
@@ -57,9 +57,6 @@
               sleep $BLOCK_SECONDS
               GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
               echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
-
-              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
-              echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"
 
               echo "2" > "$CHAIN_DATA/interpreter_code_id"
           }
@@ -314,8 +311,8 @@
             CW4_GROUP_CONTRACT_BINARY_ID=$(store_binary             "$CW4_GROUP_CONTRACT")
 
             # COMPOSABLE
-            CW_CVM_GATEWAY_CONTRACT_BINARY_ID=$(store_binary             "$CW_CVM_GATEWAY_CONTRACT")
-            CW_CVM_EXECUTOR_CONTRACT_BINARY_ID=$(store_binary             "$CW_CVM_EXECUTOR_CONTRACT")
+            CVM_GATEWAY_CONTRACT_BINARY_ID=$(store_binary             "$CVM_GATEWAY_CONTRACT")
+            CVM_EXECUTOR_CONTRACT_BINARY_ID=$(store_binary             "$CVM_EXECUTOR_CONTRACT")
 
             # WARNING!
             # The following code is needed to pre-generate the contract addresses
@@ -370,7 +367,7 @@
             GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS=$(genaddr         "$CW4_GROUP_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
             # COMPOSABLE
-            CW_CVM_GATEWAY_CONTRACT_ADDRESS=$(genaddr         "$CW_CVM_EXECUTOR_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
+            CVM_GATEWAY_CONTRACT_ADDRESS=$(genaddr         "$CVM_EXECUTOR_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
             echo "$DAO_CONTRACT_ADDRESS"
             echo "$VOTING_REGISTRY_CONTRACT_ADDRESS"
@@ -391,7 +388,7 @@
             echo "$GRANTS_SUBDAO_PRE_PROPOSE_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_TIMELOCK_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS"
-            echo "$CW_CVM_GATEWAY_CONTRACT_ADDRESS"
+            echo "$CVM_GATEWAY_CONTRACT_ADDRESS"
 
             function check_json() {
               MSG=$1
@@ -776,6 +773,13 @@
               "security_dao": "'"$SECURITY_SUBDAO_CORE_CONTRACT_ADDRESS"'"
             }'
 
+            CVM_ADMIN=$($BINARY keys show APP_1 --keyring-backend test --home "$CHAIN_DATA" --output json | jq .address)
+            echo "$CVM_ADMIN"
+            CVM_GATEWAY_INIT_MSG='{
+              "admin": '"$CVM_ADMIN"',
+              "network_id": '$NETWORK_ID'
+            }'
+
             echo "Instantiate contracts"
 
             function init_contract() {
@@ -799,6 +803,11 @@
             init_contract "$DISTRIBUTION_CONTRACT_BINARY_ID"             "$DISTRIBUTION_INIT"              "$DISTRIBUTION_LABEL"
             init_contract "$SUBDAO_CORE_BINARY_ID"                       "$SECURITY_SUBDAO_CORE_INIT_MSG"  "$SECURITY_SUBDAO_CORE_LABEL"
             init_contract "$SUBDAO_CORE_BINARY_ID"                       "$GRANTS_SUBDAO_CORE_INIT_MSG"    "$GRANTS_SUBDAO_CORE_LABEL"
+
+            init_contract "$CVM_GATEWAY_CONTRACT_BINARY_ID"           "$CVM_GATEWAY_INIT_MSG"    "composable.cvm.gateway"
+
+            echo "$CVM_GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+            echo "$CVM_EXECUTOR_CONTRACT_BINARY_ID" > "$CHAIN_DATA/interpreter_code_id"
 
             ADD_SUBDAOS_MSG='{
               "update_sub_daos": {
