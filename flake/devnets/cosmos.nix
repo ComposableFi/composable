@@ -152,6 +152,12 @@ in {
         availability = { restart = chain-restart; };
       } // depends-on-cvm-init;
 
+      # neutron-cvm-config = {
+      #   command = self'.packages.neutrond-cvm-config;
+      #   log_location = "${devnet-root-directory}/neutron-cvm-config.log";
+      #   availability = { restart = chain-restart; };
+      # } // depends-on-cvm-init;
+
       osmosis = {
         command = self'.packages.osmosisd-gen;
         readiness_probe.http_get = {

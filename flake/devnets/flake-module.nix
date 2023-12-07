@@ -302,7 +302,7 @@
                 command = self'.packages.osmosisd-gen;
                 readiness_probe.http_get = {
                   host = "127.0.0.1";
-                  port = pkgs.networksLib.osmosis.devnet.PORT;
+                  port = pkgs.networksLib.osmosis.devnet.CONSENSUS_RPC_PORT;
                 };
                 log_location = "${devnet-root-directory}/osmosis.log";
                 availability = { restart = chain-restart; };
