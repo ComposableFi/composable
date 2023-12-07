@@ -13,8 +13,7 @@
         failure_threshold = 16;
         timeout_seconds = 4;
       };
-    in
-    {
+    in {
 
       packages = rec {
 
@@ -472,14 +471,12 @@
             parachain-startup relay devnetTools;
         };
 
-
         devnet-cosmos = import ./cosmos.nix {
           inherit pkgs devnet-root-directory self' chain-restart
             parachain-startup relay devnetTools networks;
         };
 
         devnet-cosmos-background = devnet-cosmos // { tui = false; };
-
 
       };
     };

@@ -95,8 +95,7 @@
 
     eth-pos-devnet-src = {
       flake = false;
-      url =
-        "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
+      url = "github:OffchainLabs/eth-pos-devnet";
     };
 
     neutron-src.url = "github:neutron-org/neutron/v2.0.0";
@@ -171,7 +170,7 @@
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/ComposableFi/composable-ibc/flake-module.nix
-        ./inputs/ComposableFi/composable-cosmos/flake-module.nix        
+        ./inputs/ComposableFi/composable-cosmos/flake-module.nix
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix

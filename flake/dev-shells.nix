@@ -88,8 +88,6 @@
           buildInputs = tools ++ (with self'.packages; [ centaurid ]);
         };
 
-
-                
         neutron-devnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;

@@ -138,7 +138,7 @@
         '';
       };
 
-            centaurid-cvm-init = pkgs.writeShellApplication {
+      centaurid-cvm-init = pkgs.writeShellApplication {
         name = "centaurid-cvm-init";
         runtimeInputs = devnetTools.withBaseContainerTools ++ [
           centaurid

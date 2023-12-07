@@ -26,53 +26,51 @@
           '';
         };
 
-    neutron-cvm-init = pkgs.writeShellApplication {
-        name = "neutron-cvm-init";
-        runtimeInputs = devnetTools.withBaseContainerTools ++ [
-          neutrond
-          pkgs.jq
-        ];
+        neutron-cvm-init = pkgs.writeShellApplication {
+          name = "neutron-cvm-init";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ neutrond pkgs.jq ];
 
-        text = ''
-          CHAIN_DATA="${devnet-root-directory}/.neutrond"
-          ${bashTools.export pkgs.networksLib.neutron.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
+          text = ''
+            CHAIN_DATA="${devnet-root-directory}/.neutrond"
+            ${bashTools.export pkgs.networksLib.neutron.devnet}
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"
 
-          function init_cvm() {
-              local INSTANTIATE=$1
-              "$BINARY" tx wasm store  "${
-                self.inputs.cvm.packages."${system}".cw-cvm-gateway
-              }/lib/cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
-              GATEWAY_CODE_ID=1
+            function init_cvm() {
+                local INSTANTIATE=$1
+                "$BINARY" tx wasm store  "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+                GATEWAY_CODE_ID=1
 
-              sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store   --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+                sleep $BLOCK_SECONDS
+                "$BINARY" tx wasm store   --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
-              sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+                sleep $BLOCK_SECONDS
+                "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
-              sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+                sleep $BLOCK_SECONDS
+                "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "1234" --label "xc-gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
-              sleep $BLOCK_SECONDS
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
-              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+                sleep $BLOCK_SECONDS
+                GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+                echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
 
-              echo "2" > "$CHAIN_DATA/interpreter_code_id"
-          }
+                echo "2" > "$CHAIN_DATA/interpreter_code_id"
+            }
 
-          KEY="$($BINARY keys  show APP_1 | jq .address --raw)"
-          INSTANTIATE=$(cat << EOF
-              {
-                  "admin" : "$KEY",
-                  "network_id" : $NETWORK_ID
-              }
-          EOF
-          )
+            KEY="$($BINARY keys  show APP_1 | jq .address --raw)"
+            INSTANTIATE=$(cat << EOF
+                {
+                    "admin" : "$KEY",
+                    "network_id" : $NETWORK_ID
+                }
+            EOF
+            )
 
-          init_cvm "$INSTANTIATE"
-        '';
-      };
+            init_cvm "$INSTANTIATE"
+          '';
+        };
 
         neutron-gen = pkgs.writeShellApplication {
           name = "neutron-gen";
@@ -183,9 +181,13 @@
             CW4_GROUP_CONTRACT=$THIRD_PARTY_CONTRACTS_DIR/cw4_group.wasm
 
             # COMPOSABLE
-            CVM_EXECUTOR_CONTRACT="${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm"
-            CVM_GATEWAY_CONTRACT="${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
-            
+            CVM_EXECUTOR_CONTRACT="${
+              self.inputs.cvm.packages."${system}".cw-cvm-executor
+            }/lib/cw_cvm_executor.wasm"
+            CVM_GATEWAY_CONTRACT="${
+              self.inputs.cvm.packages."${system}".cw-cvm-gateway
+            }/lib/cw_cvm_gateway.wasm"
+
             echo "Add consumer section..."
             $BINARY add-consumer-section --home "$CHAIN_DIR"
             ### PARAMETERS SECTION
