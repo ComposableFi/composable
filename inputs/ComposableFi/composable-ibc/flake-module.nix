@@ -11,14 +11,15 @@
       hyperspace-picasso-kusama-config-base = {
         channel_whitelist = [ ];
         commitment_prefix = "0x6962632f";
-        finality_protocol = "Grandpa";
         connection_id = "connection-0";
+        finality_protocol = "Grandpa";
         key_type = "sr25519";
         name = "picasso_dev";
         para_id = 2087;
         private_key = "//Alice";
         ss58_version = 49;
         type = "picasso_kusama";
+        skip_tokens_list = [ ];
       };
 
       ibc-composable-to-picasso-1-1 = hyperspace-picasso-kusama-config-base // {
@@ -33,35 +34,14 @@
         hyperspace-picasso-kusama-config-base // {
           parachain_rpc_url = "ws://${host}:9988";
           relay_chain_rpc_url = "ws://${host}:9944";
-          client_id = "10-grandpa-0";
+          client_id = "08-wasm-0";
+          #client_id = "10-grandpa-0";
         };
 
-      ibc-relayer-config-picasso-kusama-to-centauri-0-0 = {
-        type = "cosmos";
-        name = "centauri";
-        rpc_url = "http://${host}:${
-            builtins.toString pkgs.networksLib.pica.devnet.RPCPORT
-          }";
-        grpc_url = "http://${host}:${
-            builtins.toString pkgs.networksLib.pica.devnet.GRPCPORT
-          }";
-        websocket_url = "ws://${host}:26657/websocket";
-        chain_id = pkgs.networksLib.pica.devnet.CHAIN_ID;
-        client_id = "07-tendermint-0";
-        connection_id = "connection-0";
-        account_prefix = "centauri";
-        fee_denom = "ppica";
-        fee_amount = "100000000";
-        gas_limit = 9223372036854775806;
-        store_prefix = "ibc";
-        max_tx_size = 20000000;
-        wasm_code_id =
-          "0000000000000000000000000000000000000000000000000000000000000000";
-        skip_optional_client_updates = false;
-        channel_whitelist = [ ];
-        mnemonic =
-          "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort";
-      };
+      ibc-relayer-config-picasso-kusama-to-centauri-0-0 =
+        (import ./relayer-configs.nix {
+          inherit pkgs host;
+        }).ibc-relayer-config-picasso-kusama-to-centauri-0-0;
 
       hyperspace-core-config = { prometheus_endpoint = "https://${host}"; };
 
@@ -119,11 +99,10 @@
 
     in {
       packages = rec {
-        composable-ibc-src = self.inputs.composable-ibc-src;
+        composable-ibc-relayer-src = self.inputs.composable-ibc-relayer-src;
 
-        ics10-grandpa-cw =
-          build-optimized-wasm "ics10-grandpa-cw" composable-ibc-src
-          "ics10_grandpa_cw";
+        ics10-grandpa-cw = build-optimized-wasm "ics10-grandpa-cw"
+          self.inputs.composable-ibc-light-client-src "ics10_grandpa_cw";
 
         centauri-hyperspace = crane.stable.buildPackage (subnix.subenv // {
           name = "centauri-hyperspace";
@@ -131,12 +110,12 @@
           cargoArtifacts = crane.stable.buildDepsOnly (subnix.subenv // {
             pname = "hyperspace";
             version = "0.1";
-            src = composable-ibc-src;
+            src = composable-ibc-relayer-src;
             doCheck = false;
             cargoExtraArgs = "--package hyperspace";
             cargoTestCommand = "";
           });
-          src = composable-ibc-src;
+          src = composable-ibc-relayer-src;
           doCheck = false;
           cargoExtraArgs = "--package hyperspace";
           cargoTestCommand = "";
@@ -151,7 +130,7 @@
               self'.packages.composable-rococo-subxt-client
               self'.packages.picasso-rococo-subxt-client
             ];
-            src = composable-ibc-src;
+            src = composable-ibc-relayer-src;
             patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
@@ -178,7 +157,7 @@
               self'.packages.composable-polkadot-subxt-client
               self'.packages.picasso-kusama-subxt-client
             ];
-            src = composable-ibc-src;
+            src = composable-ibc-relayer-src;
             patchPhase = "true";
             installPhase = ''
               mkdir --parents $out
@@ -201,7 +180,7 @@
           pkgs.stdenv.mkDerivation rec {
             name = "composable-rococo-picasso-rococo-centauri-patched-src";
             pname = "${name}";
-            src = composable-ibc-src;
+            src = composable-ibc-relayer-src;
             buildInputs = with pkgs; [ sd git ];
             patchFlags = "--strip=4";
             installPhase = ''
@@ -223,7 +202,7 @@
           pkgs.stdenv.mkDerivation rec {
             name = "composable-polkadot-picasso-kusama-centauri-patched-src";
             pname = "${name}";
-            src = composable-ibc-src;
+            src = composable-ibc-relayer-src;
             buildInputs = with pkgs; [ sd git ];
             patchFlags = "--strip=4";
             installPhase = ''
