@@ -316,7 +316,24 @@
         "type": "github"
       }
     },
-    "composable-ibc-src": {
+    "composable-ibc-light-client-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1701741636,
+        "narHash": "sha256-u/2ZZd7XIntUE69wW0dAwgrnqkEi1x1cvP+YufHScaE=",
+        "owner": "ComposableFi",
+        "repo": "composable-ibc",
+        "rev": "50eb36a8a1c4f67ae573ac447f6b1ba46f37791c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ComposableFi",
+        "repo": "composable-ibc",
+        "rev": "50eb36a8a1c4f67ae573ac447f6b1ba46f37791c",
+        "type": "github"
+      }
+    },
+    "composable-ibc-relayer-src": {
       "flake": false,
       "locked": {
         "lastModified": 1701186287,
@@ -4184,7 +4201,8 @@
       "inputs": {
         "bech32cli": "bech32cli",
         "bundlers": "bundlers",
-        "composable-ibc-src": "composable-ibc-src",
+        "composable-ibc-light-client-src": "composable-ibc-light-client-src",
+        "composable-ibc-relayer-src": "composable-ibc-relayer-src",
         "cosmos": "cosmos",
         "cosmos-old": "cosmos-old",
         "crane": "crane",

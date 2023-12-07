@@ -65,10 +65,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    composable-ibc-src = {
+    composable-ibc-relayer-src = {
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/698146a5a66ce9e5e7a21633ef60e39fa1c8840e";
+    };
+
+    composable-ibc-light-client-src = {
+      flake = false;
+      url =
+        "github:ComposableFi/composable-ibc/50eb36a8a1c4f67ae573ac447f6b1ba46f37791c";
     };
 
     cvm = { url = "github:ComposableFi/cvm"; };
