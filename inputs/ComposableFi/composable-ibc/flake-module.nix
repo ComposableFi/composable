@@ -34,8 +34,8 @@
         hyperspace-picasso-kusama-config-base // {
           parachain_rpc_url = "ws://${host}:9988";
           relay_chain_rpc_url = "ws://${host}:9944";
-          # client_id = "08-wasm-5";
-          client_id = "10-grandpa-0";
+          client_id = "08-wasm-0";
+          #client_id = "10-grandpa-0";
         };
 
       ibc-relayer-config-picasso-kusama-to-centauri-0-0 =

@@ -5,7 +5,7 @@
       devnet-root-directory = "/tmp/composable-devnet";
       validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       RUST_LOG =
-        "debug,hyperspace=debug,hyperspace_parachain=debug,hyperspace_cosmos=debug";
+        "debug,hyperspace=trace,hyperspace_parachain=trace,hyperspace_cosmos=trace";
     in {
       packages = rec {
         picasso-centauri-ibc-init = pkgs.writeShellApplication {
