@@ -175,9 +175,6 @@
               GATEWAY_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
-              STAKING_WASM_FILE = "${
-                  self.inputs.instrumental.packages."${system}".staking
-                }/lib/staking.wasm";
               ORDER_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-mantis-order
                 }/lib/cw_mantis_order.wasm";

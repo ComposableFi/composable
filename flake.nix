@@ -82,17 +82,6 @@
 
     networks = { url = "github:ComposableFi/networks"; };
 
-    instrumental = {
-      url =
-        "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";
-      inputs.cosmos.follows = "cosmos";
-      inputs.crane.follows = "crane";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
-
     eth-pos-devnet-src = {
       flake = false;
       url = "github:OffchainLabs/eth-pos-devnet";
