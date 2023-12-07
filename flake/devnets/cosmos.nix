@@ -8,6 +8,18 @@
 , networks
 ,
 }:
+let
+  depends-on-cvm-init =
+    {
+      depends_on."centauri-cvm-init".condition =
+        "process_completed_successfully";
+      depends_on."osmosis-cvm-init".condition =
+        "process_completed_successfully";
+      depends_on."neutron-cvm-init".condition =
+        "process_completed_successfully";
+
+    };
+in
 {
   settings = {
     log_level = "trace";
@@ -153,18 +165,14 @@
         log_location =
           "${devnet-root-directory}/centauri-cvm-config.log";
         availability = { restart = chain-restart; };
-      };
+      } // depends-on-cvm-init;
 
       osmosis-cvm-config = {
         command = self'.packages.osmosisd-cvm-config;
-        depends_on."centauri-cvm-init".condition =
-          "process_completed_successfully";
-        depends_on."osmosis-cvm-init".condition =
-          "process_completed_successfully";
         log_location =
           "${devnet-root-directory}/osmosis-cvm-config.log";
         availability = { restart = chain-restart; };
-      };
+      } // depends-on-cvm-init;
 
       osmosis = {
         command = self'.packages.osmosisd-gen;
