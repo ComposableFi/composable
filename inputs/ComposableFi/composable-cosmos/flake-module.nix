@@ -13,10 +13,31 @@
       };
       native_denom = "ppica";
       name = "centaurid";
+      cosmosLib = (self.inputs.cosmos.lib self.inputs.nix-std) {
+        inherit pkgs;
+        cosmwasm-check = self.inputs.cosmos.packages."${system}".cosmwasm-check;
+      };
+      centauri = cosmosLib.mkCosmosGoApp {
+        name = "centauri";
+        version = "v6.3.1";
+        src = self.inputs.composable-cosmos-src;
+        vendorHash = "sha256-MRADQxw+T8lVJujJn2yEaZOEs6AYGgaiBbYJUI3cugA=";
+        tags = [ "netgo" ];
+        engine = "cometbft/cometbft";
+        excludedPackages = [ "interchaintest" "simd" ];
+        preFixup = ''
+          ${cosmosLib.wasmdPreFixupPhase
+          self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 "centaurid"}
+        '';
+        buildInputs = [ self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 ];
+        proxyVendor = true;
+        doCheck = false;
+      };
+
       centaurid = pkgs.writeShellApplication {
         name = "centaurid";
         text = ''
-          ${self.inputs.cosmos.packages.${system}.centauri}/bin/centaurid "$@"
+          ${centauri}/bin/centaurid "$@"
         '';
       };
 

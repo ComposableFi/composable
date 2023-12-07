@@ -47,17 +47,13 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     cosmos = {
       url =
         "github:dzmitry-lahoda-forks/cosmos.nix/e398b4dc9fa8e44c9201d3285eb2818116c0b9d3";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
-    };
-
-    cosmos-old = {
-      url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/3039c8f154b1f9f1fb217c2bc0048eaff0da2472";
     };
 
     bech32cli = {
@@ -75,6 +71,11 @@
       flake = false;
       url =
         "github:ComposableFi/composable-ibc/50eb36a8a1c4f67ae573ac447f6b1ba46f37791c";
+    };
+
+    composable-cosmos-src = {
+      flake = false;
+      url = "github:ComposableFi/composable-cosmos/devnet";
     };
 
     cvm = { url = "github:ComposableFi/cvm"; };
