@@ -22,7 +22,7 @@ Same as for [manual guide](../../../../../docs/docs/products/cosmwasm/deploy-and
 ### CW4 Stake
 
 ```shell
-nix build .#cw4_stake
+curl --location https://github.com/CosmWasm/cw-plus/releases/download/v1.1.0/cw4_stake.wasm > result
 ```
 
 ```shell

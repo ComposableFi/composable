@@ -46,9 +46,7 @@
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm store  "${
-                self.inputs.cvm.packages."${system}".cw-cvm-executor
-              }/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              "$BINARY" tx wasm store   --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  "${self'.packages.cw20_base}" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
@@ -187,6 +185,10 @@
             CW4_VOTING_CONTRACT=$THIRD_PARTY_CONTRACTS_DIR/cw4_voting.wasm
             CW4_GROUP_CONTRACT=$THIRD_PARTY_CONTRACTS_DIR/cw4_group.wasm
 
+            # COMPOSABLE
+            CVM_EXECUTOR_CONTRACT="${self.inputs.cvm.packages."${system}".cw-cvm-executor}/lib/cw_cvm_executor.wasm"
+            CVM_GATEWAY_CONTRACT="${self.inputs.cvm.packages."${system}".cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
+            
             echo "Add consumer section..."
             $BINARY add-consumer-section --home "$CHAIN_DIR"
             ### PARAMETERS SECTION
@@ -311,6 +313,10 @@
             CW4_VOTING_CONTRACT_BINARY_ID=$(store_binary            "$CW4_VOTING_CONTRACT")
             CW4_GROUP_CONTRACT_BINARY_ID=$(store_binary             "$CW4_GROUP_CONTRACT")
 
+            # COMPOSABLE
+            CW_CVM_GATEWAY_CONTRACT_BINARY_ID=$(store_binary             "$CW_CVM_GATEWAY_CONTRACT")
+            CW_CVM_EXECUTOR_CONTRACT_BINARY_ID=$(store_binary             "$CW_CVM_EXECUTOR_CONTRACT")
+
             # WARNING!
             # The following code is needed to pre-generate the contract addresses
             # Those addresses depend on the ORDER OF CONTRACTS INITIALIZATION
@@ -344,15 +350,6 @@
             PROPOSAL_OVERRULE_CONTRACT_ADDRESS=$(genaddr            "$PROPOSAL_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS=$(genaddr        "$PRE_PROPOSAL_OVERRULE_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
-            echo "$DAO_CONTRACT_ADDRESS"
-            echo "$VOTING_REGISTRY_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_SINGLE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
-
             # RESERVE
             RESERVE_CONTRACT_ADDRESS=$(genaddr                     "$RESERVE_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             DISTRIBUTION_CONTRACT_ADDRESS=$(genaddr                "$DISTRIBUTION_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
@@ -372,6 +369,17 @@
             GRANTS_SUBDAO_TIMELOCK_CONTRACT_ADDRESS=$(genaddr      "$SUBDAO_TIMELOCK_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS=$(genaddr         "$CW4_GROUP_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
+            # COMPOSABLE
+            CW_CVM_GATEWAY_CONTRACT_ADDRESS=$(genaddr         "$CW_CVM_EXECUTOR_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
+
+            echo "$DAO_CONTRACT_ADDRESS"
+            echo "$VOTING_REGISTRY_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_SINGLE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_CORE_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_VOTING_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_GROUP_CONTRACT_ADDRESS"
@@ -383,6 +391,7 @@
             echo "$GRANTS_SUBDAO_PRE_PROPOSE_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_TIMELOCK_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS"
+            echo "$CW_CVM_GATEWAY_CONTRACT_ADDRESS"
 
             function check_json() {
               MSG=$1
