@@ -162,7 +162,7 @@
         ./flake/xapps.nix
         ./flake/xapps.nix
         ./flake/overlays.nix
-        ./flake/process-compose.nix
+        ./flake/devnets/flake-module.nix
         ./flake/release.nix
         ./flake/mantis.nix
         ./flake/rust.nix

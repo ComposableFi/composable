@@ -467,13 +467,13 @@
           };
         };
 
-        devnet-picasso-centauri = import ./devnets/picasso-centauri.nix {
+        devnet-picasso-centauri = import ./picasso-centauri.nix {
           inherit pkgs devnet-root-directory self' chain-restart
             parachain-startup relay devnetTools;
         };
 
 
-        devnet-cosmos = import ./devnets/picasso-centauri.nix {
+        devnet-cosmos = import ./cosmos.nix {
           inherit pkgs devnet-root-directory self' chain-restart
             parachain-startup relay devnetTools;
         };
