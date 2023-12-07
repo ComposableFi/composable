@@ -533,7 +533,7 @@
             echo "$RLY_MNEMONIC_4" | centaurid keys add relayer3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
 
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "100000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"
+              centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"
             }
 
             # relayer
