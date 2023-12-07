@@ -3,6 +3,34 @@
       "force": [
         {
           "force_network": {
+            "network_id": 4,
+            "accounts": {
+              "bech": "neutron"
+            },
+            "gateway": {
+              "cosm_wasm": {
+                "contract": "$NEUTRON_GATEWAY_CONTRACT_ADDRESS",
+                "interpreter_code_id": $NEUTRON_INTERPRETER_CODE_ID,
+                "admin": "$KEY"
+              }
+            },
+            "ibc": {
+              "channels": {
+                "ics20": {
+                  "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                  "features": {
+                    "pfm": {},
+                    "wasm_hooks": {
+                      "callback": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },        
+        {
+          "force_network": {
             "network_id": 3,
             "accounts": {
               "bech": "osmo"
