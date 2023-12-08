@@ -17,15 +17,9 @@ env:
   CACHIX_COMPRESSION_LEVEL: 16
   CACHIX_JOBS: 8
   CACHIX_COMPRESSION_METHOD: zstd
-
   CACHIX_NAME: composable
-
-  DOCKER_REGISTRY_NAME: composablefi
-  # weird, next is implicit dependency of docker action
-  DOCKER_USER_OPTION: '$UID:$GID'
-
+ 
 jobs:   
-  # this is not flaky!!!
   deploy-docs:
     name: "deploy-docs"
     runs-on: ubuntu-latest
@@ -55,7 +49,7 @@ jobs:
         run: |  
           nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
           nix-channel --update
-          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs nixpkgs.tree nixpkgs.docker
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs
       - uses: actions/checkout@v3
         if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
         with:

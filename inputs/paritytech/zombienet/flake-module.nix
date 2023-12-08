@@ -14,9 +14,7 @@
           inherit name;
           runtimeInputs = with pkgs;
             [ nodejs zombienet.default ] ++ runtimeDeps;
-          text = let
-            dir-parameter = if dir != null then "--dir ${dir}" else "";
-            dir-command = if dir != null then "mkdir --parents ${dir}" else "";
+          text = let dir-parameter = if dir != null then "--dir ${dir}" else "";
           in ''
             ACTIONS_RUNNER_DEBUG=''${ACTIONS_RUNNER_DEBUG:-false} 
             LEVEL=''${1:-error}

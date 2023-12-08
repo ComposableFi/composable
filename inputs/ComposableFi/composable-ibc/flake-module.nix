@@ -2,11 +2,6 @@
   perSystem = { config, self', inputs', pkgs, system, crane, subnix
     , systemCommonRust, ... }:
     let
-      cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
-      centauri-runtime-dep = builtins.head
-        (builtins.filter (x: x.name == "pallet-ibc") (cargo-lock.package));
-      centauri-runtime-commit =
-        builtins.elemAt (builtins.split "#" centauri-runtime-dep.source) 2;
       host = "127.0.0.1";
       hyperspace-picasso-kusama-config-base = {
         channel_whitelist = [ ];

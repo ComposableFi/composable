@@ -82,21 +82,9 @@
 
     networks = { url = "github:ComposableFi/networks"; };
 
-    instrumental = {
-      url =
-        "github:InstrumentalFi/instrumental-contracts/61b3c81992178b7382308bfc3ecce04fff3de59c";
-      inputs.cosmos.follows = "cosmos";
-      inputs.crane.follows = "crane";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
-
     eth-pos-devnet-src = {
       flake = false;
-      url =
-        "github:OffchainLabs/eth-pos-devnet/4f4c28e71fd39bc50788dc1b858c1cc6b983defb";
+      url = "github:OffchainLabs/eth-pos-devnet";
     };
 
     neutron-src.url = "github:neutron-org/neutron/v2.0.0";
@@ -146,7 +134,6 @@
         ./flake/check.nix
         ./flake/lightnet.nix
         ./flake/cosmos.nix
-        ./flake/darwin-configurations.nix
         ./flake/dev-shells.nix
         ./flake/devnet-tools.nix
         ./flake/devnet.nix
@@ -162,7 +149,7 @@
         ./flake/xapps.nix
         ./flake/xapps.nix
         ./flake/overlays.nix
-        ./flake/process-compose.nix
+        ./flake/devnets/flake-module.nix
         ./flake/release.nix
         ./flake/mantis.nix
         ./flake/rust.nix
@@ -172,7 +159,6 @@
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/ComposableFi/composable-ibc/flake-module.nix
         ./inputs/ComposableFi/composable-cosmos/flake-module.nix
-        ./inputs/CosmWasm/flake-module.nix
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix

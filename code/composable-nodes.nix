@@ -3,8 +3,6 @@
     , subnix, devnetTools, cargoTools, ... }:
 
     let
-
-      rustSrc = cargoTools.mkRustSrc ./.;
       toDockerImage = { ... }@drv:
         (pkgs.dockerTools.buildImage {
           name = drv.name or drv.pname or "image";
@@ -35,7 +33,9 @@
           CW_CVM_EXECUTOR_WASM_PATH = "${
               self.inputs.cvm.packages."${system}".cw-cvm-executor
             }/lib/cw_cvm_executor.wasm";
-          CW_20_BASE_WASM_PATH = self'.packages.cw20_base;
+          CW_20_BASE_WASM_PATH = "${
+              self.inputs.cosmos.packages.${system}.cw20-base
+            }/lib/cw20_base.wasm";
           PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
           COMPOSABLE_RUNTIME =
             "${composable-runtime}/lib/runtime.optimized.wasm";

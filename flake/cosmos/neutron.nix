@@ -2,10 +2,8 @@
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
     let
-      devnet-root-directory = cosmosTools.devnet-root-directory;
-      validator-key = cosmosTools.validators.neutron;
       devnetConfig = pkgs.networksLib.neutron.devnet;
-
+      log = " --log_level trace --trace ";
     in {
       packages = rec {
         neutrond = pkgs.writeShellApplication {
@@ -23,6 +21,33 @@
           text = ''
             ${bashTools.export devnetConfig}
               $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
+          '';
+        };
+
+        neutrond-cvm-config = pkgs.writeShellApplication {
+          name = "neutrond-cvm-config";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ neutrond pkgs.jq pkgs.dasel ];
+          text = ''
+            ${bashTools.export pkgs.networksLib.osmosis.devnet}
+            KEY=${cosmosTools.cvm.osmosis}
+
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
+            CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
+            OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
+            NEUTRON_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.neutrond/gateway_contract_address")
+            NEUTRON_INTERPRETER_CODE_ID=$(cat "$HOME/.neutrond/interpreter_code_id")
+
+            FORCE_CONFIG=$(cat << EOF
+              ${builtins.readFile ../cvm.json}
+            EOF
+            )
+            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" ${log}             
+
+
+            sleep "$BLOCK_SECONDS"
+            "$BINARY" query wasm contract-state all "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA"
           '';
         };
 
@@ -53,6 +78,7 @@
             echo "$RLY_MNEMONIC_1" | $BINARY keys add rly1 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_2" | $BINARY keys add rly2 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_4" | $BINARY keys add rly4 --home "$CHAIN_DATA" --recover --keyring-backend=test
+            echo "$APP_1" | $BINARY keys add APP_1 --home "$CHAIN_DATA" --recover --keyring-backend=test
 
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
@@ -62,6 +88,7 @@
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly4 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
+            $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show APP_1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
 
             sed -i -e 's/timeout_commit = "5s"/timeout_commit = "1s"/g' "$CHAIN_DATA/config/config.toml"
             sed -i -e 's/timeout_propose = "3s"/timeout_propose = "1s"/g' "$CHAIN_DATA/config/config.toml"
@@ -131,6 +158,14 @@
             SUBDAO_PROPOSAL_CONTRACT=$CONTRACTS_BINARIES_DIR/cwd_subdao_proposal_single.wasm
             CW4_VOTING_CONTRACT=$THIRD_PARTY_CONTRACTS_DIR/cw4_voting.wasm
             CW4_GROUP_CONTRACT=$THIRD_PARTY_CONTRACTS_DIR/cw4_group.wasm
+
+            # COMPOSABLE
+            CVM_EXECUTOR_CONTRACT="${
+              self.inputs.cvm.packages."${system}".cw-cvm-executor
+            }/lib/cw_cvm_executor.wasm"
+            CVM_GATEWAY_CONTRACT="${
+              self.inputs.cvm.packages."${system}".cw-cvm-gateway
+            }/lib/cw_cvm_gateway.wasm"
 
             echo "Add consumer section..."
             $BINARY add-consumer-section --home "$CHAIN_DIR"
@@ -256,6 +291,10 @@
             CW4_VOTING_CONTRACT_BINARY_ID=$(store_binary            "$CW4_VOTING_CONTRACT")
             CW4_GROUP_CONTRACT_BINARY_ID=$(store_binary             "$CW4_GROUP_CONTRACT")
 
+            # COMPOSABLE
+            CVM_GATEWAY_CONTRACT_BINARY_ID=$(store_binary             "$CVM_GATEWAY_CONTRACT")
+            CVM_EXECUTOR_CONTRACT_BINARY_ID=$(store_binary             "$CVM_EXECUTOR_CONTRACT")
+
             # WARNING!
             # The following code is needed to pre-generate the contract addresses
             # Those addresses depend on the ORDER OF CONTRACTS INITIALIZATION
@@ -289,15 +328,6 @@
             PROPOSAL_OVERRULE_CONTRACT_ADDRESS=$(genaddr            "$PROPOSAL_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS=$(genaddr        "$PRE_PROPOSAL_OVERRULE_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
-            echo "$DAO_CONTRACT_ADDRESS"
-            echo "$VOTING_REGISTRY_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_SINGLE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
-            echo "$PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
-            echo "$PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
-
             # RESERVE
             RESERVE_CONTRACT_ADDRESS=$(genaddr                     "$RESERVE_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             DISTRIBUTION_CONTRACT_ADDRESS=$(genaddr                "$DISTRIBUTION_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
@@ -317,6 +347,17 @@
             GRANTS_SUBDAO_TIMELOCK_CONTRACT_ADDRESS=$(genaddr      "$SUBDAO_TIMELOCK_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
             GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS=$(genaddr         "$CW4_GROUP_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
 
+            # COMPOSABLE
+            CVM_GATEWAY_CONTRACT_ADDRESS=$(genaddr         "$CVM_EXECUTOR_CONTRACT_BINARY_ID") && (( INSTANCE_ID_COUNTER++ ))
+
+            echo "$DAO_CONTRACT_ADDRESS"
+            echo "$VOTING_REGISTRY_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_SINGLE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_MULTIPLE_CONTRACT_ADDRESS"
+            echo "$PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
+            echo "$PRE_PROPOSAL_OVERRULE_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_CORE_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_VOTING_CONTRACT_ADDRESS"
             echo "$SECURITY_SUBDAO_GROUP_CONTRACT_ADDRESS"
@@ -328,6 +369,7 @@
             echo "$GRANTS_SUBDAO_PRE_PROPOSE_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_TIMELOCK_CONTRACT_ADDRESS"
             echo "$GRANTS_SUBDAO_GROUP_CONTRACT_ADDRESS"
+            echo "$CVM_GATEWAY_CONTRACT_ADDRESS"
 
             function check_json() {
               MSG=$1
@@ -712,6 +754,13 @@
               "security_dao": "'"$SECURITY_SUBDAO_CORE_CONTRACT_ADDRESS"'"
             }'
 
+            CVM_ADMIN=$($BINARY keys show APP_1 --keyring-backend test --home "$CHAIN_DATA" --output json | jq .address)
+            echo "$CVM_ADMIN"
+            CVM_GATEWAY_INIT_MSG='{
+              "admin": '"$CVM_ADMIN"',
+              "network_id": '$NETWORK_ID'
+            }'
+
             echo "Instantiate contracts"
 
             function init_contract() {
@@ -735,6 +784,11 @@
             init_contract "$DISTRIBUTION_CONTRACT_BINARY_ID"             "$DISTRIBUTION_INIT"              "$DISTRIBUTION_LABEL"
             init_contract "$SUBDAO_CORE_BINARY_ID"                       "$SECURITY_SUBDAO_CORE_INIT_MSG"  "$SECURITY_SUBDAO_CORE_LABEL"
             init_contract "$SUBDAO_CORE_BINARY_ID"                       "$GRANTS_SUBDAO_CORE_INIT_MSG"    "$GRANTS_SUBDAO_CORE_LABEL"
+
+            init_contract "$CVM_GATEWAY_CONTRACT_BINARY_ID"           "$CVM_GATEWAY_INIT_MSG"    "composable.cvm.gateway"
+
+            echo "$CVM_GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+            echo "$CVM_EXECUTOR_CONTRACT_BINARY_ID" > "$CHAIN_DATA/interpreter_code_id"
 
             ADD_SUBDAOS_MSG='{
               "update_sub_daos": {

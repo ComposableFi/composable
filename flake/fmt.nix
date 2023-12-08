@@ -1,16 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
-        name = "allDirectoriesAndFiles";
-        src =
-          builtins.filterSource (path: _type: baseNameOf path != ".git") ./.;
-        dontUnpack = true;
-        installPhase = ''
-          mkdir $out/
-          cp -r $src/. $out/
-        '';
-      };
 
       filesWithExtension = extension:
         pkgs.stdenv.mkDerivation {
@@ -80,7 +70,7 @@
             deadnix --version
             SRC=$(find ${allNixFiles} -name "*.nix" -type f | tr "\n" " ")
             echo $SRC
-            deadnix $SRC
+            deadnix $SRC --no-lambda-arg --no-lambda-pattern-names --no-underscore
           '';
         };
 
