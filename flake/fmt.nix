@@ -80,7 +80,7 @@
             deadnix --version
             SRC=$(find ${allNixFiles} -name "*.nix" -type f | tr "\n" " ")
             echo $SRC
-            deadnix $SRC
+            deadnix $SRC --no-lambda-arg --no-lambda-pattern-names --no-underscore
           '';
         };
 
