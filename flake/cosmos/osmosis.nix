@@ -5,7 +5,7 @@
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-key = cosmosTools.validators.osmosis;
       devnet = pkgs.networksLib.osmosis.devnet;
-
+      log = " --log_level trace --trace ";
     in {
 
       packages = rec {
@@ -155,8 +155,7 @@
 
             dasel put --type string --file $CONFIG_FOLDER/client.toml --value "tcp://localhost:$CONSENSUS_RPC_PORT" '.node'
 
-
-            osmosisd start --home "$CHAIN_DATA" --rpc.unsafe --pruning=nothing --p2p.pex false --p2p.upnp false --p2p.seed_mode true --log_level trace --trace
+            osmosisd start --home "$CHAIN_DATA" --rpc.unsafe --pruning=nothing --p2p.pex false --p2p.upnp false --p2p.seed_mode true ${log}
           '';
         };
 
@@ -231,13 +230,13 @@
 
             "$BINARY" tx gamm create-pool --pool-file=${
               ./osmosis-gamm-pool-pica-osmo.json
-            } --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from pools --keyring-dir "$KEYRING_TEST" --trace --log_level trace --broadcast-mode block  
+            } --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --keyring-backend test  --home "$CHAIN_DATA" --from pools --keyring-dir "$KEYRING_TEST" ${log} --broadcast-mode block  
             "$BINARY" query gamm pools --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA"           
           '';
         };
 
-        osmosis-cvm-config = pkgs.writeShellApplication {
-          name = "osmosis-cvm-config";
+        osmosisd-cvm-config = pkgs.writeShellApplication {
+          name = "osmosisd-cvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
@@ -250,13 +249,12 @@
             OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
             NEUTRON_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.neutrond/gateway_contract_address")
             NEUTRON_INTERPRETER_CODE_ID=$(cat "$HOME/.neutrond/interpreter_code_id")
-            
 
             FORCE_CONFIG=$(cat << EOF
               ${builtins.readFile ../cvm.json}
             EOF
             )
-            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" ${log}             
 
 
             sleep "$BLOCK_SECONDS"
