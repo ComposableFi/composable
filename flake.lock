@@ -2218,42 +2218,6 @@
         "type": "github"
       }
     },
-    "instrumental": {
-      "inputs": {
-        "cosmos": [
-          "cosmos"
-        ],
-        "crane": [
-          "crane"
-        ],
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": [
-          "rust-overlay"
-        ]
-      },
-      "locked": {
-        "lastModified": 1699737818,
-        "narHash": "sha256-J6Jjcg1FNHgSV19E1rct590jbGdNETsuNYV7UPbbkJQ=",
-        "owner": "InstrumentalFi",
-        "repo": "instrumental-contracts",
-        "rev": "61b3c81992178b7382308bfc3ecce04fff3de59c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "InstrumentalFi",
-        "repo": "instrumental-contracts",
-        "rev": "61b3c81992178b7382308bfc3ecce04fff3de59c",
-        "type": "github"
-      }
-    },
     "interchain-security-src": {
       "flake": false,
       "locked": {
@@ -3300,7 +3264,6 @@
         "flake-utils": "flake-utils_6",
         "helix": "helix",
         "home-manager": "home-manager",
-        "instrumental": "instrumental",
         "networks": "networks",
         "neutron-src": "neutron-src_3",
         "nix-std": "nix-std_3",
