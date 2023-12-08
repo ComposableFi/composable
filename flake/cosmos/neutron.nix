@@ -2,7 +2,7 @@
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
     let devnetConfig = pkgs.networksLib.neutron.devnet;
-
+      log = " --log_level trace --trace ";
     in {
       packages = rec {
         neutrond = pkgs.writeShellApplication {
@@ -20,6 +20,33 @@
           text = ''
             ${bashTools.export devnetConfig}
               $BINARY start --log_level trace --log_format json --home "$CHAIN_DIR"  --pruning=nothing --p2p.pex false --p2p.upnp false --p2p.seed_mode true --trace 2>&1 | tee "$CHAIN_DIR/$CHAIN_ID.log"
+          '';
+        };
+
+         neutrond-cvm-config = pkgs.writeShellApplication {
+          name = "neutrond-cvm-config";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ neutrond pkgs.jq pkgs.dasel ];
+          text = ''
+            ${bashTools.export pkgs.networksLib.osmosis.devnet}
+            KEY=${cosmosTools.cvm.osmosis}
+
+            CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)        
+            CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
+            OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
+            OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
+            NEUTRON_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.neutrond/gateway_contract_address")
+            NEUTRON_INTERPRETER_CODE_ID=$(cat "$HOME/.neutrond/interpreter_code_id")
+
+            FORCE_CONFIG=$(cat << EOF
+              ${builtins.readFile ../cvm.json}
+            EOF
+            )
+            "$BINARY" tx wasm execute "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" ${log}             
+
+
+            sleep "$BLOCK_SECONDS"
+            "$BINARY" query wasm contract-state all "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA"
           '';
         };
 
