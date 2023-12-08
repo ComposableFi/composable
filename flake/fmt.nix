@@ -1,16 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
-        name = "allDirectoriesAndFiles";
-        src =
-          builtins.filterSource (path: _type: baseNameOf path != ".git") ./.;
-        dontUnpack = true;
-        installPhase = ''
-          mkdir $out/
-          cp -r $src/. $out/
-        '';
-      };
 
       filesWithExtension = extension:
         pkgs.stdenv.mkDerivation {

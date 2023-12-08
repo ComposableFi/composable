@@ -1,10 +1,7 @@
 { self, inputs, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
-    let
-      devnet-root-directory = cosmosTools.devnet-root-directory;
-      validator-key = cosmosTools.validators.neutron;
-      devnetConfig = pkgs.networksLib.neutron.devnet;
+    let devnetConfig = pkgs.networksLib.neutron.devnet;
 
     in {
       packages = rec {

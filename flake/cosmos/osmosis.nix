@@ -3,7 +3,6 @@
     , cosmosTools, bashTools, ... }:
     let
       devnet-root-directory = cosmosTools.devnet-root-directory;
-      validator-key = cosmosTools.validators.osmosis;
       devnet = pkgs.networksLib.osmosis.devnet;
       log = " --log_level trace --trace ";
     in {

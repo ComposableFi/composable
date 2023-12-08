@@ -80,20 +80,6 @@
         };
       };
 
-      mk-zombienet-all = name: chain:
-        with prelude;
-        let
-          config = mkZombienet {
-            relaychain = relaychainBase;
-            parachains = [{
-              command = pkgs.lib.meta.getExe self'.packages.composable-node;
-              inherit chain;
-              id = 2087;
-              collators = 3;
-            }];
-          };
-        in zombieTools.writeZombienetShellApplication name config;
-
       picasso-dev-config = overrideZombienet {
         chain = "picasso-dev";
         command = self'.packages.composable-testfast-node;

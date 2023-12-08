@@ -1,8 +1,6 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
-    , cosmosTools, ... }:
-    let log = "debug";
-    in {
+    , cosmosTools, ... }: {
       packages = rec {
         mantis-simulate-solve = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools

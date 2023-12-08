@@ -8,7 +8,6 @@
         cosmwasm-check = self.input.cosmos.packages.${system}.cosmwasm-check;
       };
       devnet-root-directory = "/tmp/composable-devnet";
-      validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       log = "trace";
       hermes-config = (cosmos.evalHermesModule {
         modules = [{

@@ -23,11 +23,6 @@
             systemCommonRust.common-attrs.nativeBuildInputs;
           meta = { mainProgram = "polkadot"; };
         });
-      cargo-lock = builtins.fromTOML (builtins.readFile ../../code/Cargo.lock);
-      rococo-runtime-dep = builtins.head
-        (builtins.filter (x: x.name == "rococo-runtime") (cargo-lock.package));
-      rococo-runtime-commit =
-        builtins.elemAt (builtins.split "#" rococo-runtime-dep.source) 2;
 
       mkRelayRuntime = url: hash:
         pkgs.stdenv.mkDerivation {

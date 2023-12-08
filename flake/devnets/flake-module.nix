@@ -4,7 +4,6 @@
     let
       networks = pkgs.networksLib;
       devnet-root-directory = "/tmp/composable-devnet";
-      validator-key = "osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj";
       relay = "no"; # `no` not to restart, `on_failure` for
       chain-restart = "no"; # `no` not to restart, `on_failure` for
       parachain-startup = {

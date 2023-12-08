@@ -3,8 +3,6 @@
     , subnix, devnetTools, cargoTools, ... }:
 
     let
-
-      rustSrc = cargoTools.mkRustSrc ./.;
       toDockerImage = { ... }@drv:
         (pkgs.dockerTools.buildImage {
           name = drv.name or drv.pname or "image";

@@ -1,9 +1,7 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
-    let
-      devnet-root-directory = cosmosTools.devnet-root-directory;
-      devnet = pkgs.networksLib.cosmos-hub.devnet;
+    let devnet = pkgs.networksLib.cosmos-hub.devnet;
     in {
 
       packages = rec {
