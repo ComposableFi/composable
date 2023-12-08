@@ -1,6 +1,5 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, ... }:
-
     {
       packages = {
         lightnet-picasso = pkgs.writeShellApplication {

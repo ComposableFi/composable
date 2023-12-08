@@ -147,7 +147,7 @@ in {
       } // depends-on-cvm-init;
 
       osmosis-cvm-config = {
-        command = self'.packages.osmosisd-cvm-config;
+        command = self'.packages.osmosis-cvm-config;
         log_location = "${devnet-root-directory}/osmosis-cvm-config.log";
         availability = { restart = chain-restart; };
       } // depends-on-cvm-init;

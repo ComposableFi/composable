@@ -3,6 +3,24 @@
     "force": [
       {
         "force_network": {
+          "network_id": 5,
+          "accounts": {
+            "bech": "cosmos"
+          },
+          "ibc": {
+            "channels": {
+              "ics20": {
+                "sender": "CosmosStargateIbcApplicationsTransferV1MsgTransfer",
+                "features": {
+                  "pfm": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "force_network": {
           "network_id": 4,
           "accounts": {
             "bech": "neutron"

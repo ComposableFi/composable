@@ -122,7 +122,7 @@
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RLY_MNEMONIC_3" "relayer"
-            add-genesis-account "${cosmosTools.cvm.mnemonic}" "cvm"
+            add-genesis-account "$APP_1" "cvm"
             add-genesis-account "${cosmosTools.pools.mnemonic}" "pools"
 
             osmosisd gentx $VALIDATOR_MONIKER 500000000uosmo --keyring-backend=test --chain-id=$CHAIN_ID --home "$CHAIN_DATA" 
@@ -236,8 +236,8 @@
           '';
         };
 
-        osmosisd-cvm-config = pkgs.writeShellApplication {
-          name = "osmosisd-cvm-config";
+        osmosis-cvm-config = pkgs.writeShellApplication {
+          name = "osmosis-cvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ osmosisd pkgs.jq pkgs.dasel ];
           text = ''
@@ -248,6 +248,9 @@
             CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
             OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
             OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
+            NEUTRON_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.neutrond/gateway_contract_address")
+            NEUTRON_INTERPRETER_CODE_ID=$(cat "$HOME/.neutrond/interpreter_code_id")
+            
 
             FORCE_CONFIG=$(cat << EOF
               ${builtins.readFile ../cvm.json}
