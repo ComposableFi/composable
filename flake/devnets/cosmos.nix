@@ -168,7 +168,7 @@ in {
         availability = { restart = chain-restart; };
       };
       osmosis-cvm-init = {
-        command = self'.packages.osmosisd-cvm-init;
+        command = self'.packages.osmosis-cvm-init;
         depends_on."osmosis".condition = "process_healthy";
         log_location = "${devnet-root-directory}/osmosis-cvm-init.log";
         availability = { restart = chain-restart; };
@@ -204,40 +204,6 @@ in {
         };
         log_location = "${devnet-root-directory}/mantis-simulate-solve.log";
         availability = { restart = "on_failure"; };
-        namespace = "xapp";
-      };
-
-      xapp-osmosis-osmo-to-centauri = {
-        command = self'.packages.xapp-osmosis-osmo-to-centauri;
-        depends_on = {
-          "osmosis-centauri-init".condition = "process_completed_successfully";
-        };
-        log_location =
-          "${devnet-root-directory}/xapp-osmosis-osmo-to-centauri.log";
-        namespace = "xapp";
-      };
-
-      transfer-centauri-pica-to-osmosis = {
-        command = self'.packages.transfer-centauri-pica-to-osmosis;
-        depends_on = {
-          "osmosis-centauri-init".condition = "process_completed_successfully";
-        };
-        log_location =
-          "${devnet-root-directory}/transfer-centauri-pica-to-osmosis.log";
-        namespace = "xapp";
-      };
-
-      xapp-swap-centauri-osmo-to-osmosis-pica-and-back = {
-        command =
-          self'.packages.xapp-swap-centauri-osmo-to-osmosis-pica-and-back;
-        depends_on = {
-          "transfer-centauri-pica-to-osmosis".condition =
-            "process_completed_successfully";
-          "xapp-osmosis-osmo-to-centauri".condition =
-            "process_completed_successfully";
-        };
-        log_location =
-          "${devnet-root-directory}/xapp-swap-centauri-osmo-to-osmosis-pica-and-back.log";
         namespace = "xapp";
       };
     };

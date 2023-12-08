@@ -12,20 +12,13 @@ Additionally, make sure you are well-versed in how to make Cosmos RPC calls via 
 
 Lastly, it's important to be aware of Bech32 encoding for accounts and the use of IBC prefixed assets within the Cosmos ecosystem. 
 
-### On Mainnet
-   
-| chain      | stage   | id  |
-| ---------- | ------- | --- |
-| osmosis-1  | mainnet |  osmo1sy7pdmawyerekcl6xwz4v2p87j726auntcu48fvhsy24rkhv7n4s9yg267   |
-| centauri-1 | mainnet |  centauri1lkh7p89tdhkc52vkza5jus5xmgjqjut6ngucsn88mhmzaqc02h5qu89k2u   |
-| neutron-1 | mainnet |     |
-| picasso    | mainnet |     |
-| ethereum   | mainnet |     |
-| solana     | mainnet |     |
+### Deployments
+
+See `ComposableFi/networks` for contract addresses on mainnet.
 
 If you are interacting with CVM contracts on the DevNet, you can get their address via logs in `/tmp/composable-devnet/` or via calling the RPC.
 
-All of the latest identifiers and mapping can be found in the [CVM global configuration file](https://github.com/ComposableFi/composable/blob/main/code/cvm/cvm.json).
+Configuration for latest CVM registry  can be found in the `ComposableFi/env` in `cvm.json` file or queried from contract. 
 
 ### Shells
 
@@ -91,7 +84,7 @@ Please read and remove `//` commands before executing.
 ```json
             {
                 "execute_program": {
-                  "salt": "737061776e5f776974685f6173736574", // each user has instances of interpreter contract per user per salt, so each new slat instances new contract, 
+                  "salt": "737061776e5f776974685f6173736574", // each user has instances of Executor contract per user per salt, so each new slat instances new contract, 
                                                               // while reusing salt reuses existing instances (and funds on these)
                   "program": {
                     "tag": "737061776e5f776974685f6173736574", // a number give by user which allows to differentiate on program from other (just of offchain indexing)  
@@ -104,7 +97,7 @@ Please read and remove `//` commands before executing.
                             [
                               "158456325028528675187087900673", // PICA on Centauri
                               {
-                                  "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to interpreter
+                                  "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to Executor
                                   "slope": "0"
                               }
                             ]
@@ -207,11 +200,11 @@ $BINARY tx wasm execute <account> "<json file path>" --from=<wallet name> -y --g
 
 All events raised by CVM are prefixed by `cvm.` All logs are prefixed by `cvm::` as logged by CVM contracts.
 
-On the sender side, look for wasmd `cvm` prefixed events, specifically `cvm.gateway.bridge.track.added` if the packet was sent from Composable Cosmos.
+On the sender side, look for wasmd `cvm` prefixed events, specifically `cvm.outpost.bridge.track.added` if the packet was sent from Composable Cosmos.
 
 `cvm.executor.exchange.succeeded` indicates the swap was successful on Osmosis.
 
-Events prefixed `cvm.executor.` trace deep execution of programs in the `executor`. All interpreter events can be seen by [generating schema](./cosmwasm/README.md).
+Events prefixed `cvm.executor.` trace deep execution of programs in the `executor`. All Executor events can be seen by [generating schema](./cosmwasm/README.md).
 
 All CVM events are wrapped around by IBC and wasmd modules events as documented by relevant parties.
 
@@ -227,7 +220,7 @@ In general, Celatone and other generalised indexers show execution very well. It
 
 After the schema is generated, you will be able to view all the queries that can be called. 
 
-You can use the `State` query in the Interpreter to dump the whole state of the interpreter.
+You can use the `State` query in the Executor to dump the whole state of the Executor.
 
 You can follow the CW20 and Cosmos Bank guide to retrieve the amount of assets on the `executor` address.
 
@@ -236,9 +229,6 @@ The following example is to retrieve the CVM state of the `executor`:
 ```sh
 (devenv) bash-5.2$ $BINARY query wasm  contract-state smart centauri12u8s70drvm6cg4fc6j93q0q3g5nw6rvk926rjctx96md4fttedaq787pyl '{
 "state" : [] }'
-
-{"data":{"result_register":{"Err":"codespace: client, code: 29"},"ip_register":0,"owners":["centauri176cs0sw6awmc3jvmewcfqmtc08l4wf8jrrka208xnnkprset6kkqh2uwdx"],"config":{"gateway_address":"centauri176cs0sw6awmc3jvmewcfqmtc08l4wf8jrrka208xnnkprset6kkqh2uwdx","interpreter_origin":{"user_origin":{"network_id":2,"user_id":"63656e7461757269317171306b376435366a7575376834396172656c7a677730396a6363646b3873756a7263726a64"},"salt":"737061776e5f776974685f6173736574"}}}}
-
 ```
 
 Field details are comprehensively documented in Rust doc comments and within the schema, which is generated from these doc comments.
@@ -262,7 +252,7 @@ Additionally, the `executor` includes a CW1 proxy contract, allowing users to re
 ```json
             {
                 "execute_program": {
-                  "salt": "737061776e5f776974685f6173736574", // retain same salt to talk to same interpreter
+                  "salt": "737061776e5f776974685f6173736574", // retain same salt to talk to same Executor
                   "program": {
                     "tag": "137061776e5f776974685f6173736574",
                     "instructions": [
@@ -274,7 +264,7 @@ Additionally, the `executor` includes a CW1 proxy contract, allowing users to re
                             [
                               "158456325028528675187087900673", // PICA on Centauri
                               {
-                                  "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to interpreter
+                                  "intercept": "1234567890", // amount to move to Osmosis, but be same or larger than moved to Executor
                                   "slope": "0"
                               }
                             ]

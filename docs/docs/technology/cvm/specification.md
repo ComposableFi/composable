@@ -669,15 +669,20 @@ CVM handles differences without chaining program semantics and reaches chains wi
 
 Security of such multi deploy is described in other section.
 
-## Deployments
+### Deployments (Feature lowering)
 
 Can be considered as 3 layers,
 
 1. Full deployment of contract with all capabilities. Can do anything.
 2. Partial fulfillment of CVM spec using on chain features in case not deployment is possible (usually can multi hop transfer, swap). 
-3. Edges which may start or terminate CVM programs, but do not execute anything except simple sings (like one hop final transfer). `Shortcuts` capable doing only limited subset of operation on top of existing cross chain protocol.
+3. Edges which may start or terminate CVM programs, but do not execute anything except simple sings (like one hop final transfer). Csapable doing only limited subset of operation on top of existing cross chain protocol.
+
 
 For each chain and protocol it makes pragmatics solution to use existing liquidity and execution primitives.
+
+### High price of compute (Route lowering)
+
+Like Ethereum, in this case sender chain (or wallet) transforms CVM (using  registry) into native ABI stucture. In this case Executor does minimal overhead and no need for [routing](lowering-routing.md) to be executed on that chain.
 
 ### No support for arbitrary contracts
 
@@ -757,22 +762,22 @@ For this example, we have the source initiator be a regular user, however, a sma
 
 ```mermaid
 sequenceDiagram
-    User->>Interpreter ABC: Submit Program
-    Interpreter ABC->>Router ABC: Spawn Program
+    User->>Executor ABC: Submit Program
+    Executor ABC->>Router ABC: Spawn Program
     Router ABC->>Outpost ABC: Submit Program
     Outpost ABC->>Outpost XYZ: Relay Program
     Outpost XYZ->>Router XYZ: Instantiate VM
-    Router XYZ->>Interpreter XYZ: Execute Spawn
-    Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
-    Lender->>Interpreter XYZ: Transfer USDC
-    Interpreter XYZ->>Tip: Transfer USDC fee to Relayer
-    Interpreter XYZ->>Router XYZ: Spawn Program
+    Router XYZ->>Executor XYZ: Execute Spawn
+    Executor XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
+    Lender->>Executor XYZ: Transfer USDC
+    Executor XYZ->>Tip: Transfer USDC fee to Relayer
+    Executor XYZ->>Router XYZ: Spawn Program
     Router XYZ->>Outpost XYZ: Submit Program
     Outpost XYZ->>Outpost ABC: Relay Program
     Outpost ABC->>Router ABC: Instantiate VM
-    Router ABC->>Interpreter ABC: Execute Spawn
-    Interpreter ABC->>Tip: Transfer USDC fee to Relayer
-    Interpreter ABC->>User: Transfer USDC
+    Router ABC->>Executor ABC: Execute Spawn
+    Executor ABC->>Tip: Transfer USDC fee to Relayer
+    Executor ABC->>User: Transfer USDC
 ```
 
 Although these operations are quite complicated to code by hand, using the CVM protocol, we can very succinctly express them:

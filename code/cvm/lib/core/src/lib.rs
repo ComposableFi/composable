@@ -18,7 +18,10 @@
 // )
 // .map_err(|_| StdError::generic_err("invalid program"))?
 // .build())
-
+#![deprecated(
+	since = "1.0.0",
+	note = "use ibc-apps-more-rs repo for relevant types, cvm moved to cvm repo"
+)]
 #![allow(clippy::comparison_chain)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(

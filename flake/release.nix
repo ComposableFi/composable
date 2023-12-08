@@ -147,21 +147,21 @@
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
             echo "$ADDRESS" > .secret/$DIR/ADDRESS
 
-            INTERPRETER_WASM_FILE="${packages.cw-cvm-executor}/lib/cw_cvm_executor.wasm"
-            INTERPRETER_WASM_CODE_HASH=$(sha256sum "$INTERPRETER_WASM_FILE"  | head -c 64)
+            EXECUTOR_WASM_FILE="${packages.cw-cvm-executor}/lib/cw_cvm_executor.wasm"
+            EXECUTOR_WASM_CODE_HASH=$(sha256sum "$EXECUTOR_WASM_FILE"  | head -c 64)
             DESCRIPTION=$(cat ${./release-gov-osmosis-proposal-cvm-upload.md})
 
-             "$BINARY" tx gov submit-proposal wasm-store "$INTERPRETER_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine interpreter contract" \
+             "$BINARY" tx gov submit-proposal wasm-store "$EXECUTOR_WASM_FILE" --title "Upload Composable cross-chain Virtual Machine Executor contract" \
                --description "$DESCRIPTION" --run-as "$ADDRESS"  \
                --deposit="$DEPOSIT" \
-               --code-source-url 'https://github.com/ComposableFi/composable/tree/d4d01f19d8fbe4eafa81f9f2dfd0fd4899998ce6/code/cvm/cosmwasm/contracts/interpreter' \
+               --code-source-url 'https://github.com/ComposableFi/cvm/contracts/cosmwasm/executor' \
                --builder "composablefi/devnet:v9.10037.1" \
-               --code-hash "$INTERPRETER_WASM_CODE_HASH" \
+               --code-hash "$EXECUTOR_WASM_CODE_HASH" \
                --from "$ADDRESS" --keyring-backend test --chain-id $CHAIN_ID --yes --broadcast-mode block \
                --gas 25000000 --gas-prices 0.025$FEE --node "$NODE" --home .secret/$DIR |
-                tee .secret/$DIR/INTERPRETER_PROPOSAL
+                tee .secret/$DIR/EXECUTOR_PROPOSAL
 
-             GATEWAY_WASM_FILE="${packages.cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
+             GATEWAY_WASM_FILE="${packages.cw-cvm-outpost}/lib/cw_cvm_outpost.wasm"
              GATEWAY_WASM_CODE_HASH=$(sha256sum "$GATEWAY_WASM_FILE"  | head -c 64)
 
              sleep "$BLOCK_SECONDS" 
@@ -193,7 +193,7 @@
             mkdir --parents .secret/$DIR
 
             EXECUTOR="${packages.cw-cvm-executor}/lib/cw_cvm_executor.wasm"
-            GATEWAY="${packages.cw-cvm-gateway}/lib/cw_cvm_gateway.wasm"
+            GATEWAY="${packages.cw-cvm-outpost}/lib/cw_cvm_outpost.wasm"
 
             echo "$CI_COSMOS_MNEMONIC" | "$BINARY" keys add CI_COSMOS_MNEMONIC --recover --keyring-backend test --home .secret/$DIR --output json
             ADDRESS=$("$BINARY" keys show CI_COSMOS_MNEMONIC --keyring-backend test --home .secret/$DIR --output json | jq -r '.address')
@@ -227,11 +227,11 @@
             EOF
             )
 
-            INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "cvm-gateway-4" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
+            INSTANTIATE=$("$BINARY" tx wasm instantiate "$CENTAURI_GATEWAY_CODE_ID" "$INSTANTIATE" --label "composable_cvm_outpost" --keyring-backend test --home .secret/$DIR --output json --node "$NODE" --from CI_COSMOS_MNEMONIC --gas-prices 0.1$FEE --gas auto --gas-adjustment 1.3 --chain-id "$CHAIN_ID" --yes --broadcast-mode sync --admin "$ADDRESS")
             echo "$INSTANTIATE"
             sleep $BLOCK_TIME
-            GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$CENTAURI_GATEWAY_CODE_ID" --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
-            echo "$GATEWAY_CONTRACT_ADDRESS" > .secret/$DIR/GATEWAY_CONTRACT_ADDRESS
+            OUTPOST_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$CENTAURI_GATEWAY_CODE_ID" --home .secret/$DIR --output json --node "$NODE"  | jq -r ".contracts | .[-1]")
+            echo "$OUTPOST_CONTRACT_ADDRESS" > .secret/$DIR/OUTPOST_CONTRACT_ADDRESS
           '';
         };
       };

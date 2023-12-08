@@ -1,0 +1,22 @@
+{
+  "name": "tests",
+  "module": "tests.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@cosmjs/cosmwasm-stargate": "^0.32.2",
+    "@cosmjs/proto-signing": "^0.32.2",
+    "@cosmjs/stargate": "^0.32.2",
+    "@effect/cli": "^0.27.0",
+    "@effect/platform-bun": "^0.27.0",
+    "cosmjs-types": "^0.9.0",
+    "cvm-cw-types": "^0.2.0",
+    "effect": "^2.0.0-next.62",
+    "primitive-predicates": "^2.0.6"
+  }
+}

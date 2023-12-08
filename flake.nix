@@ -43,14 +43,9 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    darwin = {
-      url = "github:lnl7/nix-darwin/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     cosmos = {
       url =
-        "github:dzmitry-lahoda-forks/cosmos.nix/e398b4dc9fa8e44c9201d3285eb2818116c0b9d3";
+        "github:dzmitry-lahoda-forks/cosmos.nix/1117a34d387aabb168a9c6909fec95f385745330";
       inputs.sbt-derivation.follows = "sbt-derivation";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -73,9 +68,8 @@
         "github:ComposableFi/composable-ibc/50eb36a8a1c4f67ae573ac447f6b1ba46f37791c";
     };
 
-    composable-cosmos-src = {
-      flake = false;
-      url = "github:ComposableFi/composable-cosmos/devnet";
+    composable-cosmos = {
+      url = "github:ComposableFi/composable-cosmos/release/v7.0.x";
     };
 
     cvm = { url = "github:ComposableFi/cvm"; };
@@ -123,18 +117,18 @@
         ./code/benchmarks.nix
         ./code/common-deps.nix
         ./code/composable-nodes.nix
-        ./code/integration-tests/runtime-tests/runtime-tests.nix
+        ./tests/flake-module.nix
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
         ./docs/flake-module.nix
-        ./flake/all.nix
+        ./flake/ci.nix
         ./flake/bash.nix
         ./flake/cargo-tools.nix
         ./flake/check.nix
         ./flake/lightnet.nix
         ./flake/cosmos.nix
-        ./flake/dev-shells.nix
+        ./flake/shells.nix
         ./flake/devnet-tools.nix
         ./flake/devnet.nix
         ./flake/ethereum.nix
@@ -147,7 +141,6 @@
         ./flake/cosmos/cosmos-hub.nix
         ./flake/cosmos/neutron.nix
         ./flake/xapps.nix
-        ./flake/xapps.nix
         ./flake/overlays.nix
         ./flake/devnets/flake-module.nix
         ./flake/release.nix
@@ -158,7 +151,7 @@
         ./inputs/AcalaNetwork/acala.nix
         ./inputs/bifrost-finance/bifrost/flake-module.nix
         ./inputs/ComposableFi/composable-ibc/flake-module.nix
-        ./inputs/ComposableFi/composable-cosmos/flake-module.nix
+        ./flake/cosmos/composable-cosmos.nix
         ./inputs/paritytech/cumulus.nix
         ./inputs/paritytech/polkadot.nix
         ./inputs/paritytech/substrate.nix

@@ -25,10 +25,10 @@
           "accounts": {
             "bech": "neutron"
           },
-          "gateway": {
+          "outpost": {
             "cosm_wasm": {
-              "contract": "$NEUTRON_GATEWAY_CONTRACT_ADDRESS",
-              "interpreter_code_id": $NEUTRON_INTERPRETER_CODE_ID,
+              "contract": "$NEUTRON_OUTPOST_CONTRACT_ADDRESS",
+              "executor_code_id": $NEUTRON_EXECUTOR_CODE_ID,
               "admin": "$KEY"
             }
           },
@@ -53,10 +53,10 @@
           "accounts": {
             "bech": "osmo"
           },
-          "gateway": {
+          "outpost": {
             "cosm_wasm": {
-              "contract": "$OSMOSIS_GATEWAY_CONTRACT_ADDRESS",
-              "interpreter_code_id": $OSMOSIS_INTERPRETER_CODE_ID,
+              "contract": "$OSMOSIS_OUTPOST_CONTRACT_ADDRESS",
+              "executor_code_id": $OSMOSIS_EXECUTOR_CODE_ID,
               "admin": "$KEY"
             }
           },
@@ -81,10 +81,10 @@
           "accounts": {
             "bech": "centauri"
           },
-          "gateway": {
+          "outpost": {
             "cosm_wasm": {
-              "contract": "$CENTAURI_GATEWAY_CONTRACT_ADDRESS",
-              "interpreter_code_id": $CENTAURI_INTERPRETER_CODE_ID,
+              "contract": "$CENTAURI_OUTPOST_CONTRACT_ADDRESS",
+              "executor_code_id": $CENTAURI_EXECUTOR_CODE_ID,
               "admin": "$KEY"
             }
           },
@@ -105,9 +105,9 @@
       },
       {
         "force_network_to_network": {
-          "from": 2,
-          "to": 3,
-          "other": {
+          "from_network_id": 2,
+          "to_network_id": 3,
+          "to_network": {
             "counterparty_timeout": {
               "seconds": 600
             },
@@ -120,9 +120,9 @@
       },
       {
         "force_network_to_network": {
-          "from": 3,
-          "to": 2,
-          "other": {
+          "from_network_id": 3,
+          "to_network_id": 2,
+          "to_network": {
             "counterparty_timeout": {
               "seconds": 600
             },
@@ -137,7 +137,7 @@
         "force_asset": {
           "asset_id": "316912650057057350374175801345",
           "network_id": 4,
-          "metadata": "Native asset of Cosmos Neutron",
+          "metadata": "Neutron NTRN",
           "local": {
             "native": {
               "denom": "untrn"
@@ -148,6 +148,7 @@
       {
         "force_asset": {
           "asset_id": "237684487542793012780631851009",
+          "metadata": "Osmosis ComposableCosmos Picasso PICA",
           "network_id": 3,
           "local": {
             "native": {
@@ -167,6 +168,7 @@
       {
         "force_asset": {
           "asset_id": "158456325028528675187087900673",
+          "metadata" : "Picasso ComposableCosmos PICA",
           "network_id": 2,
           "local": {
             "native": {

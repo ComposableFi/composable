@@ -1,3 +1,4 @@
+#[deprecated(since = "0.1.0", note = "use ibc-apps-more-rs")]
 pub mod ics20;
 pub mod picasso;
 

@@ -9,25 +9,35 @@
       };
       devnet-root-directory = "/tmp/composable-devnet";
       log = "trace";
+      centauri-osmosis = {
+        devnet = {
+          TELEMETRY_PORT = 30142;
+          REST_PORT = 31066;
+        };
+      };
       hermes-config = (cosmos.evalHermesModule {
         modules = [{
+
           config.hermes.global.log_level = "trace";
-          config.hermes.mode.clients.misbehaviour = false;
+          config.hermes.mode.clients = {
+            misbehaviour = true;
+            refresh = true;
+          };
           config.hermes.mode.packets = {
             enabled = true;
-            clear_interval = 0;
+            clear_interval = 100;
             clear_on_start = false;
             tx_confirmation = true;
           };
           config.hermes.rest = {
-            enabled = true;
-            host = "127.0.0.1";
-            port = 30042;
+            enabled = false;
+            host = "0.0.0.0";
+            port = centauri-osmosis.devnet.REST_PORT;
           };
           config.hermes.telemetry = {
-            enabled = true;
-            host = "127.0.0.1";
-            port = 30041;
+            enabled = false;
+            host = "0.0.0.0";
+            port = centauri-osmosis.devnet.TELEMETRY_PORT;
           };
           config.hermes.chains = [
             {
@@ -49,10 +59,10 @@
               default_gas = 100000000;
               max_gas = 40000000000;
               gas_price = {
-                price = 1.0;
+                price = 0.1;
                 denom = "ppica";
               };
-              gas_multiplier = 1.3;
+              gas_multiplier = 2.0;
               max_msg_num = 5;
               max_tx_size = 4097152;
               clock_drift = "10s";
@@ -66,9 +76,17 @@
               address_type = { derivation = "cosmos"; };
               trusted_node = true;
               key_store_type = "Test";
+              # default is allow * *
+              # packet_filter = {
+              #   policy = "allow";
+              #   list = [[
+              #     "transfer"
+              #     "channel-*"
+              #   ]];
+              # };
             }
             {
-              id = "osmosis-dev";
+              id = networks.osmosis.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
                   builtins.toString networks.osmosis.devnet.CONSENSUS_RPC_PORT
                 }";
@@ -80,20 +98,20 @@
                 interval = "1s";
               };
               rpc_timeout = "20s";
-              account_prefix = "osmo";
+              account_prefix = networks.osmosis.devnet.ACCOUNT_PREFIX;
               key_name = "osmosis-dev";
               store_prefix = "ibc";
               key_store_type = "Test";
               default_gas = 10000000;
-              max_gas = 4000000000;
+              max_gas = 2000000000;
               gas_price = {
-                price = 1.0;
+                price = 0.1;
                 denom = "uosmo";
               };
-              gas_multiplier = 1.1;
-              max_msg_num = 5;
+              gas_multiplier = 2.0;
+              max_msg_num = 10;
               max_tx_size = 4097152;
-              clock_drift = "10s";
+              clock_drift = "20s";
               max_block_time = "30s";
               trusting_period = "640s";
               trust_threshold = {
@@ -104,80 +122,80 @@
               address_type = { derivation = "cosmos"; };
               trusted_node = true;
             }
-
-            {
-              id = networks.neutron.devnet.CHAIN_ID;
-              rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.neutron.devnet.CONSENSUS_RPC_PORT
-                }";
-              grpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.neutron.devnet.GRPCPORT
-                }";
-              event_source = {
-                mode = "pull";
-                interval = "1s";
-              };
-              ccv_consumer_chain = true;
-              rpc_timeout = "20s";
-              account_prefix = networks.neutron.devnet.ACCOUNT_PREFIX;
-              key_name = networks.neutron.devnet.CHAIN_ID;
-              store_prefix = "ibc";
-              key_store_type = "Test";
-              default_gas = 10000000;
-              max_gas = 30000000;
-              gas_price = {
-                price = 2.5e-3;
-                denom = networks.neutron.devnet.FEE;
-              };
-              gas_multiplier = 1.5;
-              max_msg_num = 30;
-              max_tx_size = 4097152;
-              clock_drift = "10s";
-              max_block_time = "30s";
-              trusting_period = "14days";
-              trust_threshold = {
-                numerator = "1";
-                denominator = "3";
-              };
-              type = "CosmosSdk";
-              address_type = { derivation = "cosmos"; };
-              trusted_node = true;
-            }
-            {
-              id = networks.cosmos-hub.devnet.CHAIN_ID;
-              rpc_addr = "http://127.0.0.1:${
-                  builtins.toString
-                  networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT
-                }";
-              grpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.cosmos-hub.devnet.GRPCPORT
-                }";
-              event_source = {
-                mode = "pull";
-                interval = "1s";
-              };
-              rpc_timeout = "10s";
-              account_prefix = "cosmos";
-              key_name = networks.cosmos-hub.devnet.CHAIN_ID;
-              store_prefix = "ibc";
-              default_gas = 100000;
-              max_gas = 3000000;
-              gas_price = {
-                price = 2.5e-3;
-                denom = "uatom";
-              };
-              gas_multiplier = 1.5;
-              max_msg_num = 30;
-              max_tx_size = 2097152;
-              clock_drift = "5s";
-              max_block_time = "10s";
-              trusting_period = "14days";
-              trust_threshold = {
-                numerator = "1";
-                denominator = "3";
-              };
-              address_type = { derivation = "cosmos"; };
-            }
+            # something weird with sharing one config, will handle later with per connection relay
+            # {
+            #   id = networks.neutron.devnet.CHAIN_ID;
+            #   rpc_addr = "http://127.0.0.1:${
+            #       builtins.toString networks.neutron.devnet.CONSENSUS_RPC_PORT
+            #     }";
+            #   grpc_addr = "http://127.0.0.1:${
+            #       builtins.toString networks.neutron.devnet.GRPCPORT
+            #     }";
+            #   event_source = {
+            #     mode = "pull";
+            #     interval = "1s";
+            #   };
+            #   ccv_consumer_chain = true;
+            #   rpc_timeout = "20s";
+            #   account_prefix = networks.neutron.devnet.ACCOUNT_PREFIX;
+            #   key_name = networks.neutron.devnet.CHAIN_ID;
+            #   store_prefix = "ibc";
+            #   key_store_type = "Test";
+            #   default_gas = 10000000;
+            #   max_gas = 30000000;
+            #   gas_price = {
+            #     price = 2.5e-3;
+            #     denom = networks.neutron.devnet.FEE;
+            #   };
+            #   gas_multiplier = 2.0;
+            #   max_msg_num = 30;
+            #   max_tx_size = 4097152;
+            #   clock_drift = "10s";
+            #   max_block_time = "30s";
+            #   trusting_period = "14days";
+            #   trust_threshold = {
+            #     numerator = "1";
+            #     denominator = "3";
+            #   };
+            #   type = "CosmosSdk";
+            #   address_type = { derivation = "cosmos"; };
+            #   trusted_node = true;
+            # }
+            # {
+            #   id = networks.cosmos-hub.devnet.CHAIN_ID;
+            #   rpc_addr = "http://127.0.0.1:${
+            #       builtins.toString
+            #       networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT
+            #     }";
+            #   grpc_addr = "http://127.0.0.1:${
+            #       builtins.toString networks.cosmos-hub.devnet.GRPCPORT
+            #     }";
+            #   event_source = {
+            #     mode = "pull";
+            #     interval = "1s";
+            #   };
+            #   rpc_timeout = "10s";
+            #   account_prefix = "cosmos";
+            #   key_name = networks.cosmos-hub.devnet.CHAIN_ID;
+            #   store_prefix = "ibc";
+            #   default_gas = 100000;
+            #   max_gas = 3000000;
+            #   gas_price = {
+            #     price = 2.5e-3;
+            #     denom = "uatom";
+            #   };
+            #   gas_multiplier = 2.0;
+            #   max_msg_num = 30;
+            #   max_tx_size = 2097152;
+            #   clock_drift = "5s";
+            #   max_block_time = "10s";
+            #   trusting_period = "14days";
+            #   trust_threshold = {
+            #     numerator = "1";
+            #     denominator = "3";
+            #   };
+            #   address_type = { derivation = "cosmos"; };
+            # }
           ];
         }];
       }).config.hermes.toml;

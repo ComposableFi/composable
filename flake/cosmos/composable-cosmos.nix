@@ -18,29 +18,8 @@
         inherit pkgs;
         cosmwasm-check = self.inputs.cosmos.packages."${system}".cosmwasm-check;
       };
-      centauri = cosmosLib.mkCosmosGoApp {
-        name = "centauri";
-        version = "v6.3.1";
-        src = self.inputs.composable-cosmos-src;
-        vendorHash = "sha256-MRADQxw+T8lVJujJn2yEaZOEs6AYGgaiBbYJUI3cugA=";
-        tags = [ "netgo" ];
-        engine = "cometbft/cometbft";
-        excludedPackages = [ "interchaintest" "simd" ];
-        preFixup = ''
-          ${cosmosLib.wasmdPreFixupPhase
-          self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 "centaurid"}
-        '';
-        buildInputs = [ self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 ];
-        proxyVendor = true;
-        doCheck = false;
-      };
 
-      centaurid = pkgs.writeShellApplication {
-        name = "centaurid";
-        text = ''
-          ${centauri}/bin/centaurid "$@"
-        '';
-      };
+      centaurid = self.inputs.composable-cosmos.packages."${system}".centaurid;
 
       ibc-lightclients-wasm-v1-msg-push-new-wasm-code = code: {
         "messages" = [{
@@ -74,29 +53,22 @@
           centaurid
           pkgs.jq
           self.inputs.cvm.packages."${system}".cw-cvm-executor
-          self.inputs.cvm.packages."${system}".cw-cvm-gateway
+          self.inputs.cvm.packages."${system}".cw-cvm-outpost
         ];
 
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
-
           ${bashTools.export pkgs.networksLib.pica.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          VALIDATOR_KEY=$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )
-          PORT=26657
-          BLOCK_SECONDS=5
-          FEE=ppica
-          BINARY=centaurid
+          VALIDATOR_KEY=$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend=test --keyring-dir="$KEYRING_TEST" --output=json | jq .address -r )
 
-          "$BINARY" tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
+          "$BINARY" tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from="$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep $BLOCK_SECONDS
-          "$BINARY" query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:$PORT --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
+          "$BINARY" query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:$CONSENSUS_RPC_PORT --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
           PROPOSAL_ID=1
           "$BINARY" tx gov vote $PROPOSAL_ID yes --from "$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep 20
-          "$BINARY" query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:$PORT --home "$CHAIN_DATA" | jq '.status'
+          "$BINARY" query gov proposal $PROPOSAL_ID --chain-id "$CHAIN_ID" --node tcp://localhost:$CONSENSUS_RPC_PORT --home "$CHAIN_DATA" | jq '.status'
           sleep $BLOCK_SECONDS
-          "$BINARY" query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CHAIN_DATA" --output json --node tcp://localhost:$PORT | jq '.code_ids[0]' --raw-output | tee "$CHAIN_DATA/code_id"
+          "$BINARY" query 08-wasm all-wasm-code --chain-id "$CHAIN_ID" --home "$CHAIN_DATA" --output json --node tcp://localhost:$CONSENSUS_RPC_PORT | jq '.code_ids[0]' --raw-output | tee "$CHAIN_DATA/code_id"
         '';
       };
 
@@ -106,38 +78,32 @@
           centaurid
           pkgs.jq
           self.inputs.cvm.packages."${system}".cw-cvm-executor
-          self.inputs.cvm.packages."${system}".cw-cvm-gateway
+          self.inputs.cvm.packages."${system}".cw-cvm-outpost
         ];
 
         text = ''
-
-          HOME=${devnet-root-directory}
-          export HOME
           KEY=${cosmosTools.cvm.centauri}
-
-          CHAIN_DATA="$HOME/.centaurid"
           ${bashTools.export pkgs.networksLib.pica.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
           PORT=26657
           BLOCK_SECONDS=5
           FEE=ppica
           BINARY=centaurid
 
-          CENTAURI_GATEWAY_CONTRACT_ADDRESS=$(cat $HOME/.centaurid/gateway_contract_address)
-          CENTAURI_INTERPRETER_CODE_ID=$(cat $HOME/.centaurid/interpreter_code_id)
-          OSMOSIS_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/gateway_contract_address")
-          OSMOSIS_INTERPRETER_CODE_ID=$(cat "$HOME/.osmosisd/interpreter_code_id")
-          NEUTRON_GATEWAY_CONTRACT_ADDRESS=$(cat "$HOME/.neutrond/gateway_contract_address")
-          NEUTRON_INTERPRETER_CODE_ID=$(cat "$HOME/.neutrond/interpreter_code_id")
+          CENTAURI_OUTPOST_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/outpost_contract_address)
+          CENTAURI_EXECUTOR_CODE_ID=$(cat $CHAIN_DATA/executor_code_id)
+          OSMOSIS_OUTPOST_CONTRACT_ADDRESS=$(cat "$HOME/.osmosisd/outpost_contract_address")
+          OSMOSIS_EXECUTOR_CODE_ID=$(cat "$HOME/.osmosisd/executor_code_id")
+          NEUTRON_OUTPOST_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/outpost_contract_address")
+          NEUTRON_EXECUTOR_CODE_ID=$(cat "$CHAIN_DATA/executor_code_id")
 
           FORCE_CONFIG=$(cat << EOF
-              ${builtins.readFile ../../../flake/cvm.json}
+              ${builtins.readFile ./../cvm.json}
           EOF
           )
 
-          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${log} --keyring-backend test  --home "$CHAIN_DATA" --from APPLICATION1 --keyring-dir "$KEYRING_TEST" ${log}
+          "$BINARY" tx wasm execute "$CENTAURI_OUTPOST_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${log} --keyring-backend test  --home "$CHAIN_DATA" --from APPLICATION1 --keyring-dir "$KEYRING_TEST" ${log}
           sleep $BLOCK_SECONDS
-          "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
+          "$BINARY" query wasm contract-state all "$CENTAURI_OUTPOST_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
         '';
       };
 
@@ -147,21 +113,16 @@
           centaurid
           pkgs.jq
           self.inputs.cvm.packages."${system}".cw-cvm-executor
-          self.inputs.cvm.packages."${system}".cw-cvm-gateway
+          self.inputs.cvm.packages."${system}".cw-cvm-outpost
         ];
 
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
-
           ${bashTools.export pkgs.networksLib.pica.devnet}
-
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
           KEY=${cosmosTools.cvm.centauri}
-          PORT=26657
-          BLOCK_SECONDS=5
-          FEE=ppica
-          NETWORK_ID=2
-          BINARY=centaurid
+
+          if [[ $(curl 127.0.0.1:$CONSENSUS_RPC_PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
+           sleep 5
+          fi
 
           if [[ $(curl 127.0.0.1:$PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
            sleep 5
@@ -170,44 +131,44 @@
           function init_cvm() {
               local INSTANTIATE=$1
               "$BINARY" tx wasm store  "${
-                self.inputs.cvm.packages."${system}".cw-cvm-gateway
-              }/lib/cw_cvm_gateway.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+                self.inputs.cvm.packages."${system}".cw-cvm-outpost
+              }/lib/cw_cvm_outpost.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               GATEWAY_CODE_ID=1
 
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  "${
                 self.inputs.cvm.packages."${system}".cw-cvm-executor
-              }/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
-              INTERPRETER_CODE_ID=2
+              }/lib/cw_cvm_executor.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              EXECUTOR_CODE_ID=2
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  ${
                 self.inputs.cosmos.packages.${system}.cw20-base
-              }/lib/cw20_base.wasm --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              }/lib/cw20_base.wasm --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
 
               sleep $BLOCK_SECONDS
               "$BINARY" tx wasm store  "${
                 self.inputs.cvm.packages."${system}".cw-mantis-order
-              }/lib/cw_mantis_order.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
+              }/lib/cw_mantis_order.wasm" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST"
               ORDER_CODE_ID=4
 
               sleep $BLOCK_SECONDS
-              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "2121" --label "composable_cvm_gateway" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+              "$BINARY" tx wasm instantiate2 $GATEWAY_CODE_ID "$INSTANTIATE" "2121" --label "composable_cvm_outpost" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
               sleep $BLOCK_SECONDS
-              GATEWAY_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
-              echo "$GATEWAY_CONTRACT_ADDRESS" > "$CHAIN_DATA/gateway_contract_address"
+              OUTPOST_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$GATEWAY_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              echo "$OUTPOST_CONTRACT_ADDRESS" > "$CHAIN_DATA/outpost_contract_address"
 
               sleep $BLOCK_SECONDS
-              echo "{\"cvm_address\": \"$GATEWAY_CONTRACT_ADDRESS\"}"
-              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{\"cvm_address\": \"$GATEWAY_CONTRACT_ADDRESS\"}" "2121" --label "composable_mantis_order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
+              echo "{\"cvm_address\": \"$OUTPOST_CONTRACT_ADDRESS\"}"
+              "$BINARY" tx wasm instantiate2 $ORDER_CODE_ID "{\"cvm_address\": \"$OUTPOST_CONTRACT_ADDRESS\"}" "2121" --label "composable_mantis_order" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --yes --gas 25000000 --fees 920000166$FEE ${log} --keyring-backend test  --home "$CHAIN_DATA" --from "$KEY" --keyring-dir "$KEYRING_TEST" --admin "$KEY" --amount 1000000000000$FEE
 
 
               echo "wait for next block"
               sleep $BLOCK_SECONDS
-              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
+              ORDER_CONTRACT_ADDRESS=$("$BINARY" query wasm list-contract-by-code "$ORDER_CODE_ID" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --output json --home "$CHAIN_DATA" | dasel --read json '.contracts.[0]' --write yaml)
               echo "$ORDER_CONTRACT_ADDRESS" > "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS"
 
-              echo "$INTERPRETER_CODE_ID" > "$CHAIN_DATA/interpreter_code_id"
+              echo "$EXECUTOR_CODE_ID" > "$CHAIN_DATA/executor_code_id"
           }
 
           INSTANTIATE=$(cat << EOF
@@ -227,13 +188,7 @@
         runtimeInputs = devnetTools.withBaseContainerTools
           ++ [ centaurid pkgs.jq ];
         text = ''
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
-          ${bashTools.export pkgs.networksLib.pica.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          PORT=26657
-          FEE=ppica
-          BINARY=centaurid
-          BLOCK_SECONDS=5
+          ${bashTools.export pkgs.networksLib.pica.devnet}          
           ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
 
           sleep $BLOCK_SECONDS
@@ -262,9 +217,7 @@
           ++ [ centaurid pkgs.jq pkgs.dasel ];
         text = ''
           ${bashTools.export pkgs.networksLib.devnet.mnemonics}
-          CHAIN_DATA="${devnet-root-directory}/.centaurid"
           ${bashTools.export pkgs.networksLib.pica.devnet}
-          KEYRING_TEST="$CHAIN_DATA/keyring-test"
 
           if test "''${1-reuse}" == "fresh"; then
              echo "removing data dir"
@@ -315,18 +268,22 @@
            register_asset 0 "ptest"
            register_asset 1 "pdemo"
 
-
-            sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
-            sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
-            sed -i 's/keyring-backend = "os"/keyring-backend = "test"/' "$CHAIN_DATA/config/client.toml"
-            sed -i 's/output = "text"/output = "json"/' "$CHAIN_DATA/config/client.toml"
-            sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" "$CHAIN_DATA/config/config.toml"
-            sed -i "s/swagger = false/swagger = true/" "$CHAIN_DATA/config/app.toml"
+            dasel put --type=string --write=toml --file "$CHAIN_DATA/config/client.toml" --value "test" "keyring-backend"
+            dasel put --type=string --write=toml --file "$CHAIN_DATA/config/client.toml" --value "json" "output"
+            dasel put --type=string --write=toml --file="$CHAIN_DATA/config/client.toml" --value "$CHAIN_ID" '.chain-id'
+            dasel put --type=string --write=toml --file="$CHAIN_DATA/config/client.toml" --value "sync" '.broadcast-mode'
+            sed -i 's/minimum-gas-prices = "0stake"/minimum-gas-prices = "0stake"/' "$CHAIN_DATA/config/client.toml"
+            
             sed -i "s/rpc-max-body-bytes = 1000000/rpc-max-body-bytes = 10000000/" "$CHAIN_DATA/config/app.toml"
+            sed -i "s/swagger = false/swagger = true/" "$CHAIN_DATA/config/app.toml"
+            dasel put --type string --file "$CHAIN_DATA/config/app.toml" --value "0.0.0.0:$GRPCPORT" '.grpc.address'
+
+            dasel put --type string --file "$CHAIN_DATA/config/config.toml" --value "tcp://0.0.0.0:$CONSENSUS_GRPC_PORT" '.rpc.grpc_laddr'
+
+            sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = \[\"\*\"\]/" "$CHAIN_DATA/config/config.toml"
             sed -i "s/max_body_bytes = 1000000/max_body_bytes = 10000000/" "$CHAIN_DATA/config/config.toml"
             sed -i "s/max_header_bytes = 1048576/max_header_bytes = 10485760/" "$CHAIN_DATA/config/config.toml"
             sed -i "s/max_tx_bytes = 1048576/max_tx_bytes = 10485760/" "$CHAIN_DATA/config/config.toml"
-            sed -i 's/minimum-gas-prices = "0stake"/minimum-gas-prices = "0stake"/' "$CHAIN_DATA/config/client.toml"
 
             echo "document prefer nurse marriage flavor cheese west when knee drink sorry minimum thunder tilt cherry behave cute stove elder couch badge gown coral expire" | centaurid keys add alice --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "bleak slush nose opinion document sample embark couple cabbage soccer cage slow father witness canyon ring distance hub denial topic great beyond actress problem" | centaurid keys add bob --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
@@ -362,9 +319,9 @@
           else
             echo "WARNING: REUSING EXISTING DATA FOLDER"
           fi
-          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0.001ppica --home "$CHAIN_DATA" --db_dir "$CHAIN_DATA/data" ${log} --with-tendermint true --transport socket --trace-store $CHAIN_DATA/kvstore.log --grpc.address localhost:${
+          centaurid start --rpc.unsafe --rpc.laddr tcp://0.0.0.0:26657 --pruning=nothing --minimum-gas-prices=0.001ppica --home="$CHAIN_DATA" --db_dir="$CHAIN_DATA/data" ${log} --with-tendermint=true --transport=socket --trace-store=$CHAIN_DATA/kvstore.log --grpc.address=0.0.0.0:${
             builtins.toString pkgs.networksLib.pica.devnet.GRPCPORT
-          } --grpc.enable true --grpc-web.enable false --api.enable true --cpu-profile $CHAIN_DATA/cpu-profile.log --p2p.pex false --p2p.upnp  false
+          } --grpc.enable=true --grpc-web.enable=false --api.enable=true --cpu-profile=$CHAIN_DATA/cpu-profile.log --p2p.pex=false --p2p.upnp=false
         '';
       };
     in {
@@ -379,19 +336,14 @@
             centaurid
             pkgs.jq
             self.inputs.cvm.packages."${system}".cw-cvm-executor
-            self.inputs.cvm.packages."${system}".cw-cvm-gateway
+            self.inputs.cvm.packages."${system}".cw-cvm-outpost
           ];
 
           text = ''
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"
-            PORT=26657
-            FEE=ppica
-            BINARY=centaurid
-            GATEWAY_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/gateway_contract_address)
+            OUTPOST_CONTRACT_ADDRESS=$(cat $CHAIN_DATA/outpost_contract_address)
             MSG=$1
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${log} --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" ${log}
+            "$BINARY" tx wasm execute "$OUTPOST_CONTRACT_ADDRESS" "$MSG"  --chain-id="$CHAIN_ID"  --node=s"tcp://localhost:$CONSENSUS_RPC_PORT" --output=json --yes --gas=25000000 --fees=920000166"$FEE" ${log} --keyring-backend=test  --home="$CHAIN_DATA" --from=${cosmosTools.cvm.moniker} --keyring-dir="$KEYRING_TEST" ${log}
           '';
         };
         centauri-tx = pkgs.writeShellApplication {
@@ -400,13 +352,8 @@
             ++ [ centaurid pkgs.jq ];
 
           text = ''
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"
-            PORT=26657
-            FEE=ppica
-            BINARY=centaurid
-            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" ${log}
+            "$BINARY" tx ibc-transfer transfer transfer channel-0 osmo1x99pkz8mk7msmptegg887wy46vrusl7kk0sudvaf2uh2k8qz7spsyy4mg8 9876543210ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONENSUS_RPC_PORT" --output=json --yes --gas=25000000 --fees=920000166"$FEE" --keyring-backend=test  --home="$CHAIN_DATA" --from=${cosmosTools.cvm.moniker} --keyring-dir="$KEYRING_TEST" ${log}
           '';
         };
       };
