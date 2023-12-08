@@ -2,9 +2,9 @@
   perSystem = { config, self', inputs', pkgs, lib, system, crane
     , systemCommonRust, subnix, devnetTools, cosmosTools, bashTools, centauri
     , ... }:
-    
+
     let
-          log = " --log_level trace --trace ";
+      log = " --log_level trace --trace ";
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
       validator-key = cosmosTools.validators.centauri;

@@ -1,7 +1,8 @@
 { self, inputs, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, ... }:
-    let devnetConfig = pkgs.networksLib.neutron.devnet;
+    let
+      devnetConfig = pkgs.networksLib.neutron.devnet;
       log = " --log_level trace --trace ";
     in {
       packages = rec {
@@ -23,7 +24,7 @@
           '';
         };
 
-         neutrond-cvm-config = pkgs.writeShellApplication {
+        neutrond-cvm-config = pkgs.writeShellApplication {
           name = "neutrond-cvm-config";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ neutrond pkgs.jq pkgs.dasel ];
