@@ -33,7 +33,7 @@
             {
               id = networks.pica.devnet.CHAIN_ID;
               rpc_addr = "http://127.0.0.1:${
-                  builtins.toString networks.pica.devnet.PORT
+                  builtins.toString networks.pica.devnet.CONSENSUS_RPC_PORT
                 }";
               grpc_addr = "http://127.0.0.1:${
                   builtins.toString networks.pica.devnet.GRPCPORT

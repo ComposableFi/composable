@@ -16,8 +16,9 @@ Lastly, it's important to be aware of Bech32 encoding for accounts and the use o
    
 | chain      | stage   | id  |
 | ---------- | ------- | --- |
-| osmosis-1  | mainnet |  osmo1ltevzdpc6ku5en4spjn887nnd7qt4mz0msn6jpk3s40rn80uz9yqa68crl   |
-| centauri-1 | mainnet |  centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d   |
+| osmosis-1  | mainnet |  osmo1sy7pdmawyerekcl6xwz4v2p87j726auntcu48fvhsy24rkhv7n4s9yg267   |
+| centauri-1 | mainnet |  centauri1lkh7p89tdhkc52vkza5jus5xmgjqjut6ngucsn88mhmzaqc02h5qu89k2u   |
+| neutron-1 | mainnet |     |
 | picasso    | mainnet |     |
 | ethereum   | mainnet |     |
 | solana     | mainnet |     |

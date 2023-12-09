@@ -1,7 +1,8 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri, bashTools
     , osmosis, ... }:
     let
+      networks = pkgs.networksLib;
       env = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath
           (with pkgs; [ stdenv.cc.cc.lib llvmPackages.libclang.lib pkgs.zlib ]);
@@ -93,12 +94,12 @@
           inputs = self.inputs;
           modules = [rec {
             packages = [ self'.packages.neutrond ];
-            env = pkgs.networksLib.neutron.devnet // {
+            env = networks.neutron.devnet // {
               DIR = "devnet/.neutrond";
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
             };
@@ -109,7 +110,7 @@
               echo 'output = "json"' >> ~/.neutrond/config/client.toml
               echo 'node = "${env.NODE}"' >> ~/.neutrond/config/client.toml
               echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.neutrond/config/client.toml               
-              echo ${pkgs.networksLib.devnet.mnemonics.APP_1} | "$BINARY" keys add APP_1 --recover --keyring-backend test --output json            
+              echo ${networks.devnet.mnemonics.APPLICATION1} | "$BINARY" keys add APPLICATION1 --recover --keyring-backend test --output json            
             '';
           }];
         };
@@ -119,13 +120,13 @@
           inputs = self.inputs;
           modules = [rec {
             packages = [ self'.packages.centaurid ];
-            env = pkgs.networksLib.pica.devnet // {
+            env = networks.pica.devnet // {
               DIR = "devnet/.centaurid";
               NODE = "tcp://localhost:26657";
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
             };
@@ -136,7 +137,9 @@
               echo 'output = "json"' >> ~/.centauri/config/client.toml
               echo 'node = "${env.NODE}"' >> ~/.centauri/config/client.toml
               echo 'chain-id = "${env.CHAIN_ID}"' >> ~/.centauri/config/client.toml               
-              echo "apart ahead month tennis merge canvas possible cannon lady reward traffic city hamster monitor lesson nasty midnight sniff enough spatial rare multiply keep task" | "$BINARY" keys add cvm-admin --recover --keyring-backend test --output json            
+              ${bashTools.export networks.devnet.mnemonics}
+              echo "$APPLICATION1" | "$BINARY" keys add APPLICATION1 --recover --keyring-backend test --output json            
+              echo "$DEMO_MNEMONIC_1" | "$BINARY" keys add DEMO_MNEMONIC_1 --recover --keyring-backend test --output json
             '';
           }];
         };
@@ -156,7 +159,7 @@
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
             };
@@ -168,42 +171,71 @@
           inputs = self.inputs;
           modules = [{
             packages = [ self'.packages.centaurid ];
-            env = centauri.env.mainnet // {
+            env = networks.pica.mainnet // {
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
               ORDER_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-mantis-order
                 }/lib/cw_mantis_order.wasm";
-              FEE = "ppica";
             };
 
             enterShell = ''
-              rm --force --recursive ~/.centauri
-              mkdir --parents ~/.centauri/config
-              echo 'keyring-backend = "os"' >> ~/.centauri/config/client.toml
-              echo 'output = "json"' >> ~/.centauri/config/client.toml
-              echo 'node = "https://composable-rpc.polkachu.com:443"' >> ~/.centauri/config/client.toml
-              echo 'chain-id = "centauri-1"' >> ~/.centauri/config/client.toml
+              rm --force --recursive ~/.banksy
+              mkdir --parents ~/.banksy/config
+              echo 'keyring-backend = "os"' >> ~/.banksy/config/client.toml
+              echo 'output = "json"' >> ~/.banksy/config/client.toml
+              echo 'node = "${networks.pica.mainnet.NODE}"' >> ~/.banksy/config/client.toml
+              echo 'chain-id = "centauri-1"' >> ~/.banksy/config/client.toml
             '';
           }];
         };
+
+
+        neutron-mainnet = self.inputs.devenv.lib.mkShell {
+          inherit pkgs;
+          inputs = self.inputs;
+          modules = [{
+            packages = [ self'.packages.neutrond ];
+            env = networks.neutron.mainnet // {
+              EXECUTOR_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-executor
+                }/lib/cw_cvm_executor.wasm";
+              OUTPOST_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-cvm-gateway
+                }/lib/cw_cvm_gateway.wasm";
+            };
+
+            enterShell = ''
+              rm --force --recursive ~/.neutron
+              mkdir --parents ~/.neutron/config
+              echo 'keyring-backend = "os"' >> ~/.neutron/config/client.toml
+              echo 'output = "json"' >> ~/.neutron/config/client.toml
+              echo 'node = "https://rpc-kralum.neutron-1.neutron.org:443"' >> ~/.neutron/config/client.toml
+              echo 'chain-id = "${networks.neutron.mainnet.CHAIN_ID}"' >> ~/.neutron/config/client.toml
+            '';
+          }];
+        };
+
 
         osmosis-mainnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
           modules = [{
             packages = [ self'.packages.osmosisd ];
-            env = osmosis.env.mainnet // {
+            env = networks.osmosis.mainnet // {
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
+              ORDER_WASM_FILE = "${
+                  self.inputs.cvm.packages."${system}".cw-mantis-order
+                }/lib/cw_mantis_order.wasm";                
             };
             enterShell = ''
               rm ~/.osmosisd/config/client.toml 
@@ -221,7 +253,7 @@
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
               FEE = "uatom";
@@ -238,11 +270,11 @@
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
               NODE = "tcp://localhost:${
-                  builtins.toString pkgs.networksLib.osmosis.devnet.PORT
+                  builtins.toString networks.osmosis.devnet.PORT
                 }";
               FEE = "uatom";
             };
@@ -272,7 +304,7 @@
               EXECUTOR_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-executor
                 }/lib/cw_cvm_executor.wasm";
-              GATEWAY_WASM_FILE = "${
+              OUTPOST_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-cvm-gateway
                 }/lib/cw_cvm_gateway.wasm";
             };

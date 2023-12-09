@@ -308,7 +308,7 @@ type Identity = [Network, Account]
 
 /// this happens in Executor
 function execute_program(caller: Account, program: Program) {
-    ensureOneOf(caller, this.owners, this.gateway)
+    ensureOneOf(caller, this.owners, this.outpost)
     
     // reset from the last execution
     this.InstructionPointer = 0;
@@ -516,15 +516,15 @@ See Appendix A for the algorithm.
 
 ## CVM Execution Semantics
 
-Each chain within the `CVM` contains a singleton entity consisting of the Router, and the Gateway. Implementors MAY choose to create a monolithic smart contract or a set of modular contracts.
+Each chain within the `CVM` contains a singleton entity consisting of the Router, and the Outpost. Implementors MAY choose to create a monolithic smart contract or a set of modular contracts.
 
-### Gateway
+### Outpost
 
-Each chain contains a singleton bridge aggregator, the `Gateway`, which abstracts over transports.
+Each chain contains a singleton bridge aggregator, the `Outpost`, which abstracts over transports.
 
 ### Router
 
-Each program arriving through the `Gateway` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Executor` instance. The router then transfers funds to the `Executor` instance.
+Each program arriving through the `Outpost` is passed to the `Router`, which becomes the initial beneficiary of the provided `Assets` before finding or instantiating an `Executor` instance. The router then transfers funds to the `Executor` instance.
 
 Subsequent calls by the same `Origin` will not result in an instantiation, but instead in a re-use of the `Executor` instance. This allows foreign `Origins` to maintain state across different protocols, such as managing LP positions.
 
@@ -762,17 +762,17 @@ For this example, we have the source initiator be a regular user, however, a sma
 sequenceDiagram
     User->>Interpreter ABC: Submit Program
     Interpreter ABC->>Router ABC: Spawn Program
-    Router ABC->>Gateway ABC: Submit Program
-    Gateway ABC->>Gateway XYZ: Relay Program
-    Gateway XYZ->>Router XYZ: Instantiate VM
+    Router ABC->>Outpost ABC: Submit Program
+    Outpost ABC->>Outpost XYZ: Relay Program
+    Outpost XYZ->>Router XYZ: Instantiate VM
     Router XYZ->>Interpreter XYZ: Execute Spawn
     Interpreter XYZ->>Lender: Call 0x1337 (Borrow USDC for DOT)
     Lender->>Interpreter XYZ: Transfer USDC
     Interpreter XYZ->>Tip: Transfer USDC fee to Relayer
     Interpreter XYZ->>Router XYZ: Spawn Program
-    Router XYZ->>Gateway XYZ: Submit Program
-    Gateway XYZ->>Gateway ABC: Relay Program
-    Gateway ABC->>Router ABC: Instantiate VM
+    Router XYZ->>Outpost XYZ: Submit Program
+    Outpost XYZ->>Outpost ABC: Relay Program
+    Outpost ABC->>Router ABC: Instantiate VM
     Router ABC->>Interpreter ABC: Execute Spawn
     Interpreter ABC->>Tip: Transfer USDC fee to Relayer
     Interpreter ABC->>User: Transfer USDC

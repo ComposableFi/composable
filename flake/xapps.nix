@@ -3,6 +3,7 @@
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, osmosis, centauri, ... }:
     let devnet-root-directory = cosmosTools.devnet-root-directory;
+    cosmos-log = "--log_level trace --trace";
     in {
       packages = rec {
         xc-transfer-osmo-from--osmosis-to-centauri =
@@ -82,8 +83,23 @@
           '';
         };
 
-        xapp-centauri-pica-to-osmosis = pkgs.writeShellApplication {
-          name = "xapp-centauri-pica-to-osmosis";
+        transfer-centauri-pica-to-osmosis = pkgs.writeShellApplication {
+          name = "transfer-centauri-pica-to-osmosis";
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ self'.packages.centaurid pkgs.jq ];
+
+          text = ''
+            ${bashTools.export pkgs.networksLib.pica.devnet}
+            CHAIN_DATA="${devnet-root-directory}/.centaurid"      
+            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
+            FROM_ADDRESS=$("$BINARY" keys show APPLICATION1 --keyring-backend test --home "$CHAIN_DATA" --keyring-dir "$KEYRING_TEST" --output json | jq -r '.address')
+            echo "$FROM_ADDRESS"
+            centaurid tx ibc-transfer transfer transfer channel-0 "$FROM_ADDRESS" 1366642100500ppica --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${cosmos-log} --keyring-backend test  --home "$CHAIN_DATA" --from "$FROM_ADDRESS" --keyring-dir "$KEYRING_TEST"             
+          '';
+        };
+
+        transfer-centauri-pica-to-neutron = pkgs.writeShellApplication {
+          name = "transfer-centauri-pica-to-neutron";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.centaurid pkgs.jq ];
 
@@ -91,7 +107,8 @@
             CHAIN_DATA="${devnet-root-directory}/.centaurid"      
             KEYRING_TEST="$CHAIN_DATA/keyring-test"            
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            centaurid tx ibc-transfer transfer transfer channel-0 ${cosmosTools.cvm.centauri} 1366642100500ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" --log_level trace --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace             
+            FROM_ADDRESS=$("$BINARY" keys show APPLICATION1 --keyring-backend test --home "$CHAIN_DATA" --keyring-dir "$KEYRING_TEST" --output json | jq -r '.address')
+            centaurid tx ibc-transfer transfer transfer channel-1 "$FROM_ADDRESS" 1366642100500ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$RPCPORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${cosmos-log} --keyring-backend test  --home "$CHAIN_DATA" --from "$FROM_ADDRESS" --keyring-dir "$KEYRING_TEST"             
           '';
         };
 

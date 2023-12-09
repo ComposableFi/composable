@@ -7,7 +7,6 @@
       log = " --log_level trace --trace ";
       devnet-root-directory = cosmosTools.devnet-root-directory;
       validator-mnemonic = cosmosTools.validators.mnemonic;
-      validator-key = cosmosTools.validators.centauri;
       gov = {
         account = "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq";
         voting_period = "20s";
@@ -83,7 +82,7 @@
 
           ${bashTools.export pkgs.networksLib.pica.devnet}
           KEYRING_TEST="$CHAIN_DATA/keyring-test"
-          VALIDATOR_KEY=${validator-key}
+          VALIDATOR_KEY=$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )
           PORT=26657
           BLOCK_SECONDS=5
           FEE=ppica
@@ -136,7 +135,7 @@
           EOF
           )
 
-          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${log} --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" ${log}
+          "$BINARY" tx wasm execute "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" "$FORCE_CONFIG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${log} --keyring-backend test  --home "$CHAIN_DATA" --from APPLICATION1 --keyring-dir "$KEYRING_TEST" ${log}
           sleep $BLOCK_SECONDS
           "$BINARY" query wasm contract-state all "$CENTAURI_GATEWAY_CONTRACT_ADDRESS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
         '';
@@ -164,6 +163,10 @@
           NETWORK_ID=2
           BINARY=centaurid
 
+          if [[ $(curl 127.0.0.1:$PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
+           sleep 5
+          fi
+          
           function init_cvm() {
               local INSTANTIATE=$1
               "$BINARY" tx wasm store  "${
@@ -234,13 +237,13 @@
           ORDER_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/ORDER_CONTRACT_ADDRESS")
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" ${log} --from cvm-admin  ${log}
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ptest","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ppica" --amount 1234567890"$FEE" ${log} --from APPLICATION1  ${log}
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" ${log} --from cvm-admin  ${log}
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"order":{"msg":{"wants":{"denom":"ppica","amount":"10000"},"timeout":1000}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount "1234567890ptest" ${log} --from APPLICATION1  ${log}
 
           sleep $BLOCK_SECONDS
-          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"2","cow_amount":"100000","given":"100000"},{"order_id":"3","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" ${log} --from cvm-admin  ${log}
+          "$BINARY" tx wasm execute "$ORDER_CONTRACT_ADDRESS" '{"solve":{"msg":{"routes" : [], "cows":[{"order_id":"2","cow_amount":"100000","given":"100000"},{"order_id":"3","cow_amount":"100000","given":"100000"}],"timeout":5}}}' --output json --yes --gas 25000000 --fees "1000000000ptest" --amount 1234567890"$FEE" ${log} --from APPLICATION1  ${log}
 
         '';
       };
@@ -327,31 +330,29 @@
 
             echo "document prefer nurse marriage flavor cheese west when knee drink sorry minimum thunder tilt cherry behave cute stove elder couch badge gown coral expire" | centaurid keys add alice --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "bleak slush nose opinion document sample embark couple cabbage soccer cage slow father witness canyon ring distance hub denial topic great beyond actress problem" | centaurid keys add bob --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "coffee hospital claim ability wrap load display submit lecture solid secret law base barrel miss tattoo desert want wall bar ketchup sauce real unknown" | centaurid keys add charlie --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "${validator-mnemonic}" | centaurid keys add ${cosmosTools.validators.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
-            echo "${cosmosTools.cvm.mnemonic}" | centaurid keys add ${cosmosTools.cvm.moniker} --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "notice oak worry limit wrap speak medal online prefer cluster roof addict wrist behave treat actual wasp year salad speed social layer crew genius" | centaurid keys add test1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "quality vacuum heart guard buzz spike sight swarm shove special gym robust assume sudden deposit grid alcohol choice devote leader tilt noodle tide penalty" | centaurid keys add test2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_1" | centaurid keys add relayer1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_2" | centaurid keys add relayer2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_3" | centaurid keys add relayer3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_4" | centaurid keys add relayer4 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$APPLICATION1" | centaurid keys add APPLICATION1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
 
             function add-genesis-account () {
-              centaurid --keyring-backend test add-genesis-account "$1" "1000000000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --keyring-backend test --home "$CHAIN_DATA"
+              echo "adding $1"
+              centaurid --keyring-backend test add-genesis-account "$1" "10000000000000000000000000000ppica,100000000000000000000000ptest,100000000000000000000000pdemo" --home "$CHAIN_DATA"
             }
 
-            
-            # relayer
             add-genesis-account "$("$BINARY" keys show relayer1 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show relayer2 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show relayer3 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show relayer4 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
+            add-genesis-account "$("$BINARY" keys show APPLICATION1 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
+            add-genesis-account "$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
 
             add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
             add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
-            add-genesis-account ${validator-key}
-            add-genesis-account ${cosmosTools.cvm.centauri}
             add-genesis-account ${cosmosTools.mantis.centauri}
             add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
             add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d
