@@ -338,6 +338,7 @@
             echo "$RLY_MNEMONIC_3" | centaurid keys add relayer3 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$RLY_MNEMONIC_4" | centaurid keys add relayer4 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
             echo "$APPLICATION1" | centaurid keys add APPLICATION1 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
+            echo "$APPLICATION2" | centaurid keys add APPLICATION2 --recover --keyring-backend test --keyring-dir "$KEYRING_TEST" || true
 
             function add-genesis-account () {
               echo "adding $1"
@@ -349,10 +350,10 @@
             add-genesis-account "$("$BINARY" keys show relayer3 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show relayer4 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show APPLICATION1 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
+            add-genesis-account "$("$BINARY" keys show APPLICATION2 --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
             add-genesis-account "$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend test --keyring-dir "$KEYRING_TEST" --output json | jq .address -r )"
 
             add-genesis-account centauri1zr4ng42laatyh9zx238n20r74spcrlct6jsqaw
-            add-genesis-account centauri1makf5hslxqxzl29uyeyyddf89ff7edxyr7ewm5
             add-genesis-account ${cosmosTools.mantis.centauri}
             add-genesis-account centauri1cyyzpxplxdzkeea7kwsydadg87357qnamvg3y3
             add-genesis-account centauri18s5lynnmx37hq4wlrw9gdn68sg2uxp5ry85k7d

@@ -203,7 +203,7 @@ in {
           "osmosis-centauri-init".condition = "process_completed_successfully";
         };
         log_location = "${devnet-root-directory}/mantis-simulate-solve.log";
-        availability = { restart = relay; };
+        availability = { restart = "on_failure"; };
         namespace = "xapp";
       };
 
