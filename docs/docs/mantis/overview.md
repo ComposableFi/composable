@@ -14,8 +14,7 @@ Composable's thesis introduces an additional feature to how intents are currentl
 
 After the introduction of dark pools, which enabled orders to be broken up and split into different markets, the solution space broadened and more earnings opportunities were made available:
 
-![image_1](hbjabs)
-
+(insert image)
 ## Blockchains are Inherently Trust-No-One Markets
 Orders live on blocks that are publicly verifiable. A supply chain forms around these orders, involving the following entities and roles:
 
