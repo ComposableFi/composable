@@ -658,11 +658,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1702046209,
-        "narHash": "sha256-khctfCNWE0XZ6Y8XQaTDMyvhGJ9zSxpHfih1sSGUJAc=",
+        "lastModified": 1702376923,
+        "narHash": "sha256-4yhjFHDLamtJLOnBzmTROUlyAZl++b3fX7q5W/ZPduI=",
         "owner": "ComposableFi",
         "repo": "cvm",
-        "rev": "2a2d6e696979281153bd4f399a253a70e4a7c3a3",
+        "rev": "62eddd4a92b8b9b4b4c17ea698afabc522c0669f",
         "type": "github"
       },
       "original": {
@@ -2493,11 +2493,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1702069367,
-        "narHash": "sha256-7Spo3tnCxwkWETAByoc/rUJ5KGDSeRsowNzKxgjNWvk=",
+        "lastModified": 1702084598,
+        "narHash": "sha256-pqS3LgnidQyGLEbHNlcMkoKLuQipxRQbpxDQiMhQFPw=",
         "owner": "ComposableFi",
         "repo": "networks",
-        "rev": "94ee98f820ae53a0347f694cd6addc6c689f9c35",
+        "rev": "75e880e94bb560df2cc4663cfac2dcab590ffdc9",
         "type": "github"
       },
       "original": {
