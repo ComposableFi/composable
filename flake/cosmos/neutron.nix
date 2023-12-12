@@ -78,7 +78,7 @@
             echo "$RLY_MNEMONIC_1" | $BINARY keys add rly1 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_2" | $BINARY keys add rly2 --home "$CHAIN_DATA" --recover --keyring-backend=test
             echo "$RLY_MNEMONIC_4" | $BINARY keys add rly4 --home "$CHAIN_DATA" --recover --keyring-backend=test
-            echo "$APP_1" | $BINARY keys add APP_1 --home "$CHAIN_DATA" --recover --keyring-backend=test
+            echo "$APPLICATION1" | $BINARY keys add APPLICATION1 --home "$CHAIN_DATA" --recover --keyring-backend=test
 
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show val2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
@@ -88,7 +88,7 @@
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly2 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
             $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show rly4 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
-            $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show APP_1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
+            $BINARY add-genesis-account "$($BINARY --home "$CHAIN_DATA" keys show APPLICATION1 --keyring-backend test -a --home "$CHAIN_DATA")" "100000000000000$STAKEDENOM"  --home "$CHAIN_DATA"
 
             sed -i -e 's/timeout_commit = "5s"/timeout_commit = "1s"/g' "$CHAIN_DATA/config/config.toml"
             sed -i -e 's/timeout_propose = "3s"/timeout_propose = "1s"/g' "$CHAIN_DATA/config/config.toml"
@@ -754,7 +754,7 @@
               "security_dao": "'"$SECURITY_SUBDAO_CORE_CONTRACT_ADDRESS"'"
             }'
 
-            CVM_ADMIN=$($BINARY keys show APP_1 --keyring-backend test --home "$CHAIN_DATA" --output json | jq .address)
+            CVM_ADMIN=$($BINARY keys show APPLICATION1 --keyring-backend test --home "$CHAIN_DATA" --output json | jq .address)
             echo "$CVM_ADMIN"
             CVM_GATEWAY_INIT_MSG='{
               "admin": '"$CVM_ADMIN"',

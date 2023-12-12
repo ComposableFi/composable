@@ -40,40 +40,6 @@ nix run .#xc-swap-pica-to-osmo
 ```
 
 
-## How to generate schema
-
-```sh
-nix run ".#build-cvm-json-schema-ts"
-```
-
-## How to deploy and configure mainnet
-
-```sh
-nix develop .#centauri-mainnet --impure
-```
-
-```sh
-$BINARY tx wasm store "$GATEWAY_WASM_FILE" --from dz --gas=auto
-$BINARY tx wasm instantiate 15 '{"admin": "centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k", "network_id" : 2}' --label "cvm_gateway_4" --admin centauri1u2sr0p2j75fuezu92nfxg5wm46gu22ywfgul6k --gas=auto --from=dz
-
-$BINARY tx wasm store "$EXECUTOR_WASM_FILE" --from dz --gas=5305232
-
-$BINARY tx wasm execute centauri1wpf2szs4uazej8pe7g8vlck34u24cvxx7ys0esfq6tuw8yxygzuqpjsn0d "$(cat cvm.json)" --from=dz -y --gas=500000
-```
-
-```sh
-nix develop ".#osmosis-mainnet --impure"
-```
-
-```sh
-$BINARY tx wasm store "$GATEWAY_WASM_FILE" --from dz --gas=25000000 --fees=75000uosmo -y
-
-$BINARY tx wasm instantiate 271 '{"admin": "osmo1u2sr0p2j75fuezu92nfxg5wm46gu22yw9ezngh", "network_id" : 3}' --label "cvm_gateway_4" --admin osmo1u2sr0p2j75fuezu92nfxg5wm46gu22yw9ezngh --gas=400000 --from=dz --fees=1000uosmo
-
-$BINARY tx wasm store "$EXECUTOR_WASM_FILE" --from dz --gas=25000000 --fees=75000uosmo -y
-
-$BINARY tx wasm execute osmo1ltevzdpc6ku5en4spjn887nnd7qt4mz0msn6jpk3s40rn80uz9yqa68crl "$(cat cvm.json)" --from=dz -y --gas=500000 --fees=1500uosmo
-```
 
 ### ICS-20 Memo as `Spawn` carrier
 
