@@ -1,6 +1,6 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri, bashTools
-    , osmosis, ... }:
+  perSystem = { config, self', inputs', pkgs, system, systemCommonRust, centauri
+    , bashTools, osmosis, ... }:
     let
       networks = pkgs.networksLib;
       env = {
@@ -194,7 +194,6 @@
           }];
         };
 
-
         neutron-mainnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
@@ -220,7 +219,6 @@
           }];
         };
 
-
         osmosis-mainnet = self.inputs.devenv.lib.mkShell {
           inherit pkgs;
           inputs = self.inputs;
@@ -235,7 +233,7 @@
                 }/lib/cw_cvm_gateway.wasm";
               ORDER_WASM_FILE = "${
                   self.inputs.cvm.packages."${system}".cw-mantis-order
-                }/lib/cw_mantis_order.wasm";                
+                }/lib/cw_mantis_order.wasm";
             };
             enterShell = ''
               rm ~/.osmosisd/config/client.toml 

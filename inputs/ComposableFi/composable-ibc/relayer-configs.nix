@@ -3,7 +3,7 @@
     type = "cosmos";
     name = "centauri";
     rpc_url = "http://${host}:${
-        builtins.toString pkgs.networksLib.pica.devnet.RPCPORT
+        builtins.toString pkgs.networksLib.pica.devnet.CONSENSUS_RPC_PORT
       }";
     grpc_url = "http://${host}:${
         builtins.toString pkgs.networksLib.pica.devnet.GRPCPORT

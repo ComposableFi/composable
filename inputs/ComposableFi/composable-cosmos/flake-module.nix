@@ -166,7 +166,7 @@
           if [[ $(curl 127.0.0.1:$PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
            sleep 5
           fi
-          
+
           function init_cvm() {
               local INSTANTIATE=$1
               "$BINARY" tx wasm store  "${

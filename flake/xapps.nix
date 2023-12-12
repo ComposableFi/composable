@@ -2,8 +2,9 @@
 { self, ... }: {
   perSystem = { self', pkgs, systemCommonRust, subnix, lib, system, devnetTools
     , cosmosTools, bashTools, osmosis, centauri, ... }:
-    let devnet-root-directory = cosmosTools.devnet-root-directory;
-    cosmos-log = "--log_level trace --trace";
+    let
+      devnet-root-directory = cosmosTools.devnet-root-directory;
+      cosmos-log = "--log_level trace --trace";
     in {
       packages = rec {
         xc-transfer-osmo-from--osmosis-to-centauri =
