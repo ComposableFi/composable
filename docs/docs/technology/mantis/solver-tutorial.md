@@ -13,11 +13,11 @@ You know basics of blockchain, transactions, gas and easy can catch up with Cosm
 
 1. Get wallet with PICA on Centauri
 
-2. Clone https://github.com/ComposableFi/cvm/tree/main/mantis and cargo to build mantis-node. You can use `nix run "github:ComposableFi/cvm#mantis-node --` as alternative.
+2. Clone https://github.com/ComposableFi/cvm and `cargo run --bin mantis`. You can use `nix run "github:ComposableFi/cvm#mantis" --` as alternative.
 
 ## Run
 
-Here is example of command line parameters used by solver run by us https://github.com/ComposableFi/env/blob/a4bfeef449b5786f0d99f45e38a9acc306980fbb/flake.nix#L57 .
+Here is example of command line parameters used by solver run by us https://github.com/ComposableFi/env/blob/e9eaa098e103cb16f033e2abc26d09d79823da26/flake.nix#L49 .
 
 `--simulate` is optional, so is example how to provision own liquidity.
 
