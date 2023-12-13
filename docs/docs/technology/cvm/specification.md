@@ -114,7 +114,6 @@ During program interpretation, while the instruction is executing, the result of
 type OpaqueContract = SmartContract | Module 
 type OpaqueUser = OpaqueContract | Wallet
 
-
 type Network = number
 
 interface Program {
@@ -513,7 +512,6 @@ After the final instruction has been executed and registers are set, the executi
 
 See Appendix A for the algorithm.
 
-
 ## CVM Execution Semantics
 
 Each chain within the `CVM` contains a singleton entity consisting of the Router, and the Outpost. Implementors MAY choose to create a monolithic smart contract or a set of modular contracts.
@@ -577,12 +575,11 @@ Execution fees are opt-in and paid by the user by using the `Tip` registry value
 
 The following example program performs an operation, and rewards the tip address:
 
-```json
+```kdl
 {
-    "call" : 
+    call 0x13371337
+    transfer tip 15000000000000cvm/42
 }
-<Call> 0x13371337...
-<Transfer> <Tip> { USDC: 15000000000000 }
 ```
 
 ## Configuration and routing registry
