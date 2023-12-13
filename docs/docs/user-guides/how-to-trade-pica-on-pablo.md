@@ -15,7 +15,7 @@ This introductory guide explores how users can trade PICA on [Pablo](https://www
 
 ![token_select](./images-how-to-trade/token-select.png)
 
-By clicking the 'settings' ⚙️ icon, users can change the token utilized for paying gas fees, adjust their slippage tolerance and change the input to the USD value or the the number of tokens.
+By clicking the 'settings' ⚙️ icon, users can change the token utilized for paying gas fees, adjust their slippage tolerance and change the input to the USD value or the number of tokens.
 
 ![transaction_settings](./images-how-to-trade/transaction-settings.png)
 
