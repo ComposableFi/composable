@@ -1,7 +1,7 @@
 # Composable Virtual Machine (CVM)
 
 The Composable Virtual Machine (CVM) is language and execution runtime for cross-chain program execution and intents settlement. 
-The CVM is a orchestration language on top of standards for cross-chain communication, specifically over [IBC](./composable-ibc.md).
+The CVM is an orchestration language on top of standards for cross-chain communication, specifically over [IBC](./composable-ibc.md).
 
 ## Summary
 With the Composable Virtual Machine (CVM), developers can execute complex cross-chain operations in a single, user-signed transaction. With CVM, you're not restricted to a single blockchain universe. Just like you wouldn't want to be confined to one streaming service for all your entertainment needs, why settle for one blockchain network? CVM offers you a plethora of options, letting your digital assets enjoy the best of all worlds.

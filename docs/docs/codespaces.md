@@ -14,7 +14,7 @@ This gives us the following advantages:
   times, and saves you resources on your main machine.
 - You don't have to worry about using the wrong versions of dependencies, build systems, or other tools, since everyone 
   uses the same dependencies that have been defined in code, and are identical to the ones used in our CI pipelines.
-- If you come up with an improvement to our development experience, you can open an PR for it and then the entire team 
+- If you come up with an improvement to our development experience, you can open a PR for it and then the entire team 
 - can take advantage of it.
 
 Let's [get started with Codespaces!](./codespaces/getting-started.md)

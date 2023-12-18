@@ -6,11 +6,11 @@ To get in touch with the Composable team if you have additional questions or req
 
 ## Cosmos chains onboarding:
 
-Onboarding IBC-enabled chains is a permissionless and seamless proccess. Teams would have to set up a relayer between their Cosmos chain and [Composable Cosmos](../networks/composable-cosmos.md) in order to connect to Picasso and Ethereum. 
+Onboarding IBC-enabled chains is a permissionless and seamless process. Teams would have to set up a relayer between their Cosmos chain and [Composable Cosmos](../networks/composable-cosmos.md) in order to connect to Picasso and Ethereum. 
 
 ## HRMP Cross-chain channel onboarding:
 
-Onboarding other parachains to connect to Picasso, Composable and IBC-enabled chains requires HRMP channel openings which is a governance based proccess. 
+Onboarding other parachains to connect to Picasso, Composable and IBC-enabled chains requires HRMP channel openings which is a governance based process. 
 
 ### Apollo onboarding:
 
