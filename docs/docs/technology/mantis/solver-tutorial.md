@@ -27,6 +27,7 @@ In case of failure - read error. Usually it is:
 1. timeout/rate limit by RP
 2. bad wallet - no PICA or bad mnemonic
 3. Node not hosted with process auto restart policy on failure as it should be
+4. latency, if you picked slow RPC or host node on slow network - other solvers will be faster and solve instead o you
 
 ## GTP bot
 
