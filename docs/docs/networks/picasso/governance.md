@@ -1,4 +1,4 @@
-# Picasso OpenGov
+# OpenGov
 
 Governance mechanisms for Picasso are intended to ensure the growth and adaptation of the ecosystem in alignment with the wants and needs of the Picasso community. Therefore, all token holders are able to participate, with their votes being weighted by stake. Moreover, any alteration to Picasso must be approved by a referendum decided by PICA token holders.
 
@@ -22,16 +22,13 @@ Core principles guiding participation in the Picasso OpenGov process are as foll
 - Acting morally and with a mind for consequences of action or inaction
 - Standing firmly against any malicious language, behaviour, and actions
 
-
 ## On-Chain Governance
 
-Picasso’s hard governance involves on-chain mechanisms where the majority of tokens on Picasso determine key decisions. These decisions are made via token holders voting on proposed referenda, with individuals’ votes being weighted by staked token amount. 
-
-Definitions and components for OpenGov of Picasso are detailed below:
+Picasso’s hard governance involves on-chain mechanisms where the majority of tokens on Picasso determine key decisions. These decisions are made via token holders voting on proposed referenda. 
 
 ### OpenGov Committees
 
-The **Technical Committee** is a group of 5 core developers that are able to whitelist proposals. Its purpose is to provide technical review of urgent security issues and upgrades. The role of the Technical Committee includes, among others, ensuring the technical stability and critical safety measures of the parachain.
+The **Technical Committee** is a group of 6 core developers that are able to whitelist proposals. Its purpose is to provide technical review of urgent security issues and upgrades. There must always be 1/3 approval from the committee to whitelist proposals. 
 
 The **Treasury Committee** is an on-chain entity made up of 11 senior team members and supporters. Members of the Treasury committee consist of:
 
@@ -47,11 +44,12 @@ The **Treasury Committee** is an on-chain entity made up of 11 senior team membe
 - Tamara Frankel, D1 Ventures Founding Partner
 - James Wo, Digital Finance Group (DFG) Founder & Chairman
 
-The Treasury Committee also control Picasso’s multi-sig wallets holding the allocation for Liquidity Programs and Ecosystem incentives. Treasury spending can only be approved by this council; the funds from any of these wallets will only be transferred upon the approval of on-chain governance. For more details, refer to the PICA token transparency commitment statement.
+The Treasury Committee also control Picasso’s multi-sig wallets holding the allocation for Liquidity Programs and Ecosystem incentives. Treasury proposals can be submitted by anyone but spending can only be approved by this council; the funds from any of these wallets will only be transferred upon the approval of on-chain governance. For more details, refer to the PICA token transparency commitment statement.
 
-The **Relayer Committee** involves accounts running the Hyperspace relayer.
+The **Relayer Committee** consists of accounts running the Hyperspace relayer.
 
 ## Definitions
+Definitions and components for OpenGov on Picasso are detailed below:
 
 #### Origins 
 An origin is an authorization-based dispatch source for an operation. This determines the Track that a referendum is posted in.
@@ -74,10 +72,10 @@ This is a specific pipeline delineating the life cycle of a proposal. Tracks in 
 | Track           | Description    | Example |
 |-----------------------|-------------------|--------------------------|
 | Root        | Highest Privileges        | Runtime Upgrades                   |
-| Whitelist Caller           | Proposals handled by technical committee             | Accelerated proposal  |
-| General Admin          | On-chain changes            | HRMP Channel Opening, XCM Fees, Staking parameters, Registrar         |
-| Referendum Canceller                 |  Canceling proposal                           |  Incorrect referendum      |
-| Referendum Killer            |  Canceling proposal + slashing deposits            |    Malicious referendum              |
+| Whitelist Caller           | Fast-track proposals          | Accelerated proposal  |
+| General Admin          | On-chain changes            | Apollo and Collator onboarding, Release committee, LSD         |
+| Referendum Canceller                 |  Cancelling proposal                           |  Incorrect referendum      |
+| Referendum Killer            |  Cancelling proposals & slashing deposits            |    Malicious referendum              |
 
 
 ### Voting
@@ -152,6 +150,16 @@ Governance parameters (for each referenda track) are as follows:
 | General Admin    | 1 hour (300 blocks)    | 10 Days (72000 Blocks)         |  1 Day (7200 Blocks)        |   1 day       |
 | Referendum Canceller    | 1 hour 1 Day (7200 Blocks)    | 10 Days (72000 Blocks)         | 3 Hours (3600 Blocks)         | 10 mins   |
 | Referendum Killer    | 1 hour 1 Day (7200 Blocks)    | 10 Days (72000 Blocks)         | 3 Hours (3600 Blocks)         |  10 mins        |
+
+## Support and Approval Parameters by Track
+
+| Track    | Approval Curve     | Parameters | Support Curve | Parameters |
+| --- | --- | -------- | -------- | -------- |
+| Root    | Reciprocal   |  Day 0: 100% Day 2: 80% Day 10: 50%     | Linear      | Day 0: 50% Day 10: 0.5% |
+| Whitelist Caller    | Reciprocal | Day 0: 100% Day 2: 80% Day 10: 50%   | Reciprocal      | Day 0: 2% Hour 1: 1% Day 14: 0%  |
+| General Admin    | Reciprocal  | Day 0: 100% Day 2: 80% Day 10: 50%  | Reciprocal  | Day 0: 50% Day 5: 10% Day 10: 0% |
+| Referendum Canceller    | Reciprocal | Day 0: 100% Day 2: 80% Day 10: 50% | Reciprocal  | Day 0: 10% Day 1: 1% Day 10: 0% |
+| Referendum Killer    | Reciprocal  | Day 0: 100% Day 2: 80% Day 10: 50% | Reciprocal   |  Day 0: 10% Day 1: 1% Day 10: 0% |
 
 ## Approval Curves
 With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.

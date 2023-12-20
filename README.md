@@ -25,7 +25,7 @@ Composable Finance is dedicated to building the infrastructure for trust-minimiz
 
 Among the noteworthy pallets included are:
 
-- [CosmWasm VM for Substrate](./code/parachain/frame/cosmwasm/))
+- [CosmWasm VM for Substrate](./code/parachain/frame/cosmwasm/)
 - [Multihop (XCM + IBC)](./code/parachain/frame/pallet-multihop-xcm-ibc/) 
 - [Apollo](./code/parachain/frame/oracle/)
 - [Pablo DEX](./code/parachain/frame/pablo/)
