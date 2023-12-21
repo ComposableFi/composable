@@ -14,6 +14,7 @@ crate-type = ["cdylib"]
 name = "picasso_runtime"
 
 [features]
+std = ["picasso-runtime/std"]
 runtime-benchmarks = ["picasso-runtime/runtime-benchmarks"]
 fastnet = ["picasso-runtime/fastnet"]
 testnet = ["picasso-runtime/testnet"]

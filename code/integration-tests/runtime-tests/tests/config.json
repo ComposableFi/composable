@@ -1,0 +1,70 @@
+{
+  "endpoints": {
+    "picassoEndpoint": "ws://127.0.0.1:9988",
+    "composableEndpoint": "ws://127.0.0.1:29988",
+    "kusamaEndpoint": "ws://localhost:9944"
+  },
+  "chains": {
+    "picasso": {
+      "chainType": "substrate",
+      "addresses": {
+        "substrateEscrowAddress": "5xZC6K86GX7WbBv6UD4pLuFXbpUMqdPmMGpoZqij2dGewTDX",
+        "cosmosEscrowAddress": "5ywFeGCA5MvVqeEmTXshfzPJe9tCXEFDZKCTeoYCYYQWGSd8",
+        "feeAddress": "5xMXcPsD9B9xDMvLyNBLmn9uhK7sTXTfubGVTZmXwVJmTVWa"
+      }
+    },
+    "centauri": {
+      "chainType": "cosmos",
+      "addresses": {
+        "centauriAddress": "centauri1a58ta54j4trzz4wgdeunr4ga4sggz2vk5cfnhy"
+      }
+    },
+    "osmosis": {
+      "chainType": "cosmos",
+      "addresses": {
+        "osmoAddress": "osmo1a58ta54j4trzz4wgdeunr4ga4sggz2vkcfhl99"
+      }
+    },
+    "composable": {
+      "chainType": "substrate"
+    }
+  },
+  "assets": {
+    "ksm": {
+      "id": {
+        "picasso": "4",
+        "composable": "79228162514264337593543950340",
+        "centauri": "ibc/4859E46FF89C3A8D361A2F69CB04A2F5CD9D2CB01171E9D91B9E36405B89318A",
+        "osmosis": "ibc/437841648B2B6B72533FF4A045FE878DE5DDF1688703D5320347F5DB057B5494"
+      },
+      "decimals": 12
+    }
+  },
+  "channels": [
+    {
+      "from": "picasso",
+      "to": "composable",
+      "channelId": 1
+    },
+    {
+      "from": "composable",
+      "to": "picasso",
+      "channelId": 0
+    },
+    {
+      "from": "picasso",
+      "to": "centauri",
+      "channelId": 0
+    },
+    {
+      "from": "centauri",
+      "to": "picasso",
+      "channelId": 0
+    },
+    {
+      "from": "centauri",
+      "to": "osmosis",
+      "channelId": 1
+    }
+  ]
+}

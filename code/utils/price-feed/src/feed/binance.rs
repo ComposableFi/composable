@@ -40,7 +40,7 @@ impl BinanceFeed {
 				let asset_pair = AssetPair::new(asset, quote_asset).unwrap_or_else(|| {
 					panic!("asset {:?} should be quotable in {:?}", asset, quote_asset)
 				});
-				format!("{}", ConcatSymbol::new(asset_pair))
+				ConcatSymbol::new(asset_pair).to_string()
 			})
 			.zip(assets.iter().copied())
 			.collect::<HashMap<_, _>>();

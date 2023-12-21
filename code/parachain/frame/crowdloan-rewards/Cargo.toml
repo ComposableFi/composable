@@ -16,10 +16,10 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dev-dependencies]
-composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 ed25519-dalek = "1.0.1"
 frame-benchmarking = { default-features = false, workspace = true }
-hex-literal = "0.3.3"
+hex-literal.workspace = true
 libsecp256k1 = { version = "0.7.0" }
 pallet-balances = { workspace = true }
 pallet-timestamp = { workspace = true }
@@ -37,26 +37,22 @@ libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, f
 ] }
 sp-application-crypto = { default-features = false, optional = true, workspace = true }
 
-# FRAME
 frame-benchmarking = { default-features = false, optional = true, workspace = true }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
 pallet-timestamp = { default-features = false, workspace = true, optional = true }
 
-# substrate primitives
 sp-arithmetic = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
-# SCALE
-scale-info = { version = "2.1.1", default-features = false, features = [
+scale-info = { worksspace = true, default-features = false, features = [
   "derive",
 ] }
 
-# misc
-hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex = { workspace = true, default-features = false, features = ["alloc"] }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = '1.0.136', optional = true }
 
@@ -67,24 +63,39 @@ default = ["std"]
 
 std = [
   "codec/std",
+  "composable-support/std",
+  "pallet-balances/std",
+  "composable-tests-helpers/std",
+  "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
   "scale-info/std",
   "serde/std",
-  "frame-benchmarking/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "hex/std",
+  "pallet-timestamp/std",
+  "sp-keystore/std",
+  "sp-application-crypto/std",
+  "ed25519-dalek/std",
+  "libsecp256k1/std",
+  "rustc-hex/std",
 ]
 
 runtime-benchmarks = [
-  "libsecp256k1",
   "ed25519-dalek",
-  "sp-application-crypto",
-  "pallet-timestamp",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "libsecp256k1",
+  "pallet-timestamp",
+  "sp-application-crypto",
+  "pallet-timestamp/runtime-benchmarks",
+  "composable-tests-helpers/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
 ]

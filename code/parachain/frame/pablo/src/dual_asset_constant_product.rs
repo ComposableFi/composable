@@ -18,7 +18,10 @@ use composable_traits::dex::{
 };
 use frame_support::{
 	pallet_prelude::*,
-	traits::fungibles::{Inspect, Mutate, Transfer},
+	traits::{
+		fungibles::{Inspect, Mutate},
+		tokens::{Fortitude, Precision, Preservation},
+	},
 };
 use sp_runtime::{
 	traits::{Convert, One, Zero},
@@ -118,7 +121,7 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		keep_alive: bool,
 	) -> Result<(T::Balance, BTreeMap<T::AssetId, T::Balance>), DispatchError> {
 		let mut pool_assets = Self::get_pool_balances(&pool, &pool_account);
-
+		let keep_alive = if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
 		let assets_with_balances = assets.try_mapped(|asset_amount| {
 			if asset_amount.amount.is_zero() {
 				return Err(Error::<T>::InvalidAmount)
@@ -290,16 +293,10 @@ impl<T: Config> DualAssetConstantProduct<T> {
 		ensure!(min_receive.is_empty(), Error::<T>::AssetNotFound);
 
 		for (id, amount) in &redeemed_assets {
-			T::Assets::transfer(
-				*id,
-				&pool_account,
-				who,
-				*amount,
-				false, // pool account doesn't need to be kept alive
-			)?;
+			T::Assets::transfer(*id, &pool_account, who, *amount, Preservation::Expendable)?;
 		}
 
-		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
+		T::Assets::burn_from(pool.lp_token, who, lp_amount, Precision::Exact, Fortitude::Force)?;
 
 		Ok(redeemed_assets)
 	}

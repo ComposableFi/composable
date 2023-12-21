@@ -15,6 +15,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0" }
 jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
 log = "0.4.17"
 once_cell = "1.12.0"
+futures = { workspace = true }
 serde = { version = "1.0.136", features = ["derive"] }
 common = { path = "../runtime/common" }
 composable-runtime = { path = "../runtime/composable" }
@@ -30,12 +31,8 @@ cosmwasm-rpc = { path = "../frame/cosmwasm/rpc" }
 cosmwasm-runtime-api = { path = "../frame/cosmwasm/runtime-api" }
 crowdloan-rewards-rpc = { path = "../frame/crowdloan-rewards/rpc" }
 crowdloan-rewards-runtime-api = { path = "../frame/crowdloan-rewards/runtime-api" }
-lending-rpc = { path = "../frame/lending/rpc" }
-lending-runtime-api = { path = "../frame/lending/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
-staking-rewards-rpc = { path = "../frame/staking-rewards/rpc" }
-staking-rewards-runtime-api = { path = "../frame/staking-rewards/runtime-api" }
 pallet-transaction-payment-rpc = { path = "../frame/transaction-payment/rpc" }
 pallet-transaction-payment-rpc-runtime-api = { path = "../frame/transaction-payment/rpc/runtime-api" }
 
@@ -49,7 +46,7 @@ frame-benchmarking-cli = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
-sc-finality-grandpa = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
 sc-basic-authorship = { workspace = true }
 sc-chain-spec = { workspace = true }
 sc-cli = { workspace = true }
@@ -100,9 +97,7 @@ cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-rpc-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
 
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", features = [
-  "rococo-native",
-], workspace = true }
+polkadot-cli = { workspace = true }
 polkadot-parachain = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-service = { workspace = true }
@@ -115,18 +110,27 @@ hex = "0.4.3"
 
 [features]
 builtin-wasm = [
-  "picasso-runtime/builtin-wasm",
   "composable-runtime/builtin-wasm",
+  "picasso-runtime/builtin-wasm",
 ]
 default = []
-ocw = []
 runtime-benchmarks = [
+  "composable-runtime/runtime-benchmarks",
+  "picasso-runtime/runtime-benchmarks",
   "polkadot-cli/runtime-benchmarks",
   "polkadot-service/runtime-benchmarks",
-  "picasso-runtime/runtime-benchmarks",
-  "composable-runtime/runtime-benchmarks",
 ]
-std = ["picasso-runtime/std", "composable-runtime/std"]
-
-[package.metadata.cargo-udeps.ignore]
-normal = ["pallet-bonded-finance"]
+std = [
+  "assets-rpc/std",
+  "assets-runtime-api/std",
+  "common/std",
+  "composable-runtime/std",
+  "cosmwasm-runtime-api/std",
+  "crowdloan-rewards-runtime-api/std",
+  "pablo-runtime-api/std",
+  "pallet-assets/std",
+  "pallet-crowdloan-rewards/std",
+  "pallet-transaction-payment-rpc-runtime-api/std",
+  "picasso-runtime/std",
+  "primitives/std",
+]

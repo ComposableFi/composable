@@ -31,7 +31,7 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: asset_tx_payment::Config> asset_tx_payment::WeightInfo for WeightInfo<T> {
 	fn set_payment_asset() -> Weight {
-		Weight::from_ref_time(26_387_000)
+		Weight::from_parts(26_387_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}

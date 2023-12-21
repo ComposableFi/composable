@@ -1,7 +1,6 @@
 use crate::{Config, Pallet, SUBSTRATE_ECDSA_SIGNATURE_LEN};
 use sp_std::{vec, vec::Vec};
 
-// TODO(cor): move these out of the `impl` as they do not refer to `self` or `Self`.
 use sp_core::{ecdsa, ed25519};
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_secp256k1_recover_pubkey(
@@ -69,6 +68,8 @@ impl<T: Config> Pallet<T> {
 		signatures: &[&[u8]],
 		public_keys: &[&[u8]],
 	) -> bool {
+		// https://substrate.stackexchange.com/questions/9754/sp-iocryptoed25519-batch-verify-was-removed-amid-polkadot-0-9-39-and-0-9-4
+
 		let mut messages = messages.to_vec();
 		let mut public_keys = public_keys.to_vec();
 
@@ -85,36 +86,11 @@ impl<T: Config> Pallet<T> {
 			return false
 		}
 
-		// Each batch verification process is started with `start_batch_verify` and ended with
-		// `finish_batch_verify`. When it is started, it needs to be properly finished. But this
-		// means `finish_batch_verify` will verify the previously pushed verification tasks. We
-		// converted all the public keys and signatures in-front not to unnecessarily verify
-		// previously pushed signatures. (Note that there is no function to ditch the batch
-		// verification early without doing any verification)
-		let mut verify_items = Vec::with_capacity(messages.len());
-		for ((message, signature), public_key) in
-			messages.iter().zip(signatures.iter()).zip(public_keys.iter())
-		{
-			match ((*signature).try_into(), (*public_key).try_into()) {
-				(Ok(signature), Ok(public_key)) =>
-					verify_items.push((signature, message, public_key)),
-				_ => return false,
-			}
-		}
-
-		sp_io::crypto::start_batch_verify();
-
-		for (signature, message, public_key) in verify_items {
-			// This is very unlikely to fail. Because this only fails if the verification task
-			// cannot be spawned internally. Note that the actual verification is only done when
-			// `finish_batch_verify` is called.
-			if !sp_io::crypto::ed25519_batch_verify(&signature, message, &public_key) {
-				let _ = sp_io::crypto::finish_batch_verify();
-				return false
-			}
-		}
-
-		sp_io::crypto::finish_batch_verify()
+		messages
+			.iter()
+			.zip(signatures)
+			.zip(public_keys)
+			.all(|((m, s), p)| Self::do_ed25519_verify(m, s, p))
 	}
 
 	pub(crate) fn do_ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {

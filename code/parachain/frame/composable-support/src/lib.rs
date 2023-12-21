@@ -11,6 +11,9 @@
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(generic_const_exprs)]
+#![feature(const_trait_impl)]
+#![allow(incomplete_features)]
 
 pub mod abstractions;
 pub mod collections;

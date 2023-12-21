@@ -1,9 +1,9 @@
 use crate as dex_router;
 use crate::mock_fnft::MockFnft;
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
+use composable_traits::governance::SignedRawOrigin;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
-use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 use primitives::currency::ForeignAssetId;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -167,27 +167,13 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct NoopRegistry;
-
-impl<AssetId, AccountId> GovernanceRegistry<AssetId, AccountId> for NoopRegistry {
-	fn set(_k: AssetId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<AssetId> GetByKey<AssetId, Result<SignedRawOrigin<u128>, sp_runtime::DispatchError>>
-	for NoopRegistry
-{
-	fn get(_k: &AssetId) -> Result<SignedRawOrigin<u128>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 parameter_types! {
-	// cspell:disable-next
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Test {
@@ -199,6 +185,7 @@ impl pallet_assets_registry::Config for Test {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
 impl pallet_assets_transactor_router::Config for Test {
@@ -208,7 +195,6 @@ impl pallet_assets_transactor_router::Config for Test {
 	type NativeTransactor = Balances;
 	type LocalTransactor = Tokens;
 	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = NoopRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type AssetLocation = ForeignAssetId;

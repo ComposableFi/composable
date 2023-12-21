@@ -12,7 +12,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use sp_core::{ed25519, keccak_256, Pair, H256};
+use sp_core::{ed25519, keccak_256, ConstU128, ConstU32, Pair, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	AccountId32, Perbill,
@@ -75,12 +75,20 @@ impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ();
+	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type MaxLocks = ();
 	type ReserveIdentifier = [u8; 8];
 	type MaxReserves = ();
 	type WeightInfo = ();
+
+	type HoldIdentifier = ();
+
+	type FreezeIdentifier = [u8; 8];
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
 }
 
 parameter_types! {

@@ -8,16 +8,14 @@ use crate::{
 	types::*,
 	*,
 };
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use common::cosmwasm::CosmwasmToSubstrateAccount;
 use core::marker::PhantomData;
 
-use cosmwasm_vm::{
-	cosmwasm_std::{
-		ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
-		QueryResponse, Response, SubMsg, WasmMsg,
-	},
-	vm::{VMBase, VmErrorOf, VmGas},
+use cosmwasm_std::{
+	ContractResult, Event as CosmwasmEvent, Ibc3ChannelOpenResponse, IbcMsg, IbcTimeout,
+	QueryResponse, Response, SubMsg, WasmMsg,
 };
+use cosmwasm_vm::vm::{VMBase, VmErrorOf, VmGas};
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
 use frame_support::{
 	ord_parameter_types,
@@ -34,8 +32,10 @@ use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, Convert, ConvertInto, IdentityLookup},
-	AccountId32, DispatchError,
+	AccountId32,
 };
+
+use crate as pallet_cosmwasm;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -58,13 +58,12 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		Cosmwasm: crate,
-		Balances: pallet_balances,
-		AssetsRegistry: pallet_assets_registry,
-		Assets: pallet_assets_transactor_router,
 		Timestamp: pallet_timestamp,
-		GovernanceRegistry: governance_registry,
+		Balances: pallet_balances,
 		Tokens: orml_tokens,
+		Assets: pallet_assets,
+		AssetsRegistry: pallet_assets_registry,
+		Cosmwasm: pallet_cosmwasm,
 	}
 );
 
@@ -104,12 +103,6 @@ impl frame_system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<2>;
-}
-
-impl governance_registry::Config for Test {
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 }
 
 parameter_types! {
@@ -159,28 +152,18 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ConstU32<2>;
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
+
+	type HoldIdentifier = [u8; 8];
+
+	type FreezeIdentifier = [u8; 8];
+
+	type MaxHolds = ConstU32<50>;
+
+	type MaxFreezes = ConstU32<50>;
 }
 
-pub struct CurrencyIdGenerator;
-
-impl CurrencyFactory for CurrencyIdGenerator {
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-
-	fn create(_: RangeId) -> Result<Self::AssetId, sp_runtime::DispatchError> {
-		Ok(CurrencyId(1))
-	}
-
-	fn protocol_asset_id_to_unique_asset_id(
-		_protocol_asset_id: u32,
-		_range_id: RangeId,
-	) -> Result<Self::AssetId, DispatchError> {
-		Ok(CurrencyId(1))
-	}
-
-	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
-		1
-	}
+parameter_types! {
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Test {
@@ -192,20 +175,28 @@ impl pallet_assets_registry::Config for Test {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
 }
 
-impl pallet_assets_transactor_router::Config for Test {
+impl pallet_assets::Config for Test {
+	type RuntimeHoldReason = ();
+	type NativeAssetId = NativeAssetId;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
-	type NativeAssetId = NativeAssetId;
-	type NativeTransactor = Balances;
-	type LocalTransactor = Tokens;
-	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = Balances;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = ForeignAssetId;
-	type AssetsRegistry = AssetsRegistry;
+	type CurrencyValidator = Valid;
+}
+
+pub struct Valid;
+impl composable_support::validation::Validate<CurrencyId, primitives::currency::ValidateCurrencyId>
+	for Valid
+{
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		Ok(input)
+	}
 }
 
 impl pallet_timestamp::Config for Test {
@@ -213,29 +204,6 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<5>;
 	type WeightInfo = ();
-}
-
-/// Native <-> Cosmwasm account mapping
-pub struct AccountToAddr;
-
-impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account =
-			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
-		Ok(account.into())
-	}
-}
-
-impl Convert<AccountId, alloc::string::String> for AccountToAddr {
-	fn convert(a: AccountId) -> alloc::string::String {
-		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
-		String::from_utf8_lossy(account.as_slice()).to_string()
-	}
-}
-impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
-	}
 }
 
 /// Native <-> Cosmwasm asset mapping
@@ -249,7 +217,7 @@ impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
 
 impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
-		alloc::format!("{}", currency_id)
+		currency_id.to_string()
 	}
 }
 
@@ -257,7 +225,7 @@ parameter_types! {
 	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
 	pub IbcRelayerAccount: AccountId = PalletId(*b"centauri").into_account_truncating();
 	pub const ChainId: &'static str = "composable-network-dali";
-	pub const MaxFrames: u32 = 64;
+	pub const MaxFrames: u16 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
 	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
 	pub const MaxMessageSize: u32 = 256 * 1024;
@@ -398,17 +366,17 @@ impl PalletHook<Test> for MockHook {
 						let response = Response::new()
 							.add_event(CosmwasmEvent::new(MOCK_CONTRACT_IBC_EVENT_TYPE_1))
 							.add_message(WasmMsg::Execute {
-								contract_addr: AccountToAddr::convert(
+								contract_addr: CosmwasmToSubstrateAccount::convert(
 									MOCK_PALLET_IBC_CONTRACT_ADDRESS,
 								),
-								msg: cosmwasm_vm::cosmwasm_std::Binary("42".as_bytes().to_vec()),
+								msg: cosmwasm_std::Binary("42".as_bytes().to_vec()),
 								funds: Default::default(),
 							})
 							.add_message(IbcMsg::SendPacket {
 								channel_id: "channel-0".to_string(),
 								data: [1, 2, 3].into(),
 								timeout: IbcTimeout::with_timestamp(
-									cosmwasm_vm::cosmwasm_std::Timestamp::from_nanos(0),
+									cosmwasm_std::Timestamp::from_nanos(0),
 								),
 							})
 							.set_data(0x666_u32.to_le_bytes());
@@ -436,7 +404,9 @@ impl PalletHook<Test> for MockHook {
 					let depth = message.first().copied().unwrap_or(0);
 					if depth > 0 {
 						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_1),
+							contract_addr: CosmwasmToSubstrateAccount::convert(
+								MOCK_PALLET_CONTRACT_ADDRESS_1,
+							),
 							msg: vec![depth - 1].into(),
 							funds: Default::default(),
 						}));
@@ -461,7 +431,9 @@ impl PalletHook<Test> for MockHook {
 					let depth = message.first().copied().unwrap_or(0);
 					if depth > 0 {
 						response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
-							contract_addr: AccountToAddr::convert(MOCK_PALLET_CONTRACT_ADDRESS_2),
+							contract_addr: CosmwasmToSubstrateAccount::convert(
+								MOCK_PALLET_CONTRACT_ADDRESS_2,
+							),
 							msg: vec![depth - 1].into(),
 							funds: Default::default(),
 						}));
@@ -510,15 +482,15 @@ impl PalletHook<Test> for MockHook {
 	}
 }
 
-impl Config for Test {
+impl pallet_cosmwasm::Config for Test {
+	const MAX_FRAMES: u8 = 64;
 	type RuntimeEvent = RuntimeEvent;
 	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
-	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;
 	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
 	type MaxMessageSize = MaxMessageSize;
-	type AccountToAddr = AccountToAddr;
+	type AccountToAddr = CosmwasmToSubstrateAccount;
 	type AssetToDenom = AssetToDenom;
 	type Balance = Balance;
 	type AssetId = CurrencyId;

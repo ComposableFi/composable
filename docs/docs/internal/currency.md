@@ -3,24 +3,18 @@ tags:
   - assets
   - tokens
   - funds
-lastmod: 2022-08-23T15:33:24.815Z
+  - coins
 ---
 
 # Currency
 
-This document describes various aspects of currency as they relate to composable finance. All these aspects are, in some form, embedded into our protocols.
+This document describes various properties of currencies. 
 
-In this document, we use the following terms interchangeably:
-
-- `currency`, `asset`, `token`
-- `this parachain`, `consensus`
+`currency`, `asset`, `token`, `coins`, `fungibles` are referring to same thing, emphasizing either some aspect of entity or just came from various blockchains. 
 
 ## What is currency?
 
 We express the identity of a currency as a positive integer. Any positive integer may be a currency id, but not all integers are currency ids.
-
-The CurrencyFactory (frame/currency-factory) pallet manages all currencies created in the runtime. For clarification on the low-level basics, look into the pallet readme.
-
 
 ### Amounts
 
@@ -28,20 +22,19 @@ Each currency has a non-negative total issuance. Given an identifier, we can ask
 
 ### Decimals
 
-A Currency may be associated with a `unit` and `minimal amount`. `Unit` usually comes in an amount of 10 to some power like 6, 9, or 12. The units are typically priceable and comprehendible for users. `minimal amount` can be used to operate micro-transactions and help minimize rounding errors.  
-
 Most pallets operate without knowledge of decimals and execute all mathematical operations on whole numbers.
 
-Only pallets that care about out-of-consensus metadata operate with decimals, such as the oracle and bridge protocols. These protocols normalize all incoming amounts to 12 decimals based on knowledge of remote decimals.
+A Currency may be associated with a `unit` and `minimal amount`. `Unit` usually comes in an amount of 10 to some power like 6, 9, or 12. The units are typically priceable and comprehendible for users. `minimal amount` can be used to operate micro-transactions and help minimize rounding errors.  
+
+Only pallets that care about out-of-consensus metadata for humans operate with decimals. 
 
 Ledgers operate only in decimal currencies. However, currencies with zero decimals are viable too.
 
-Pallets use larger numbers internally in order to keep rounding effectively non-existent on a per-protocol basis.
+Pallets use larger decimals internally in order to keep rounding effectively non-existent on a per-protocol basis.
 
 **Example**
 
 Currency A has 12 decimals. 420 units of A would equal to `420*10^12`. Currency B has 9 decimals, so 420 units would be equal to `420*10^09`.
-In a decimals-agnostic pallet, amount of A and be B would be equal to `42*10^13`.
 
 ## Remote or local
 
@@ -61,7 +54,7 @@ For details on registry mapping, check the AssetsRegistry (frame/assets-registry
 
 Generally, a remote currency transferred via one bridge is not necessarily the same as the same currency transferred via another bridge.
 
-For example, USDC transferred via Mosaic is not equal to the same amount transferred via XCMP from Acala.
+For example, USDC transferred via IBC is not equal to the same amount transferred via XCMP from Acala.
 
 There are several solutions to equalize currencies:
 
@@ -69,7 +62,7 @@ There are several solutions to equalize currencies:
 - A risky approach is to embed direct trust to bridges via the configured ratio of transferred currencies to be 1 to 1.
 - Use trustless decentralized bridging. With this solution, there is proof of equivalence, making it the lowest risk. For example, IBC MMR or XCMP `Reserver Transfer`.
 
-For more details, read XCVM documentation regarding security and the risks of choosing bridges (relayers).
+For more details, read CVM documentation regarding security and the risks of choosing bridges (relayers).
 
 **Example**
 
@@ -87,7 +80,7 @@ Remote currencies usually have their respective bridge identifiers attached in t
 
 **Example**
 
-You may find example in XCM and XCVM documentation.
+Check XCM and IBC ICS-20.
 
 ## Native currencies and gas fees
 
@@ -154,16 +147,3 @@ They are used in protocols like lending or credit scores.
 
 Assets may be sore risky, so it is not used as collateral in lending.
 It may depreciate in price fast and there is no market to sell it when that happens.
-
-See Angular documentation for more examples.
-
-## Relevant pallets and contracts
-
-- xTokens
-- tokens
-- balances
-- unknownTokens
-- currencyFactory
-- assets
-- assetsRegistry
-- mosaic

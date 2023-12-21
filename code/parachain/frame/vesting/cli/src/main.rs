@@ -4,13 +4,11 @@ mod output;
 mod prelude;
 
 use clap::Parser;
-use client::VestingSchedule;
 use codec::Output;
 use input::*;
 use output::*;
 use prelude::*;
-use sp_core::{hexdisplay, Blake2Hasher, Pair};
-use sp_runtime::print;
+use sp_core::Pair;
 use std::{
 	alloc::System,
 	collections::{HashMap, HashSet},
@@ -81,17 +79,13 @@ async fn main() -> anyhow::Result<()> {
 				let out = OutputRecord {
 					to: record.account,
 					// in substrate unix time is in milliseconds, while in unix it is in seconds
-					window_start: format!(
-						"{}",
-						OffsetDateTime::from_unix_timestamp(
-							(record.window_moment_start / 1000) as i64
-						)
-						.unwrap()
-					),
-					window_period: format!(
-						"{}",
-						Duration::milliseconds(record.window_moment_period as i64)
-					),
+					window_start: OffsetDateTime::from_unix_timestamp(
+						(record.window_moment_start / 1000) as i64,
+					)
+					.unwrap()
+					.to_string(),
+					window_period: Duration::milliseconds(record.window_moment_period as i64)
+						.to_string(),
 					total: record.per_period * record.period_count as u128,
 				};
 				if std::time::SystemTime::UNIX_EPOCH
@@ -114,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
 			if let Some(batch) = subargs.batch {
 				let batch: Vec<_> = calls
 					.into_iter()
-					.map(|(data, record)| data)
+					.map(|(data, _)| data)
 					.map(|data| subxt::dynamic::tx("Vesting", "vested_transfer", data))
 					.map(|x| x.into_value())
 					.collect();
@@ -205,7 +199,7 @@ async fn main() -> anyhow::Result<()> {
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
-			let out = csv::Writer::from_writer(vec![]);
+			let _out = csv::Writer::from_writer(vec![]);
 			let all: HashSet<_> = all.into_iter().map(|x| x.account).collect();
 
 			let clean: Vec<_> = all
@@ -252,7 +246,8 @@ async fn main() -> anyhow::Result<()> {
 			let mut rdr = csv::Reader::from_reader(csv_file.as_bytes());
 			let all: Vec<_> =
 				rdr.deserialize::<DeleteRecord>().map(|x| x.expect("record")).collect();
-			let schedules_to_remove: HashSet<_> = all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
+			let schedules_to_remove: HashSet<_> =
+				all.iter().map(|x| x.vesting_schedule_id.clone()).collect();
 			let key = sp_core::sr25519::Pair::from_string(&subargs.key, None).expect("secret");
 			let signer = PairSigner::new(key.clone());
 			let api = OnlineClient::<SubstrateConfig>::from_url(args.client).await?;
@@ -262,9 +257,9 @@ async fn main() -> anyhow::Result<()> {
 				let _ = entry.or_default();
 			}
 
-			let storage_address = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
+			let vesting_schedules = subxt::dynamic::storage_root("Vesting", "VestingSchedules");
 
-			let mut iter = api.storage().at(None).await?.iter(storage_address, 1000).await?;
+			let mut iter = api.storage().at(None).await?.iter(vesting_schedules, 1000).await?;
 			let mut existing_schedules: HashMap<[u8; 32], _> = <_>::default();
 			while let Some((key, vesting_schedule)) = iter.next().await? {
 				let vesting_schedule = VestingScheduleT::decode(&mut vesting_schedule.encoded())
@@ -274,24 +269,38 @@ async fn main() -> anyhow::Result<()> {
 				existing_schedules.insert(account.0, vesting_schedule);
 			}
 
+			let timestamp_now = subxt::dynamic::storage_root("Timestamp", "Now");
+
+			let timestamp_now: u64 = api
+				.storage()
+				.at(None)
+				.await?
+				.fetch(&timestamp_now)
+				.await?
+				.map(|x| Decode::decode(&mut (x.into_encoded().as_ref())).unwrap())
+				.unwrap();
+			println!("now : {}", timestamp_now);
+
 			let mut clean: Vec<_> = account_amounts_to_take_away
 				.iter_mut()
 				.map(|record| {
 					let address = AccountId32::from_str(&record.0).expect("address");
 
-					let retained =
-						if let Some(mut retained) = existing_schedules.get(&address.0).map(Clone::clone) {
-							for item in schedules_to_remove.iter() {
-								if let Some(not_yet_vested) = retained.remove(item) {
-									let not_yet_vested : VestingSchedule<u128, u32, u64, u128> = not_yet_vested;
-									*record.1 += not_yet_vested.per_period * not_yet_vested.period_count as u128 - not_yet_vested.already_claimed;
-								}
+					let retained = if let Some(mut retained) =
+						existing_schedules.get(&address.0).map(Clone::clone)
+					{
+						for item in schedules_to_remove.iter() {
+							if let Some(not_yet_vested) = retained.remove(item) {
+								*record.1 += not_yet_vested.per_period *
+									not_yet_vested.period_count as u128 - not_yet_vested
+									.already_claimed;
 							}
+						}
 
-							retained
-						} else {
-							<_>::default()
-						};
+						retained
+					} else {
+						<_>::default()
+					};
 
 					let retained: Vec<_> = retained
 						.values()
@@ -299,9 +308,13 @@ async fn main() -> anyhow::Result<()> {
 							let (window_moment_start, window_moment_period) = match item.window {
 								client::VestingWindow::MomentBased { start, period } =>
 									(start, period),
-								client::VestingWindow::BlockNumberBased { start: _, period : _ } =>
+								client::VestingWindow::BlockNumberBased { start: _, period: _ } =>
 									todo!(),
 							};
+
+							let old_total = item.per_period * item.period_count as u128;
+							let new_total = old_total - item.already_claimed;
+							let new_per_period = new_total / item.period_count as u128;
 
 							let retained = Value::named_composite(vec![
 								(
@@ -315,7 +328,7 @@ async fn main() -> anyhow::Result<()> {
 									),
 								),
 								("period_count", Value::u128(item.period_count as u128)),
-								("per_period", Value::u128(item.per_period)),
+								("per_period", Value::u128(new_per_period)),
 							]);
 							retained
 						})
@@ -398,22 +411,17 @@ async fn main() -> anyhow::Result<()> {
 					};
 					let window_start = match OffsetDateTime::from_unix_timestamp(
 						(window_moment_start / 1000) as i64,
-					)
-					.map(|x| format!("{}", x))
-					.map_err(|_x| "#BAD_START_TME".to_string())
-					{
-						Err(x) => x,
-						Ok(x) => x,
+					) {
+						Ok(x) => x.to_string(),
+						Err(_x) => String::from("#BAD_START_TME"),
 					};
 					out.serialize(ListRecord {
 						pubkey: hex::encode(&key.2),
 						account: key.2.to_string(),
 
 						window_start,
-						window_period: format!(
-							"{}",
-							Duration::milliseconds(window_moment_period as i64)
-						),
+						window_period: Duration::milliseconds(window_moment_period as i64)
+							.to_string(),
 						total: record.per_period * record.period_count as u128,
 						already_claimed: record.already_claimed,
 						per_period: record.per_period,

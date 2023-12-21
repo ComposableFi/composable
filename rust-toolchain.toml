@@ -1,10 +1,9 @@
 [toolchain]
-channel = "nightly-2022-11-17"
-components = [
-  "clippy",
-  "llvm-tools-preview",
-  "rust-analyzer",
-  "rustfmt",
-  "rust-src",
+# ideally as close is possible(above) to https://github.com/paritytech/scripts/blob/master/dockerfiles/ci-unified/Dockerfile
+channel = "nightly-2023-03-09"
+components = ["clippy", "llvm-tools", "rust-analyzer", "rustfmt", "rust-src"]
+targets = [
+  "wasm32-unknown-unknown",
+  # that is the way to test that it checks and builds againt no_std target
+  "thumbv7em-none-eabi",
 ]
-targets = ["wasm32-unknown-unknown"]

@@ -27,10 +27,11 @@ pub enum FundsAvailability<Balance> {
 	None,
 }
 
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo, Default)]
 pub enum Deposit<Balance, BlockNumber> {
 	/// Indicates that the vault has deposited an amount large enough to forever be exempt from
 	/// rent payments.
+	#[default]
 	Existential,
 	Rent {
 		/// The amount left in the deposit.
@@ -38,12 +39,6 @@ pub enum Deposit<Balance, BlockNumber> {
 		/// The last block number at which payment was performed.
 		at: BlockNumber,
 	},
-}
-
-impl<Balance, BlockNumber> Default for Deposit<Balance, BlockNumber> {
-	fn default() -> Self {
-		Deposit::Existential
-	}
 }
 
 impl<Balance, BlockNumber> Deposit<Balance, BlockNumber> {

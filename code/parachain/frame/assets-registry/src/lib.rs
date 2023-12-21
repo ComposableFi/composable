@@ -36,7 +36,8 @@ pub mod pallet {
 	use composable_traits::{
 		assets::{
 			Asset, AssetInfo, AssetInfoUpdate, AssetType, AssetTypeInspect, BiBoundedAssetName,
-			BiBoundedAssetSymbol, GenerateAssetId, InspectRegistryMetadata, MutateRegistryMetadata,
+			BiBoundedAssetSymbol, CreateAsset, GenerateAssetId, InspectRegistryMetadata,
+			MutateRegistryMetadata,
 		},
 		currency::{AssetExistentialDepositInspect, BalanceLike, ForeignByNative},
 		storage::UpdateValue,
@@ -45,8 +46,9 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
-		traits::{tokens::BalanceConversion, EnsureOrigin},
+		traits::{tokens::ConversionToAssetBalance, EnsureOrigin},
 	};
+
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::Convert;
@@ -93,10 +95,13 @@ pub mod pallet {
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
+
+		/// Network id, unique per chain
+		#[pallet::constant]
+		type NetworkId: Get<u32>;
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Mapping local asset to foreign asset.
@@ -170,7 +175,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			for (nonce, location, asset_info) in self.assets.clone() {
-				let asset_id = <Pallet<T>>::generate_asset_id([0; 8], nonce);
+				let asset_id = <Pallet<T>>::generate_asset_id([0; 4], nonce);
 
 				<Pallet<T> as RemoteAssetRegistryMutate>::register_asset(
 					asset_id, location, asset_info,
@@ -231,7 +236,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			protocol_id: [u8; 8],
+			protocol_id: [u8; 4],
 			nonce: u64,
 			location: Option<T::ForeignAssetId>,
 			asset_info: AssetInfo<T::Balance>,
@@ -316,6 +321,7 @@ pub mod pallet {
 			ExistentialDeposit::<T>::iter_keys()
 				.map(|asset_id| {
 					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let symbol = AssetSymbol::<T>::get(asset_id).map(Into::into);
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
 					let decimals =
 						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
@@ -323,7 +329,15 @@ pub mod pallet {
 					let existential_deposit =
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
-					Asset { name, id: asset_id, decimals, ratio, foreign_id, existential_deposit }
+					Asset {
+						name,
+						symbol,
+						id: asset_id,
+						decimals,
+						ratio,
+						foreign_id,
+						existential_deposit,
+					}
 				})
 				.collect::<Vec<_>>()
 		}
@@ -429,6 +443,8 @@ pub mod pallet {
 		) -> Vec<Asset<Self::AssetId, T::Balance, Self::AssetNativeLocation>> {
 			ForeignToLocal::<T>::iter()
 				.map(|(_, asset_id)| {
+					let name = AssetName::<T>::get(asset_id).map(Into::into);
+					let symbol = AssetSymbol::<T>::get(asset_id).map(Into::into);
 					let foreign_id = LocalToForeign::<T>::get(asset_id);
 					let decimals =
 						<Pallet<T> as InspectRegistryMetadata>::decimals(&asset_id).unwrap_or(12);
@@ -437,7 +453,8 @@ pub mod pallet {
 						ExistentialDeposit::<T>::get(asset_id).unwrap_or_default();
 
 					Asset {
-						name: None,
+						name,
+						symbol,
 						id: asset_id,
 						decimals,
 						ratio,
@@ -528,7 +545,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> BalanceConversion<T::Balance, T::LocalAssetId, T::Balance> for Pallet<T> {
+	impl<T: Config> ConversionToAssetBalance<T::Balance, T::LocalAssetId, T::Balance> for Pallet<T> {
 		type Error = DispatchError;
 
 		fn to_asset_balance(
@@ -548,15 +565,56 @@ pub mod pallet {
 	impl<T: Config> GenerateAssetId for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 
-		fn generate_asset_id(protocol_id: [u8; 8], nonce: u64) -> Self::AssetId {
-			let bytes = protocol_id
-				.into_iter()
-				.chain(nonce.to_be_bytes())
-				.collect::<Vec<u8>>()
-				.try_into()
-				.expect("[u8; 8] + bytes(u64) = [u8; 16]");
+		/// Generates asset id from this network id and given protocol id and
+		/// nonce.
+		///
+		/// To guarantee the asset ids are unique, the `(protocol_id, nonce)`
+		/// pair must be unique within a single.  Since network id is part of
+		/// the asset id, each network is free to use its `(protocol_id, nonce)`
+		/// namespace without risk of colliding with other networks..
+		fn generate_asset_id(protocol_id: [u8; 4], nonce: u64) -> Self::AssetId {
+			// asset_id = <32-bit network id> <32-bit protocol id> <64-bit nonce>
+			//          = <64-bit high qword> <64-bit nonce>
+			let protocol_id = u32::from_be_bytes(protocol_id);
+			let network_id: u32 = T::NetworkId::get();
+			let high = (u64::from(network_id) << 32) | u64::from(protocol_id);
+			let asset_id = (u128::from(high) << 64) | u128::from(nonce);
+			Self::AssetId::from(asset_id)
+		}
+	}
 
-			Self::AssetId::from(u128::from_be_bytes(bytes))
+	impl<T: Config> CreateAsset for Pallet<T> {
+		type LocalAssetId = T::LocalAssetId;
+		type ForeignAssetId = T::ForeignAssetId;
+		type Balance = T::Balance;
+
+		fn create_local_asset(
+			protocol_id: [u8; 4],
+			nonce: u64,
+			asset_info: AssetInfo<T::Balance>,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let asset_id = Self::generate_asset_id(protocol_id, nonce);
+
+			<Self as RemoteAssetRegistryMutate>::register_asset(asset_id, None, asset_info)?;
+
+			Ok(asset_id)
+		}
+
+		fn create_foreign_asset(
+			protocol_id: [u8; 4],
+			nonce: u64,
+			asset_info: AssetInfo<T::Balance>,
+			foreign_asset_id: Self::ForeignAssetId,
+		) -> Result<Self::LocalAssetId, DispatchError> {
+			let asset_id = Self::generate_asset_id(protocol_id, nonce);
+
+			<Self as RemoteAssetRegistryMutate>::register_asset(
+				asset_id,
+				Some(foreign_asset_id),
+				asset_info,
+			)?;
+
+			Ok(asset_id)
 		}
 	}
 }

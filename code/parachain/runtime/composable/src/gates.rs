@@ -1,6 +1,6 @@
 use crate::{
-	prelude::*, weights, Balances, ReleaseCommittee, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin,
+	governance::MaxProposalWeight, prelude::*, weights, Balances, ReleaseCommittee, Runtime,
+	RuntimeCall, RuntimeEvent, RuntimeOrigin,
 };
 use common::{
 	fees::NativeExistentialDeposit, governance::native::ReleaseCollective, AccountId,
@@ -83,6 +83,7 @@ impl collective::Config<ReleaseCollective> for Runtime {
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin =
 		frame_system::EnsureSignedBy<crate::TechnicalCommitteeMembership, Self::AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 pub type EnsureRootOrTwoThirds<T> =

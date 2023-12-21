@@ -7,17 +7,14 @@ use common::{
 	fees::{IbcIcs20FeePalletId, IbcIcs20ServiceCharge},
 	governance::native::EnsureRootOrOneThirdNativeTechnical,
 };
-use composable_traits::assets::InspectRegistryMetadata;
-use frame_system::EnsureSigned;
 use pallet_ibc::{
-	ics20::{MODULE_ID_STR, PORT_ID_STR},
+	ics20::{IbcMemoHandler, MODULE_ID_STR, PORT_ID_STR},
 	light_client_common::RelayChain,
 	routing::ModuleRouter,
 	DenomToAssetId, IbcAssetIds, IbcAssets,
 };
 use sp_core::ConstU64;
 use sp_runtime::{AccountId32, DispatchError, Either};
-use system::EnsureSignedBy;
 
 use hex_literal::hex;
 use pallet_ibc::ics20_fee::NonFlatFeeConverter;
@@ -31,13 +28,13 @@ impl Default for Runtime {
 	}
 }
 
-use common::ibc::ForeignIbcIcs20Assets;
+use common::ibc::{ForeignIbcIcs20Assets, RawMemo};
 pub struct IbcDenomToAssetIdConversion;
 
 impl DenomToAssetId<Runtime> for IbcDenomToAssetIdConversion {
 	type Error = DispatchError;
 
-	fn from_denom_to_asset_id(denom: &String) -> Result<CurrencyId, Self::Error> {
+	fn from_denom_to_asset_id(denom: &str) -> Result<CurrencyId, Self::Error> {
 		ForeignIbcIcs20Assets::<AssetsRegistry>::from_denom_to_asset_id(denom)
 	}
 
@@ -114,48 +111,6 @@ parameter_types! {
 
 }
 
-use pallet_ibc::ics20::Ics20RateLimiter;
-
-pub struct ConstantAny;
-
-impl Ics20RateLimiter for ConstantAny {
-	fn allow(
-		msg: &pallet_ibc::ics20::Ics20TransferMsg,
-		_flow_type: pallet_ibc::ics20::FlowType,
-	) -> Result<(), ()> {
-		let pica_denom =
-			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
-				Runtime,
-			>>::from_asset_id_to_denom(CurrencyId::PICA);
-
-		let limit = match msg.token.denom.to_string().as_str() {
-			denom if Some(denom) == pica_denom.as_deref() => 500_000,
-			_ => 10_000,
-		};
-
-		// adjust the number of decimals based on the currency id, as different assets have
-		// different decimals places and not doing it would defeat the purpose of fixing the nominal
-		// amount tha we are allowing users to transfer.
-		let token = &msg.token;
-		let asset_id: CurrencyId =
-			<<Runtime as pallet_ibc::Config>::IbcDenomToAssetIdConversion as DenomToAssetId<
-				Runtime,
-			>>::from_denom_to_asset_id(&token.denom.to_string())
-			.map_err(|_| ())?;
-
-		let decimals =
-			<assets_registry::Pallet<Runtime> as InspectRegistryMetadata>::decimals(&asset_id)
-				.unwrap_or(12);
-
-		if msg.token.amount.as_u256() <=
-			::ibc::bigint::U256::from(limit * 10_u64.pow(decimals as _))
-		{
-			return Ok(())
-		}
-		Err(())
-	}
-}
-
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct Router {
 	ics20: pallet_ibc::ics20::memo::Memo<
@@ -207,19 +162,21 @@ impl pallet_ibc::Config for Runtime {
 	type MinimumConnectionDelay = ConstU64<1>;
 	type ParaId = parachain_info::Pallet<Runtime>;
 	type RelayChain = RelayChainId;
-	type WeightInfo = weights::ibc::WeightInfo<Self>;
+	type WeightInfo = weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type FreezeOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type SpamProtectionDeposit = SpamProtectionDeposit;
 	type IbcAccountId = Self::AccountId;
-	type TransferOrigin = EnsureSigned<Self::AccountId>;
-	type RelayerOrigin = EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
-	type HandleMemo = ();
-	type MemoMessage = MemoMessage;
-	type Ics20RateLimiter = ConstantAny;
+	type TransferOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(feature = "testnet")]
+	type RelayerOrigin = system::EnsureSigned<Self::IbcAccountId>;
+	#[cfg(not(feature = "testnet"))]
+	type RelayerOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::IbcAccountId>;
+	type HandleMemo = IbcMemoHandler<(), Runtime>;
+	type MemoMessage = RawMemo;
 	type IsReceiveEnabled = ConstBool<true>;
 	type IsSendEnabled = ConstBool<true>;
-
+	type SubstrateMultihopXcmHandler = pallet_multihop_xcm_ibc::Pallet<Runtime>;
 	type FeeAccount = FeeAccount;
 	type CleanUpPacketsPeriod = ConstU32<100>;
 	type ServiceChargeOut = IbcIcs20ServiceCharge;

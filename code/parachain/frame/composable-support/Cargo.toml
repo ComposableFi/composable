@@ -13,9 +13,14 @@ targets = ["x86_64-unknown-linux-gnu"]
 frame-support = { default-features = false, workspace = true }
 
 sp-arithmetic = { default-features = false, workspace = true }
+
 sp-io = { default-features = false, workspace = true }
+
 sp-runtime = { default-features = false, workspace = true }
+
 sp-std = { default-features = false, workspace = true }
+
+schemars = { optional = true, workspace = true }
 
 codec = { version = "3.0.0", package = "parity-scale-codec", default-features = false, features = [
   "derive",
@@ -24,7 +29,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
-hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex = { workspace = true, default-features = false, features = ["alloc"] }
 is_sorted = { version = "0.1.1", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 p256 = { version = "0.12", default-features = false, features = [
@@ -32,7 +37,10 @@ p256 = { version = "0.12", default-features = false, features = [
   "ecdsa-core",
 ] }
 rustc-hex = { version = "2.1.0", default-features = false }
-serde = { version = "1.0.136", features = ["derive"], optional = true }
+serde = { workspace = true, features = [
+  "derive",
+  "alloc",
+], default-features = false }
 
 [dev-dependencies]
 frame-system = { workspace = true }
@@ -42,10 +50,5 @@ sp-io = { workspace = true }
 
 [features]
 default = ["std"]
-std = [
-  "codec/std",
-  "frame-support/std",
-  "sp-std/std",
-  "scale-info/std",
-  "serde",
-]
+schema = ["schemars", "std"]
+std = ["codec/std", "frame-support/std", "scale-info/std", "sp-std/std"]

@@ -1,18 +1,21 @@
 { self, ... }: {
-  perSystem = { config, self', inputs', pkgs, system, lib, ... }:
+  perSystem =
+    { config, self', inputs', pkgs, system, lib, systemCommonRust, ... }:
     let
-      debug = {
-        # CARGO_LOG = "debug";
-        # CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-        # CARGO_NET_RETRY = "true";
-        # CARGO_HTTP_MULTIPLEXING = "false";
-        # CARGO_HTTP_DEBUG = "true";
-        # RUST_LOG = "debug";
+      debug-env = {
+        CARGO_LOG = "debug";
+        CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+        CARGO_NET_RETRY = "true";
+        CARGO_HTTP_MULTIPLEXING = "false";
+        CARGO_HTTP_DEBUG = "true";
+        RUST_LOG = "debug";
       };
+      # evn for deep isolation of building polkadot-sdk nodes and shellss
       subattrs = {
         LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
           pkgs.stdenv.cc.cc.lib
           pkgs.llvmPackages.libclang.lib
+          pkgs.zlib.dev
         ];
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         PROTOC = "${pkgs.protobuf}/bin/protoc";
@@ -20,37 +23,69 @@
         # forces Rust to use exact same git as CI runner/Nix fetcher/other tools
         CARGO_NET_GIT_FETCH_WITH_CLI = "true";
         CARGO_NET_RETRY = 3; # +1 on top of default
-      } // debug;
+        # https://github.com/rust-lang/libz-sys/blob/main/build.rs
+        # rust asks for this dependings on version
+        ZLIB_VERSION = "1.3";
+        LIBZ_SYS_STATIC = 1;
+      };
 
+      # for packages
       subenv = {
         doCheck = false;
-        buildInputs = with pkgs; [ openssl zstd protobuf ];
+        buildInputs = with pkgs; [ openssl zstd protobuf zlib.dev zlib ];
         nativeBuildInputs = with pkgs;
-          [ clang pkg-config self'.packages.rust-nightly ]
-          ++ lib.optional stdenv.isDarwin
-          (with pkgs.darwin.apple_sdk.frameworks; [
-            Security
-            SystemConfiguration
-          ]);
+        # yes, all these are in general needed, git not always, but substrate checks git revision
+          [ clang openssl pkg-config self'.packages.rust-nightly git ]
+          ++ systemCommonRust.darwin-deps;
         RUST_BACKTRACE = "full";
       } // subattrs;
+
       check-pallet = pkgs.writeShellApplication {
         name = "check-pallet";
-        runtimeInputs = [ self'.packages.rust-nightly ];
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
-          EXTRA_FEATURES=""
-          if [[ -n "''${2-}" ]]; then
-            EXTRA_FEATURES=",$2"
-          fi
           cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
-          cargo check --tests --features=std,runtime-benchmarks --package "$1"
+          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
           cargo clippy --package "$1" -- --deny warnings --allow deprecated
-          cargo test --features=std,runtime-benchmarks"$EXTRA_FEATURES" --package "$1"
         '';
       };
+      check-std-wasm = pkgs.writeShellApplication {
+        name = "check-std-wasm";
+        runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
+        text = ''
+          # we cannot use `check` because it does not not validates linker like `build`, errors happen there too
+          FEATURES=""
+          if [[ -n "''${2-}" ]]; then
+            FEATURES="--features=$2"
+          fi          
+          # shellcheck disable=SC2086
+          cargo build --no-default-features --target wasm32-unknown-unknown --package "$1" $FEATURES
+          # shellcheck disable=SC2086
+          cargo clippy --package "$1" $FEATURES -- --deny warnings --allow deprecated
+
+          # shellcheck disable=SC2086
+          cargo test --package "$1" $FEATURES
+        '';
+      };
+
+      check-no-std = pkgs.writeShellApplication {
+        name = "check-no-std";
+        runtimeInputs = [ self'.packages.rust-nightly ];
+        text = ''
+          FEATURES=""
+          if [[ -n "''${2-}" ]]; then
+            FEATURES="--features=$2"
+          fi          
+          # shellcheck disable=SC2086
+          cargo build --no-default-features --target thumbv7em-none-eabi --package "$1" $FEATURES
+        '';
+      };
+
       check-runtime = check-pallet;
     in {
-      _module.args.subnix = rec { inherit subenv subattrs; };
-      packages = { inherit check-pallet check-runtime; };
+      _module.args.subnix = rec { inherit subenv subattrs debug-env; };
+      packages = {
+        inherit check-pallet check-runtime check-std-wasm check-no-std;
+      };
     };
 }

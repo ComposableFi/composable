@@ -95,17 +95,14 @@ fn get_price(
 		Ok((normalized_price, elapsed)) => Ok(reply::with_header(
 			reply::with_header(
 				reply::with_status(
-					reply::json(&HashMap::from([(
-						format!("{}", currency_index),
-						normalized_price,
-					)])),
+					reply::json(&HashMap::from([(currency_index.to_string(), normalized_price)])),
 					StatusCode::OK,
 				),
 				"x-composable-cache-elapsed",
-				format!("{}", elapsed),
+				elapsed.to_string(),
 			),
 			"x-composable-cache-duration",
-			format!("{}", cache_duration),
+			cache_duration.to_string(),
 		)),
 		Err(_) => Err(warp::reject::not_found()),
 	}

@@ -285,7 +285,6 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
-				let _ = &cli;
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or("Could not find parachain extension in chain-spec.")?;
@@ -298,7 +297,9 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
+						&id,
+					);
 
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
@@ -324,16 +325,12 @@ impl DefaultConfigurationValues for RelayChainCli {
 		30334
 	}
 
-	fn rpc_ws_listen_port() -> u16 {
-		9945
-	}
-
-	fn rpc_http_listen_port() -> u16 {
-		9934
-	}
-
 	fn prometheus_listen_port() -> u16 {
 		9616
+	}
+
+	fn rpc_listen_port() -> u16 {
+		sc_cli::RPC_DEFAULT_PORT
 	}
 }
 
@@ -373,17 +370,21 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.blocks_pruning()
 	}
 
-	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_http(default_listen_port)
+	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+		self.base.base.rpc_addr(default_listen_port)
 	}
 
-	fn rpc_ipc(&self) -> Result<Option<String>> {
-		self.base.base.rpc_ipc()
-	}
+	// fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+	// 	self.base.base.rpc_http(default_listen_port)
+	// }
 
-	fn rpc_ws(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_ws(default_listen_port)
-	}
+	// fn rpc_ipc(&self) -> Result<Option<String>> {
+	// 	self.base.base.rpc_ipc()
+	// }
+
+	// fn rpc_ws(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+	// 	self.base.base.rpc_ws(default_listen_port)
+	// }
 
 	fn prometheus_config(
 		&self,
@@ -424,9 +425,13 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_methods()
 	}
 
-	fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
-		self.base.base.rpc_ws_max_connections()
+	fn rpc_max_connections(&self) -> Result<u32> {
+		self.base.base.rpc_max_connections()
 	}
+
+	// fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
+	// 	self.base.base.rpc_ws_max_connections()
+	// }
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)

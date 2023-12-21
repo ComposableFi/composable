@@ -195,7 +195,7 @@ impl Pyth {
 		sink: &mpsc::Sender<PythFeedNotification>,
 		asset_pair: &AssetPair,
 	) -> Result<(), PythError> {
-		let asset_pair_symbol = format!("{}", SlashSymbol::new(*asset_pair));
+		let asset_pair_symbol = SlashSymbol::new(*asset_pair).to_string();
 		let product_prices = self
 			.get_product_list()
 			.await?
@@ -261,8 +261,8 @@ mod tests {
 		let product_price = PythProductPrice { account, price_exponent: Exponent(0x1337) };
 		let price = Price(0xCAFEBABE);
 		let timestamp = TimeStamp::now();
-		VALID_ASSETS.iter().for_each(|&asset| {
-			[
+		for (_, asset) in INDEX_TO_ASSET {
+			let tests = [
 				(PythSymbolStatus::Halted, None),
 				(PythSymbolStatus::Unknown, None),
 				(
@@ -278,15 +278,14 @@ mod tests {
 						},
 					)),
 				),
-			]
-			.iter()
-			.for_each(|&(status, expected_action)| {
+			];
+			for (status, expected_action) in tests {
 				let notify_price = PythNotifyPrice { status, price };
 				assert_eq!(
 					expected_action,
 					notify_price_action(asset, &product_price, &notify_price, &timestamp)
 				)
-			});
-		});
+			}
+		}
 	}
 }

@@ -37,8 +37,9 @@ rust_decimal = { version = "1.2", default-features = false, features = [
 default = ["std"]
 std = [
   "codec/std",
-  "frame-support/std",
-  "sp-std/std",
-  "scale-info/std",
   "composable-support/std",
+  "composable-tests-helpers/std",
+  "frame-support/std",
+  "scale-info/std",
+  "sp-std/std",
 ]

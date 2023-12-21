@@ -1,0 +1,3 @@
+[submodule "flake/eth-pos-devnet"]
+	path = flake/eth-pos-devnet
+	url = https://github.com/OffchainLabs/eth-pos-devnet.git

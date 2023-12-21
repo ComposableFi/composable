@@ -21,7 +21,7 @@ import {
 	vmExecute,
 	vmInstantiate,
 	vmSetup,
-} from 'cw_vm_ts_sdk_001';
+} from '@composable-finance/cosmwasm-vm';
 
 import { SetRequired } from 'type-fest';
 

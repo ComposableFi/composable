@@ -169,7 +169,6 @@ pub fn composable_dev() -> composable::ChainSpec {
 	)
 }
 
-/// Common dev accounts
 pub fn dev_accounts() -> Vec<AccountId> {
 	vec![
 		account_id_from_seed::<sr25519::Public>("Alice"),

@@ -89,3 +89,14 @@ pub struct ForeignMetadata<AssetNativeLocation> {
 	pub decimals: Option<Exponent>,
 	pub location: AssetNativeLocation,
 }
+
+pub trait MultiCurrencyCallback {
+	type AssetId;
+	fn deposit_asset(
+		asset: &xcm::latest::MultiAsset,
+		location: &xcm::latest::MultiLocation,
+		context: &xcm::latest::XcmContext,
+		deposit_result: xcm::latest::Result,
+		asset_id: Self::AssetId,
+	) -> Option<()>;
+}

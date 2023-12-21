@@ -4,9 +4,8 @@ name = "utils-common"
 version = "0.1.0"
 
 [dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", workspace = true }
-sp-runtime = { git = "https://github.com/paritytech/substrate", workspace = true }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 composable-runtime = { path = "../../parachain/runtime/composable" }
 derive_more = "0.99.17"
 picasso-runtime = { path = "../../parachain/runtime/picasso" }

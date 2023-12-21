@@ -10,7 +10,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{sr25519, sr25519::Signature, H256};
+use sp_core::{sr25519, sr25519::Signature, ConstU128, H256};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
@@ -36,6 +36,7 @@ frame_support::construct_runtime!(
 );
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const MINIMUM_BALANCE: Balance = 1;
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
@@ -93,12 +94,19 @@ impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<{ MINIMUM_BALANCE }>;
 	type AccountStore = System;
 	type WeightInfo = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type FreezeIdentifier = [u8; 8];
+
+	type HoldIdentifier = [u8; 8];
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
 }
 
 parameter_types! {
@@ -170,6 +178,10 @@ impl pallet_oracle::Config for Test {
 		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
 		EnsureRoot<AccountId>,
 	>;
+	type SetSigner = EitherOfDiverse<
+		EnsureSignedBy<RootAccount, sp_core::sr25519::Public>,
+		EnsureRoot<AccountId>,
+	>;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
@@ -192,12 +204,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-			(get_account_1(), 100),
-			(get_root_account(), 100),
-			(get_account_4(), 100),
-			(get_account_3(), 100),
-			(get_account_5(), 100),
-			(get_treasury_account(), 100),
+			(get_account_1(), 100 + MINIMUM_BALANCE),
+			(get_root_account(), 100 + MINIMUM_BALANCE),
+			(get_account_4(), 100 + MINIMUM_BALANCE),
+			(get_account_3(), 100 + MINIMUM_BALANCE),
+			(get_account_5(), 100 + MINIMUM_BALANCE),
+			(get_treasury_account(), 100 + MINIMUM_BALANCE),
 		],
 	};
 	genesis.assimilate_storage(&mut t).unwrap();

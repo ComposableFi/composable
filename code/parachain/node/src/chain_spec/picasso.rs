@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId, Balance};
 use picasso_runtime::GenesisConfig;
+use primitives::currency::CurrencyId;
 
 use super::{Extensions, ParaId};
 
@@ -25,6 +26,26 @@ pub fn genesis_config(
 	existential_deposit: Balance,
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
+	let contracts =
+		[option_env!("CW_CVM_GATEWAY_WASM_PATH"), option_env!("CW_CVM_EXECUTOR_WASM_PATH")]
+			.into_iter()
+			.flatten()
+			.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
+				Ok(Ok(data)) => data,
+				Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),
+				Err(err) => panic!("{path}: {err}"),
+			})
+			.map(|contract| (root.clone(), contract))
+			.collect();
+
+	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts };
+	let dex = picasso_runtime::PabloConfig {
+		pools: vec![
+			(root.clone(), CurrencyId(1), CurrencyId(4)),
+			(root.clone(), CurrencyId(1), CurrencyId(130)),
+		],
+	};
+
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
 			code: picasso_runtime::WASM_BINARY_V2
@@ -65,18 +86,29 @@ pub fn genesis_config(
 		},
 		council_membership: Default::default(),
 		council: Default::default(),
-		democracy: Default::default(),
 		treasury: Default::default(),
 		technical_committee: Default::default(),
 		technical_committee_membership: picasso_runtime::TechnicalCommitteeMembershipConfig {
-			members: vec![root.clone()].try_into().expect("const"),
+			members: accounts
+				.iter()
+				.take(2)
+				.cloned()
+				.map(Into::into)
+				.collect::<Vec<_>>()
+				.try_into()
+				.expect("const"),
 			phantom: Default::default(),
 		},
+		relayer_committee: Default::default(),
+		relayer_committee_membership: Default::default(),
 		polkadot_xcm: Default::default(),
 		assets_registry: picasso_runtime::AssetsRegistryConfig {
 			assets: primitives::topology::Picasso::assets(),
 			phantom: Default::default(),
 		},
+		cosmwasm,
+		pablo: dex,
+
 		tokens: Default::default(),
 		transaction_payment: Default::default(),
 		vesting: Default::default(),
@@ -91,5 +123,6 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		release_committee: Default::default(),
+		pallet_liquid_staking: Default::default(),
 	}
 }

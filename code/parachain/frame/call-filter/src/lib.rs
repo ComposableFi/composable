@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -15,21 +15,21 @@
 
 mod prelude;
 mod types;
-pub use pallet::*;
-use support::{
+use frame_support::{
 	dispatch::{CallMetadata, GetCallMetadata},
 	pallet_prelude::*,
 	traits::{Contains, PalletInfoAccess},
 	transactional,
 };
-use system::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+pub use pallet::*;
 pub use types::*;
 use weights::WeightInfo;
 mod mock;
 mod tests;
 mod weights;
 
-#[support::pallet]
+#[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use prelude::*;
@@ -37,11 +37,14 @@ pub mod pallet {
 	type CallFilterEntryOf<T> = CallFilterEntry<<T as Config>::MaxStringSize>;
 
 	#[pallet::config]
-	pub trait Config: system::Config {
+	pub trait Config: frame_system::Config {
 		/// Overarching event type
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
+		/// Origin which can disable extrinsic for being executed.
+		/// Consider be same or more allowed than EnableOrigin.
 		type DisableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		type EnableOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.
@@ -56,6 +59,7 @@ pub mod pallet {
 			+ Eq;
 
 		/// A hook that is able to block us from disabling/enabling an extrinsic.
+		/// Consider preventing to block executing Root governance operations.
 		type Hook: CallFilterHook<Self::MaxStringSize>;
 
 		/// Weight information for the extrinsics in this module.
@@ -97,6 +101,7 @@ pub mod pallet {
 		/// Possibly emits a `Disabled` event.
 		#[pallet::weight(T::WeightInfo::disable())]
 		#[transactional]
+		#[pallet::call_index(0)]
 		pub fn disable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::DisableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
@@ -117,6 +122,7 @@ pub mod pallet {
 		/// Possibly emits an `Enabled` event.
 		#[pallet::weight(T::WeightInfo::enable())]
 		#[transactional]
+		#[pallet::call_index(1)]
 		pub fn enable(origin: OriginFor<T>, entry: CallFilterEntryOf<T>) -> DispatchResult {
 			T::EnableOrigin::ensure_origin(origin)?;
 			ensure!(entry.valid(), Error::<T>::InvalidString);
@@ -170,7 +176,7 @@ pub mod pallet {
 
 	impl<T: Config> Contains<T::RuntimeCall> for Pallet<T>
 	where
-		<T as system::Config>::RuntimeCall: GetCallMetadata,
+		<T as frame_system::Config>::RuntimeCall: GetCallMetadata,
 	{
 		fn contains(call: &T::RuntimeCall) -> bool {
 			let CallMetadata { function_name, pallet_name } = call.get_call_metadata();

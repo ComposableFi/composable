@@ -6,7 +6,8 @@ use crate::{
 	CodeHashToId, CodeIdToInfo, CodeIdentifier, Config, CosmwasmAccount, CurrentCodeId,
 	InstrumentedCode, Pallet as Cosmwasm, PristineCode, INSTRUMENTATION_VERSION,
 };
-use cosmwasm_vm::{cosmwasm_std::instantiate2_address, vm::VMBase};
+use cosmwasm_std::instantiate2_address;
+use cosmwasm_vm::vm::VMBase;
 use cosmwasm_vm_wasmi::code_gen;
 use frame_system::RawOrigin;
 use sha2::{Digest, Sha256};
@@ -15,6 +16,8 @@ use sp_runtime::{traits::Convert, AccountId32};
 #[test]
 fn upload() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let origin = create_funded_root_account();
 
 		let wasm_module: code_gen::WasmModule =
@@ -119,14 +122,13 @@ pub fn instantiate_test_cases(
 		contract_info.label,
 		TryInto::<ContractLabelOf<Test>>::try_into(COMMON_LABEL.as_bytes().to_vec()).unwrap()
 	);
-
-	// TODO(aeryz): Improve code_gen to embed cosmwasm code, so that we can assert
-	// `instantiate` function is really called.
 }
 
 #[test]
 fn instantiate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let origin = create_funded_account("origin");
 
 		let wasm_module: code_gen::WasmModule =
@@ -175,6 +177,8 @@ pub fn migrate_test_cases(contract: AccountId32, code_id: u64) {
 #[test]
 fn migrate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -238,6 +242,8 @@ pub fn update_admin_test_cases(contract: AccountId32, new_admin: Option<AccountI
 #[test]
 fn update_admin() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract = create_instantiated_contract(&mut shared_vm, origin.clone());

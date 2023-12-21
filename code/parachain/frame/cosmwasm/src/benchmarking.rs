@@ -1,11 +1,14 @@
 #![allow(clippy::disallowed_methods)]
 
+use core::cell::OnceCell;
+use std::collections::HashMap;
+
 use super::*;
 use crate::{
 	instrument::INSTRUCTIONS_MULTIPLIER,
 	runtimes::{
-		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas},
-		vm::{CosmwasmVMCache, CosmwasmVMShared},
+		abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount},
+		vm::CosmwasmVMShared,
 	},
 	types::*,
 	Pallet as Cosmwasm,
@@ -13,11 +16,8 @@ use crate::{
 use alloc::{
 	borrow::ToOwned, boxed::Box, collections::BTreeMap, format, string::String, vec, vec::Vec,
 };
-use core::cell::SyncUnsafeCell;
-use cosmwasm_vm::{
-	cosmwasm_std::{Coin, Reply, SubMsgResult},
-	system::CosmwasmContractMeta,
-};
+use cosmwasm_std::{Coin, Reply, SubMsgResult};
+use cosmwasm_vm::system::CosmwasmContractMeta;
 use cosmwasm_vm_wasmi::code_gen::{
 	self, Function, FunctionBuilder, Table, WasmModule, INDEX_OF_USER_DEFINED_FNS,
 };
@@ -25,7 +25,7 @@ use entrypoint::*;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{fungible, fungibles, fungibles::Mutate, Get};
 use frame_system::RawOrigin;
-use lazy_static::lazy_static;
+use hex_literal::hex;
 use primitives::currency::CurrencyId;
 use rand::{rngs::SmallRng, RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
@@ -36,19 +36,19 @@ use wasm_instrument::parity_wasm::elements::{
 };
 use wasmi::{AsContext, AsContextMut};
 
-const SECP256K1_MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
-const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
-const SECP256K1_PUBLIC_KEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+const SECP256K1_MESSAGE: [u8; 128] = hex!("5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7");
+const SECP256K1_SIGNATURE: [u8; 64] = hex!("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4");
+const SECP256K1_PUBLIC_KEY: [u8; 65] = hex!("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73");
 
-const ED25519_MESSAGE_HEX: &str = "af82";
-const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
-const ED25519_PUBLIC_KEY_HEX: &str =
-	"fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
+const ED25519_MESSAGE: [u8; 2] = hex!("af82");
+const ED25519_SIGNATURE: [u8; 64] = hex!("6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a");
+const ED25519_PUBLIC_KEY: [u8; 32] =
+	hex!("fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025");
 
-const ED25519_MESSAGE2_HEX: &str = "72";
-const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
-const ED25519_PUBLIC_KEY2_HEX: &str =
-	"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
+const ED25519_MESSAGE2: [u8; 1] = hex!("72");
+const ED25519_SIGNATURE2: [u8; 64] = hex!("92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00");
+const ED25519_PUBLIC_KEY2: [u8; 32] =
+	hex!("3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c");
 
 const BASE_ADDITIONAL_BINARY_SIZE: usize = 10;
 const FN_NAME: &str = "raw_fn";
@@ -56,46 +56,17 @@ const INSTRUCTIONS_SAMPLE_COUNT: u32 = 50;
 // This is the first index where the user defined functions start
 const EXTRA_FN_INDEX: u32 = INDEX_OF_USER_DEFINED_FNS;
 
-// Substrate's benchmarks are compiled as follows: The upper part and the lower part are separate
-// functions. The upper part is the setup and the lower part is the actual benchmark which is put
-// in a closure. Hence, the benchmark cannot reference to an object from the setup. Since the
-// closure is defined as `move ||`, it moves when references are used. But in our case, `vm` stores
-// a mutable reference to the `shared vm`. Which means it points to a local object. Following
-// alternatives are not used: 1. We could implement a trait and it could work regardless of `shared
-// vm` being reference or owned. But    this would require a lot of changes and it would be useful
-// only to benchmarks. 2. We could use `Rc<RefCell<CosmwasmVMShared>>` but this is an unnecessary
-// performance penalty.
-//
-// We also used `SyncUnsafeCell` to be able to borrow the `shared vm` as  mutable. `Mutex` could
-// have been used but again, we don't want to pay for `Mutex` during benchmarking.
-lazy_static! {
-	static ref SHARED_VM: SyncUnsafeCell<CosmwasmVMShared> = {
-		SyncUnsafeCell::new(CosmwasmVMShared {
-			storage_readonly_depth: 0,
-			depth: 0,
-			gas: Gas::new(64, u64::MAX),
-			cache: CosmwasmVMCache { code: Default::default() },
-		})
-	};
-	// ed25519_batch_verify functions gets a parameter of type `&[&[u8]]`. Since the closure
-	// cannot point to a non-static references data like explained previously, these are done
-	// globally.
-	static ref ED25519_MESSAGE: Vec<u8> = hex::decode(ED25519_MESSAGE_HEX).unwrap();
-	static ref ED25519_MESSAGE2: Vec<u8> = hex::decode(ED25519_MESSAGE2_HEX).unwrap();
-	static ref ED25519_SIGNATURE: Vec<u8> = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
-	static ref ED25519_SIGNATURE2: Vec<u8> = hex::decode(ED25519_SIGNATURE2_HEX).unwrap();
-	static ref ED25519_PUBLIC_KEY: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
-	static ref ED25519_PUBLIC_KEY2: Vec<u8> = hex::decode(ED25519_PUBLIC_KEY2_HEX).unwrap();
-}
-
-/// Get a mutable reference to the shared vm
-fn get_shared_vm() -> &'static mut CosmwasmVMShared {
-	let mut shared = unsafe { SHARED_VM.get().as_mut().unwrap() };
-	shared.gas = Gas::new(64, u64::MAX);
-	shared.depth = 0;
-	shared.storage_readonly_depth = 0;
-	shared.cache = CosmwasmVMCache { code: Default::default() };
-	shared
+/// Construct a shared VM.
+///
+/// Substrate's benchmarks consists of two separate functions: the setup and the
+/// benchmark which is put in a `move ||` closure.  Hence, the benchmark cannot
+/// reference an object from the setup.  But in our case, `vm` stores a mutable
+/// reference to the `shared vm`.
+///
+/// To overcome that limitation, this function returns an unsafe cell allocated
+/// on heap.
+fn make_shared_vm() -> CosmwasmVMShared {
+	CosmwasmVMShared::with_gas(64, u64::MAX)
 }
 
 /// Create a CosmWasm module with additional custom functions
@@ -119,17 +90,21 @@ fn create_wasm_module_with_fns(
 		BASE_ADDITIONAL_BINARY_SIZE,
 		table,
 	)
-	.unwrap()
+	.expect("test")
 	.try_into()
-	.unwrap();
+	.expect("test");
 
 	let engine = wasmi::Engine::default();
-	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
+	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).expect("test");
 
 	let mut store = wasmi::Store::new(&engine, ());
-	let linker = <wasmi::Linker<()>>::new();
+	let linker = <wasmi::Linker<()>>::new(&engine);
 
-	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
+	let instance = linker
+		.instantiate(&mut store, &module)
+		.expect("test")
+		.start(&mut store)
+		.expect("test");
 
 	(store, instance)
 }
@@ -159,17 +134,21 @@ where
 		BASE_ADDITIONAL_BINARY_SIZE,
 		None,
 	)
-	.unwrap()
+	.expect("test")
 	.try_into()
-	.unwrap();
+	.expect("test");
 
 	let engine = wasmi::Engine::default();
-	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).unwrap();
+	let module = wasmi::Module::new(&engine, wasm_module.code.as_slice()).expect("test");
 
 	let mut store = wasmi::Store::new(&engine, ());
-	let linker = <wasmi::Linker<()>>::new();
+	let linker = <wasmi::Linker<()>>::new(&engine);
 
-	let instance = linker.instantiate(&mut store, &module).unwrap().start(&mut store).unwrap();
+	let instance = linker
+		.instantiate(&mut store, &module)
+		.expect("test")
+		.start(&mut store)
+		.expect("test");
 
 	(store, instance)
 }
@@ -181,9 +160,9 @@ fn wasm_invoke(mut store: wasmi::Store<()>, instance: wasmi::Instance) {
 	instance
 		.get_export(store.as_context(), FN_NAME)
 		.and_then(wasmi::Extern::into_func)
-		.unwrap()
+		.expect("test")
 		.call(store.as_context_mut(), &[], &mut [])
-		.unwrap();
+		.expect("test");
 }
 
 trait NumericInstruction {
@@ -224,9 +203,7 @@ fn create_unary_instruction_set<I: NumericInstruction>(
 	vec![I::get(), binary_instr, Instruction::Drop]
 }
 
-fn create_funded_account<
-	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
->(
+fn create_funded_account<T: Config + pallet_balances::Config + pallet_assets::Config>(
 	key: &'static str,
 ) -> <T as Config>::AccountIdExtended
 where
@@ -238,90 +215,96 @@ where
 		&origin,
 		10_000_000_000_000_u128.into(),
 	)
-	.unwrap();
+	.expect("test");
 	origin
 }
 
-fn create_funded_root_account<
-	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
->() -> <T as Config>::AccountIdExtended
+fn create_funded_root_account<T: Config + pallet_balances::Config + pallet_assets::Config>(
+) -> <T as Config>::AccountIdExtended
 where
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
-	let origin = Decode::decode(&mut TrailingZeroInput::new(&[1u8; 32])).unwrap();
+	let origin = Decode::decode(&mut TrailingZeroInput::new(&[1_u8; 32])).expect("test");
 
 	<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
 		&origin,
 		10_000_000_000_000_u128.into(),
 	)
-	.unwrap();
+	.expect("test");
 	origin
 }
 
 fn create_instantiated_contract<T>(origin: T::AccountId) -> T::AccountId
 where
-	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
+	T: Config + pallet_balances::Config + pallet_assets::Config,
 	<T as pallet_balances::Config>::Balance: From<u128>,
 {
 	// 1. Generate a wasm code
 	let wasm_module: WasmModule =
 		code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE, None)
-			.unwrap()
+			.expect("test")
 			.into();
 	// 2. Properly upload the code (so that the necessary storage items are modified)
-	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
+	Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().expect("test")).expect("test");
 
 	// 3. Instantiate the contract and get the contract address
+	let mut shared_vm = CosmwasmVMShared::with_gas(64, u64::MAX);
+
 	let contract_addr = setup_instantiate_call::<T>(
 		origin.clone(),
 		1,
 		"salt".as_bytes(),
 		Some(origin),
-		vec![0x41_u8].try_into().unwrap(),
+		vec![0x41_u8].try_into().expect("test"),
 	)
-	.unwrap()
-	.top_level_call(get_shared_vm(), Default::default(), b"message".to_vec().try_into().unwrap())
-	.unwrap();
+	.expect("test")
+	.top_level_call(
+		//unsafe { &mut *shared_vm.get() },
+		&mut shared_vm,
+		Default::default(),
+		b"message".to_vec().try_into().expect("test"),
+	)
+	.expect("test");
 
 	contract_addr
 }
 
 fn create_coins<T>(accounts: Vec<&AccountIdOf<T>>, n: u32) -> Vec<Coin>
 where
-	T: Config + pallet_balances::Config + pallet_assets_transactor_router::Config,
+	T: Config + pallet_balances::Config + pallet_assets::Config,
 	<T as Config>::Balance: From<u128>,
 	<T as Config>::AssetId: From<u128>,
 	<T as pallet_balances::Config>::Balance: From<u128>,
-	<T as pallet_assets_transactor_router::Config>::Balance: From<u128>,
-	<T as pallet_assets_transactor_router::Config>::AssetId: From<u128>,
-	<T as pallet_assets_transactor_router::Config>::NativeTransactor: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+	<T as pallet_assets::Config>::Balance: From<u128>,
+	<T as pallet_assets::Config>::AssetId: From<u128>,
+	<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
 		+ fungible::Inspect<
 			<T as pallet::Config>::AccountIdExtended,
-			Balance = <T as pallet_assets_transactor_router::Config>::Balance,
+			Balance = <T as pallet_assets::Config>::Balance,
 		>,
-	<T as pallet_assets_transactor_router::Config>::LocalTransactor: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+	<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
 		+ fungibles::Inspect<
 			<T as pallet::Config>::AccountIdExtended,
-			Balance = <T as pallet_assets_transactor_router::Config>::Balance,
-			AssetId = <T as pallet_assets_transactor_router::Config>::AssetId,
+			Balance = <T as pallet_assets::Config>::Balance,
+			AssetId = <T as pallet_assets::Config>::AssetId,
 		>,
 {
 	let mut funds: Vec<Coin> = Vec::new();
 	let assets = CurrencyId::list_assets();
 	for i in 0..n {
-		let currency_id = assets[i as usize].id;
+		let currency_id = assets.get(i as usize).expect("ok").id;
 		// We need to fund all accounts first
 		for account in &accounts {
-			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.0.into(),
 				account,
-				10_000_000_000_000_000_000u128.into(),
+				10_000_000_000_000_000_000_u128.into(),
 			)
-			.unwrap();
+			.expect("test");
 		}
 		funds.push(Cosmwasm::<T>::native_asset_to_cosmwasm_asset(
 			currency_id.0.into(),
-			1_000_000_000_000_000_000u128.into(),
+			1_000_000_000_000_000_000_u128.into(),
 		));
 	}
 	funds
@@ -330,66 +313,66 @@ where
 benchmarks! {
 	where_clause {
 		where
-			T: pallet_balances::Config + pallet_assets_transactor_router::Config<AssetId = CurrencyId>,
+			T: pallet_balances::Config + pallet_assets::Config<AssetId = CurrencyId>,
 			<T as Config>::Balance: From<u128>,
 			<T as Config>::AssetId: From<u128>,
 			<T as pallet_balances::Config>::Balance: From<u128>,
-			<T as pallet_assets_transactor_router::Config>::Balance: From<u128>,
-			<T as pallet_assets_transactor_router::Config>::AssetId: From<u128>,
-			<T as pallet_assets_transactor_router::Config>::NativeTransactor: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
+			<T as pallet_assets::Config>::Balance: From<u128>,
+			<T as pallet_assets::Config>::AssetId: From<u128>,
+			<T as pallet_assets::Config>::NativeCurrency: fungible::Mutate<<T as pallet::Config>::AccountIdExtended>
 				+ fungible::Inspect<
 					<T as pallet::Config>::AccountIdExtended,
-					Balance = <T as pallet_assets_transactor_router::Config>::Balance,
+					Balance = <T as pallet_assets::Config>::Balance,
 				>,
-			<T as pallet_assets_transactor_router::Config>::LocalTransactor: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
+			<T as pallet_assets::Config>::MultiCurrency: fungibles::Mutate<<T as pallet::Config>::AccountIdExtended>
 				+ fungibles::Inspect<
 					<T as pallet::Config>::AccountIdExtended,
-					Balance = <T as pallet_assets_transactor_router::Config>::Balance,
-					AssetId = <T as pallet_assets_transactor_router::Config>::AssetId,
+					Balance = <T as pallet_assets::Config>::Balance,
+					AssetId = <T as pallet_assets::Config>::AssetId,
 				>,
 	}
 
 	upload {
 		let n in 1..T::MaxCodeSize::get() - 10000;
 		let origin = create_funded_root_account::<T>();
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize, None).unwrap().into();
-	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().unwrap())
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), n as usize, None).expect("test").into();
+	}: _(RawOrigin::Signed(origin), wasm_module.code.try_into().expect("test"))
 
 	instantiate {
-		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
+		let n in 0..CurrencyId::list_assets().len().try_into().expect("test");
 		let origin = create_funded_account::<T>("origin");
 		// BASE_ADDITIONAL_BINARY_SIZE + 1 to make a different code so that it doesn't already exist
 		// in `PristineCode` and we don't get an error back.
-		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE + 1, None).unwrap().into();
-		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
-		let salt: ContractSaltOf<T> = vec![1].try_into().unwrap();
-		let label: ContractLabelOf<T> = "label".as_bytes().to_vec().try_into().unwrap();
-		let message: ContractMessageOf<T> = "{}".as_bytes().to_vec().try_into().unwrap();
+		let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), BASE_ADDITIONAL_BINARY_SIZE + 1, None).expect("test").into();
+		Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().expect("test")).expect("test");
+		let salt: ContractSaltOf<T> = vec![1].try_into().expect("test");
+		let label: ContractLabelOf<T> = "label".as_bytes().to_vec().try_into().expect("test");
+		let message: ContractMessageOf<T> = "{}".as_bytes().to_vec().try_into().expect("test");
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
-			let currency_id = assets[i as usize].id;
-			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			let currency_id = assets.get(i as usize).expect("ok").id;
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.0.into(),
 				&origin,
-				10_000_000_000_000_000_000u128.into(),
+				10_000_000_000_000_000_000_u128.into(),
 			)
-			.unwrap();
-			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000u128.into(), false));
+			.expect("test");
+			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000_u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().unwrap(), 1_000_000_000_000u64, message.clone())
+	}: _(RawOrigin::Signed(origin.clone()), CodeIdentifier::CodeId(1), salt.clone(), None, label.clone(), funds.try_into().expect("test"), 1_000_000_000_000_u64, message.clone())
 	verify {
 		// Make sure refcount is increased
-		assert_eq!(CodeIdToInfo::<T>::get(1).unwrap().refcount, 1);
+		assert_eq!(CodeIdToInfo::<T>::get(1).expect("test").refcount, 1);
 		// Make sure contract address is derived correctly
-		let code_hash = CodeIdToInfo::<T>::get(1).unwrap().pristine_code_hash;
+		let code_hash = CodeIdToInfo::<T>::get(1).expect("test").pristine_code_hash;
 		let contract_addr =
-			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash).unwrap();
+			Pallet::<T>::derive_contract_address(&origin, &salt, &code_hash).expect("test");
 		// Make sure trie_id is derived correctly
 		let nonce = CurrentNonce::<T>::get();
 		let trie_id = Pallet::<T>::derive_contract_trie_id(&contract_addr, nonce);
 		// Make sure contract info is inserted
-		let info = Pallet::<T>::contract_info(&contract_addr).unwrap();
+		let info = Pallet::<T>::contract_info(&contract_addr).expect("test");
 
 		assert_eq!(ContractInfoOf::<T> {
 			code_id: 1,
@@ -401,47 +384,47 @@ benchmarks! {
 	}
 
 	execute {
-		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
+		let n in 0..CurrencyId::list_assets().len().try_into().expect("test");
 		let origin = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(origin.clone());
-		let message = b"{}".to_vec().try_into().unwrap();
+		let message = b"{}".to_vec().try_into().expect("test");
 		let mut funds = BTreeMap::new();
 		let assets = CurrencyId::list_assets();
 		for i in 0..n {
-			let currency_id = assets[i as usize].id;
-			<pallet_assets_transactor_router::Pallet<T> as Mutate<T::AccountId>>::mint_into(
+			let currency_id = assets.get(i as usize).expect("ok").id;
+			<pallet_assets::Pallet<T> as Mutate<T::AccountId>>::mint_into(
 				currency_id.0.into(),
 				&origin,
-				10_000_000_000_000_000_000u128.into(),
+				10_000_000_000_000_000_000_u128.into(),
 			)
-			.unwrap();
-			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000u128.into(), false));
+			.expect("test");
+			funds.insert(currency_id.0.into(), (1_000_000_000_000_000_000_u128.into(), false));
 		}
-	}: _(RawOrigin::Signed(origin), contract, funds.try_into().unwrap(), 1_000_000_000_000u64, message)
+	}: _(RawOrigin::Signed(origin), contract, funds.try_into().expect("test"), 1_000_000_000_000_u64, message)
 
 	migrate {
 		let origin = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(origin.clone());
 		{
 			// Upload the second contract but do not instantiate it, this will get `code_id = 2`
-			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12, None).unwrap().into();
-			Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().unwrap()).unwrap();
+			let wasm_module: WasmModule = code_gen::ModuleDefinition::new(Default::default(), 12, None).expect("test").into();
+			Cosmwasm::<T>::do_upload(&origin, wasm_module.code.try_into().expect("test")).expect("test");
 		}
-		let message = b"{}".to_vec().try_into().unwrap();
+		let message = b"{}".to_vec().try_into().expect("test");
 		let assets = CurrencyId::list_assets();
 		let CodeInfoOf::<T> {
 			pristine_code_hash,
 			..
-		} = CodeIdToInfo::<T>::get(1).unwrap();
-	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 1_000_000_000_000u64, message)
+		} = CodeIdToInfo::<T>::get(1).expect("test");
+	}: _(RawOrigin::Signed(origin), contract.clone(), CodeIdentifier::CodeId(2), 1_000_000_000_000_u64, message)
 	verify {
 		// Make sure code id doesn't exist
-		assert_eq!(CodeIdToInfo::<T>::contains_key(1), false);
-		assert_eq!(PristineCode::<T>::contains_key(1), false);
-		assert_eq!(InstrumentedCode::<T>::contains_key(1), false);
-		assert_eq!(CodeHashToId::<T>::contains_key(pristine_code_hash), false);
+		assert!(!CodeIdToInfo::<T>::contains_key(1));
+		assert!(!PristineCode::<T>::contains_key(1));
+		assert!(!InstrumentedCode::<T>::contains_key(1));
+		assert!(!CodeHashToId::<T>::contains_key(pristine_code_hash));
 		// Make sure contract points to the new code
-		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().code_id, 2);
+		assert_eq!(ContractToInfo::<T>::get(&contract).expect("test").code_id, 2);
 	}
 
 	update_admin {
@@ -449,59 +432,72 @@ benchmarks! {
 		let new_admin = account::<<T as Config>::AccountIdExtended>("new_admin", 0, 0xCAFEBABE);
 		let contract = create_instantiated_contract::<T>(origin.clone());
 
-	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 1_000_000_000_000u64)
+	}: _(RawOrigin::Signed(origin), contract.clone(), Some(new_admin.clone()), 1_000_000_000_000_u64)
 	verify {
 		// Make sure contract points to the new code
-		assert_eq!(ContractToInfo::<T>::get(&contract).unwrap().admin, Some(new_admin));
+		assert_eq!(ContractToInfo::<T>::get(&contract).expect("test").admin, Some(new_admin));
 	}
 
 	db_read {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_db_read(vm.0.data_mut(), "hello world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_read(vm.0.data_mut(), "hello world".as_bytes()).expect("test");
 	}
 
 	db_read_other_contract {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-	let info = ContractToInfo::<T>::get(&contract).unwrap();
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let info = ContractToInfo::<T>::get(&contract).expect("test");
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_db_read_other_contract(vm.0.data_mut(), &info.trie_id, "hello world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_read_other_contract(vm.0.data_mut(), &info.trie_id, "hello world".as_bytes()).expect("test");
 	}
 
 	db_write {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).expect("test");
 	}
 
 	db_scan {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
+		Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).expect("test");
 	}
 
 	db_next {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
-		let iterator = Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
+		let iterator = Cosmwasm::<T>::do_db_scan(vm.0.data_mut()).expect("test");
 	}: {
-		Cosmwasm::<T>::do_db_next(vm.0.data_mut(), iterator).unwrap();
+		Cosmwasm::<T>::do_db_next(vm.0.data_mut(), iterator).expect("test");
 	}
 
 	db_remove {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
-		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).expect("test");
 	}: {
 		Cosmwasm::<T>::do_db_remove(vm.0.data_mut(), "hello".as_bytes());
 	}
@@ -509,30 +505,34 @@ benchmarks! {
 	balance {
 		let sender = create_funded_account::<T>("origin");
 	}: {
-		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).unwrap();
+		Cosmwasm::<T>::do_balance(&sender, String::from("100000")).expect("test");
 	}
 
 	transfer {
-		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
+		let n in 0..CurrencyId::list_assets().len().try_into().expect("test");
 		let sender = create_funded_account::<T>("from");
 		let receiver = account::<<T as Config>::AccountIdExtended>("to", 0, 0xCAFEBABE);
 		let funds: Vec<Coin> = create_coins::<T>(vec![&sender], n);
 	}: {
-		Cosmwasm::<T>::do_transfer(&sender, &receiver, &funds, false).unwrap();
+		Cosmwasm::<T>::do_transfer(&sender, &receiver, &funds, Preservation::Expendable).expect("test");
 	}
 
 	set_contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_set_contract_meta(&contract, 1, None, "hello world".into()).unwrap()
+		Cosmwasm::<T>::do_set_contract_meta(&contract, 1, None, "hello world".into()).expect("test")
 	}
 
 	running_contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
 		Cosmwasm::<T>::do_running_contract_meta(vm.0.data_mut())
 	}
@@ -540,23 +540,25 @@ benchmarks! {
 	contract_meta {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let _ = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let _ = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_contract_meta(contract).unwrap();
+		Cosmwasm::<T>::do_contract_meta(contract).expect("test");
 	}
 
 	addr_validate {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_validate(address).unwrap();
+		Cosmwasm::<T>::do_addr_validate(address).expect("test");
 	}
 
 	addr_canonicalize {
 		let account = account::<<T as Config>::AccountIdExtended>("account", 0, 0xCAFEBABE);
 		let address = Cosmwasm::<T>::account_to_cosmwasm_addr(account);
 	}: {
-		Cosmwasm::<T>::do_addr_canonicalize(address).unwrap();
+		Cosmwasm::<T>::do_addr_canonicalize(address).expect("test");
 	}
 
 	addr_humanize {
@@ -568,109 +570,122 @@ benchmarks! {
 
 	secp256k1_recover_pubkey {
 		let message = "connect all the things";
-		let signature_hex = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4";
-		let signature = hex::decode(signature_hex).unwrap();
+		let signature = hex!("dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a4");
 		let mut hasher = Keccak256::new();
 		hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
 		hasher.update(message);
 		let message_hash = hasher.finalize();
 	}: {
-		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).unwrap();
+		Cosmwasm::<T>::do_secp256k1_recover_pubkey(&message_hash[..], &signature, 0).expect("test");
 	}
 
 	secp256k1_verify {
-		let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
+		let message = SECP256K1_MESSAGE;
 		let message_hash = Sha256::digest(message);
-		let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
-		let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
+		let signature = SECP256K1_SIGNATURE;
+		let public_key = SECP256K1_PUBLIC_KEY;
 	}: {
 		Cosmwasm::<T>::do_secp256k1_verify(&message_hash, &signature, &public_key);
 	}
 
 	ed25519_verify {
-		let message = ED25519_MESSAGE.as_slice();
-		let signature = ED25519_SIGNATURE.as_slice();
-		let public_key = ED25519_PUBLIC_KEY.as_slice();
+		let message = ED25519_MESSAGE;
+		let signature = ED25519_SIGNATURE;
+		let public_key = ED25519_PUBLIC_KEY;
 	}: {
-		Cosmwasm::<T>::do_ed25519_verify(message, signature, public_key)
+		Cosmwasm::<T>::do_ed25519_verify(&message, &signature, &public_key)
 	}
 
 	ed25519_batch_verify {
-		let messages = vec![ED25519_MESSAGE.as_slice(), ED25519_MESSAGE2.as_slice()];
-		let signatures = vec![ED25519_SIGNATURE.as_slice(), ED25519_SIGNATURE2.as_slice()];
-		let public_keys = vec![ED25519_PUBLIC_KEY.as_slice(), ED25519_PUBLIC_KEY2.as_slice()];
+		let messages = [&ED25519_MESSAGE[..], &ED25519_MESSAGE2[..]];
+		let signatures = [&ED25519_SIGNATURE[..], &ED25519_SIGNATURE2[..]];
+		let public_keys = [&ED25519_PUBLIC_KEY[..], &ED25519_PUBLIC_KEY2[..]];
 	}: {
 		Cosmwasm::<T>::do_ed25519_batch_verify(&messages, &signatures, &public_keys);
 	}
 
 	continue_instantiate {
-		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
+		let n in 0..CurrencyId::list_assets().len().try_into().expect("test");
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-	let info = ContractToInfo::<T>::get(&contract).unwrap();
+	let info = ContractToInfo::<T>::get(&contract).expect("test");
 		let meta: CosmwasmContractMeta<CosmwasmAccount<T>> = CosmwasmContractMeta { code_id: info.code_id, admin: None, label: String::from("test")};
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_instantiate(vm.0.data_mut(), meta, funds, b"salt", "{}".as_bytes(), &mut |_event| {}).expect("test");
 	}
 
 	continue_execute {
-		let n in 0..CurrencyId::list_assets().len().try_into().unwrap();
+		let n in 0..CurrencyId::list_assets().len().try_into().expect("test");
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
 		let funds = create_coins::<T>(vec![&sender, &contract], n);
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_continue_execute(vm.0.data_mut(), contract, funds, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_execute(vm.0.data_mut(), contract, funds, "{}".as_bytes(), &mut |_event| {}).expect("test");
 	}
 
 	continue_migrate {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_continue_migrate(vm.0.data_mut(), contract, "{}".as_bytes(), &mut |_event| {}).unwrap();
+		Cosmwasm::<T>::do_continue_migrate(vm.0.data_mut(), contract, "{}".as_bytes(), &mut |_event| {}).expect("test");
 	}
 
 	continue_query {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_continue_query(vm.0.data_mut(), contract, "{}".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_continue_query(vm.0.data_mut(), contract, "{}".as_bytes()).expect("test");
 	}
 
 	continue_reply {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract, vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract, vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).unwrap();
+		Cosmwasm::<T>::do_continue_reply(vm.0.data_mut(), Reply { id: 0, result: SubMsgResult::Err(String::new())}, &mut |_| {}).expect("test");
 	}
 
 	query_contract_info {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
 	}: {
-		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).unwrap();
+		Cosmwasm::<T>::do_query_contract_info(vm.0.data_mut(), contract).expect("test");
 	}
 
 	query_code_info {
 		let sender = create_funded_account::<T>("origin");
 		let _ = create_instantiated_contract::<T>(sender);
 	}: {
-		Cosmwasm::<T>::do_query_code_info(1).unwrap();
+		Cosmwasm::<T>::do_query_code_info(1).expect("test");
 	}
 
 	query_raw {
 		let sender = create_funded_account::<T>("origin");
 		let contract = create_instantiated_contract::<T>(sender.clone());
-		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(get_shared_vm(), sender, contract.clone(), vec![]).unwrap();
-		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).unwrap();
+		let mut shared_vm = make_shared_vm();
+		let shared_vm = Box::pin(core::cell::UnsafeCell::new(shared_vm));
+		let mut vm = Cosmwasm::<T>::cosmwasm_new_vm(unsafe { &mut *shared_vm.get() }, sender, contract.clone(), vec![]).expect("test");
+		Cosmwasm::<T>::do_db_write(vm.0.data_mut(), "hello".as_bytes(), "world".as_bytes()).expect("test");
 	}: {
-		Cosmwasm::<T>::do_query_raw(vm.0.data_mut(), contract, "hello".as_bytes()).unwrap();
+		Cosmwasm::<T>::do_query_raw(vm.0.data_mut(), contract, "hello".as_bytes()).expect("test");
 	}
 
 	// For `I64Const` and `Drop`. This will be also used to calculate the cost of an empty function call and additional

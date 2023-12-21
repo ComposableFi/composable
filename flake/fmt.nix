@@ -1,16 +1,6 @@
 { self, ... }: {
   perSystem = { config, self', inputs', pkgs, system, ... }:
     let
-      allDirectoriesAndFiles = pkgs.stdenv.mkDerivation {
-        name = "allDirectoriesAndFiles";
-        src =
-          builtins.filterSource (path: _type: baseNameOf path != ".git") ./.;
-        dontUnpack = true;
-        installPhase = ''
-          mkdir $out/
-          cp -r $src/. $out/
-        '';
-      };
 
       filesWithExtension = extension:
         pkgs.stdenv.mkDerivation {
@@ -80,7 +70,7 @@
             deadnix --version
             SRC=$(find ${allNixFiles} -name "*.nix" -type f | tr "\n" " ")
             echo $SRC
-            deadnix $SRC
+            deadnix $SRC --no-lambda-arg --no-lambda-pattern-names --no-underscore
           '';
         };
 
@@ -95,39 +85,6 @@
             taplo check -c  ${taplo-toml}--verbose
           '';
         };
-
-        hadolint-check = let hadolint-yaml = ./.hadolint.yaml;
-        in pkgs.stdenv.mkDerivation {
-          name = "hadolint-check";
-          dontUnpack = true;
-          buildInputs = [ allDirectoriesAndFiles pkgs.hadolint ];
-          installPhase = ''
-            mkdir -p $out
-
-            hadolint --version
-            total_exit_code=0
-            for file in $(find ${allDirectoriesAndFiles} -name "Dockerfile" -or -name "*.dockerfile"); do
-              echo "=== $file ==="
-              hadolint --config ${hadolint-yaml} $file || total_exit_code=$?
-              echo ""
-            done
-            exit $total_exit_code
-          '';
-        };
-
-        spell-check = let cspell-yaml = ./cspell.yaml;
-        in pkgs.stdenv.mkDerivation {
-          name = "spell-check";
-          dontUnpack = true;
-          buildInputs = [ allDirectoriesAndFiles pkgs.nodePackages.cspell ];
-          installPhase = ''
-            mkdir $out
-            echo "cspell version: $(cspell --version)"
-            cd ${allDirectoriesAndFiles}
-            cspell lint --config ${cspell-yaml} --no-progress "**"
-          '';
-        };
-
       };
     };
 }

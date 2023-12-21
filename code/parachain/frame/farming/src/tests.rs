@@ -16,7 +16,7 @@ macro_rules! assert_emitted {
 use crate::mock::CurrencyId;
 
 const POOL_CURRENCY_ID: CurrencyId = 1000;
-const REWARD_CURRENCY_ID: CurrencyId = 1;
+const REWARD_CURRENCY_ID: CurrencyId = 2;
 
 #[test]
 fn should_create_and_remove_reward_schedule() {

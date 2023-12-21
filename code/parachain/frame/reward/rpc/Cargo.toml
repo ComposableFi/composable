@@ -12,3 +12,6 @@ sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 reward-rpc-runtime-api = { path = "runtime-api" }
 composable-support = { path = "../../composable-support" }
+
+[features]
+std = ["composable-support/std"]

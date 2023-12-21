@@ -11,10 +11,7 @@ use crate::{
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use composable_tests_helpers::test::helper::RuntimeTrait;
-use frame_support::{
-	assert_noop, assert_ok,
-	traits::{fungible::Transfer, Currency},
-};
+use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
 
@@ -52,6 +49,8 @@ fn with_rewards_default<R>(
 
 mod unlock_rewards_for {
 
+	use frame_support::traits::{fungible::Mutate, tokens::Preservation};
+
 	use super::*;
 
 	#[test]
@@ -81,13 +80,13 @@ mod unlock_rewards_for {
 			}
 
 			assert_noop!(
-				<Balances as Transfer<AccountId>>::transfer(
+				<Balances as Mutate<AccountId>>::transfer(
 					&accounts[0].0,
 					&accounts[1].0,
 					DEFAULT_REWARD / 10,
-					false,
+					Preservation::Expendable,
 				),
-				pallet_balances::pallet::Error::<Test>::LiquidityRestrictions
+				sp_runtime::DispatchError::Token(sp_runtime::TokenError::Frozen)
 			);
 
 			let accounts: Vec<AccountId> =
@@ -97,11 +96,11 @@ mod unlock_rewards_for {
 				accounts.clone()
 			));
 
-			assert_ok!(<Balances as Transfer<AccountId>>::transfer(
+			assert_ok!(<Balances as Mutate<AccountId>>::transfer(
 				&accounts[0],
 				&accounts[1],
 				DEFAULT_REWARD / 10,
-				false,
+				Preservation::Expendable,
 			));
 		})
 	}

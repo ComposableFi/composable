@@ -60,8 +60,8 @@ pub mod pallet {
 	};
 	use frame_system::{
 		offchain::{
-			AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload, Signer,
-			SigningTypes,
+			Account, AppCrypto, CreateSignedTransaction, SendSignedTransaction, SignedPayload,
+			Signer, SigningTypes,
 		},
 		pallet_prelude::*,
 	};
@@ -72,15 +72,14 @@ pub mod pallet {
 		offchain::{http, Duration},
 		traits::{
 			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv,
-			CheckedMul, CheckedSub, Saturating, UniqueSaturatedInto as _, Zero,
+			CheckedMul, CheckedSub, IdentifyAccount, Saturating, UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		PerThing, Percent, RuntimeDebug,
+		PerThing, Percent, RuntimeAppPublic, RuntimeDebug,
 	};
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
-
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(KEY_ID);
@@ -156,6 +155,8 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Origin to add new signer
+		type SetSigner: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Origin to manage rewards
 		type RewardOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Lower bound for min answers for a price
@@ -226,7 +227,6 @@ pub mod pallet {
 	type BalanceOf<T> = <T as Config>::Balance;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
@@ -355,6 +355,8 @@ pub mod pallet {
 		AnswerPruned(T::AccountId, T::PriceValue),
 		/// Price changed by oracle \[asset_id, price\]
 		PriceChanged(T::AssetId, T::PriceValue),
+		/// Signer removed
+		SignerRemoved(T::AccountId, T::AccountId, BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -591,9 +593,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
+			who: T::AccountId,
 			signer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			T::SetSigner::ensure_origin(origin.clone())?;
 			let current_controller = ControllerToSigner::<T>::get(&who);
 			let current_signer = SignerToController::<T>::get(&signer);
 
@@ -727,7 +730,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let author_stake = OracleStake::<T>::get(&who).unwrap_or_else(Zero::zero);
-			ensure!(Self::is_requested(&asset_id), Error::<T>::PriceNotRequested);
 			ensure!(
 				author_stake >=
 					T::MinStake::get().saturating_add(
@@ -765,6 +767,29 @@ pub mod pallet {
 
 			Self::deposit_event(Event::PriceSubmitted(who, asset_id, price));
 			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::WeightInfo::remove_signer())]
+		pub fn remove_signer(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			T::SetSigner::ensure_origin(origin.clone())?;
+			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
+			let stake = Self::oracle_stake(signer.clone()).ok_or(Error::<T>::NoStake)?;
+			ensure!(stake > BalanceOf::<T>::zero(), Error::<T>::NoStake);
+			OracleStake::<T>::remove(&signer);
+			DeclaredWithdraws::<T>::remove(&signer);
+			T::Currency::unreserve(&signer, stake);
+			let result = T::Currency::transfer(&signer, &who, stake, AllowDeath);
+			ensure!(result.is_ok(), Error::<T>::TransferError);
+
+			ControllerToSigner::<T>::remove(&who);
+			SignerToController::<T>::remove(&signer);
+
+			Self::deposit_event(Event::SignerRemoved(who, signer, stake));
+			Ok(().into())
 		}
 	}
 
@@ -962,18 +987,21 @@ pub mod pallet {
 					};
 				};
 				total_weight += one_read;
-				if let Ok((removed_pre_prices_len, pre_prices)) =
-					Self::update_pre_prices(asset_id, &asset_info, block)
-				{
-					total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
-					let pre_prices_len = pre_prices.len();
+				if Self::is_requested(&asset_id) {
+					if let Ok((removed_pre_prices_len, pre_prices)) =
+						Self::update_pre_prices(asset_id, &asset_info, block)
+					{
+						total_weight +=
+							T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
+						let pre_prices_len = pre_prices.len();
 
-					// We can ignore `Error::<T>::MaxHistory` because it can not be
-					// because we control the length of items of `PriceHistory`.
-					// TODO this doesnt include weight inside
-					let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
-					total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
-				};
+						// We can ignore `Error::<T>::MaxHistory` because it can not be
+						// because we control the length of items of `PriceHistory`.
+						// TODO this doesnt include weight inside
+						let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
+						total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
+					};
+				}
 			}
 			total_weight
 		}
@@ -1001,6 +1029,8 @@ pub mod pallet {
 				let staled_prices = res.0;
 				pre_prices = res.1;
 				for p in staled_prices {
+					// remove old prices from answer in transit
+					Self::remove_price_in_transit(&p.who.clone(), asset_info);
 					Self::deposit_event(Event::AnswerPruned(p.who.clone(), p.price));
 				}
 				PrePrices::<T>::insert(
@@ -1067,8 +1097,7 @@ pub mod pallet {
 			let stale_block = block.saturating_sub(T::StalePrice::get());
 			let (staled_prices, mut fresh_prices) =
 				match pre_prices.iter().enumerate().find(|(_, p)| p.block >= stale_block) {
-					Some((index, pre_price)) => {
-						Self::remove_price_in_transit(&pre_price.who, asset_info);
+					Some((index, _)) => {
 						let fresh_prices = pre_prices.split_off(index);
 						(pre_prices, fresh_prices)
 					},
@@ -1076,18 +1105,9 @@ pub mod pallet {
 				};
 
 			// check max answer
-			let max_answers = asset_info.max_answers;
-			if fresh_prices.len() as u32 > max_answers {
-				let pruned = fresh_prices.len() - max_answers as usize;
-				for price in fresh_prices.iter().skip(pruned) {
-					Self::remove_price_in_transit(&price.who, asset_info);
-				}
-				#[allow(clippy::indexing_slicing)]
-				// max_answers is confirmed to be less than the len in the condition of the if
-				// block (in a block due to https://github.com/rust-lang/rust/issues/15701)
-				{
-					fresh_prices = fresh_prices[0..max_answers as usize].to_vec();
-				};
+			let pruned = fresh_prices.len().saturating_sub(asset_info.max_answers as usize);
+			for price in fresh_prices.drain(..pruned) {
+				Self::remove_price_in_transit(&price.who, asset_info);
 			}
 
 			(staled_prices, fresh_prices)
@@ -1251,46 +1271,68 @@ pub mod pallet {
 				)
 			}
 			// checks to make sure key from keystore has not already submitted price
-			let prices = PrePrices::<T>::get(*price_id);
-			let public_keys: Vec<sp_core::sr25519::Public> =
-				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
-			let account = AccountId32::new(
-				public_keys.first().ok_or("No public keys for crypto key type `orac`")?.0,
-			);
-			let mut to32 = AccountId32::as_ref(&account);
-			let address: T::AccountId =
-				T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
-
+			let prices = PrePrices::<T>::get(*price_id)
+				.into_iter()
+				.map(|price| price.who)
+				.collect::<Vec<_>>();
 			if prices.len() as u32 >= asset_info.max_answers {
 				log::info!("Max answers reached");
 				return Err("Max answers reached")
 			}
+			let public_keys: Vec<sp_core::sr25519::Public> =
+				sp_io::crypto::sr25519_public_keys(CRYPTO_KEY_TYPE);
 
-			if prices.into_iter().any(|price| price.who == address) {
-				log::info!("Tx already submitted");
-				return Err("Tx already submitted")
+			if public_keys.is_empty() {
+				return Err("No public keys for crypto key type `orac`")
 			}
-			// Make an external HTTP request to fetch the current price.
-			// Note this call will block until response is received.
-			let price = Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
-			log::info!("price {:#?}", price);
 
-			// Using `send_signed_transaction` associated type we create and submit a transaction
-			// representing the call, we've just created.
-			// Submit signed will return a vector of results for all accounts that were found in the
-			// local keystore with expected `KEY_TYPE`.
+			for public_key in public_keys {
+				let account = AccountId32::new(public_key.0);
+				let mut to32 = AccountId32::as_ref(&account);
+				let address: T::AccountId =
+					T::AccountId::decode(&mut to32).map_err(|_| "Could not decode account")?;
+				log::info!("address {:?}", public_key.0);
+				if prices.contains(&address) {
+					log::info!("Tx already submitted");
+				} else {
+					log::info!("findind match among existing keys");
+					let mut accounts = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::RuntimeAppPublic::all().into_iter().enumerate().map(|(index, key)| {
+						let generic_public = <T::AuthorityId as AppCrypto<T::Public, T::Signature>>::GenericPublic::from(key);
+						let public: T::Public = generic_public.into();
+						let account_id = public.clone().into_account();
+						Account::<T>::new(index, account_id, public)
+					});
 
-			let results = signer.send_signed_transaction(|_account| {
-				// Received price is wrapped into a call to `submit_price` public function of this
-				// pallet. This means that the transaction, when executed, will simply call that
-				// function passing `price` as an argument.
-				Call::submit_price { price: price.into(), asset_id: *price_id }
-			});
-
-			for (acc, res) in &results {
-				match res {
-					Ok(()) => log::info!("[{:?}] Submitted price of {} cents", acc.id, price),
-					Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+					if let Some(account) = accounts.find(|x| x.id == address) {
+						log::info!("found account");
+						// Make an external HTTP request to fetch the current price.
+						// Note this call will block until response is received.
+						let price =
+							Self::fetch_price(price_id).map_err(|_| "Failed to fetch price")?;
+						log::info!("price {:#?}", price);
+						let signer = Signer::<T, T::AuthorityId>::all_accounts();
+						let results = signer
+							.with_filter(vec![account.public])
+							.send_signed_transaction(|_account| {
+								// Received price is wrapped into a call to `submit_price` public
+								// function of this pallet. This means that the transaction, when
+								// executed, will simply call that function passing `price` as an
+								// argument.
+								Call::submit_price { price: price.into(), asset_id: *price_id }
+							});
+						for (acc, res) in &results {
+							match res {
+								Ok(()) => {
+									log::info!("[{:?}] Submitted price of {} cents", acc.id, price)
+								},
+								Err(e) => log::error!(
+									"[{:?}] Failed to submit transaction: {:?}",
+									acc.id,
+									e
+								),
+							}
+						}
+					}
 				}
 			}
 

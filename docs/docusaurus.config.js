@@ -1,8 +1,10 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/duotoneLight');
-const darkCodeTheme = require('prism-react-renderer/themes/duotoneDark');
+const lightCodeTheme = require('prism-react-renderer/themes/duotoneLight')
+const darkCodeTheme = require('prism-react-renderer/themes/duotoneDark')
+const math = require('remark-math')
+const katex = require('rehype-katex')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -29,16 +31,16 @@ const config = {
 
 	presets: [
 		[
-			'classic',
+			'@docusaurus/preset-classic',
 			/** @type {import('@docusaurus/preset-classic').Options} */
 			({
 				docs: {
 					breadcrumbs: true,
 					sidebarPath: require.resolve('./sidebars.js'),
 					routeBasePath: '/',
-					// Please change this to your repo.
-					// Remove this to remove the "edit this page" links.
 					editUrl: 'https://github.com/ComposableFi/composable/tree/main/docs/',
+					remarkPlugins: [math],
+					rehypePlugins: [katex]
 				},
 				blog: false,
 				theme: {
@@ -47,17 +49,26 @@ const config = {
 			}),
 		],
 	],
+	stylesheets: [
+		{
+		  href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
+		  type: 'text/css',
+		  integrity:
+			'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM',
+		  crossorigin: 'anonymous',
+		},
+	  ],	
 
 	themeConfig:
 		/** @type {import('@docusaurus/preset-classic').ThemeConfig} */
 		({
-	    algolia: {
-	      // The application ID provided by Algolia
-	      appId: '1GMXVIRCBW',
-	      // Public API key: it is safe to commit it
-	      apiKey: 'de939a9de56cd5e30ef4a25b9f61a641',
-	      indexName: 'composable',
-	    },
+			algolia: {
+				// The application ID provided by Algolia
+				appId: '1GMXVIRCBW',
+				// Public API key: it is safe to commit it
+				apiKey: 'de939a9de56cd5e30ef4a25b9f61a641',
+				indexName: 'composable',
+			},
 			navbar: {
 				title: 'Composable Finance',
 				logo: {
@@ -66,13 +77,38 @@ const config = {
 				},
 				items: [
 					{
+						to: '/networks/picasso-parachain-overview',
+						position: 'left',
+						label: 'Networks',
+					},
+					{
+						to: '/technology/ibc',
+						position: 'left',
+						label: 'Architecture',
+					},
+					{
+						to: '/develop/build-on-composable',
+						position: 'left',
+						label: 'Develop',
+					},
+					{
+						to: '/ecosystem/composable-ecosystem',
+						position: 'left',
+						label: 'Ecosystem',
+					},
+					{
+						to: '/user-guides',
+						position: 'left',
+						label: 'User Guides',
+					},
+					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
 						position: 'right',
 					},
 					{
-						href: 'https://composablefi.medium.com/',
-						label: 'Medium',
+						href: 'https://explorer.trustless.zone/',
+						label: 'Explorer',
 						position: 'right',
 					},
 				],
@@ -93,7 +129,7 @@ const config = {
 							},
 							{
 								label: 'Telegram',
-								href: 'https://t.me/composablefinance',
+								href: 'https://t.me/https://t.me/composablefinance',
 							},
 							{
 								label: 'Discord',
@@ -109,10 +145,6 @@ const config = {
 						title: 'More',
 						items: [
 							{
-								label: 'GitHub',
-								href: 'https://github.com/ComposableFi/composable',
-							},
-							{
 								label: 'Composable Medium',
 								href: 'https://composablefi.medium.com',
 							},
@@ -120,18 +152,34 @@ const config = {
 								label: 'Picasso Medium',
 								href: 'https://medium.com/@picasso_network',
 							},
+							{
+								label: 'Press Kit',
+								href: 'https://docs.composable.finance/ecosystem/press-kit',
+							},
+							{
+								label: 'Risk Factors',
+								href: 'https://docs.composable.finance/faqs/risk-factors',
+							},
+							{
+								label: 'Terms of Use',
+								href: 'https://docs.composable.finance/faqs/terms-of-use',
+							},
 						],
 					},
 				],
-				copyright: `Copyright © ${new Date().getFullYear()} Composable Finance, Ltd.`,
+				copyright: `Copyright © ${new Date().getFullYear()} Composable Foundation`,
 			},
 			prism: {
-        additionalLanguages: ['rust', 'haskell', 'nix'],
+				additionalLanguages: ['rust', 'haskell', 'nix', 'typescript', 'tsx', 'toml', 'yaml', 'json', 'bash'],
 				theme: lightCodeTheme,
 				darkTheme: darkCodeTheme,
 			},
 		}),
 	plugins: ['docusaurus-plugin-sass', 'my-loaders'],
+	markdown: {
+		mermaid: true,
+	},
+	themes: ['@docusaurus/theme-mermaid'],
 };
 
 module.exports = config;

@@ -15,20 +15,41 @@ polkadot-parachain = { workspace = true, default-features = false }
 proxy = { default-features = false, workspace = true }
 sp-arithmetic = { default-features = false, workspace = true }
 sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 xcm = { default-features = false, workspace = true }
 
+bech32-no_std = { workspace = true, default-features = false, features = [
+  "strict",
+] }
 bitflags = "1.3.2"
 composable-support = { default-features = false, path = "../composable-support" }
+xc-core = { default-features = false, path = "../../../cvm/lib/core", features = [
+  "xcm",
+] }
 plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-serde = { version = '1.0.136', optional = true }
+pallet-ibc = { workspace = true, default-features = false }
 
-[dev-dependencies]
-proptest = { version = "1.0.0" }
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+
+serde = { workspace = true, default-features = false, features = ["alloc"] }
+
+sha2 = { workspace = true, default-features = false }
+
+schemars = { optional = true, workspace = true, default-features = false }
+
+cosmwasm-schema = { workspace = true, default-features = false, optional = true }
+
+thiserror = { workspace = true, default-features = false }
+
 
 [dependencies.codec]
 default-features = false
@@ -36,24 +57,32 @@ features = ["derive"]
 package = "parity-scale-codec"
 version = "3.0.0"
 
+[dev-dependencies]
+proptest = { version = "1.0.0" }
+
 [features]
-default = ["std"]
+default = ["centauri", "std"]
 std = [
-  "serde",
   "codec/std",
+  "composable-support/std",
+  "cosmwasm-schema",
+  "cosmwasm-std/std",
   "frame-support/std",
   "frame-system/std",
+  "pallet-ibc/std",
+  "polkadot-parachain/std",
+  "proxy/std",
+  "scale-info/std",
+  "schemars",
+  "sp-core/std",
   "sp-runtime/std",
   "sp-std/std",
-  "sp-core/std",
-  "scale-info/std",
+  "xc-core/std",
   "xcm/std",
-  "proxy/std",
-  "polkadot-parachain/std",
-  "composable-support/std",
 ]
 test-utils = []
 visualization = ["plotters"]
+centauri = []
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["plotters"]

@@ -6,8 +6,8 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::marker::PhantomData;
+use cosmwasm_std::Coin;
 use cosmwasm_vm::{
-	cosmwasm_std::Coin,
 	executor::{cosmwasm_call, AsFunctionName},
 	system::{
 		cosmwasm_system_entrypoint_hook, cosmwasm_system_run_hook, CosmwasmCallVM,
@@ -60,7 +60,7 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 					match vm.0.as_context().data().contract_runtime {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call::<I, _>(vm, message).map(Into::into),
-						ContractBackend::Pallet =>
+						ContractBackend::Pallet { .. } =>
 							T::PalletHook::execute(vm, self.entrypoint, message),
 					}
 				})
@@ -82,8 +82,8 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 		shared: &mut CosmwasmVMShared,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, CosmwasmVMError<T>>
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, CosmwasmVMError<T>>
 	where
 		for<'x> OwnedWasmiVM<DefaultCosmwasmVM<'x, T>>:
 			CosmwasmCallVM<I> + CosmwasmDynamicVM<I> + StargateCosmwasmCallVM,
@@ -105,7 +105,7 @@ impl<I, O, T: Config> DispatchableCall<I, O, T> {
 					match vm.0.as_context().data().contract_runtime {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call::<I, _>(vm, message).map(Into::into),
-						ContractBackend::Pallet =>
+						ContractBackend::Pallet { .. } =>
 							T::PalletHook::execute(vm, self.entrypoint, message),
 					}
 				})

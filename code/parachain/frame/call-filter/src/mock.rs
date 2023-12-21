@@ -1,10 +1,10 @@
 #![cfg(test)]
 
 use super::*;
+use frame_support::{construct_runtime, ord_parameter_types, parameter_types, traits::Everything};
+use frame_system::EnsureSignedBy;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
-use support::{construct_runtime, ord_parameter_types, parameter_types, traits::Everything};
-use system::EnsureSignedBy;
 
 pub type AccountId = u128;
 pub type Balance = u128;
@@ -18,7 +18,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl system::Config for Runtime {
+impl frame_system::Config for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = u64;
@@ -60,6 +60,11 @@ impl pallet_balances::Config for Runtime {
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = ();
 	type WeightInfo = ();
+
+	type HoldIdentifier = [u8; 8];
+	type FreezeIdentifier = [u8; 8];
+	type MaxHolds = ConstU32<32>;
+	type MaxFreezes = ConstU32<32>;
 }
 
 ord_parameter_types! {
@@ -83,8 +88,8 @@ impl Config for Runtime {
 	type MaxStringSize = MaxStringSize;
 }
 
-type UncheckedExtrinsic = system::mocking::MockUncheckedExtrinsic<Runtime>;
-type Block = system::mocking::MockBlock<Runtime>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
+type Block = frame_system::mocking::MockBlock<Runtime>;
 
 construct_runtime!(
 	pub enum Runtime where
@@ -92,7 +97,7 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Filter: call_filter::{Pallet, Storage, Call, Event<T>},
 		Balances: pallet_balances::{Pallet, Storage, Call, Event<T>},
 	}
@@ -108,7 +113,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 		t.into()
 	}
 }

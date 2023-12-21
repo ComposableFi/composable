@@ -26,12 +26,16 @@ in with prelude; rec {
         "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
         "--enable-offchain-indexing=true"
         "--blocks-pruning=archive"
+        "--state-pruning=archive"
         "--rpc-max-request-size=30" # 2x x default
+        "--offchain-worker=always"
+        "--discover-local"
       ];
+      substrate_cli_args_version = "1";
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime::contracts=debug,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
+          "info,runtime::contracts=debug,runtime=info,parachain=info,cumulus-collator=info,aura=info,xcm=trace,pallet_ibc=trace,hyperspace=trace,hyperspace_parachain=trace,ics=trace,ics::routing=trace,ics::channel=trace"
           # RUST_LOG does not eats extra comma well, so fixed conditionally
           + (if rust_log_add != null then "," + rust_log_add else "");
       }];
@@ -78,10 +82,11 @@ in with prelude; rec {
     {
       name = name;
       validator = true;
+      substrate_cli_args_version = "1";
       env = [{
         name = "RUST_LOG";
         value =
-          "info,runtime=debug,parachain=trace,cumulus-collator=trace,aura=trace,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
+          "info,runtime=debug,parachain=debug,cumulus-collator=debug,aura=debug,xcm=trace,wasmtime_cranelift=warn,wasm-heap=warn,"
           + "netlink_proto=warn,libp2p_ping=warn,multistream_select=warn,trie-cache=warn,wasm_overrides=warn,libp2p_core=warn,libp2p_swarm=warn,sub-libp2p=warn,sync=warn";
       }];
     } // optionalAttrs (rpc_port != null) { inherit rpc_port; }
@@ -100,25 +105,51 @@ in with prelude; rec {
       };
     in [ bootstrap ] ++ generated;
 
-  mkRelaychain =
-    { chain, default_command, rpc_port ? 30444, ws_port ? 9944, count ? 2 }: {
+  mkRelaychain = { chain, default_command, rpc_port ? 30444, ws_port ? 9944
+    , count ? 2, genesis ? { } }: {
       inherit default_command;
       inherit chain;
-      default_args = [ "-lparachain=debug" "--blocks-pruning=archive" ];
-      genesis = {
-        runtime = {
-          runtime_genesis_config = {
-            configuration = {
-              config = {
-                max_validators_per_core = 2;
-                needed_approvals = 1;
-                validation_upgrade_cooldown = 2;
-                validation_upgrade_delay = 2;
+      default_args = [
+        "-lparachain=debug"
+        "--blocks-pruning=archive"
+        "--state-pruning=archive"
+        "--offchain-worker=always"
+        "--enable-offchain-indexing=true"
+        "--discover-local"
+      ];
+
+      genesis = let
+        recursiveMerge = with lib;
+          attrList:
+          let
+            f = attrPath:
+              zipAttrsWith (n: values:
+                if tail values == [ ] then
+                  head values
+                else if all isList values then
+                  unique (concatLists values)
+                else if all isAttrs values then
+                  f (attrPath ++ [ n ]) values
+                else
+                  last values);
+          in f [ ] attrList;
+      in recursiveMerge [
+        {
+          runtime = {
+            runtime_genesis_config = {
+              configuration = {
+                config = {
+                  max_validators_per_core = 2;
+                  needed_approvals = 1;
+                  validation_upgrade_cooldown = 2;
+                  validation_upgrade_delay = 2;
+                };
               };
             };
           };
-        };
-      };
+        }
+        genesis
+      ];
       nodes = mkRelaychainNodes { inherit rpc_port ws_port count chain; };
     };
   mkSettings = {
@@ -141,24 +172,4 @@ in with prelude; rec {
     settings = mkSettings;
     types = mkTypes;
   };
-
-  zombienet-to-ops = zombienet:
-    # output network information in a format that ops(compose, deploy, tests) can consume
-    let
-      ops-node = { name ? null, ws_port ? null, ... }:
-        if name != null && ws_port != null then {
-          ws_port = ws_port;
-          name = name;
-        } else
-          null;
-
-      driedCollators = collators:
-        builtins.filter (e: e != null) (builtins.map ops-node collators);
-      driedParachains = parachains:
-        builtins.map (e: driedCollators e.collators) parachains;
-    in {
-      parachain-nodes = driedParachains zombienet.parachains;
-      relaychain-nodes = builtins.filter (e: e != null)
-        (builtins.map ops-node zombienet.relaychain.nodes);
-    };
 }

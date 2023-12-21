@@ -1,9 +1,5 @@
 use primitives::currency::CurrencyId;
-use std::{
-	collections::{HashMap, HashSet},
-	convert::TryFrom,
-	fmt::Display,
-};
+use std::{convert::TryFrom, fmt::Display};
 
 custom_derive! {
 	#[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -22,27 +18,18 @@ pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USDT, Asset::USDC];
 pub struct AssetPair(pub Asset, pub Asset);
 
 // NOTE: sure it is better move it into primitives
-lazy_static! {
-	/*
-	  The map of valid asset we are allowed to ask price for.
-	  We must not swap two indexes.
-	*/
-	pub static ref INDEX_TO_ASSET: HashMap<CurrencyId, Asset> = [
-		(CurrencyId::KSM, Asset::KSM),
-		(CurrencyId::PICA, Asset::PICA),
-		(CurrencyId::USDT, Asset::USDT),
-		(CurrencyId::USDC, Asset::USDC),
-		(CurrencyId::DOT, Asset::DOT),
-	]
-	.into_iter()
-	.collect();
-
-	pub static ref ASSET_TO_INDEX: HashMap<Asset, CurrencyId> =
-		INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
-
-	pub static ref VALID_ASSETS: HashSet<Asset> =
-		INDEX_TO_ASSET.values().copied().collect();
-}
+//
+// The map of valid asset we are allowed to ask price for.
+// We must not swap two indexes.
+//
+// This is tiny enough that we don’t bother using a Map.
+pub static INDEX_TO_ASSET: [(CurrencyId, Asset); 5] = [
+	(CurrencyId::KSM, Asset::KSM),
+	(CurrencyId::PICA, Asset::PICA),
+	(CurrencyId::USDT, Asset::USDT),
+	(CurrencyId::USDC, Asset::USDC),
+	(CurrencyId::DOT, Asset::DOT),
+];
 
 impl AssetPair {
 	/*
@@ -59,14 +46,17 @@ impl AssetPair {
 impl TryFrom<Asset> for CurrencyId {
 	type Error = ();
 	fn try_from(asset: Asset) -> Result<CurrencyId, Self::Error> {
-		ASSET_TO_INDEX.get(&asset).copied().ok_or(())
+		INDEX_TO_ASSET.iter().find_map(|(id, a)| (asset == *a).then_some(*id)).ok_or(())
 	}
 }
 
 impl TryFrom<CurrencyId> for Asset {
 	type Error = ();
 	fn try_from(currency_index: CurrencyId) -> Result<Asset, Self::Error> {
-		INDEX_TO_ASSET.get(&currency_index).copied().ok_or(())
+		INDEX_TO_ASSET
+			.iter()
+			.find_map(|(id, a)| (currency_index == *id).then_some(*a))
+			.ok_or(())
 	}
 }
 

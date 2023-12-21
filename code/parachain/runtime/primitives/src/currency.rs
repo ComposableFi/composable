@@ -11,7 +11,6 @@ use sp_runtime::{
 
 use crate::prelude::*;
 
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 use xcm::{latest::prelude::*, v3};
@@ -51,10 +50,11 @@ pub trait WellKnownCurrency {
 	TypeInfo,
 	CompactAs,
 	Hash,
+	Serialize,
+	Deserialize,
 )]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
-#[cfg_attr(feature = "std", serde(transparent))]
+#[serde(transparent)]
 pub struct CurrencyId(pub u128);
 
 impl FromStr for CurrencyId {
@@ -112,6 +112,7 @@ macro_rules! list_assets {
 				$(Asset {
 					id: CurrencyId::$NAME,
 					name: Some(stringify!($NAME).as_bytes().to_vec()),
+					symbol: Some(stringify!($NAME).as_bytes().to_vec()),
 					ratio: None,
 					decimals: Self::remote_decimals_for_local(CurrencyId::$NAME).unwrap_or(Self::decimals()),
 					foreign_id: None,
@@ -136,6 +137,8 @@ impl CurrencyId {
 		);
 		///  Native from Composable
 		pub const LAYR: CurrencyId = CurrencyId(2);
+		///  Native from Composable
+		pub const COMPOSABLE_LAYR: CurrencyId = CurrencyId(79228162514264337593543950338);
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(
@@ -149,6 +152,10 @@ impl CurrencyId {
 
 		/// DOT from Polkadot
 		pub const DOT: CurrencyId = CurrencyId(6, None);
+		pub const stDOT: CurrencyId = CurrencyId(7, None);
+		pub const COMPOSABLE_DOT: CurrencyId = CurrencyId(79228162514264337593543950342);
+		pub const LIQUID_STAKED_COMPOSABLE_DOT: CurrencyId = CurrencyId(79228162514264337593543950351);
+		pub const LIQUID_STAKED_PICASSO_KSM: CurrencyId = CurrencyId(20);
 
 		pub const KSM_USDT_LPT: CurrencyId = CurrencyId(105, None);
 		pub const PICA_USDT_LPT: CurrencyId = CurrencyId(106, None);

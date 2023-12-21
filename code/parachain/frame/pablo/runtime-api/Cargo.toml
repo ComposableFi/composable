@@ -22,4 +22,4 @@ sp-std = { default-features = false, workspace = true }
 # REVIEW: Does the runtime API need features?
 [features]
 default = ["std"]
-std = ["sp-api/std", "composable-support/std"]
+std = ["composable-support/std", "composable-traits/std", "sp-api/std"]

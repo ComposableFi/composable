@@ -1,9 +1,12 @@
 use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
-use crate::{runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet};
+use crate::{
+	prelude::*, runtimes::abstraction::GasOutcome, types::*, weights::WeightInfo, Config, Pallet,
+};
 use alloc::{borrow::ToOwned, string::String};
+use composable_traits::cosmwasm::CosmwasmSubstrateError;
 use core::marker::{Send, Sync};
+use cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	cosmwasm_std::{CodeInfoResponse, Coin, ContractInfoResponse, Empty, Env, MessageInfo},
 	executor::ExecutorError,
 	has::Has,
 	memory::{MemoryReadError, MemoryWriteError},
@@ -14,6 +17,8 @@ use cosmwasm_vm::{
 use cosmwasm_vm_wasmi::{
 	OwnedWasmiVM, WasmiContext, WasmiInput, WasmiModule, WasmiOutput, WasmiVMError,
 };
+use frame_support::traits::tokens::Preservation;
+use sp_runtime::DispatchError;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::{core::HostError, Instance, Memory};
 
@@ -25,22 +30,32 @@ pub enum ContractBackend {
 	CosmWasm {
 		/// The wasmi module instantiated for the CosmWasm contract.
 		executing_module: Option<WasmiModule>,
+		call_depth_mut: u32,
 	},
 	/// A substrate pallet, which is a precompiled contract that is included in the runtime.
-	Pallet,
+	Pallet { call_depth_mut: u32 },
 }
 
 impl WasmiContext for ContractBackend {
 	fn executing_module(&self) -> Option<WasmiModule> {
 		match self {
-			ContractBackend::CosmWasm { executing_module } => executing_module.clone(),
-			ContractBackend::Pallet => None,
+			ContractBackend::CosmWasm { executing_module, .. } => executing_module.clone(),
+			ContractBackend::Pallet { .. } => None,
 		}
 	}
 
 	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
-		*self =
-			ContractBackend::CosmWasm { executing_module: Some(WasmiModule { instance, memory }) };
+		*self = ContractBackend::CosmWasm {
+			executing_module: Some(WasmiModule { instance, memory }),
+			call_depth_mut: 0,
+		};
+	}
+
+	fn call_depth_mut(&mut self) -> &mut u32 {
+		match self {
+			ContractBackend::CosmWasm { call_depth_mut, .. } => call_depth_mut,
+			ContractBackend::Pallet { call_depth_mut } => call_depth_mut,
+		}
 	}
 }
 
@@ -49,13 +64,38 @@ pub enum CosmwasmVMError<T: Config> {
 	Interpreter(wasmi::Error),
 	VirtualMachine(WasmiVMError),
 	Pallet(crate::Error<T>),
-	AccountConversionFailure,
+	SubstrateDispatch(DispatchError),
+	AccountConvert,
 	Aborted(String),
 	ReadOnlyViolation,
 	OutOfGas,
+	InvalidGasCheckpoint,
 	Unsupported,
+	NotImplemented,
+	ContractNotFound,
+	ExecuteDeserialize,
+	QuerySerialize,
+	QueryDeserialize,
+	ExecuteSerialize,
 	Rpc(String),
 	Ibc(String),
+	Xcm(String),
+	AssetConversion,
+	Precompile,
+}
+
+impl<T: Config> From<CosmwasmSubstrateError> for CosmwasmVMError<T> {
+	fn from(value: CosmwasmSubstrateError) -> Self {
+		match value {
+			CosmwasmSubstrateError::AssetConversion => Self::AssetConversion,
+			CosmwasmSubstrateError::AccountConvert => Self::AccountConvert,
+			CosmwasmSubstrateError::DispatchError => Self::Precompile,
+			CosmwasmSubstrateError::QuerySerialize => Self::QuerySerialize,
+			CosmwasmSubstrateError::ExecuteSerialize => Self::ExecuteSerialize,
+			CosmwasmSubstrateError::Ibc => Self::Ibc("CosmwasmSubstrate".to_string()),
+			CosmwasmSubstrateError::Xcm => Self::Ibc("CosmwasmSubstrate".to_string()),
+		}
+	}
 }
 
 impl<T: Config + core::marker::Send + core::marker::Sync + 'static> HostError
@@ -121,7 +161,7 @@ pub enum InitialStorageMutability {
 }
 
 /// VM shared cache
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CosmwasmVMCache {
 	/// Code cache, a mapping from an identifier to it's code.
 	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
@@ -136,7 +176,7 @@ pub struct CosmwasmVMShared {
 	/// A value > 0 mean that the storage is readonly.
 	pub storage_readonly_depth: u32,
 	/// VM depth, i.e. how many contracts has been loaded and are currently running.
-	pub depth: u32,
+	pub depth: u8,
 	/// Shared Gas metering.
 	pub gas: Gas,
 	/// Shared cache.
@@ -144,6 +184,18 @@ pub struct CosmwasmVMShared {
 }
 
 impl CosmwasmVMShared {
+	/// Constructs a VM with given gas limits and other fields set to defaults.
+	///
+	/// The arguments have the same meaning as in [`Gas::new`] constructor.
+	pub fn with_gas(max_frames: u8, initial_value: u64) -> Self {
+		Self {
+			storage_readonly_depth: 0,
+			depth: 0,
+			gas: Gas::new(max_frames, initial_value),
+			cache: CosmwasmVMCache::default(),
+		}
+	}
+
 	/// Whether the storage is currently readonly.
 	pub fn storage_is_readonly(&self) -> bool {
 		self.storage_readonly_depth > 0
@@ -200,6 +252,13 @@ impl<'a, T: Config> WasmiContext for CosmwasmVM<'a, T> {
 	fn set_wasmi_context(&mut self, instance: Instance, memory: Memory) {
 		self.contract_runtime.set_wasmi_context(instance, memory)
 	}
+
+	fn call_depth_mut(&mut self) -> &mut u32 {
+		match &mut self.contract_runtime {
+			ContractBackend::CosmWasm { call_depth_mut, .. } => call_depth_mut,
+			ContractBackend::Pallet { call_depth_mut } => call_depth_mut,
+		}
+	}
 }
 
 impl<'a, T: Config> CosmwasmVM<'a, T> {
@@ -232,7 +291,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		_start: Option<Self::StorageKey>,
 		_end: Option<Self::StorageKey>,
-		_order: cosmwasm_vm::cosmwasm_std::Order,
+		_order: cosmwasm_std::Order,
 	) -> Result<u32, Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_scan");
 		Pallet::<T>::do_db_scan(self)
@@ -283,17 +342,17 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		address: Self::Address,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
 		Pallet::<T>::do_continue_execute(self, address.into_inner(), funds, message, event_handler)
 	}
 
 	fn continue_reply(
 		&mut self,
-		message: cosmwasm_vm::cosmwasm_std::Reply,
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
+		message: cosmwasm_std::Reply,
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_reply");
 		Pallet::<T>::do_continue_reply(self, message, event_handler)
 	}
@@ -303,8 +362,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		contract_meta: Self::ContractMeta,
 		funds: Vec<Coin>,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<(Self::Address, Option<cosmwasm_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
 		self.continue_instantiate2(contract_meta, funds, b"salt", message, event_handler)
 	}
@@ -315,8 +374,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		funds: Vec<Coin>,
 		salt: &[u8],
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<(Self::Address, Option<cosmwasm_vm::cosmwasm_std::Binary>), Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<(Self::Address, Option<cosmwasm_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate2");
 		Pallet::<T>::do_continue_instantiate(
 			self,
@@ -333,8 +392,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		address: Self::Address,
 		message: &[u8],
-		event_handler: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
+		event_handler: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_migrate");
 		Pallet::<T>::do_continue_migrate(self, address.into_inner(), message, event_handler)
 	}
@@ -342,10 +401,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	fn query_custom(
 		&mut self,
 		_: Self::QueryCustom,
-	) -> Result<
-		cosmwasm_vm::cosmwasm_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>,
-		Self::Error,
-	> {
+	) -> Result<cosmwasm_std::SystemResult<cosmwasm_vm::executor::CosmwasmQueryResult>, Self::Error>
+	{
 		log::debug!(target: "runtime::contracts", "query_custom");
 		Err(CosmwasmVMError::Unsupported)
 	}
@@ -353,8 +410,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	fn message_custom(
 		&mut self,
 		_: Self::MessageCustom,
-		_: &mut dyn FnMut(cosmwasm_vm::cosmwasm_std::Event),
-	) -> Result<Option<cosmwasm_vm::cosmwasm_std::Binary>, Self::Error> {
+		_: &mut dyn FnMut(cosmwasm_std::Event),
+	) -> Result<Option<cosmwasm_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "message_custom");
 		Err(CosmwasmVMError::Unsupported)
 	}
@@ -371,25 +428,23 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "transfer: {:#?}", funds);
 		let from = self.contract_address.as_ref();
-		Pallet::<T>::do_transfer(from, to.as_ref(), funds, false)?;
+		Pallet::<T>::do_transfer(from, to.as_ref(), funds, Preservation::Expendable)?;
 		Ok(())
 	}
 
 	fn burn(&mut self, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "burn: {:#?}", funds);
-		// TODO: assets registry check etc...
-		Err(CosmwasmVMError::Unsupported)
+		Err(CosmwasmVMError::NotImplemented)
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {
-		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", Into::<String>::into(account.clone()), denom);
+		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", String::from(account.clone()), denom);
 		let amount = Pallet::<T>::do_balance(account.as_ref(), denom.clone())?;
 		Ok(Coin { denom, amount: amount.into() })
 	}
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
-		log::debug!(target: "runtime::contracts", "all balance: {}", Into::<String>::into(account.clone()));
-		//  TODO(hussein-aitlahcen): support iterating over all tokens???
+		log::debug!(target: "runtime::contracts", "all balance: {}", String::from(account.clone()));
 		Err(CosmwasmVMError::Unsupported)
 	}
 
@@ -402,7 +457,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		address: Self::Address,
 	) -> Result<ContractInfoResponse, Self::Error> {
-		log::debug!(target: "runtime::contracts", "query_contract_info");
+		log::trace!(target: "runtime::contracts", "query_contract_info");
 		Pallet::<T>::do_query_contract_info(self, address.into_inner())
 	}
 
@@ -515,11 +570,6 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 			VmGas::QueryContractInfo => T::WeightInfo::query_contract_info().ref_time(),
 			VmGas::QueryCodeInfo => T::WeightInfo::query_code_info().ref_time(),
 			_ => 1_u64,
-			// NOTE: **Operations that require no charge**: Debug,
-			// NOTE: **Unsupported operations**:
-			// 		   QueryCustom, MessageCustom, Burn, AllBalance
-			// TODO(aeryz): Implement when centauri is ready: IbcTransfer, IbcSendPacket,
-			//				IbcCloseChannel
 		};
 		self.charge_raw(gas_to_charge)
 	}
@@ -530,15 +580,15 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_push");
 		match self.shared.gas.push(checkpoint) {
-			GasOutcome::Continue => Ok(()),
-			GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
+			Ok(GasOutcome::Continue) => Ok(()),
+			Ok(GasOutcome::Halt) => Err(CosmwasmVMError::OutOfGas),
+			Err(_) => Err(CosmwasmVMError::InvalidGasCheckpoint),
 		}
 	}
 
 	fn gas_checkpoint_pop(&mut self) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_pop");
-		self.shared.gas.pop();
-		Ok(())
+		self.shared.gas.pop().map_err(|_| CosmwasmVMError::InvalidGasCheckpoint)
 	}
 
 	fn gas_ensure_available(&mut self) -> Result<(), Self::Error> {
@@ -595,7 +645,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		channel_id: String,
 		to_address: String,
 		amount: Coin,
-		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		timeout: cosmwasm_std::IbcTimeout,
 	) -> Result<(), Self::Error> {
 		Pallet::<T>::do_ibc_transfer(self, channel_id, to_address, amount, timeout)
 	}
@@ -603,8 +653,8 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 	fn ibc_send_packet(
 		&mut self,
 		channel_id: String,
-		data: cosmwasm_vm::cosmwasm_std::Binary,
-		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		data: cosmwasm_std::Binary,
+		timeout: cosmwasm_std::IbcTimeout,
 	) -> Result<(), Self::Error> {
 		Pallet::<T>::do_ibc_send_packet(self, channel_id, data, timeout)
 	}
@@ -619,7 +669,7 @@ impl<'a, T: Config + Send + Sync> VMBase for CosmwasmVM<'a, T> {
 		to: &Self::Address,
 		funds: &[Coin],
 	) -> Result<(), Self::Error> {
-		Pallet::<T>::do_transfer(from.as_ref(), to.as_ref(), funds, false)?;
+		Pallet::<T>::do_transfer(from.as_ref(), to.as_ref(), funds, Preservation::Expendable)?;
 		Ok(())
 	}
 }

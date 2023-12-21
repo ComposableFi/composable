@@ -5,15 +5,16 @@ use super::{
 	helpers::*,
 	*,
 };
-use crate::types::CodeIdentifier;
-use cosmwasm_vm::cosmwasm_std::{BankMsg, Response, WasmMsg};
+use crate::{mock::*, types::CodeIdentifier};
+use cosmwasm_std::{BankMsg, Response, WasmMsg};
 use frame_benchmarking::account;
 use sp_runtime::AccountId32;
 
 #[test]
 fn submessage_instantiate() {
 	new_test_ext().execute_with(|| {
-		// initialize();
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let mut coins = create_coins(vec![]);
@@ -51,6 +52,8 @@ fn submessage_instantiate() {
 #[test]
 fn submessage_migrate() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -93,6 +96,8 @@ fn submessage_migrate() {
 #[test]
 fn submessage_update_admin() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -121,6 +126,8 @@ fn submessage_update_admin() {
 #[test]
 fn submessage_clear_admin() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let contract_1 = create_instantiated_contract(&mut shared_vm, origin.clone());
@@ -146,6 +153,8 @@ fn submessage_clear_admin() {
 #[test]
 fn submessage_bank_transfer() {
 	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		crate::mock::Timestamp::set_timestamp(1);
 		let mut shared_vm = create_vm();
 		let origin = create_funded_account("origin");
 		let destination = account::<AccountId32>("destination", 0, 0xCAFEBABE);

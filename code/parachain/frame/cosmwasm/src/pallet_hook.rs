@@ -1,8 +1,6 @@
 use crate::{prelude::*, runtimes::vm::CosmwasmVM, types::*, Config, Error};
-use cosmwasm_vm::{
-	cosmwasm_std::{ContractResult, QueryResponse, Response},
-	vm::{VMBase, VmErrorOf},
-};
+use cosmwasm_std::{ContractResult, QueryResponse, Response};
+use cosmwasm_vm::vm::{VMBase, VmErrorOf};
 use cosmwasm_vm_wasmi::OwnedWasmiVM;
 
 /// A hook for pallets into the VM. Used to call substrate pallets from a CosmWasm contract.

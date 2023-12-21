@@ -1,0 +1,74 @@
+name: "release-docs"
+on:
+  push:
+    branches:
+      - release-*
+      - main
+  pull_request:
+  merge_group:
+    types: [checks_requested]
+    
+permissions: 
+  pull-requests: write
+
+env:
+  NIX_VERSION: nix-2.13.2
+  NIXPKGS_CHANNEL: nixos-22.11
+  CACHIX_COMPRESSION_LEVEL: 16
+  CACHIX_JOBS: 8
+  CACHIX_COMPRESSION_METHOD: zstd
+  CACHIX_NAME: composable
+ 
+jobs:   
+  deploy-docs:
+    name: "deploy-docs"
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-deploy-docs-${{ github.event.pull_request.title }}
+      cancel-in-progress: true
+    steps:
+      - name: Set up Nix
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        uses: cachix/install-nix-action@daddc62a2e67d1decb56e028c9fa68344b9b7c2a # v18
+        with:
+          install_url: https://releases.nixos.org/nix/${{ env.NIX_VERSION }}/install
+          nix_path: nixpkgs=channel:${{ env.NIXPKGS_CHANNEL }}
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0      
+            system-features = kvm
+            
+      - name: Set up Cachix
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        uses: cachix/cachix-action@298387a7aea14d6564aa5d6ead79272878339c8b # v12
+        with:
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{ env.CACHIX_NAME }}
+      - name: Add tools needed for non-nix steps
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        run: |  
+          nix-channel --add https://nixos.org/channels/${{ env.NIXPKGS_CHANNEL }} nixpkgs
+          nix-channel --update
+          nix-env -iA nixpkgs.cachix nixpkgs.nodejs nixpkgs.git nixpkgs.git-lfs
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        with:
+          lfs: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Build docs
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        uses: "./.github/templates/watch-exec"
+        with:
+          command: nix -- build .#docs-static
+          working-directory: ./docs
+
+      - name: Deploy docs
+        if: ${{ github.event_name == 'push' || (inputs.github_event_name == 'pull_request' && inputs.github_event_pull_request_head_repo_id == 383289760) }}
+        uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DOCS_COMPOSABLE_FINANCE }}
+          projectId: composable-docs
+          entrypoint: docs/
+          # this must go same release flow as FE, not from main
+          channelId: ${{ github.event_name == 'push' && github.ref_name == 'main' && 'live' }}

@@ -14,22 +14,16 @@ normal = [
   "assets",
   "assets-registry",
   "call-filter",
-  "currency-factory",
-  "governance-registry",
   "oracle",
-  "assets-transactor-router",
   "orml-unknown-tokens",
   "orml-xtokens",
-  "pallet-bonded-finance",
-  "pallet-vault",
   "session-benchmarking",
-  "vault",
 ]
 
 [dependencies]
-executive = { package = "frame-executive", default-features = false, workspace = true }
+executive = { workspace = true, default-features = false }
 frame-support = { default-features = false, workspace = true }
-frame-system = { package = "frame-system", default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
 sp-api = { default-features = false, workspace = true }
 sp-block-builder = { default-features = false, workspace = true }
 sp-consensus-aura = { default-features = false, workspace = true }
@@ -59,20 +53,22 @@ smallvec = "1.6.1"
 sudo = { default-features = false, workspace = true }
 timestamp = { default-features = false, workspace = true }
 treasury = { default-features = false, workspace = true }
+pallet-referenda = { default-features = false, workspace = true }
+pallet-custom-origins = { package = "pallet-custom-origins", path = "../../frame/origins", default-features = false }
+pallet-conviction-voting = { workspace = true, default-features = false }
+pallet-whitelist = { default-features = false, workspace = true }
 utility = { default-features = false, workspace = true }
 log = { version = "0.4.14", default-features = false }
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false }
+pallet-assets = { path = "../../frame/assets", default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false }
-assets-transactor-router = { package = "pallet-assets-transactor-router", path = "../../frame/assets-transactor-router", default-features = false }
-bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
 call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
 common = { path = "../common", default-features = false }
+pallet-multihop-xcm-ibc = { package = "pallet-multihop-xcm-ibc", path = '../../frame/pallet-multihop-xcm-ibc', default-features = false }
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = "../../frame/crowdloan-rewards", default-features = false }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
+revenue-ibc = { package = "pallet-revenue-ibc", path = "../../frame/revenue-ibc", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
@@ -85,6 +81,17 @@ crowdloan-rewards-runtime-api = { path = "../../frame/crowdloan-rewards/runtime-
 pablo-runtime-api = { path = "../../frame/pablo/runtime-api", default-features = false }
 cosmwasm = { package = "pallet-cosmwasm", path = "../../frame/cosmwasm", default-features = false }
 cosmwasm-runtime-api = { path = "../../frame/cosmwasm/runtime-api", default-features = false }
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+
+pallet-liquid-staking = { package = "pallet-liquid-staking", path = "../../frame/liquid-staking", default-features = false }
+pallet-xcm-helper = { package = "pallet-xcm-helper", path = "../../frame/pallet-xcm-helper", default-features = false }
+xc-core = { path = "../../../cvm/lib/core", default-features = false, features = [
+  "xcm",
+] }
 reward = { path = "../../frame/reward", default-features = false }
 farming = { path = "../../frame/farming", default-features = false }
 
@@ -94,7 +101,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
   "derive",
 ] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
-hex-literal = { version = "0.3.3" }
+hex-literal.workspace = true
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 
 collator-selection = { workspace = true, default-features = false }
@@ -126,31 +133,38 @@ ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
-pallet-ibc-ping = { workspace = true, default-features = false }
 
-invarch-xcm-builder = { workspace = true, default-features = false }
+orml-xcm-builder-kusama = { workspace = true, default-features = false }
+
+serde-json-wasm = { workspace = true, default-features = false }
+
+cosmwasm-vm = { workspace = true, default-features = false, features = [
+  "ibc3",
+  "iterator",
+  "stargate",
+] }
+cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
+  "iterator",
+  "stargate",
+] }
 
 [features]
 builtin-wasm = []
 testnet = []
 fastnet = []
 default = ["std"]
-local-integration-tests = []
 
 runtime-benchmarks = [
   "asset-tx-payment/runtime-benchmarks",
   "assets-registry/runtime-benchmarks",
-  "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "balances/runtime-benchmarks",
-  "bonded-finance/runtime-benchmarks",
   "collator-selection/runtime-benchmarks",
   "collective/runtime-benchmarks",
   "collective/runtime-benchmarks",
   "common/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
   "crowdloan-rewards/runtime-benchmarks",
-  "currency-factory/runtime-benchmarks",
   "democracy/runtime-benchmarks",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
@@ -162,7 +176,7 @@ runtime-benchmarks = [
   "multisig/runtime-benchmarks",
   "oracle/runtime-benchmarks",
   "pablo/runtime-benchmarks",
-  "pallet-ibc/runtime-benchmarks",
+  "pallet-assets/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "proxy/runtime-benchmarks",
   "scheduler/runtime-benchmarks",
@@ -179,12 +193,9 @@ std = [
   "asset-tx-payment/std",
   "assets-registry/std",
   "assets-runtime-api/std",
-  "assets-transactor-router/std",
-  "assets/std",
   "aura/std",
   "authorship/std",
   "balances/std",
-  "bonded-finance/std",
   "call-filter/std",
   "codec/std",
   "collator-selection/std",
@@ -193,6 +204,17 @@ std = [
   "composable-support/std",
   "composable-traits/std",
   "cosmwasm-runtime-api/std",
+  "cosmwasm-std/std",
+  "cosmwasm-vm-wasmi/std",
+  "cumulus-pallet-dmp-queue/std",
+  "log/std",
+  "pallet-xcm/std",
+  "orml-xcm-builder-kusama/std",
+  "polkadot-parachain/std",
+  "frame-benchmarking/std",
+  "session-benchmarking/std",
+  "frame-system-benchmarking/std",
+  "cosmwasm-vm/std",
   "cosmwasm/std",
   "crowdloan-rewards-runtime-api/std",
   "crowdloan-rewards/std",
@@ -203,16 +225,16 @@ std = [
   "cumulus-primitives-core/std",
   "cumulus-primitives-timestamp/std",
   "cumulus-primitives-utility/std",
-  "currency-factory/std",
   "democracy/std",
   "executive/std",
   "farming/std",
   "frame-support/std",
   "frame-system/std",
-  "governance-registry/std",
   "ibc-primitives/std",
+  "pallet-conviction-voting/std",
   "ibc-runtime-api/std",
   "ibc/std",
+  "xc-core/std",
   "identity/std",
   "indices/std",
   "membership/std",
@@ -225,7 +247,12 @@ std = [
   "orml-xtokens/std",
   "pablo-runtime-api/std",
   "pablo/std",
+  "revenue-ibc/std",
+  "pallet-assets/std",
   "pallet-ibc/std",
+  "pallet-multihop-xcm-ibc/std",
+  "pallet-referenda/std",
+  "pallet-whitelist/std",
   "parachain-info/std",
   "preimage/std",
   "primitives/std",
@@ -234,6 +261,7 @@ std = [
   "reward/std",
   "scale-info/std",
   "scheduler/std",
+  "serde-json-wasm/std",
   "session/std",
   "sp-api/std",
   "sp-block-builder/std",
@@ -257,4 +285,6 @@ std = [
   "xcm-builder/std",
   "xcm-executor/std",
   "xcm/std",
+  "pallet-liquid-staking/std",
+  "pallet-xcm-helper/std",
 ]

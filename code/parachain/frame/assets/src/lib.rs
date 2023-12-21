@@ -1,59 +1,3 @@
-//! # Assets Pallet
-//!
-//! The Assets pallet provides implementation of common currency traits
-//! (e.g. from [`orml`](https://docs.rs/orml-traits) or `frame_support`)
-//! and functionality for handling transfers and minting.
-//!
-//! - [`Config`]
-//! - [`Call`]
-//! - [`Pallet`]
-//!
-//! ## Overview
-//!
-//! The Assets pallet provides functions for:
-//!
-//! - Transferring balances of native and other assets between accounts.
-//! - Minting and burn new assets by per asset governance.
-//! - Crediting and debiting of created asset balances.
-//! - By design similar to [orml_currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
-//!   and [substrate_assets](https://github.com/paritytech/substrate/tree/master/frame/assets)
-//! Functions requiring authorization are checked via asset's governance registry origin. Example,
-//! minting.
-//!
-//! ### Implementations
-//!
-//! The Assets pallet provides implementations for the following traits:
-//!
-//! - [`Currency`](frame_support::traits::Currency):
-//!  Functions for dealing with a fungible assets system.
-//! - [`ReservableCurrency`](frame_support::traits::ReservableCurrency):
-//!  Functions for dealing with assets that can be reserved from an account.
-//! - [`MultiCurrency`](orml_traits::MultiCurrency):
-//!  Abstraction over a fungible multi-currency system.
-//! - [`MultiLockableCurrency`](orml_traits::MultiLockableCurrency):
-//!  A fungible multi-currency system whose accounts can have liquidity restrictions.
-//! - [`MultiReservableCurrency`](orml_traits::MultiReservableCurrency):
-//!  A fungible multi-currency system where funds can be reserved from the user.
-//!
-//! ## Interface
-//!
-//! ### Dispatchable Functions
-//!
-//! - `transfer`
-//! - `transfer_native`
-//! - `force_transfer`
-//! - `force_transfer_native`
-//! - `transfer_all`
-//! - `transfer_all_native`
-//! - `mint_initialize`
-//! - `mint_initialize_with_governance`
-//! - `mint_into`
-//! - `burn_from`
-//
-// we start lag behind useful traits:
-// TODO: implement fungibles::Balanced like orml Tokens do
-// TODO: implement tokens::NamedReservableCurrency like orml Tokens do
-
 #![cfg_attr(
 	not(test),
 	warn(
@@ -65,7 +9,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
@@ -86,25 +30,20 @@ pub mod weights;
 pub mod pallet {
 	use crate::weights::WeightInfo;
 	use composable_support::validation::Validate;
-	use composable_traits::{
-		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
-		governance::{GovernanceRegistry, SignedRawOrigin},
-	};
+	use composable_traits::currency::{AssetIdLike, BalanceLike};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		sp_runtime::traits::StaticLookup,
 		traits::{
-			fungible::{
-				Inspect as NativeInspect, Mutate as NativeMutate, Transfer as NativeTransfer,
-			},
-			fungibles::{Inspect, Mutate, Transfer},
+			fungible::{Inspect as NativeInspect, Mutate as NativeMutate},
+			fungibles::{Inspect, Mutate},
+			tokens::{Fortitude, Precision, Preservation},
 			EnsureOrigin,
 		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Zero;
-	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
 	use sp_runtime::{DispatchError, FixedPointOperand};
 
@@ -115,19 +54,19 @@ pub mod pallet {
 		type Balance: BalanceLike + FixedPointOperand;
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
-		type GenerateCurrencyId: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
 		type NativeCurrency;
 		type MultiCurrency;
-		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
-			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 		type WeightInfo: WeightInfo;
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		type CurrencyValidator: Validate<Self::AssetId, ValidateCurrencyId>;
+		/// An identifier for a hold. Used for disambiguating different holds so that
+		/// they can be individually replaced or removed and funds from one hold don't accidentally
+		/// become unreserved or slashed for another.
+		type RuntimeHoldReason: codec::Encode + TypeInfo + 'static;
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::error]
@@ -139,11 +78,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		<T as Config>::NativeCurrency: NativeTransfer<T::AccountId, Balance = T::Balance>
-			+ NativeInspect<T::AccountId, Balance = T::Balance>
+		<T as Config>::NativeCurrency: NativeInspect<T::AccountId, Balance = T::Balance>
 			+ NativeMutate<T::AccountId, Balance = T::Balance>,
 		<T as Config>::MultiCurrency: Inspect<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
-			+ Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
 			+ Mutate<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
 	{
 		/// Transfer `amount` of `asset` from `origin` to `dest`.
@@ -164,7 +101,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let src = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Transfer<T::AccountId>>::transfer(asset, &src, &dest, amount, keep_alive)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			<Self as Mutate<T::AccountId>>::transfer(asset, &src, &dest, amount, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -186,7 +125,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let src = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<T::AccountId>>::transfer(&src, &dest, value, keep_alive)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			<Self as NativeMutate<T::AccountId>>::transfer(&src, &dest, value, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -210,7 +151,9 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Transfer<_>>::transfer(asset, &source, &dest, value, keep_alive)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			<Self as Mutate<_>>::transfer(asset, &source, &dest, value, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -233,7 +176,9 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<_>>::transfer(&source, &dest, value, keep_alive)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			<Self as NativeMutate<_>>::transfer(&source, &dest, value, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -251,10 +196,16 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let transactor = ensure_signed(origin)?;
-			let reducible_balance =
-				<Self as Inspect<T::AccountId>>::reducible_balance(asset, &transactor, keep_alive);
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			let reducible_balance = <Self as Inspect<T::AccountId>>::reducible_balance(
+				asset,
+				&transactor,
+				keep_alive,
+				Fortitude::Polite,
+			);
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Transfer<T::AccountId>>::transfer(
+			<Self as Mutate<T::AccountId>>::transfer(
 				asset,
 				&transactor,
 				&dest,
@@ -277,10 +228,15 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let transactor = ensure_signed(origin)?;
-			let reducible_balance =
-				<Self as NativeInspect<T::AccountId>>::reducible_balance(&transactor, keep_alive);
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			let reducible_balance = <Self as NativeInspect<T::AccountId>>::reducible_balance(
+				&transactor,
+				keep_alive,
+				Fortitude::Polite,
+			);
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as NativeTransfer<T::AccountId>>::transfer(
+			<Self as NativeMutate<T::AccountId>>::transfer(
 				&transactor,
 				&dest,
 				reducible_balance,
@@ -295,13 +251,10 @@ pub mod pallet {
 		#[pallet::call_index(6)]
 		pub fn mint_initialize(
 			origin: OriginFor<T>,
-			#[pallet::compact] amount: T::Balance,
-			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] _amount: T::Balance,
+			_dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
-			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
 		}
 
@@ -313,16 +266,11 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::mint_initialize())]
 		pub fn mint_initialize_with_governance(
 			origin: OriginFor<T>,
-			#[pallet::compact] amount: T::Balance,
-			governance_origin: <T::Lookup as StaticLookup>::Source,
-			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] _amount: T::Balance,
+			_governance_origin: <T::Lookup as StaticLookup>::Source,
+			_dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
-			let governance_origin = T::Lookup::lookup(governance_origin)?;
-			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
-			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			Ok(().into())
 		}
 
@@ -335,7 +283,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(asset_id, &dest, amount)?;
 			Ok(().into())
@@ -350,42 +298,16 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
-			ensure_admin_or_governance::<T>(origin, &asset_id)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			<Self as Mutate<T::AccountId>>::burn_from(asset_id, &dest, amount)?;
+			<Self as Mutate<T::AccountId>>::burn_from(
+				asset_id,
+				&dest,
+				amount,
+				Precision::BestEffort,
+				Fortitude::Polite,
+			)?;
 			Ok(().into())
-		}
-	}
-
-	/// Returns `Ok(())` if origin is root or asset is signed by root or by origin
-	pub(crate) fn ensure_admin_or_governance<T: Config>(
-		origin: OriginFor<T>,
-		asset_id: &T::AssetId,
-	) -> Result<(), DispatchError> {
-		// TODO: that must be ensure_asset_origin(origin, asset_id))
-		if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
-			return Ok(())
-		}
-
-		match origin.into() {
-			Ok(frame_system::RawOrigin::Signed(account)) => {
-				match T::GovernanceRegistry::get(asset_id) {
-					Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
-					// (call_origin.is_signed &&
-					// asst_owner.is_root) then allow
-					// mint/burn -> anybody can mint and
-					// burn PICA?
-					// TODO: https://app.clickup.com/t/37h4edu
-					Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
-					_ => Err(DispatchError::BadOrigin),
-				}
-			},
-			Ok(frame_system::RawOrigin::Root) => Ok(()),
-			_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
-												* origin which is reasonable to have for
-												* governance
-												https://app.clickup.com/t/37h4edu
-												*/
 		}
 	}
 
@@ -577,45 +499,50 @@ pub mod pallet {
 
 		use frame_support::traits::{
 			tokens::{
-				fungible::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
-				DepositConsequence, WithdrawConsequence,
+				fungible::{Inspect, InspectHold, Mutate, MutateHold, Unbalanced, UnbalancedHold},
+				DepositConsequence, Fortitude, Precision, Preservation, Provenance,
+				WithdrawConsequence,
 			},
 			LockableCurrency, WithdrawReasons,
 		};
 		use orml_traits::LockIdentifier;
 
+		impl<T: Config> UnbalancedHold<T::AccountId> for Pallet<T>
+		where
+			T::NativeCurrency:
+				UnbalancedHold<T::AccountId, Balance = T::Balance, Reason = T::RuntimeHoldReason>,
+		{
+			fn set_balance_on_hold(
+				reason: &Self::Reason,
+				who: &T::AccountId,
+				amount: Self::Balance,
+			) -> sp_runtime::DispatchResult {
+				<<T as Config>::NativeCurrency>::set_balance_on_hold(reason, who, amount)
+			}
+		}
+
 		impl<T: Config> MutateHold<T::AccountId> for Pallet<T>
 		where
-			<T as Config>::NativeCurrency: InspectHold<T::AccountId, Balance = T::Balance>,
-			<T as Config>::NativeCurrency: Transfer<T::AccountId, Balance = T::Balance>,
-			<T as Config>::NativeCurrency: MutateHold<T::AccountId, Balance = T::Balance>,
+			<T as Config>::NativeCurrency:
+				InspectHold<T::AccountId, Balance = T::Balance, Reason = T::RuntimeHoldReason>,
+			<T as Config>::NativeCurrency:
+				MutateHold<T::AccountId, Balance = T::Balance, Reason = T::RuntimeHoldReason>,
 		{
-			fn hold(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-				<<T as Config>::NativeCurrency>::hold(who, amount)
+			fn hold(
+				reason: &Self::Reason,
+				who: &T::AccountId,
+				amount: Self::Balance,
+			) -> DispatchResult {
+				<<T as Config>::NativeCurrency>::hold(reason, who, amount)
 			}
 
 			fn release(
+				reason: &Self::Reason,
 				who: &T::AccountId,
 				amount: Self::Balance,
-				best_effort: bool,
+				best_effort: Precision,
 			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::release(who, amount, best_effort)
-			}
-
-			fn transfer_held(
-				source: &T::AccountId,
-				dest: &T::AccountId,
-				amount: Self::Balance,
-				best_effort: bool,
-				on_held: bool,
-			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::transfer_held(
-					source,
-					dest,
-					amount,
-					best_effort,
-					on_held,
-				)
+				<<T as Config>::NativeCurrency>::release(reason, who, amount, best_effort)
 			}
 		}
 
@@ -624,28 +551,19 @@ pub mod pallet {
 			<T as Config>::NativeCurrency: Inspect<T::AccountId, Balance = T::Balance>,
 			<T as Config>::NativeCurrency: Mutate<T::AccountId, Balance = T::Balance>,
 		{
-			fn mint_into(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+			fn mint_into(
+				who: &T::AccountId,
+				amount: Self::Balance,
+			) -> Result<Self::Balance, DispatchError> {
 				<<T as Config>::NativeCurrency>::mint_into(who, amount)
 			}
 			fn burn_from(
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
+				force: Fortitude,
 			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::burn_from(who, amount)
-			}
-
-			fn slash(
-				who: &T::AccountId,
-				amount: Self::Balance,
-			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::slash(who, amount)
-			}
-			fn teleport(
-				source: &T::AccountId,
-				dest: &T::AccountId,
-				amount: Self::Balance,
-			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::teleport(source, dest, amount)
+				<<T as Config>::NativeCurrency>::burn_from(who, amount, precision, force)
 			}
 		}
 
@@ -653,10 +571,6 @@ pub mod pallet {
 		where
 			<T as Config>::NativeCurrency: Unbalanced<T::AccountId, Balance = T::Balance>,
 		{
-			fn set_balance(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-				<<T as Config>::NativeCurrency>::set_balance(who, amount)
-			}
-
 			fn set_total_issuance(amount: Self::Balance) {
 				<<T as Config>::NativeCurrency>::set_total_issuance(amount)
 			}
@@ -664,43 +578,39 @@ pub mod pallet {
 			fn decrease_balance(
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
+				preservation: Preservation,
+				force: Fortitude,
 			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::decrease_balance(who, amount)
-			}
-
-			fn decrease_balance_at_most(
-				who: &T::AccountId,
-				amount: Self::Balance,
-			) -> Self::Balance {
-				<<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
+				<<T as Config>::NativeCurrency>::decrease_balance(
+					who,
+					amount,
+					precision,
+					preservation,
+					force,
+				)
 			}
 
 			fn increase_balance(
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
 			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::increase_balance(who, amount)
+				<<T as Config>::NativeCurrency>::increase_balance(who, amount, precision)
 			}
 
-			fn increase_balance_at_most(
+			fn handle_dust(dust: frame_support::traits::fungible::Dust<T::AccountId, Self>) {
+				let dust = frame_support::traits::fungible::Dust::<T::AccountId, T::NativeCurrency>(
+					dust.0,
+				);
+				<<T as Config>::NativeCurrency>::handle_dust(dust)
+			}
+
+			fn write_balance(
 				who: &T::AccountId,
 				amount: Self::Balance,
-			) -> Self::Balance {
-				<<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
-			}
-		}
-
-		impl<T: Config> Transfer<T::AccountId> for Pallet<T>
-		where
-			<T as Config>::NativeCurrency: Transfer<T::AccountId, Balance = T::Balance>,
-		{
-			fn transfer(
-				source: &T::AccountId,
-				dest: &T::AccountId,
-				amount: Self::Balance,
-				keep_alive: bool,
-			) -> Result<Self::Balance, DispatchError> {
-				<<T as Config>::NativeCurrency>::transfer(source, dest, amount, keep_alive)
+			) -> Result<Option<Self::Balance>, DispatchError> {
+				<<T as Config>::NativeCurrency>::write_balance(who, amount)
 			}
 		}
 
@@ -756,14 +666,18 @@ pub mod pallet {
 				<<T as Config>::NativeCurrency>::balance(who)
 			}
 
-			fn reducible_balance(who: &T::AccountId, keep_alive: bool) -> Self::Balance {
-				<<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
+			fn reducible_balance(
+				who: &T::AccountId,
+				preservation: Preservation,
+				force: Fortitude,
+			) -> Self::Balance {
+				<<T as Config>::NativeCurrency>::reducible_balance(who, preservation, force)
 			}
 
 			fn can_deposit(
 				who: &T::AccountId,
 				amount: Self::Balance,
-				mint: bool,
+				mint: Provenance,
 			) -> DepositConsequence {
 				<<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 			}
@@ -774,19 +688,43 @@ pub mod pallet {
 			) -> WithdrawConsequence<Self::Balance> {
 				<<T as Config>::NativeCurrency>::can_withdraw(who, amount)
 			}
+
+			fn total_balance(who: &T::AccountId) -> Self::Balance {
+				<<T as Config>::NativeCurrency>::total_balance(who)
+			}
+
+			fn active_issuance() -> Self::Balance {
+				<<T as Config>::NativeCurrency>::active_issuance()
+			}
 		}
 
 		impl<T: Config> InspectHold<T::AccountId> for Pallet<T>
 		where
-			<T as Config>::NativeCurrency:
-				Inspect<T::AccountId, Balance = T::Balance> + InspectHold<T::AccountId>,
+			<T as Config>::NativeCurrency: Inspect<T::AccountId, Balance = T::Balance>
+				+ InspectHold<T::AccountId, Reason = T::RuntimeHoldReason>,
 		{
-			fn balance_on_hold(who: &T::AccountId) -> Self::Balance {
-				<<T as Config>::NativeCurrency>::balance_on_hold(who)
+			type Reason = T::RuntimeHoldReason;
+			fn balance_on_hold(reason: &Self::Reason, who: &T::AccountId) -> Self::Balance {
+				<<T as Config>::NativeCurrency>::balance_on_hold(reason, who)
 			}
 
-			fn can_hold(who: &T::AccountId, amount: Self::Balance) -> bool {
-				<<T as Config>::NativeCurrency>::can_hold(who, amount)
+			fn can_hold(reason: &Self::Reason, who: &T::AccountId, amount: Self::Balance) -> bool {
+				<<T as Config>::NativeCurrency>::can_hold(reason, who, amount)
+			}
+
+			fn total_balance_on_hold(who: &T::AccountId) -> Self::Balance {
+				<<T as Config>::NativeCurrency>::total_balance_on_hold(who)
+			}
+
+			fn reducible_total_balance_on_hold(
+				who: &T::AccountId,
+				force: Fortitude,
+			) -> Self::Balance {
+				<<T as Config>::NativeCurrency>::reducible_total_balance_on_hold(who, force)
+			}
+
+			fn hold_available(reason: &Self::Reason, who: &T::AccountId) -> bool {
+				<<T as Config>::NativeCurrency>::hold_available(reason, who)
 			}
 		}
 	}
@@ -797,11 +735,12 @@ pub mod pallet {
 		use frame_support::traits::tokens::{
 			fungible::{
 				Inspect as NativeInspect, InspectHold as NativeInspectHold, Mutate as NativeMutate,
-				MutateHold as NativeMutateHold, Transfer as NativeTransfer,
-				Unbalanced as NativeUnbalanced,
+				MutateHold as NativeMutateHold, Unbalanced as NativeUnbalanced,
+				UnbalancedHold as NativeUnbalancedHold,
 			},
-			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer, Unbalanced},
-			DepositConsequence, WithdrawConsequence,
+			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Unbalanced, UnbalancedHold},
+			DepositConsequence, Fortitude, Precision, Preservation, Provenance,
+			WithdrawConsequence,
 		};
 
 		impl<T: Config> Unbalanced<T::AccountId> for Pallet<T>
@@ -810,18 +749,6 @@ pub mod pallet {
 			<T as Config>::MultiCurrency:
 				Unbalanced<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
 		{
-			fn set_balance(
-				asset: Self::AssetId,
-				who: &T::AccountId,
-				amount: Self::Balance,
-			) -> DispatchResult {
-				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::set_balance(who, amount)
-				}
-				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::set_balance(asset, who, amount)
-			}
-
 			fn set_total_issuance(asset: Self::AssetId, amount: Self::Balance) {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::set_total_issuance(amount)
@@ -835,147 +762,152 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
+				preservation: Preservation,
+				force: Fortitude,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::decrease_balance(who, amount)
-				}
-				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::decrease_balance(asset, who, amount)
-			}
-
-			fn decrease_balance_at_most(
-				asset: Self::AssetId,
-				who: &T::AccountId,
-				amount: Self::Balance,
-			) -> Self::Balance {
-				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
-				}
-				if let Some(asset) = valid_asset_id::<T>(asset) {
-					return <<T as Config>::MultiCurrency>::decrease_balance_at_most(
-						asset, who, amount,
+					return <<T as Config>::NativeCurrency>::decrease_balance(
+						who,
+						amount,
+						precision,
+						preservation,
+						force,
 					)
 				}
-				T::Balance::zero()
+				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
+				<<T as Config>::MultiCurrency>::decrease_balance(
+					asset,
+					who,
+					amount,
+					precision,
+					preservation,
+					force,
+				)
 			}
 
 			fn increase_balance(
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::increase_balance(who, amount)
+					return <<T as Config>::NativeCurrency>::increase_balance(who, amount, precision)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount)
+				<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount, precision)
 			}
 
-			fn increase_balance_at_most(
+			fn handle_dust(dust: frame_support::traits::fungibles::Dust<T::AccountId, Self>) {
+				if dust.0 == T::NativeAssetId::get() {
+					let dust = frame_support::traits::fungible::Dust::<
+						T::AccountId,
+						T::NativeCurrency,
+					>(dust.1);
+					return <<T as Config>::NativeCurrency>::handle_dust(dust)
+				}
+				let dust = frame_support::traits::fungibles::Dust::<T::AccountId, T::MultiCurrency>(
+					dust.0, dust.1,
+				);
+				<<T as Config>::MultiCurrency>::handle_dust(dust)
+			}
+
+			fn write_balance(
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
-			) -> Self::Balance {
+			) -> Result<Option<Self::Balance>, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
+					return <<T as Config>::NativeCurrency>::write_balance(who, amount)
 				}
-				if let Some(asset) = valid_asset_id::<T>(asset) {
-					return <<T as Config>::MultiCurrency>::increase_balance_at_most(
-						asset, who, amount,
-					)
-				}
-				T::Balance::zero()
+				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
+				<<T as Config>::MultiCurrency>::write_balance(asset, who, amount)
 			}
 		}
 
-		impl<T: Config> Transfer<T::AccountId> for Pallet<T>
+		impl<T: Config> UnbalancedHold<T::AccountId> for Pallet<T>
 		where
-			<T as Config>::NativeCurrency: NativeTransfer<T::AccountId, Balance = T::Balance>,
-			<T as Config>::NativeCurrency: NativeInspect<T::AccountId, Balance = T::Balance>,
-			<T as Config>::MultiCurrency:
-				Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
+			T::MultiCurrency: UnbalancedHold<
+				T::AccountId,
+				Balance = T::Balance,
+				AssetId = T::AssetId,
+				Reason = T::RuntimeHoldReason,
+			>,
+			T::NativeCurrency: NativeUnbalancedHold<
+				T::AccountId,
+				Balance = T::Balance,
+				Reason = T::RuntimeHoldReason,
+			>,
 		{
-			fn transfer(
+			fn set_balance_on_hold(
 				asset: Self::AssetId,
-				source: &T::AccountId,
-				dest: &T::AccountId,
+				reason: &Self::Reason,
+				who: &T::AccountId,
 				amount: Self::Balance,
-				keep_alive: bool,
-			) -> Result<Self::Balance, DispatchError> {
+			) -> sp_runtime::DispatchResult {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::transfer(
-						source, dest, amount, keep_alive,
-					)
+					return <<T as Config>::NativeCurrency>::set_balance_on_hold(reason, who, amount)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, keep_alive)
+				<<T as Config>::MultiCurrency>::set_balance_on_hold(asset, reason, who, amount)
 			}
 		}
 
 		impl<T: Config> MutateHold<T::AccountId> for Pallet<T>
 		where
-			<T as Config>::NativeCurrency: NativeInspectHold<T::AccountId, Balance = T::Balance>,
-			<T as Config>::NativeCurrency: NativeTransfer<T::AccountId, Balance = T::Balance>,
-			<T as Config>::NativeCurrency: NativeMutateHold<T::AccountId, Balance = T::Balance>,
+			<T as Config>::NativeCurrency: NativeInspectHold<
+				T::AccountId,
+				Balance = T::Balance,
+				Reason = T::RuntimeHoldReason,
+			>,
+			<T as Config>::NativeCurrency: NativeMutate<T::AccountId, Balance = T::Balance>,
+			<T as Config>::NativeCurrency:
+				NativeMutateHold<T::AccountId, Balance = T::Balance, Reason = T::RuntimeHoldReason>,
 
-			<T as Config>::MultiCurrency:
-				InspectHold<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
-			<T as Config>::MultiCurrency:
-				Transfer<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
-			<T as Config>::MultiCurrency:
-				MutateHold<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>,
+			<T as Config>::MultiCurrency: InspectHold<
+				T::AccountId,
+				Balance = T::Balance,
+				AssetId = T::AssetId,
+				Reason = T::RuntimeHoldReason,
+			>,
+			<T as Config>::MultiCurrency: MutateHold<
+				T::AccountId,
+				Balance = T::Balance,
+				AssetId = T::AssetId,
+				Reason = T::RuntimeHoldReason,
+			>,
 		{
 			fn hold(
 				asset: Self::AssetId,
+				reason: &Self::Reason,
 				who: &T::AccountId,
 				amount: Self::Balance,
 			) -> DispatchResult {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::hold(who, amount)
+					return <<T as Config>::NativeCurrency>::hold(reason, who, amount)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::hold(asset, who, amount)
+				<<T as Config>::MultiCurrency>::hold(asset, reason, who, amount)
 			}
 
 			fn release(
 				asset: Self::AssetId,
+				reason: &Self::Reason,
 				who: &T::AccountId,
 				amount: Self::Balance,
-				best_effort: bool,
+				best_effort: Precision,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::release(who, amount, best_effort)
-				}
-				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::release(asset, who, amount, best_effort)
-			}
-
-			fn transfer_held(
-				asset: Self::AssetId,
-				source: &T::AccountId,
-				dest: &T::AccountId,
-				amount: Self::Balance,
-				best_effort: bool,
-				on_hold: bool,
-			) -> Result<Self::Balance, DispatchError> {
-				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::transfer_held(
-						source,
-						dest,
+					return <<T as Config>::NativeCurrency>::release(
+						reason,
+						who,
 						amount,
 						best_effort,
-						on_hold,
 					)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::transfer_held(
-					asset,
-					source,
-					dest,
-					amount,
-					best_effort,
-					on_hold,
-				)
+				<<T as Config>::MultiCurrency>::release(asset, reason, who, amount, best_effort)
 			}
 		}
 
@@ -992,7 +924,7 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
-			) -> DispatchResult {
+			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::mint_into(who, amount)
 				}
@@ -1003,36 +935,33 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
+				precision: Precision,
+				force: Fortitude,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::burn_from(who, amount)
+					return <<T as Config>::NativeCurrency>::burn_from(who, amount, precision, force)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::burn_from(asset, who, amount)
+				<<T as Config>::MultiCurrency>::burn_from(asset, who, amount, precision, force)
 			}
 
-			fn slash(
-				asset: Self::AssetId,
-				who: &T::AccountId,
-				amount: Self::Balance,
-			) -> Result<Self::Balance, DispatchError> {
-				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::slash(who, amount)
-				}
-				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::slash(asset, who, amount)
-			}
-			fn teleport(
+			fn transfer(
 				asset: Self::AssetId,
 				source: &T::AccountId,
 				dest: &T::AccountId,
 				amount: Self::Balance,
+				preservation: Preservation,
 			) -> Result<Self::Balance, DispatchError> {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::teleport(source, dest, amount)
+					return <<T as Config>::NativeCurrency>::transfer(
+						source,
+						dest,
+						amount,
+						preservation,
+					)
 				}
 				let asset = valid_asset_id::<T>(asset).ok_or(Error::<T>::InvalidCurrency)?;
-				<<T as Config>::MultiCurrency>::teleport(asset, source, dest, amount)
+				<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, preservation)
 			}
 		}
 
@@ -1079,13 +1008,23 @@ pub mod pallet {
 			fn reducible_balance(
 				asset: Self::AssetId,
 				who: &T::AccountId,
-				keep_alive: bool,
+				preservation: Preservation,
+				keep_alive: Fortitude,
 			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
+					return <<T as Config>::NativeCurrency>::reducible_balance(
+						who,
+						preservation,
+						keep_alive,
+					)
 				}
 				if let Some(asset) = valid_asset_id::<T>(asset) {
-					return <<T as Config>::MultiCurrency>::reducible_balance(asset, who, keep_alive)
+					return <<T as Config>::MultiCurrency>::reducible_balance(
+						asset,
+						who,
+						preservation,
+						keep_alive,
+					)
 				}
 				T::Balance::zero()
 			}
@@ -1094,7 +1033,7 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
-				mint: bool,
+				mint: Provenance,
 			) -> DepositConsequence {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
@@ -1122,31 +1061,93 @@ pub mod pallet {
 			fn asset_exists(asset: Self::AssetId) -> bool {
 				valid_asset_id::<T>(asset).is_some()
 			}
+
+			fn total_balance(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
+				if asset == T::NativeAssetId::get() {
+					return <<T as Config>::NativeCurrency>::total_balance(who)
+				}
+				if let Some(asset) = valid_asset_id::<T>(asset) {
+					return <<T as Config>::MultiCurrency>::total_balance(asset, who)
+				}
+				T::Balance::zero()
+			}
 		}
 
 		impl<T: Config> InspectHold<T::AccountId> for Pallet<T>
 		where
 			<T as Config>::MultiCurrency: Inspect<T::AccountId, Balance = T::Balance, AssetId = T::AssetId>
-				+ InspectHold<T::AccountId>,
-			<T as Config>::NativeCurrency:
-				NativeInspect<T::AccountId, Balance = T::Balance> + NativeInspectHold<T::AccountId>,
+				+ InspectHold<T::AccountId, Reason = T::RuntimeHoldReason>,
+			<T as Config>::NativeCurrency: NativeInspect<T::AccountId, Balance = T::Balance>
+				+ NativeInspectHold<T::AccountId, Reason = T::RuntimeHoldReason>,
 		{
-			fn balance_on_hold(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
+			type Reason = T::RuntimeHoldReason;
+			fn balance_on_hold(
+				asset: Self::AssetId,
+				reason: &Self::Reason,
+				who: &T::AccountId,
+			) -> Self::Balance {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::balance_on_hold(who)
+					return <<T as Config>::NativeCurrency>::balance_on_hold(reason, who)
 				}
 				if let Some(asset) = valid_asset_id::<T>(asset) {
-					return <<T as Config>::MultiCurrency>::balance_on_hold(asset, who)
+					return <<T as Config>::MultiCurrency>::balance_on_hold(asset, reason, who)
 				}
 				T::Balance::zero()
 			}
 
-			fn can_hold(asset: Self::AssetId, who: &T::AccountId, amount: Self::Balance) -> bool {
+			fn can_hold(
+				asset: Self::AssetId,
+				reason: &Self::Reason,
+				who: &T::AccountId,
+				amount: Self::Balance,
+			) -> bool {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_hold(who, amount)
+					return <<T as Config>::NativeCurrency>::can_hold(reason, who, amount)
 				}
 				if let Some(asset) = valid_asset_id::<T>(asset) {
-					return <<T as Config>::MultiCurrency>::can_hold(asset, who, amount)
+					return <<T as Config>::MultiCurrency>::can_hold(asset, reason, who, amount)
+				}
+				false
+			}
+
+			fn total_balance_on_hold(asset: Self::AssetId, who: &T::AccountId) -> Self::Balance {
+				if asset == T::NativeAssetId::get() {
+					return <<T as Config>::NativeCurrency>::total_balance_on_hold(who)
+				}
+				if let Some(asset) = valid_asset_id::<T>(asset) {
+					return <<T as Config>::MultiCurrency>::total_balance_on_hold(asset, who)
+				}
+				T::Balance::zero()
+			}
+
+			fn reducible_total_balance_on_hold(
+				asset: Self::AssetId,
+				who: &T::AccountId,
+				force: Fortitude,
+			) -> Self::Balance {
+				if asset == T::NativeAssetId::get() {
+					return <<T as Config>::NativeCurrency>::reducible_total_balance_on_hold(
+						who, force,
+					)
+				}
+				if let Some(asset) = valid_asset_id::<T>(asset) {
+					return <<T as Config>::MultiCurrency>::reducible_total_balance_on_hold(
+						asset, who, force,
+					)
+				}
+				T::Balance::zero()
+			}
+
+			fn hold_available(
+				asset: Self::AssetId,
+				reason: &Self::Reason,
+				who: &T::AccountId,
+			) -> bool {
+				if asset == T::NativeAssetId::get() {
+					return <<T as Config>::NativeCurrency>::hold_available(reason, who)
+				}
+				if let Some(asset) = valid_asset_id::<T>(asset) {
+					return <<T as Config>::MultiCurrency>::hold_available(asset, reason, who)
 				}
 				false
 			}

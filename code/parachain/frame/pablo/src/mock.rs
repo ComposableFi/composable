@@ -2,21 +2,23 @@
 
 use crate as pablo;
 use composable_tests_helpers::test::currency;
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	ord_parameter_types,
+	pallet_prelude::ConstU32,
+	parameter_types,
 	traits::{EitherOfDiverse, Everything},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 use primitives::currency::ForeignAssetId;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
-	Permill,
+	DispatchError, Permill,
 };
 
 pub type CurrencyId = u128;
@@ -44,9 +46,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Tokens: orml_tokens,
 		AssetsRegistry: pallet_assets_registry,
-		AssetsTransactor: pallet_assets_transactor_router,
+		Assets: pallet_assets,
 		Timestamp: pallet_timestamp,
-		StakingRewards: pallet_staking_rewards,
 		Pablo: pablo,
 	}
 );
@@ -56,15 +57,22 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
 	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type FreezeIdentifier = [u8; 8];
+
+	type HoldIdentifier = [u8; 8];
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
 }
 
 parameter_types! {
@@ -171,20 +179,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct NoopRegistry;
-
-impl<AssetId, AccountId> GovernanceRegistry<AssetId, AccountId> for NoopRegistry {
-	fn set(_k: AssetId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<AssetId> GetByKey<AssetId, Result<SignedRawOrigin<u128>, sp_runtime::DispatchError>>
-	for NoopRegistry
-{
-	fn get(_k: &AssetId) -> Result<SignedRawOrigin<u128>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
-}
-
 parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
@@ -192,6 +186,7 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	pub const TreasuryAccountId: AccountId = 123_456_789_u128;
 	pub const NativeAssetId: AssetId = 1;
+	pub const NetworkId: u32 = 0;
 }
 
 impl pallet_assets_registry::Config for Test {
@@ -203,40 +198,28 @@ impl pallet_assets_registry::Config for Test {
 	type WeightInfo = ();
 	type Balance = Balance;
 	type Convert = ConvertInto;
+	type NetworkId = NetworkId;
 }
 
-impl pallet_assets_transactor_router::Config for Test {
-	type AssetId = AssetId;
-	type Balance = Balance;
+impl pallet_assets::Config for Test {
+	type RuntimeHoldReason = ();
 	type NativeAssetId = NativeAssetId;
-	type NativeTransactor = Balances;
-	type LocalTransactor = Tokens;
-	type ForeignTransactor = Tokens;
-	type GovernanceRegistry = NoopRegistry;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = Balances;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type AssetLocation = ForeignAssetId;
-	type AssetsRegistry = AssetsRegistry;
+	type CurrencyValidator = Valid;
 }
 
-impl pallet_staking_rewards::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type AssetId = CurrencyId;
-	type FinancialNft = pablo::mock_fnft::MockFnft;
-	type FinancialNftInstanceId = u64;
-	type UnixTime = Timestamp;
-	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
-	type PalletId = StakingRewardsPalletId;
-	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
-	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type WeightInfo = ();
-	type LockId = StakingRewardsLockId;
-	type TreasuryAccount = TreasuryAccountId;
-	type ExistentialDeposits = ExistentialDeposits;
-	type AssetsTransactor = AssetsTransactor;
+pub struct Valid;
+impl composable_support::validation::Validate<CurrencyId, primitives::currency::ValidateCurrencyId>
+	for Valid
+{
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		Ok(input)
+	}
 }
 
 ord_parameter_types! {
@@ -248,8 +231,8 @@ impl pablo::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type LPTokenFactory = AssetsTransactor;
-	type Assets = AssetsTransactor;
+	type LPTokenFactory = AssetsRegistry;
+	type Assets = Assets;
 	type Convert = ConvertInto;
 	type PoolId = PoolId;
 	type PalletId = TestPalletID;

@@ -6,7 +6,7 @@ use composable_traits::xcm::assets::RemoteAssetRegistryInspect;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	log, parameter_types,
-	traits::{Everything, Nothing, OriginTrait},
+	traits::{Everything, Nothing, OriginTrait, ProcessMessageError},
 };
 use orml_traits::{
 	location::{AbsoluteReserveProvider, RelativeReserveProvider},
@@ -30,7 +30,7 @@ use xcm_builder::{
 	TakeWeightCredit, WithComputedOrigin,
 };
 use xcm_executor::{
-	traits::{ConvertOrigin, DropAssets},
+	traits::{ConvertOrigin, DropAssets, MatchesFungible, ShouldExecute},
 	Assets, XcmExecutor,
 };
 
@@ -50,13 +50,51 @@ parameter_types! {
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 }
 
+pub struct AllowKnownQueryResponsesSubstituteQuerierIfNone<ResponseHandler>(
+	PhantomData<ResponseHandler>,
+);
+impl<ResponseHandler: OnResponse> ShouldExecute
+	for AllowKnownQueryResponsesSubstituteQuerierIfNone<ResponseHandler>
+{
+	fn should_execute<RuntimeCall>(
+		origin: &MultiLocation,
+		instructions: &mut [Instruction<RuntimeCall>],
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ProcessMessageError> {
+		let result = AllowKnownQueryResponses::<ResponseHandler>::should_execute(
+			origin,
+			instructions,
+			max_weight,
+			weight_credit,
+		);
+
+		if result.is_err() {
+			for i in instructions.iter_mut() {
+				if let QueryResponse { query_id, .. } = i {
+					let is_asked_by_lsd =
+						pallet_liquid_staking::pallet::XcmRequests::<Runtime>::contains_key(
+							query_id,
+						);
+
+					if is_asked_by_lsd {
+						return Ok(())
+					}
+					//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+				}
+			}
+		}
+		result
+	}
+}
+
 pub type Barrier = (
-	AllowKnownQueryResponses<PolkadotXcm>,
+	AllowKnownQueryResponsesSubstituteQuerierIfNone<PolkadotXcm>,
 	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,
 	WithComputedOrigin<
-		AllowTopLevelPaidExecutionFrom<invarch_xcm_builder::TinkernetMultisigMultiLocation>,
+		AllowTopLevelPaidExecutionFrom<orml_xcm_builder_kusama::TinkernetMultisigMultiLocation>,
 		UniversalLocation,
 		ConstU32<8>,
 	>,
@@ -84,8 +122,86 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 	// Mapping Tinkernet multisig to the correctly derived AccountId32.
-	invarch_xcm_builder::TinkernetMultisigAsAccountId<AccountId>,
+	orml_xcm_builder_kusama::TinkernetMultisigAsAccountId<AccountId>,
+	AccountId32MultihopTx<AccountId>,
 );
+
+pub struct AccountId32MultihopTx<AccountId>(PhantomData<AccountId>);
+impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone>
+	xcm_executor::traits::Convert<MultiLocation, AccountId> for AccountId32MultihopTx<AccountId>
+{
+	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
+		let id = match location {
+			MultiLocation {
+				parents: 0,
+				interior:
+					X4(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X5(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X6(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X7(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			MultiLocation {
+				parents: 0,
+				interior:
+					X8(
+						PalletInstance(_),
+						GeneralIndex(_),
+						AccountId32 { id, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+						AccountId32 { id: _, network: _ },
+					),
+			} => id,
+			_ => return Err(location),
+		};
+
+		Ok(id.into())
+	}
+
+	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
+		Err(who)
+	}
+}
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -104,14 +220,13 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
-	// Derives signed AccountId32 origins for Tinkernet multisigs.
-	invarch_xcm_builder::DeriveOriginFromTinkernetMultisig<RuntimeOrigin>,
+	orml_xcm_builder_kusama::TinkernetMultisigAsNativeOrigin<RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
 
-pub type LocalAssetTransactor = MultiCurrencyAdapter<
-	crate::AssetsTransactorRouter,
+pub type LocalAssetTransactor = MultiCurrencyAdapterWrapper<
+	crate::Assets,
 	UnknownTokens,
 	IsNativeConcrete<CurrencyId, AssetsIdConverter>,
 	AccountId,
@@ -119,32 +234,167 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	CurrencyId,
 	AssetsIdConverter,
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
+	PalletMultihopXcmIbc,
 >;
 
-pub struct ForeignXcm;
+pub struct MultiCurrencyAdapterWrapper<
+	MultiCurrency,
+	UnknownAsset,
+	Match,
+	AccountId,
+	AccountIdConvert,
+	CurrencyId,
+	CurrencyIdConvert,
+	DepositFailureHandler,
+	MultiCurrencyCallback,
+>(
+	PhantomData<(
+		MultiCurrency,
+		UnknownAsset,
+		Match,
+		AccountId,
+		AccountIdConvert,
+		CurrencyId,
+		CurrencyIdConvert,
+		DepositFailureHandler,
+		MultiCurrencyCallback,
+	)>,
+);
 
-impl Convert<CurrencyId, Option<MultiLocation>> for ForeignXcm {
+impl<
+		MultiCurrency: orml_traits::MultiCurrency<AccountId, CurrencyId = CurrencyId>,
+		UnknownAsset: orml_xcm_support::UnknownAsset,
+		Match: MatchesFungible<MultiCurrency::Balance>,
+		AccountId: sp_std::fmt::Debug + Clone,
+		AccountIdConvert: xcm_executor::traits::Convert<MultiLocation, AccountId>,
+		CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
+		DepositFailureHandler: orml_xcm_support::OnDepositFail<CurrencyId, AccountId, MultiCurrency::Balance>,
+		DepositCallback: composable_traits::xcm::assets::MultiCurrencyCallback<AssetId = CurrencyId>,
+	> xcm_executor::traits::TransactAsset
+	for MultiCurrencyAdapterWrapper<
+		MultiCurrency,
+		UnknownAsset,
+		Match,
+		AccountId,
+		AccountIdConvert,
+		CurrencyId,
+		CurrencyIdConvert,
+		DepositFailureHandler,
+		DepositCallback,
+	>
+{
+	fn deposit_asset(
+		asset: &MultiAsset,
+		location: &MultiLocation,
+		context: &XcmContext,
+	) -> xcm::v3::Result {
+		let result = MultiCurrencyAdapter::<
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
+		>::deposit_asset(asset, location, context);
+		// let currency_id = CurrencyIdConvert::convert(asset.clone());
+		match (
+			AccountIdConvert::convert_ref(location),
+			CurrencyIdConvert::convert(asset.clone()),
+			Match::matches_fungible(asset),
+		) {
+			// known asset
+			(Ok(_), Some(currency_id), Some(_)) => {
+				let _ =
+					DepositCallback::deposit_asset(asset, location, context, result, currency_id);
+			},
+			// unknown asset
+			_ => {
+				frame_support::log::error!(
+					target: "xcmp",
+					"deposit_asset failed: {:?} {:?} {:?}",
+					AccountIdConvert::convert_ref(location),
+					CurrencyIdConvert::convert(asset.clone()),
+					Match::matches_fungible(asset),
+				);
+			},
+		}
+		result
+	}
+
+	fn withdraw_asset(
+		asset: &MultiAsset,
+		location: &MultiLocation,
+		maybe_context: Option<&XcmContext>,
+	) -> sp_std::result::Result<Assets, XcmError> {
+		MultiCurrencyAdapter::<
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
+		>::withdraw_asset(asset, location, maybe_context)
+	}
+
+	fn transfer_asset(
+		asset: &MultiAsset,
+		from: &MultiLocation,
+		to: &MultiLocation,
+		context: &XcmContext,
+	) -> sp_std::result::Result<Assets, XcmError> {
+		MultiCurrencyAdapter::<
+			MultiCurrency,
+			UnknownAsset,
+			Match,
+			AccountId,
+			AccountIdConvert,
+			CurrencyId,
+			CurrencyIdConvert,
+			DepositFailureHandler,
+		>::transfer_asset(asset, from, to, context)
+	}
+}
+
+pub struct ForeignAssetsToXcm;
+
+impl Convert<CurrencyId, Option<MultiLocation>> for ForeignAssetsToXcm {
 	fn convert(a: CurrencyId) -> Option<MultiLocation> {
 		match AssetsRegistry::asset_to_remote(a) {
+			// XCMed assets
 			Some(ForeignAssetId::Xcm(VersionedMultiLocation::V3(xcm))) => Some(xcm),
-			_ => None,
+			// IBCed assets
+			_ => Some(MultiLocation {
+				parents: 0,
+				interior: X2(
+					PalletInstance(<AssetsRegistry as PalletInfoAccess>::index() as u8),
+					GeneralIndex(a.into()),
+				),
+			}),
 		}
 	}
 }
 
-impl Convert<MultiLocation, Option<CurrencyId>> for ForeignXcm {
+impl Convert<MultiLocation, Option<CurrencyId>> for ForeignAssetsToXcm {
 	fn convert(a: MultiLocation) -> Option<CurrencyId> {
 		AssetsRegistry::location_to_asset(ForeignAssetId::Xcm(VersionedMultiLocation::V3(a)))
 	}
 }
 
-type AssetsIdConverter =
-	CurrencyIdConvert<ForeignXcm, primitives::topology::Picasso, ParachainInfo>;
+type AssetsIdConverter = CurrencyIdConvert<
+	ForeignAssetsToXcm,
+	primitives::topology::Picasso,
+	AssetsRegistry,
+	ParachainInfo,
+>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
 	FinalPriceConverter,
-	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFeeConverter,
 >;
 
@@ -184,10 +434,42 @@ impl<
 }
 
 pub type CaptureAssetTrap = CaptureDropAssets<
-	ToTreasury<AssetsIdConverter, crate::AssetsTransactorRouter, TreasuryAccount>,
+	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	FinalPriceConverter,
 	AssetsIdConverter,
 >;
+
+use xcm_executor::traits::OnResponse;
+pub struct XcmExecutorHandler;
+impl OnResponse for XcmExecutorHandler {
+	fn expecting_response(
+		origin: &MultiLocation,
+		query_id: u64,
+		querier: Option<&MultiLocation>,
+	) -> bool {
+		PolkadotXcm::expecting_response(origin, query_id, querier)
+	}
+	/// Handler for receiving a `response` from `origin` relating to `query_id` initiated by
+	/// `querier`.
+	fn on_response(
+		origin: &MultiLocation,
+		query_id: u64,
+		querier: Option<&MultiLocation>,
+		response: Response,
+		max_weight: Weight,
+		context: &XcmContext,
+	) -> Weight {
+		//need this line because querier is None
+		//and here is where it failed in pallet-xcm
+		//https://github.com/paritytech/polkadot/blob/release-v0.9.43/xcm/pallet-xcm/src/lib.rs#L2001-L2010
+		//so need to substitute it with expected querier
+		let mut querier = querier;
+		if querier.is_none() {
+			querier = Some(&MultiLocation { parents: 0, interior: Here });
+		}
+		PolkadotXcm::on_response(origin, query_id, querier, response, max_weight, context)
+	}
+}
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -202,8 +484,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type Trader = Trader;
 	type AssetTrap = CaptureAssetTrap;
-
-	type ResponseHandler = PolkadotXcm;
+	type ResponseHandler = XcmExecutorHandler;
 	type SubscriptionService = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type AssetLocker = ();
@@ -291,6 +572,12 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+
+	type MaxRemoteLockConsumers = ConstU32<32>;
+
+	type RemoteLockConsumerIdentifier = super::assets::BalanceIdentifier;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -328,13 +615,13 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
-	type ControllerOrigin = EnsureRootOrHalfNativeTechnical;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeTechnical;
+	type ControllerOrigin = EnsureRoot<Self::AccountId>;
+	type ExecuteOverweightOrigin = EnsureRoot<Self::AccountId>;
 	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type ExecuteOverweightOrigin = EnsureRoot<Self::AccountId>;
 }

@@ -5,6 +5,12 @@ homepage = "https://composable.finance"
 name = "pallet-cosmwasm"
 version = "1.0.0"
 
+[package.metadata]
+cargo-fuzz = true
+
+[lib]
+doctest = false
+
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -13,33 +19,40 @@ version = "3.0.0"
 
 [dependencies]
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+cosmwasm-vm = { workspace = true, default-features = false, features = [
   "ibc3",
   "iterator",
   "stargate",
 ] }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "c2a4fe2c764710c0db15c571135bc37619a289d5", default-features = false, features = [
+cosmwasm-vm-wasmi = { workspace = true, default-features = false, features = [
+  "iterator",
+  "stargate",
+  "ibc3",
+] }
+
+cosmwasm-std = { workspace = true, default-features = false, features = [
+  "ibc3",
   "iterator",
   "stargate",
 ] }
+
 frame-benchmarking = { default-features = false, workspace = true, optional = true }
 frame-support = { default-features = false, workspace = true }
 frame-system = { default-features = false, workspace = true }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex-literal.workspace = true
+vec1 = { version = "*", default-features = false, features = ["smallvec-v1"] }
 
 ibc = { workspace = true, default-features = false }
 ibc-primitives = { workspace = true, default-features = false, optional = false }
 pallet-ibc = { workspace = true, default-features = false }
 
-lazy_static = { version = "1.4.0", optional = true, default-features = false, features = [
-  "spin_no_std",
-] }
 libsecp256k1 = { version = "0.7.0", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
-pallet-assets = { default-features = false, path = "../assets" }
-pallet-assets-transactor-router = { default-features = false, path = "../assets-transactor-router" }
+
 pallet-assets-registry = { default-features = false, path = "../assets-registry" }
+pallet-assets = { default-features = false, path = "../assets" }
 pallet-balances = { default-features = false, workspace = true }
 parity-wasm = { version = "0.45.0", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
@@ -50,8 +63,8 @@ rand = { version = "0.8.5", optional = true, default-features = false, features 
 scale-info = { default-features = false, version = "2.1.1", features = [
   "derive",
 ] }
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0.82", default-features = false, features = [
+serde = { workspace = true, default-features = false, features = ["derive"] }
+serde_json = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
 sha2 = { version = "0.10", default-features = false }
@@ -61,18 +74,30 @@ sp-core = { default-features = false, workspace = true }
 sp-io = { default-features = false, workspace = true }
 sp-runtime = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
-wasm-instrument = { version = "0.2", default-features = false }
-wasmi = { version = "0.26", default-features = false }
-wasmi-validation = { version = "0.5", default-features = false }
+wasm-instrument = { workspace = true, default-features = false }
+wasmi = { workspace = true, default-features = false }
+wasmi-validation = { workspace = true, default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
+
+# any(fuzzing,test) does not seems work
+[target.'cfg(fuzzing)'.dependencies]
+libfuzzer-sys = "0.4"
+common = { path = "../../runtime/common", default-features = false }
+num-traits = { version = "0.2.14", default-features = false }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
+orml-tokens = { workspace = true }
+orml-traits = { workspace = true }
+pallet-timestamp = { default-features = false, workspace = true }
+rand = { version = "0.8.5", default-features = false, features = [
+  "alloc",
+  "small_rng",
+] }
+wasm-smith = "0.12.15"
 
 [dev-dependencies]
-composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
-composable-traits = { path = "../composable-traits", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
-lazy_static = { version = "1.4.0", default-features = false, features = [
-  "spin_no_std",
-] }
+common = { path = "../../runtime/common", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 pallet-timestamp = { default-features = false, workspace = true }
@@ -81,39 +106,78 @@ rand = { version = "0.8.5", default-features = false, features = [
   "small_rng",
 ] }
 
+
 [features]
 default = ["std"]
-
 runtime-benchmarks = [
-  "lazy_static",
-  "rand",
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-ibc/runtime-benchmarks",
-  "pallet-assets-transactor-router/runtime-benchmarks",
+  "orml-tokens/runtime-benchmarks",
   "pallet-assets-registry/runtime-benchmarks",
+  "pallet-assets/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-ibc/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "rand",
+  "common/runtime-benchmarks",
+  "composable-tests-helpers/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "ibc-primitives/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
 ]
 std = [
   "codec/std",
+  "common/std",
+  "composable-support/std",
+  "composable-tests-helpers/std",
+  "composable-traits/std",
+  "cosmwasm-std/std",
+  "cosmwasm-vm-wasmi/std",
+  "cosmwasm-vm/std",
+  "frame-benchmarking/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
-  "composable-support/std",
-  "scale-info/std",
-  "primitives/std",
-  "pallet-balances/std",
-  "sha3/std",
   "hex/std",
-  "pallet-ibc/std",
+  "ibc-primitives/std",
   "ibc/std",
-  "pallet-assets-transactor-router/std",
-  "pallet-assets-registry/std",
+  "libsecp256k1/std",
+  "log/std",
+  "num-traits/std",
   "orml-tokens/std",
-
+  "orml-traits/std",
+  "pallet-assets-registry/std",
+  "pallet-assets/std",
+  "pallet-balances/std",
+  "pallet-ibc/std",
+  "pallet-timestamp/std",
+  "parity-wasm/std",
+  "primitives/std",
+  "rand/std",
+  "scale-info/std",
+  "serde_json/std",
+  "serde/std",
+  "sha2/std",
+  "sha3/std",
+  "sp-arithmetic/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "vec1/std",
+  "wasm-instrument/std",
+  "wasmi-validation/std",
+  "wasmi/std",
 ]
+
+[[bin]]
+name = "store-code-bytes"
+path = "fuzz_targets/store_code_bytes.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "store-code-module"
+path = "fuzz_targets/store_code_module.rs"
+test = false
+doc = false

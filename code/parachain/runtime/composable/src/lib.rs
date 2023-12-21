@@ -6,8 +6,7 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		// // impl_runtime_apis will generate code that contains a `panic!`. Implementations should still avoid using panics.
-		// clippy::panic
+		clippy::panic
 	)
 )]
 #![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
@@ -23,19 +22,22 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+mod assets;
 mod fees;
 mod gates;
 mod governance;
 pub mod ibc;
 mod migrations;
 mod prelude;
+mod tracks;
 pub mod version;
 mod weights;
 mod xcmp;
 use common::{
 	fees::multi_existential_deposits, governance::native::NativeTreasury, rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, Hash, Moment,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	xcmp::AccountIdToMultiLocation, AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber,
+	ComposableBlock, ComposableUncheckedExtrinsic, Hash, Moment, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
@@ -54,15 +56,18 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
+pub use tracks::TracksInfo;
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
+
+pub use crate::assets::*;
 pub use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
 	parameter_types,
 	traits::{
 		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
-		Randomness, StorageInfo,
+		Randomness, StorageInfo, StorageMapShim,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -142,6 +147,7 @@ parameter_types! {
 		.build_or_panic();
 
 	pub const SS58Prefix: u8 = 50;
+	pub const ComposableNetworkId: u32 = 1;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -191,7 +197,7 @@ impl system::Config for Runtime {
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = weights::frame_system::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -208,17 +214,13 @@ impl assets_registry::Config for Runtime {
 	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = sp_runtime::traits::ConvertInto;
-}
-
-parameter_types! {
-	// Maximum authorities/collators for aura
-	pub const MaxAuthorities: u32 = 100;
+	type NetworkId = ComposableNetworkId;
 }
 
 impl aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = ConstU32<100>;
 }
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -252,29 +254,6 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	/// Minimum amount an account has to hold to stay in state.
-	// minimum account balance is given as 0.1 PICA ~ 100 CurrencyId::milli()
-	pub ExistentialDeposit: Balance = 100 * CurrencyId::milli::<Balance>();
-	/// Max locks that can be placed on an account. Capped for storage
-	/// concerns.
-	pub const MaxLocks: u32 = 50;
-}
-
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 pub struct WeightToFee;
@@ -438,6 +417,22 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const MinCandidates: u32 = 5;
+	pub const MaxMultihopCount: u32 = 10;
+	pub const ChainNameVecLimit: u32 = 30;
+}
+
+pub struct MultihopXcmIbcPalletId;
+impl Get<u8> for MultihopXcmIbcPalletId {
+	fn get() -> u8 {
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().expect("const")
+	}
+}
+
+impl pallet_multihop_xcm_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type PalletInstanceId = MultihopXcmIbcPalletId;
+	type MaxMultihopCount = MaxMultihopCount;
+	type ChainNameVecLimit = ChainNameVecLimit;
 }
 
 impl collator_selection::Config for Runtime {
@@ -454,19 +449,6 @@ impl collator_selection::Config for Runtime {
 	type ValidatorIdOf = collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = weights::collator_selection::WeightInfo<Runtime>;
-}
-
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_type_with_key! {
@@ -487,33 +469,6 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
-pub struct CurrencyHooks;
-impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type OnSlash = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-}
-
-type ReserveIdentifier = [u8; 8];
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = MultiExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type CurrencyHooks = CurrencyHooks;
 }
 
 parameter_types! {
@@ -556,14 +511,6 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-impl currency_factory::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
-	type Balance = Balance;
-}
-
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
@@ -595,7 +542,7 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const MaxStrategies: usize = 255;
-	pub NativeAssetId: CurrencyId = CurrencyId::LAYR;
+	pub NativeAssetId: CurrencyId = CurrencyId::COMPOSABLE_LAYR;
 	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
 	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
 	pub RentPerBlock: Balance = CurrencyId::milli::<Balance>();
@@ -604,6 +551,116 @@ parameter_types! {
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
 	pub FlatFeeUSDTAmount: Balance = 0;
+}
+
+parameter_types! {
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Polkadot;
+	pub const XcmHelperPalletId: PalletId = PalletId(*b"com/fees");
+	pub const NotifyTimeout: BlockNumber = 100;
+	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
+	pub const RelayCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
+}
+
+impl pallet_xcm_helper::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type Assets = Assets;
+	type XcmSender = crate::xcmp::XcmRouter;
+	type RelayNetwork = RelayNetwork;
+	type PalletId = XcmHelperPalletId;
+	type NotifyTimeout = NotifyTimeout;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type RefundLocation = RefundLocation;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
+	type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+	type RelayCurrency = RelayCurrency;
+}
+
+parameter_types! {
+	pub const StakingPalletId: PalletId = PalletId(*b"com/lqsk");
+	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
+	pub const XcmFees: Balance = 500_000_000; // 0.05DOT
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
+	pub const StakingCurrency: CurrencyId = CurrencyId::COMPOSABLE_DOT;
+	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_COMPOSABLE_DOT;
+	pub const EraLength: BlockNumber = 6 * 4 * 3600 / 6;
+	pub const MinStakeLSD: Balance = 10_000_000_000; // 1DOT
+	pub const MinUnstake: Balance = 5_000_000_000; // 0.5sDOT
+	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 28; // 28Days
+	pub const MinNominatorBond: Balance = 100_000_000_000; // 10DOT
+	pub const NumSlashingSpans: u32 = 0;
+	pub const ElectionSolutionStoredOffset: BlockNumber = 12600;
+	pub LsdProtocolFeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex_literal::hex!("a3e194e1abc02bdd10ce919fe2c3d33b5c9291b3aaa3f75035c65fcdf1b8f129"));
+}
+
+pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> sp_runtime::traits::BlockNumberProvider
+	for RelayChainValidationDataProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
+}
+
+impl<T: cumulus_pallet_parachain_system::Config>
+	pallet_liquid_staking::types::ValidationDataProvider for RelayChainValidationDataProvider<T>
+{
+	fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+	}
+}
+
+pub struct Members<T>(sp_std::marker::PhantomData<T>);
+
+impl<AccountId: core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
+	for Members<AccountId>
+{
+	fn sorted_members() -> Vec<AccountId> {
+		vec![]
+	}
+}
+
+pub struct Decimal;
+impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
+	fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
+		assets_registry::pallet::AssetDecimals::<Runtime>::get(asset_id)
+	}
+}
+
+impl pallet_liquid_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type PalletId = StakingPalletId;
+	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
+	type SelfParaId = ParachainInfo;
+	type Assets = Assets;
+	type RelayOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type DerivativeIndexList = DerivativeIndexList;
+	type XcmFees = XcmFees;
+	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
+	type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
+	type StakingCurrency = StakingCurrency;
+	type LiquidCurrency = LiquidCurrency;
+	type EraLength = EraLength;
+	type MinStake = MinStakeLSD;
+	type MinUnstake = MinUnstake;
+	type XCM = PalletXcmHelper;
+	type BondingDuration = BondingDuration;
+	type MinNominatorBond = MinNominatorBond;
+	type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
+	type Members = Members<AccountId>; // ..LiquidStakingAgentsMembership;
+	type NumSlashingSpans = NumSlashingSpans;
+	type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
+	type ProtocolFeeReceiver = LsdProtocolFeeAccount;
+	type Decimal = Decimal;
+	type NativeCurrency = NativeAssetId;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -658,24 +715,26 @@ construct_runtime!(
 
 		Tokens: orml_tokens = 52,
 
-		CurrencyFactory: currency_factory = 53,
 		CrowdloanRewards: crowdloan_rewards = 56,
-		Assets: assets = 57,
-		GovernanceRegistry: governance_registry = 58,
+		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 59,
+
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		OpenGovBalances: balances::<Instance2> = 78,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
 
 		CallFilter: call_filter = 100,
 
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
 
+		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
+		PalletXcmHelper: pallet_xcm_helper = 193,
+		PalletLiquidStaking: pallet_liquid_staking = 194,
 	}
 );
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
@@ -689,9 +748,11 @@ pub type SignedExtra = (
 	AssetsPaymentHeader,
 );
 
+/// Block type as expected by this runtime.
+pub type Block = ComposableBlock<RuntimeCall, SignedExtra>;
+
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
@@ -736,50 +797,23 @@ impl_runtime_apis! {
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
-			// Hardcoded assets
-			use common::fees::ForeignToNativePriceConverter;
-			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
-				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-				asset
-			}).map(|xcm|
-			  Asset {
-				decimals : xcm.decimals,
-				existential_deposit : xcm.existential_deposit,
-				id : xcm.id,
-				foreign_id : xcm.foreign_id.map(Into::into),
-				name : xcm.name,
-				ratio : xcm.ratio,
-			  }
-			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
-
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
-				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
-					// Update a found asset with data from assets-registry
-					found_asset.decimals = asset.decimals;
-					found_asset.foreign_id = asset.foreign_id.clone();
-					found_asset.ratio = asset.ratio;
-				} else {
-					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-					acc.push(asset.clone())
-				}
-				acc
-			}).iter().map(|asset|
+			all_assets.iter().map(|asset|
 			  Asset {
 				decimals : asset.decimals,
-				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				existential_deposit : SafeRpcWrapper(multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id)),
 				id : SafeRpcWrapper(asset.id.into()),
 				foreign_id : asset.foreign_id.clone(),
 				name : asset.name.clone(),
+				symbol : asset.symbol.clone(),
 				ratio : asset.ratio,
 			  }
-			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()
+		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -808,6 +842,13 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 

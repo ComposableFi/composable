@@ -1,26 +1,23 @@
 { self, ... }: {
-  flake = {
-    # NOTE: These will bue put in a part soon.
-    overlays = {
-      default = let
-        mkDevnetProgram = { pkgs }:
-          name: spec:
-          pkgs.writeShellApplication {
-            inherit name;
-            runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-            text = ''
-              arion --prebuilt-file ${
-                pkgs.arion.build spec
-              } up --build --force-recreate -V --always-recreate-deps --remove-orphans
-            '';
-          };
-      in self.inputs.nixpkgs.lib.composeManyExtensions [
-        self.inputs.arion-src.overlays.default
-        (final: _prev: {
-          composable = {
-            mkDevnetProgram = final.callPackage mkDevnetProgram { };
-          };
-        })
+  perSystem = { config, self', inputs', system, pkgs, ... }: {
+    packages = {
+      update-input = pkgs.writeShellApplication {
+        name = "up";
+        text = ''
+          nix flake lock --update-input networks --update-input cosmos --update-input cvm --update-input cosmos
+        '';
+      };
+    };
+    _module.args.pkgs = import self.inputs.nixpkgs {
+      inherit system;
+      overlays = with self.inputs; [
+        npm-buildpackage.overlays.default
+        polkadot.overlays.default
+        rust-overlay.overlays.default
+        zombienet.overlays.default
+        process-compose.overlays.default
+        networks.overlays.default
+        sbt-derivation.overlays.default
       ];
     };
   };

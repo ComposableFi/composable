@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -10,7 +10,7 @@
 		// clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
@@ -25,7 +25,13 @@ pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 extern crate alloc;
 
+pub mod assets;
+mod contracts;
 mod fees;
+mod tracks;
+use hex_literal::hex;
+pub use pallet_custom_origins;
+pub use tracks::TracksInfo;
 pub mod governance;
 pub mod ibc;
 mod migrations;
@@ -33,28 +39,28 @@ mod prelude;
 pub mod version;
 mod weights;
 pub mod xcmp;
+pub use crate::fees::WellKnownForeignToNativePriceConverter;
 pub use common::xcmp::{MaxInstructions, UnitWeightCost};
 pub use fees::{AssetsPaymentHeader, FinalPriceConverter};
 use frame_support::dispatch::DispatchError;
 use version::{Version, VERSION};
 pub use xcmp::XcmConfig;
 
-pub use crate::fees::WellKnownForeignToNativePriceConverter;
-
 use common::{
 	fees::{multi_existential_deposits, NativeExistentialDeposit, WeightToFeeConverter},
 	governance::native::*,
 	rewards::StakingPot,
-	AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash,
-	Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	xcmp::AccountIdToMultiLocation,
+	AccountId, AccountIndex, Amount, AuraId, Balance, BlockNumber, ComposableBlock,
+	ComposableUncheckedExtrinsic, Hash, Moment, PoolId, ReservedDmpWeight, ReservedXcmpWeight,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	dex::{Amm, PriceAggregate},
 };
-use cosmwasm::instrument::CostRules;
 use pallet_ibc::ics20_fee::FlatFeeConverter;
 use primitives::currency::ForeignAssetId;
 use sp_runtime::traits::Get;
@@ -63,19 +69,18 @@ use gates::*;
 use governance::*;
 use prelude::*;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Either, FixedI128,
 };
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-
 // A few exports that help ease life for downstream crates.
 use codec::Encode;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -96,8 +101,6 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 use frame_system as system;
-#[cfg(feature = "testnet")]
-use frame_system::EnsureSigned;
 pub use governance::TreasuryAccount;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -212,8 +215,7 @@ impl system::Config for Runtime {
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	type SystemWeightInfo = weights::frame_system::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
@@ -223,8 +225,11 @@ impl system::Config for Runtime {
 
 parameter_types! {
 	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
-	pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	// pub AssetIdUSDT: CurrencyId = CurrencyId::USDT;
+	// pub FlatFeeUSDTAmount: Balance = 10_000_000; //10 USDT
+	pub AssetIdUSDT: CurrencyId = CurrencyId::INVALID;
+	pub FlatFeeUSDTAmount: Balance = 0;
+	pub const PicassoNetworkId: u32 = 0;
 }
 
 impl assets_registry::Config for Runtime {
@@ -232,10 +237,34 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = primitives::currency::ForeignAssetId;
-	type UpdateAssetRegistryOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRoot<AccountId>;
+	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 	type Convert = ConvertInto;
+	type NetworkId = PicassoNetworkId;
+}
+
+parameter_types! {
+	pub FeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex!("a72ef3ce1ecd46163bc5e23fd3e6a4623d9717c957fb59001a5d4cb949150f28"));
+	pub const IntermediatePalletId: PalletId = PalletId(*b"revenibc");
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSizeAddress: u32 = 100;
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSizeMemo: u32 = 1000;
+}
+
+impl revenue_ibc::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FeeAccount = FeeAccount;
+	type IntermediatePalletId = IntermediatePalletId;
+	type ForeignAssetId = primitives::currency::ForeignAssetId;
+	type AssetId = CurrencyId;
+	type AssetsRegistry = AssetsRegistry;
+	type Assets = Assets;
+	type MaxStringSizeAddress = MaxStringSizeAddress;
+	type MaxStringSizeMemo = MaxStringSizeMemo;
+	type Admin = EnsureRootOrTwoThirdNativeCouncil;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -249,43 +278,16 @@ impl pablo::Config for Runtime {
 	type AssetId = CurrencyId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
-	type Assets = AssetsTransactorRouter;
-	type LPTokenFactory = AssetsTransactorRouter;
+	type Assets = Assets;
+	type LPTokenFactory = AssetsRegistry;
 	type PoolId = PoolId;
 	type PalletId = PabloPalletId;
-	type PoolCreationOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type EnableTwapOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 	type LPTokenExistentialDeposit = LPTokenExistentialDeposit;
-}
-
-impl assets_transactor_router::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeTransactor = Balances;
-	type LocalTransactor = Tokens;
-	type ForeignTransactor = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-	type AssetLocation = primitives::currency::ForeignAssetId;
-	type AssetsRegistry = AssetsRegistry;
-}
-
-impl assets::Config for Runtime {
-	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyFactory;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type NativeCurrency = Balances;
-	type MultiCurrency = Tokens;
-	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type GovernanceRegistry = GovernanceRegistry;
-	type CurrencyValidator = ValidateCurrencyId;
 }
 
 type FarmingRewardsInstance = reward::Instance1;
@@ -312,7 +314,7 @@ impl farming::Config for Runtime {
 	type TreasuryAccountId = FarmingAccount;
 	type RewardPeriod = RewardPeriod;
 	type RewardPools = FarmingRewards;
-	type MultiCurrency = AssetsTransactorRouter;
+	type MultiCurrency = Assets;
 	type WeightInfo = ();
 }
 
@@ -320,9 +322,8 @@ parameter_types! {
 	pub const StakeLock: BlockNumber = 50;
 	pub const StalePrice: BlockNumber = 5;
 
-	// TODO
 	pub MinStake: Balance = 200_000 * CurrencyId::unit::<Balance>();
-	pub const MinAnswerBound: u32 = 7;
+	pub const MinAnswerBound: u32 = 3;
 	pub const MaxAnswerBound: u32 = 25;
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
@@ -343,8 +344,9 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfNativeCouncil;
-	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
+	type AddOracle = GeneralAdminOrRoot;
+	type SetSigner = GeneralAdminOrRoot;
+	type RewardOrigin = GeneralAdminOrRoot;
 	type MinAnswerBound = MinAnswerBound;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
@@ -354,7 +356,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
-	type LocalAssets = CurrencyFactory;
+	type LocalAssets = ();
 	type Moment = Moment;
 	type Time = Timestamp;
 	type PalletId = OraclePalletId;
@@ -362,130 +364,6 @@ impl oracle::Config for Runtime {
 
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
-}
-
-/// Native <-> Cosmwasm account mapping
-pub struct AccountToAddr;
-
-impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
-		let account =
-			ibc_primitives::runtime_interface::ss58_to_account_id_32(&a).map_err(|_| ())?;
-		Ok(account.into())
-	}
-}
-
-impl Convert<AccountId, alloc::string::String> for AccountToAddr {
-	fn convert(a: AccountId) -> alloc::string::String {
-		let account = ibc_primitives::runtime_interface::account_id_to_ss58(a.into(), 49);
-		String::from_utf8_lossy(account.as_slice()).to_string()
-	}
-}
-
-impl Convert<Vec<u8>, Result<AccountId, ()>> for AccountToAddr {
-	fn convert(a: Vec<u8>) -> Result<AccountId, ()> {
-		Ok(<[u8; 32]>::try_from(a).map_err(|_| ())?.into())
-	}
-}
-
-/// Native <-> Cosmwasm asset mapping
-pub struct AssetToDenom;
-
-impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
-	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
-		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
-	}
-}
-
-impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
-	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
-		alloc::format!("{}", currency_id)
-	}
-}
-
-parameter_types! {
-	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
-	pub const ChainId: &'static str = "composable-network-picasso";
-	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-	pub const MaxContractLabelSize: u32 = 64;
-	pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
-	pub const MaxInstantiateSaltSize: u32 = 128;
-	pub const MaxFundsAssets: u32 = 32;
-	pub const CodeTableSizeLimit: u32 = 4096;
-	pub const CodeGlobalVariableLimit: u32 = 256;
-	pub const CodeParameterLimit: u32 = 128;
-	pub const CodeBranchTableSizeLimit: u32 = 256;
-
-	// TODO: benchmark for proper values
-	pub const CodeStorageByteDeposit: u32 = 1_000_000;
-	pub const ContractStorageByteReadPrice: u32 = 1;
-	pub const ContractStorageByteWritePrice: u32 = 1;
-	pub WasmCostRules: CostRules<Runtime> = Default::default();
-}
-
-impl cosmwasm::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AccountIdExtended = AccountId;
-	type PalletId = CosmwasmPalletId;
-	type MaxFrames = ConstU32<64>;
-	type MaxCodeSize = ConstU32<{ 512 * 1024 }>;
-	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
-
-	#[cfg(feature = "testnet")]
-	type MaxMessageSize = ConstU32<{ 128 * 1024 }>;
-
-	#[cfg(not(feature = "testnet"))]
-	type MaxMessageSize = ConstU32<{ 32 * 1024 }>;
-
-	type AccountToAddr = AccountToAddr;
-
-	type AssetToDenom = AssetToDenom;
-
-	type Balance = Balance;
-	type AssetId = CurrencyId;
-	type Assets = AssetsTransactorRouter;
-	type NativeAsset = Balances;
-	type ChainId = ChainId;
-	type MaxContractLabelSize = MaxContractLabelSize;
-	type MaxContractTrieIdSize = MaxContractTrieIdSize;
-	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
-	type MaxFundsAssets = MaxFundsAssets;
-
-	type CodeTableSizeLimit = CodeTableSizeLimit;
-	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
-	type CodeStackLimit = ConstU32<{ u32::MAX }>;
-
-	type CodeParameterLimit = CodeParameterLimit;
-	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
-	type CodeStorageByteDeposit = CodeStorageByteDeposit;
-	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
-	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
-
-	type WasmCostRules = WasmCostRules;
-	type UnixTime = Timestamp;
-	type WeightInfo = cosmwasm::weights::SubstrateWeight<Runtime>;
-	type IbcRelayerAccount = TreasuryAccount;
-
-	// this was setup in repo in Jan 2023, so need to enable IBC in CW back
-	type IbcRelayer = cosmwasm::NoRelayer<Runtime>;
-
-	type PalletHook = ();
-
-	#[cfg(feature = "testnet")]
-	type UploadWasmOrigin = system::EnsureSigned<Self::AccountId>;
-
-	#[cfg(feature = "testnet")]
-	type ExecuteWasmOrigin = system::EnsureSigned<Self::AccountId>;
-
-	// really need to do EnsureOnOf<Sudo::key, >
-	#[cfg(not(feature = "testnet"))]
-	type UploadWasmOrigin = system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>;
-
-	#[cfg(not(feature = "testnet"))]
-	type ExecuteWasmOrigin = frame_support::traits::EitherOfDiverse<
-		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
-		system::EnsureSignedBy<ReleaseMembership, Self::AccountId>,
-	>;
 }
 
 parameter_types! {
@@ -559,22 +437,6 @@ impl timestamp::Config for Runtime {
 	type OnTimestampSet = Aura;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::timestamp::WeightInfo<Runtime>;
-}
-
-type MaxLocks = ConstU32<50>;
-
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = NativeExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -707,7 +569,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type UpdateOrigin = GeneralAdminOrRoot;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -729,38 +591,11 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-pub struct CurrencyHooks;
-impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
-	type OnSlash = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-}
-
-type ReserveIdentifier = [u8; 8];
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = weights::tokens::WeightInfo<Runtime>;
-	type ExistentialDeposits = MultiExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = ConstU32<2>;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type CurrencyHooks = CurrencyHooks;
-}
-
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
-  pub const NoPreimagePostponement: Option<u32> = Some(10);
+	  pub const NoPreimagePostponement: Option<u32> = Some(10);
 }
 
 impl scheduler::Config for Runtime {
@@ -792,14 +627,6 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-impl currency_factory::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
-	type Balance = Balance;
-}
-
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const CrowdloanRewardsLockId: LockIdentifier = *b"clr_lock";
@@ -820,7 +647,7 @@ pub type ProxyPrice = NativeExistentialDeposit;
 impl proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = AssetsTransactorRouter;
+	type Currency = Assets;
 	type ProxyType = composable_traits::account_proxy::ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
@@ -835,8 +662,8 @@ impl proxy::Config for Runtime {
 impl crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type RewardAsset = AssetsTransactorRouter;
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type RewardAsset = Assets;
+	type AdminOrigin = EnsureRoot<AccountId>;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -857,12 +684,12 @@ parameter_types! {
 }
 
 impl vesting::Config for Runtime {
-	type Currency = AssetsTransactorRouter;
+	type Currency = Assets;
 	type RuntimeEvent = RuntimeEvent;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type UpdateSchedulesOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type VestedTransferOrigin = EnsureRoot<Self::AccountId>;
+	type UpdateSchedulesOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -875,19 +702,133 @@ parameter_types! {
 	  pub MinReward: Balance = 10 * CurrencyId::unit::<Balance>();
 	  pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
 }
+parameter_types! {
+		pub const MaxMultihopCount: u32 = 10;
+		pub const ChainNameVecLimit: u32 = 30;
+}
 
-impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type BondOfferId = BondOfferId;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Currency = AssetsTransactorRouter;
+pub struct MultihopXcmIbcPalletId;
+impl Get<u8> for MultihopXcmIbcPalletId {
+	fn get() -> u8 {
+		<PalletMultihopXcmIbc as PalletInfoAccess>::index().try_into().expect("const")
+	}
+}
+
+impl pallet_multihop_xcm_ibc::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type MinReward = MinReward;
-	type NativeCurrency = Balances;
-	type PalletId = BondedFinanceId;
-	type Stake = Stake;
-	type Vesting = Vesting;
-	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
+	type PalletInstanceId = MultihopXcmIbcPalletId;
+	type MaxMultihopCount = MaxMultihopCount;
+	type ChainNameVecLimit = ChainNameVecLimit;
+}
+
+parameter_types! {
+	pub const RelayNetwork: xcm::v3::NetworkId = xcm::v3::NetworkId::Kusama;
+	pub const XcmHelperPalletId: PalletId = PalletId(*b"pic/fees");
+	pub const NotifyTimeout: BlockNumber = 100;
+	pub RefundLocation: AccountId = Utility::derivative_account_id(ParachainInfo::parachain_id().into_account_truncating(), u16::MAX);
+	pub const RelayCurrency: CurrencyId = CurrencyId::KSM;
+}
+
+impl pallet_xcm_helper::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type UpdateOrigin = GeneralAdminOrRoot;
+	type Assets = Assets;
+	type XcmSender = crate::xcmp::XcmRouter;
+	type RelayNetwork = RelayNetwork;
+	type PalletId = XcmHelperPalletId;
+	type NotifyTimeout = NotifyTimeout;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type RefundLocation = RefundLocation;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
+	type WeightInfo = pallet_xcm_helper::weights::SubstrateWeight<Runtime>;
+	type RelayCurrency = RelayCurrency;
+}
+
+parameter_types! {
+	pub const StakingPalletId: PalletId = PalletId(*b"pic/lqsk");
+	pub DerivativeIndexList: Vec<u16> = vec![0, 1, 2, 3, 4, 5];
+	pub const XcmFees: Balance = 5_000_000_000; // 0.005KSM
+	pub MatchingPoolFastUnstakeFee: pallet_liquid_staking::types::Rate = pallet_liquid_staking::types::Rate::saturating_from_rational(1_u32, 100_u32);
+	pub const StakingCurrency: CurrencyId = CurrencyId::KSM;
+	pub const LiquidCurrency: CurrencyId = CurrencyId::LIQUID_STAKED_PICASSO_KSM;
+	pub const EraLength: BlockNumber = 6 * 3600 / 6; // 6HOURS
+	pub const MinStakeLSD: Balance = 100_000_000_000; // 0.1KSM
+	pub const MinUnstake: Balance = 50_000_000_000; // 0.05sKSM
+	pub const BondingDuration: pallet_liquid_staking::types::EraIndex = 28; //28 era = 7 days (era 6 hours)
+	pub const MinNominatorBond: Balance = 100_000_000_000; // 0.1KSM
+	pub const NumSlashingSpans: u32 = 0;
+	pub const ElectionSolutionStoredOffset: BlockNumber = 3150;
+	pub LsdProtocolFeeAccount: sp_runtime::AccountId32 = sp_runtime::AccountId32::from(hex!("a3e194e1abc02bdd10ce919fe2c3d33b5c9291b3aaa3f75035c65fcdf1b8f129"));
+}
+
+pub struct RelayChainValidationDataProvider<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: cumulus_pallet_parachain_system::Config> sp_runtime::traits::BlockNumberProvider
+	for RelayChainValidationDataProvider<T>
+{
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+			.map(|d| d.relay_parent_number)
+			.unwrap_or_default()
+	}
+}
+
+impl<T: cumulus_pallet_parachain_system::Config>
+	pallet_liquid_staking::types::ValidationDataProvider for RelayChainValidationDataProvider<T>
+{
+	fn validation_data() -> Option<pallet_liquid_staking::types::PersistedValidationData> {
+		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
+	}
+}
+
+pub struct Members<T>(sp_std::marker::PhantomData<T>);
+
+impl<AccountId: core::cmp::Ord> frame_support::traits::SortedMembers<AccountId>
+	for Members<AccountId>
+{
+	fn sorted_members() -> Vec<AccountId> {
+		vec![]
+	}
+}
+
+pub struct Decimal;
+impl pallet_liquid_staking::types::DecimalProvider<CurrencyId> for Decimal {
+	fn get_decimal(asset_id: &CurrencyId) -> Option<u8> {
+		assets_registry::pallet::AssetDecimals::<Runtime>::get(asset_id)
+	}
+}
+
+impl pallet_liquid_staking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
+	type PalletId = StakingPalletId;
+	type WeightInfo = pallet_liquid_staking::weights::SubstrateWeight<Runtime>;
+	type SelfParaId = ParachainInfo;
+	type Assets = Assets;
+	type RelayOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = GeneralAdminOrRoot;
+	type DerivativeIndexList = DerivativeIndexList;
+	type XcmFees = XcmFees;
+	type MatchingPoolFastUnstakeFee = MatchingPoolFastUnstakeFee;
+	type DistributionStrategy = pallet_liquid_staking::distribution::MaxMinDistribution;
+	type StakingCurrency = StakingCurrency;
+	type LiquidCurrency = LiquidCurrency;
+	type EraLength = EraLength;
+	type MinStake = MinStakeLSD;
+	type MinUnstake = MinUnstake;
+	type XCM = PalletXcmHelper;
+	type BondingDuration = BondingDuration;
+	type MinNominatorBond = MinNominatorBond;
+	type RelayChainValidationDataProvider = RelayChainValidationDataProvider<Runtime>;
+	type Members = Members<AccountId>; // ..LiquidStakingAgentsMembership;
+	type NumSlashingSpans = NumSlashingSpans;
+	type ElectionSolutionStoredOffset = ElectionSolutionStoredOffset;
+	type ProtocolFeeReceiver = LsdProtocolFeeAccount;
+	type Decimal = Decimal;
+	type NativeCurrency = NativeAssetId;
 }
 
 construct_runtime!(
@@ -921,12 +862,13 @@ construct_runtime!(
 		Council: collective::<Instance1> = 30,
 		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
-		Democracy: democracy = 33,
 		TechnicalCommittee: collective::<Instance2> = 72,
 		TechnicalCommitteeMembership: membership::<Instance2> = 73,
 
 		ReleaseCommittee: collective::<Instance3> = 74,
 		ReleaseMembership: membership::<Instance3> = 75,
+		RelayerCommittee: collective::<Instance4> = 81,
+		RelayerCommitteeMembership: membership::<Instance4> = 82,
 
 		// helpers/utilities
 		Scheduler: scheduler = 34,
@@ -943,32 +885,42 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens = 45,
 
 		Tokens: orml_tokens = 52,
-		CurrencyFactory: currency_factory = 53,
-		GovernanceRegistry: governance_registry = 54,
 		CrowdloanRewards: crowdloan_rewards = 55,
 		Vesting: vesting = 56,
-		BondedFinance: bonded_finance = 57,
+		Assets: pallet_assets = 57,
 		AssetsRegistry: assets_registry = 58,
 		Pablo: pablo = 59,
 		Oracle: oracle = 60,
-		AssetsTransactorRouter: assets_transactor_router = 61,
 		FarmingRewards: reward::<Instance1> = 62,
 		Farming: farming = 63,
+
+		Referenda: pallet_referenda = 76,
+		ConvictionVoting: pallet_conviction_voting = 77,
+		Origins: pallet_custom_origins = 79,
+		Whitelist: pallet_whitelist = 80,
 
 		CallFilter: call_filter = 100,
 
 		Cosmwasm: cosmwasm = 180,
 
+
+
 		// IBC support
 		Ibc: pallet_ibc = 190,
 		Ics20Fee: pallet_ibc::ics20_fee = 191,
+		PalletMultihopXcmIbc: pallet_multihop_xcm_ibc = 192,
+
+		PalletXcmHelper: pallet_xcm_helper = 194,
+		PalletLiquidStaking: pallet_liquid_staking = 195,
+		RevenueIbc: revenue_ibc = 200,
 	}
 );
 
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = ComposableBlock<RuntimeCall, SignedExtra>;
+
+/// Unchecked extrinsic type as expected by this runtime.
+pub type UncheckedExtrinsic = ComposableUncheckedExtrinsic<RuntimeCall, SignedExtra>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
@@ -982,9 +934,6 @@ pub type SignedExtra = (
 	AssetsPaymentHeader,
 );
 
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = executive::Executive<
 	Runtime,
@@ -1018,13 +967,10 @@ mod benches {
 		[identity, Identity]
 		[multisig, Multisig]
 		[proxy, Proxy]
-		[currency_factory, CurrencyFactory]
-		[bonded_finance, BondedFinance]
 		[vesting, Vesting]
 		[assets_registry, AssetsRegistry]
-		[pablo, Pablo]
-		[democracy, Democracy]
 		[oracle, Oracle]
+		[pallet_ibc, Ibc]
 	);
 }
 
@@ -1060,54 +1006,27 @@ cumulus_pallet_parachain_system::register_validate_block!(
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, ForeignAssetId> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<AssetsTransactorRouter as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>> {
-			// Hardcoded assets
-			use common::fees::ForeignToNativePriceConverter;
-			let assets = CurrencyId::list_assets().into_iter().map(|mut asset| {
-				// Add hardcoded ratio and ED for well known assets
-				asset.ratio = WellKnownForeignToNativePriceConverter::get_ratio(asset.id);
-				asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-				asset
-			}).map(|xcm|
-			  Asset {
-				decimals : xcm.decimals,
-				existential_deposit : xcm.existential_deposit,
-				id : xcm.id,
-				foreign_id : xcm.foreign_id.map(Into::into),
-				name : xcm.name,
-				ratio : xcm.ratio,
-			  }
-			).collect::<Vec<Asset<CurrencyId, Balance, ForeignAssetId>>>();
-
 			// Assets from the assets-registry pallet
 			let all_assets =  assets_registry::Pallet::<Runtime>::get_all_assets();
 
 			// Override asset data for hardcoded assets that have been manually updated, and append
 			// new assets without duplication
-			all_assets.into_iter().fold(assets, |mut acc, mut asset| {
-				if let Some(found_asset) = acc.iter_mut().find(|asset_i| asset_i.id == asset.id) {
-					// Update a found asset with data from assets-registry
-					found_asset.decimals = asset.decimals;
-					found_asset.foreign_id = asset.foreign_id.clone();
-					found_asset.ratio = asset.ratio;
-				} else {
-					asset.existential_deposit = multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id);
-					acc.push(asset.clone())
-				}
-				acc
-			}).iter().map(|asset|
+			all_assets.iter().map(|asset|
 			  Asset {
 				decimals : asset.decimals,
-				existential_deposit : SafeRpcWrapper(asset.existential_deposit),
+				existential_deposit : SafeRpcWrapper(multi_existential_deposits::<AssetsRegistry, WellKnownForeignToNativePriceConverter>(&asset.id)),
 				id : SafeRpcWrapper(asset.id.into()),
 				foreign_id : asset.foreign_id.clone(),
 				name : asset.name.clone(),
+				symbol : asset.symbol.clone(),
 				ratio : asset.ratio,
 			  }
-			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()		}
+			).collect::<Vec<Asset<SafeRpcWrapper<u128>, SafeRpcWrapper<Balance>, ForeignAssetId>>>()
+		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -1252,6 +1171,13 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 

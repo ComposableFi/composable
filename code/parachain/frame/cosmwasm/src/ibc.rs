@@ -5,12 +5,13 @@ use crate::{
 	CodeIdToInfo, Config, Pallet,
 };
 
+use cosmwasm_std::{
+	Addr, Attribute as CosmwasmEventAttribute, Binary, ContractResult, Event as CosmwasmEvent,
+	IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcEndpoint,
+	IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout,
+};
+
 use cosmwasm_vm::{
-	cosmwasm_std::{
-		Addr, Attribute as CosmwasmEventAttribute, Binary, ContractResult, Event as CosmwasmEvent,
-		IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcEndpoint,
-		IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeout,
-	},
 	executor::{
 		cosmwasm_call_serialize,
 		ibc::{
@@ -100,16 +101,16 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or(false)
 	}
 
-	pub(crate) fn do_ibc_transfer(
+	pub fn do_ibc_transfer(
 		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
 		to_address: String,
-		amount: cosmwasm_vm::cosmwasm_std::Coin,
-		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		amount: cosmwasm_std::Coin,
+		timeout: cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
-		let address: cosmwasm_vm::cosmwasm_std::Addr = vm.contract_address.clone().into();
+		let address: cosmwasm_std::Addr = vm.contract_address.clone().into();
 
 		let _port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");
@@ -141,8 +142,8 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_ibc_send_packet(
 		vm: &mut DefaultCosmwasmVM<T>,
 		channel_id: String,
-		data: cosmwasm_vm::cosmwasm_std::Binary,
-		timeout: cosmwasm_vm::cosmwasm_std::IbcTimeout,
+		data: cosmwasm_std::Binary,
+		timeout: cosmwasm_std::IbcTimeout,
 	) -> Result<(), CosmwasmVMError<T>> {
 		let port_id = PortId::from_str(&Self::do_compute_ibc_contract_port(
 			vm.contract_address.as_ref().clone(),
@@ -169,7 +170,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), CosmwasmVMError<T>> {
 		let channel_id = ChannelId::from_str(channel_id.as_ref())
 			.map_err(|_| <CosmwasmVMError<T>>::Ibc("channel name is not valid".to_string()))?;
-		let address: cosmwasm_vm::cosmwasm_std::Addr = vm.contract_address.clone().into();
+		let address: cosmwasm_std::Addr = vm.contract_address.clone().into();
 
 		let port_id = PortId::from_str(address.as_str())
 			.expect("all pallet instanced contract addresses are valid port names; qwe");
@@ -287,7 +288,7 @@ impl<T: Config> Router<T> {
 			match vm.0.data().contract_runtime {
 				ContractBackend::CosmWasm { .. } =>
 					cosmwasm_call_serialize::<I, _, M>(&mut vm, message).map_err(Into::into),
-				ContractBackend::Pallet => {
+				ContractBackend::Pallet { .. } => {
 					let msg = serde_json::to_vec(&message).map_err(|e| {
 						<CosmwasmVMError<T>>::Ibc(format!(
 							"failed to serialize IBC message {:?}",
@@ -298,7 +299,7 @@ impl<T: Config> Router<T> {
 						CosmwasmVMError::<T>::Ibc(format!("failed to execute IBC callback {:?}", x))
 					})?;
 					serde_json::from_slice(&result)
-						.map_err(|x| CosmwasmVMError::<T>::Ibc(format!("{}", x)))
+						.map_err(|x| CosmwasmVMError::<T>::Ibc(x.to_string()))
 				},
 			}
 		})
@@ -329,7 +330,7 @@ impl<T: Config> Router<T> {
 					match vm.0.data().contract_runtime {
 						ContractBackend::CosmWasm { .. } =>
 							cosmwasm_call_serialize::<I, _, M>(vm, message).map(Into::into),
-						ContractBackend::Pallet => T::PalletHook::execute(
+						ContractBackend::Pallet { .. } => T::PalletHook::execute(
 							vm,
 							I::ENTRY,
 							serde_json::to_vec(&message)
@@ -442,7 +443,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<(), IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
-		let message = ibc_to_cw_channel_open::<T>(
+		let message = ibc_to_cw_channel_open(
 			channel_id,
 			port_id,
 			counterparty,
@@ -474,7 +475,7 @@ impl<T: Config + Send + Sync> IbcModule for Router<T> {
 	) -> Result<IbcVersion, IbcError> {
 		let address = Self::port_to_address(port_id)?;
 
-		let message = ibc_open_try_to_cw_open::<T>(
+		let message = ibc_open_try_to_cw_open(
 			channel_id,
 			port_id,
 			counterparty,

@@ -1,0 +1,61 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "xc-core"
+version = "0.1.0"
+
+[dependencies]
+bech32-no_std = { workspace = true, features = ["strict"] }
+cosmwasm-schema = { workspace = true, optional = true }
+cosmwasm-std = { workspace = true, features = ["ibc3"] }
+cw-storage-plus = { workspace = true, optional = true }
+cw20 = { workspace = true, optional = true }
+derive_more.workspace = true
+hex = { workspace = true, features = ["alloc"] }
+ibc-rs-scale = { workspace = true, features = ["serde", "parity-scale-codec"] }
+num = { workspace = true }
+parity-scale-codec = { workspace = true }
+prost = { workspace = true, features = ["prost-derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+schemars = { workspace = true, optional = true }
+serde = { workspace = true, features = ["alloc"] }
+serde-json-wasm = { workspace = true, default-features = false }
+sha2 = { workspace = true }
+strum.workspace = true
+thiserror = { workspace = true }
+ibc-proto = { workspace = true, default-features = false, features = [
+  "serde",
+  "parity-scale-codec",
+] }
+serde-cw-value = { workspace = true, default-features = false }
+xcm = { workspace = true, default-features = false, optional = true }
+# forked for schema support, pr sent
+eth-primitive-types = { package = "primitive-types", git = "https://github.com/dzmitry-lahoda-forks/parity-common", features = [
+  "serde_no_std",
+], default-features = false, rev = "db97e88283f15c11a848448440705c65dd2a56ec" }
+
+[build-dependencies]
+prost-build = { workspace = true }
+
+[features]
+default = ["std"]
+xcm = ["dep:xcm"]
+cosmwasm = ["cw-storage-plus", "cw20"]
+substrate = ["xcm"]
+std = [
+  "cosmwasm-std/std",
+  "cw-storage-plus/std",
+  "dep:cosmwasm-schema",
+  "dep:schemars",
+  "ibc-proto/std",
+  "ibc-rs-scale/schema",
+  "ibc-rs-scale/std",
+  "serde-cw-value/schema",
+  "serde-cw-value/std",
+  "serde-json-wasm/std",
+  "cw20/std",
+  "num/std",
+  "eth-primitive-types/std",
+  "eth-primitive-types/json-schema",
+]

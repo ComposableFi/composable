@@ -1,6 +1,5 @@
 use crate::*;
 
-use composable_traits::currency::{CurrencyFactory, RangeId};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},
@@ -9,11 +8,10 @@ use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::ValidateCurrencyId;
-use sp_core::H256;
+use sp_core::{ConstU32, ConstU64, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	DispatchError,
 };
 use system::EnsureRoot;
 
@@ -29,17 +27,14 @@ pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
 pub const DARWIN: AccountId = 4;
 
-pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
+pub const ACCOUNT_FREE_START: AccountId = DARWIN + 2;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
-#[allow(dead_code)]
-pub const INVALID: AssetId = 0;
 pub const ASSET_1: AssetId = 1;
 pub const ASSET_2: AssetId = 2;
 pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;
 
-// Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
 		Block = Block,
@@ -48,9 +43,8 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 1,
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 2,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 3,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
-		Assets: crate::{Pallet, Call, Storage} = 5,
+		Assets: crate = 5,
 	}
 );
 
@@ -64,36 +58,13 @@ parameter_types! {
 	pub const NativeAssetId: AssetId = 1;
 }
 
-pub struct CurrencyIdGenerator;
-
-impl CurrencyFactory for CurrencyIdGenerator {
-	type AssetId = AssetId;
-	type Balance = Balance;
-
-	fn create(_: RangeId) -> Result<Self::AssetId, sp_runtime::DispatchError> {
-		Ok(1)
-	}
-
-	fn protocol_asset_id_to_unique_asset_id(
-		_protocol_asset_id: u32,
-		_range_id: RangeId,
-	) -> Result<Self::AssetId, DispatchError> {
-		Ok(1)
-	}
-
-	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: Self::AssetId) -> u32 {
-		1
-	}
-}
-
 impl Config for Test {
+	type RuntimeHoldReason = ();
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type NativeAssetId = NativeAssetId;
-	type GenerateCurrencyId = CurrencyIdGenerator;
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
-	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type CurrencyValidator = ValidateCurrencyId;
@@ -130,12 +101,6 @@ impl orml_tokens::Config for Test {
 	type CurrencyHooks = CurrencyHooks;
 }
 
-impl governance_registry::Config for Test {
-	type AssetId = AssetId;
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
-}
-
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
@@ -168,20 +133,22 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
-}
-
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<{ MINIMUM_BALANCE }>;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type MaxLocks = ();
-	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type FreezeIdentifier = [u8; 8];
+
+	type HoldIdentifier = [u8; 8];
+
+	type MaxReserves = ();
+	type MaxLocks = ();
+	type MaxHolds = ConstU32<32>;
+	type MaxFreezes = ConstU32<32>;
 }
 
 pub const BALANCES: [(AccountId, Balance); 4] =

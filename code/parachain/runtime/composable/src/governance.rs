@@ -2,7 +2,7 @@
 
 use super::*;
 use common::governance::native::*;
-use frame_support::traits::LockIdentifier;
+use frame_support::traits::{EitherOf, LockIdentifier};
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
@@ -11,6 +11,7 @@ parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
+	pub const AlarmInterval: BlockNumber = 1;
 }
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
@@ -26,6 +27,10 @@ impl membership::Config<NativeCouncilMembership> for Runtime {
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+}
+
 impl collective::Config<NativeCouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
@@ -36,6 +41,8 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeCouncilCollective>;
+
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
@@ -51,7 +58,7 @@ impl membership::Config<NativeTechnicalMembership> for Runtime {
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
-impl collective::Config<NativeTechnicalMembership> for Runtime {
+impl collective::Config<NativeTechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
@@ -61,10 +68,116 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+pub type GovInstance = balances::Instance2;
+impl balances::Config<GovInstance> for Runtime {
+	type MaxLocks = ConstU32<50>;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	/// The type for recording an account's balance.
+	type Balance = Balance;
+	/// The ubiquitous event type.
+	type RuntimeEvent = RuntimeEvent;
+	type DustRemoval = ();
+	type ExistentialDeposit = ConstU128<1>;
+	type AccountStore = StorageMapShim<
+		balances::Account<Runtime, GovInstance>,
+		AccountId,
+		balances::AccountData<Balance>,
+	>;
+	type WeightInfo = weights::balances::SubstrateWeight<Runtime>;
+	type HoldIdentifier = TemporalHoldIdentifier;
+
+	type FreezeIdentifier = BalanceIdentifier;
+
+	type MaxHolds = ConstU32<32>;
+
+	type MaxFreezes = ConstU32<32>;
+}
+
+pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
+impl pallet_referenda::Config for Runtime {
+	type RuntimeCall = RuntimeCall;
+
+	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
+
+	type Scheduler = Scheduler;
+
+	type Currency = Balances;
+
+	type SubmitOrigin = frame_support::traits::EitherOf<
+		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
+		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
+	>;
+
+	#[cfg(not(feature = "fastnet"))]
+	type CancelOrigin = EnsureRootOrOneThirdNativeTechnical;
+	#[cfg(feature = "fastnet")]
+	type CancelOrigin = EnsureRootOrOneSixthNativeTechnical;
+
+	#[cfg(not(feature = "fastnet"))]
+	type KillOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
+	#[cfg(feature = "fastnet")]
+	type KillOrigin = EnsureRootOrOneSixthNativeCouncil;
+
+	type Slash = ();
+
+	type Votes = pallet_conviction_voting::VotesOf<Runtime>;
+
+	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
+
+	type SubmissionDeposit = ConstU128<0>;
+
+	type MaxQueued = ConstU32<16>;
+
+	type UndecidingTimeout = ConstU32<{ 3 * DAYS }>;
+
+	type AlarmInterval = AlarmInterval;
+
+	type Tracks = TracksInfo;
+
+	type Preimages = Preimage;
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
+	pub const VoteLockingPeriod: BlockNumber = 0;
+}
+
+impl pallet_conviction_voting::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_conviction_voting::weights::SubstrateWeight<Self>;
+	type Currency = OpenGovBalances;
+
+	type Polls = Referenda;
+
+	type MaxTurnout = frame_support::traits::TotalIssuanceOf<OpenGovBalances, Self::AccountId>;
+
+	type MaxVotes = ConstU32<20>;
+
+	type VoteLockingPeriod = VoteLockingPeriod;
+}
+
+impl pallet_custom_origins::Config for Runtime {}
+
+pub use pallet_custom_origins::WhitelistedCaller;
+
+impl pallet_whitelist::Config for Runtime {
+	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Self>;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	#[cfg(not(feature = "fastnet"))]
+	type WhitelistOrigin = EnsureRootOrOneThirdNativeCouncilOrTechnical;
+	#[cfg(feature = "fastnet")]
+	type WhitelistOrigin = EnsureRootOrOneSixthNativeCouncilOrTechnical;
+	type DispatchWhitelistedOrigin = EitherOf<EnsureRoot<Self::AccountId>, WhitelistedCaller>;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
@@ -80,7 +193,7 @@ impl democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
+	type LaunchPeriod = ConstU32<{ 5 * DAYS }>;
 	type VotingPeriod = VotingPeriod;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
@@ -160,13 +273,8 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
-impl governance_registry::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
-}
-
 impl sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }

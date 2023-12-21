@@ -7,6 +7,7 @@ pub mod native {
 	pub type NativeTechnicalCollective = collective::Instance2;
 	/// Quality assurance and pre-release testing.
 	pub type ReleaseCollective = collective::Instance3;
+	pub type RelayerCollective = collective::Instance4;
 	pub type NativeTreasury = treasury::Instance1;
 
 	/// Origin for either root or half of PICA council
@@ -71,4 +72,32 @@ pub mod native {
 			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 2, 3>,
 		>,
 	>;
+
+	pub type EnsureRootOrOneSixthNativeTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 6>,
+	>;
+	pub type EnsureRootOrOneSixthNativeCouncil = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 6>,
+	>;
+
+	pub type EnsureRootOrOneThirdNativeCouncilOrTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		EitherOfDiverse<
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 3>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 3>,
+		>,
+	>;
+
+	pub type EnsureRootOrOneSixthNativeCouncilOrTechnical = EitherOfDiverse<
+		EnsureRoot<AccountId>,
+		EitherOfDiverse<
+			collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 6>,
+			collective::EnsureProportionAtLeast<AccountId, NativeCouncilCollective, 1, 6>,
+		>,
+	>;
+
+	pub type GeneralAdminOrRoot =
+		EitherOfDiverse<EnsureRoot<AccountId>, pallet_custom_origins::GeneralAdmin>;
 }

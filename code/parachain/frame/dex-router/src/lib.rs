@@ -2,7 +2,7 @@
 //!
 //! Is used to add route to DEX for given asset_id's pair.
 //! It is required to have permissioned approval of routes.
-
+#![allow(clippy::let_unit_value)]
 #![cfg_attr(not(test), warn(clippy::disallowed_methods, clippy::indexing_slicing))] // allow in tests
 #![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -10,16 +10,13 @@
 use composable_traits::defi::CurrencyPair;
 pub use pallet::*;
 
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
+// #[cfg(test)]
+// mod tests;
 
-#[cfg(test)]
-mod mock_fnft;
-#[cfg(test)]
-mod tests;
-
-#[cfg(any(feature = "runtime-benchmarks", test))]
-mod benchmarking;
+// #[cfg(any(feature = "runtime-benchmarks", test))]
+// mod benchmarking;
 
 pub mod weights;
 

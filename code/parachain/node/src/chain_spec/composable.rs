@@ -40,6 +40,7 @@ pub fn genesis_config(
 			]
 			.concat(),
 		},
+		open_gov_balances: Default::default(),
 		aura: Default::default(),
 		sudo: composable_runtime::SudoConfig { key: Some(root.clone()) },
 		indices: composable_runtime::IndicesConfig { indices: vec![] },
@@ -82,7 +83,7 @@ pub fn genesis_config(
 		transaction_payment: Default::default(),
 		ibc: composable_runtime::IbcConfig {
 			assets: vec![pallet_ibc::pallet::AssetConfig {
-				id: primitives::currency::CurrencyId::LAYR,
+				id: primitives::currency::CurrencyId::COMPOSABLE_LAYR,
 				denom: b"1".to_vec(),
 			}],
 		},
@@ -91,5 +92,6 @@ pub fn genesis_config(
 			phantom: Default::default(),
 		},
 		release_committee: Default::default(),
+		pallet_liquid_staking: Default::default(),
 	}
 }

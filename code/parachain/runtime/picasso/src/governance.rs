@@ -2,15 +2,18 @@
 
 use super::*;
 use common::governance::native::*;
-use frame_support::traits::LockIdentifier;
+use frame_support::traits::EitherOf;
 
 pub type NativeCouncilMembership = membership::Instance1;
 pub type NativeTechnicalMembership = membership::Instance2;
+pub type NativeRelayerMembership = membership::Instance4;
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
+	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+	pub const AlarmInterval: BlockNumber = 1;
 }
 
 impl membership::Config<NativeCouncilMembership> for Runtime {
@@ -36,22 +39,23 @@ impl collective::Config<NativeCouncilCollective> for Runtime {
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 	type SetMembersOrigin = EnsureRootOrTwoThirdNativeCouncil;
+	type MaxProposalWeight = MaxProposalWeight;
 }
 
 impl membership::Config<NativeTechnicalMembership> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type AddOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
-	type RemoveOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
-	type SwapOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
-	type ResetOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
-	type PrimeOrigin = EnsureRootOrTwoThirdNativeCouncilOrTechnical;
+	type AddOrigin = EnsureRootOrTwoThirdNativeTechnical;
+	type RemoveOrigin = EnsureRootOrTwoThirdNativeTechnical;
+	type SwapOrigin = EnsureRootOrTwoThirdNativeTechnical;
+	type ResetOrigin = EnsureRootOrTwoThirdNativeTechnical;
+	type PrimeOrigin = EnsureRootOrTwoThirdNativeTechnical;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = CouncilMaxMembers;
 	type WeightInfo = weights::membership::WeightInfo<Runtime>;
 }
 
-impl collective::Config<NativeTechnicalMembership> for Runtime {
+impl collective::Config<NativeTechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
@@ -60,84 +64,105 @@ impl collective::Config<NativeTechnicalMembership> for Runtime {
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = collective::PrimeDefaultVote;
 	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-	type SetMembersOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
+	type SetMembersOrigin = EnsureRootOrTwoThirdNativeTechnical;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+impl membership::Config<NativeRelayerMembership> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type RemoveOrigin = EnsureRoot<AccountId>;
+	type SwapOrigin = EnsureRoot<AccountId>;
+	type ResetOrigin = EnsureRoot<AccountId>;
+	type PrimeOrigin = EnsureRoot<AccountId>;
+	type MembershipInitialized = RelayerCommittee;
+	type MembershipChanged = RelayerCommittee;
+	type MaxMembers = CouncilMaxMembers;
+	type WeightInfo = weights::membership::WeightInfo<Runtime>;
+}
+
+impl collective::Config<RelayerCollective> for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = collective::PrimeDefaultVote;
+	type WeightInfo = weights::collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
+impl pallet_referenda::Config for Runtime {
+	type RuntimeCall = RuntimeCall;
+
+	type RuntimeEvent = RuntimeEvent;
+
+	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
+
+	type Scheduler = Scheduler;
+
+	type Currency = Balances;
+
+	// everyone can submit
+	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
+	type CancelOrigin = EitherOf<EnsureRoot<Self::AccountId>, ReferendumCanceller>;
+	type KillOrigin = EitherOf<EnsureRoot<Self::AccountId>, ReferendumKiller>;
+
+	type Slash = Treasury;
+
+	type Votes = pallet_conviction_voting::VotesOf<Runtime>;
+
+	type Tally = pallet_conviction_voting::TallyOf<Runtime>;
+
+	type SubmissionDeposit = ConstU128<20_000_000_000_000_000>;
+
+	type MaxQueued = ConstU32<100>;
+
+	type UndecidingTimeout = ConstU32<{ 3 * DAYS }>;
+
+	type AlarmInterval = AlarmInterval;
+
+	type Tracks = TracksInfo;
+
+	type Preimages = Preimage;
 }
 
 parameter_types! {
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	// cspell:disable-next
-	pub const DemocracyId: LockIdentifier = *b"democrac";
-	pub RootOrigin: RuntimeOrigin = frame_system::RawOrigin::Root.into();
+	pub const VoteLockingPeriod: BlockNumber = 28 * DAYS;
 }
 
-impl democracy::Config for Runtime {
+impl pallet_conviction_voting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_conviction_voting::weights::SubstrateWeight<Self>;
 	type Currency = Balances;
 
+	type Polls = Referenda;
+
+	type MaxTurnout = frame_support::traits::TotalIssuanceOf<Balances, Self::AccountId>;
+
+	type MaxVotes = ConstU32<20>;
+
+	type VoteLockingPeriod = VoteLockingPeriod;
+}
+
+impl pallet_custom_origins::Config for Runtime {}
+
+pub use pallet_custom_origins::WhitelistedCaller;
+use pallet_custom_origins::{ReferendumCanceller, ReferendumKiller};
+
+impl pallet_whitelist::Config for Runtime {
+	type WeightInfo = pallet_whitelist::weights::SubstrateWeight<Self>;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	#[cfg(not(feature = "fastnet"))]
-	type LaunchPeriod = ConstU32<DAYS>;
-	#[cfg(not(feature = "fastnet"))]
-	type VotingPeriod = ConstU32<{ 3 * DAYS }>; // weekend + holiday
-	#[cfg(not(feature = "fastnet"))]
-	type EnactmentPeriod = ConstU32<DAYS>;
-	#[cfg(not(feature = "fastnet"))]
-	type VoteLockingPeriod = ConstU32<DAYS>;
-
+	type WhitelistOrigin = EnsureRootOrOneThirdNativeCouncilOrTechnical;
 	#[cfg(feature = "fastnet")]
-	type LaunchPeriod = ConstU32<{ 1 * HOURS }>;
-	#[cfg(feature = "fastnet")]
-	type VotingPeriod = ConstU32<{ 3 * HOURS }>;
-	#[cfg(feature = "fastnet")]
-	type EnactmentPeriod = ConstU32<{ 1 * HOURS }>;
-	#[cfg(feature = "fastnet")]
-	type VoteLockingPeriod = ConstU32<{ 1 * HOURS }>;
-
-	type MinimumDeposit = ConstU128<5_000_000_000_000_000>;
-	type ExternalOrigin = EnsureRootOrTwoThirdNativeCouncil;
-
-	type ExternalMajorityOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
-
-	type ExternalDefaultOrigin = EnsureRootOrTwoThirdNativeCouncil;
-
-	type FastTrackOrigin = EnsureRootOrHalfNativeTechnical;
-	type InstantOrigin = EnsureRootOrHalfNativeTechnical;
-	type InstantAllowed = InstantAllowed;
-
-	#[cfg(not(feature = "fastnet"))]
-	type FastTrackVotingPeriod = ConstU32<{ 3 * HOURS }>;
-
-	#[cfg(feature = "fastnet")]
-	type FastTrackVotingPeriod = ConstU32<{ 5 * common::MINUTES }>;
-
-	type CancellationOrigin = EnsureRootOrTwoThirds<NativeTechnicalCollective>;
-
-	type BlacklistOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type CancelProposalOrigin = EnsureRootOrTwoThirdNativeCouncil;
-	type VetoOrigin = EnsureNativeTechnicalMember;
-	type Slash = Treasury;
-
-	type CooloffPeriod = ConstU32<{ 7 * DAYS }>;
-	type MaxProposals = ConstU32<50>;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
-
+	type WhitelistOrigin = EnsureRootOrOneSixthNativeCouncilOrTechnical;
+	type DispatchWhitelistedOrigin = EitherOf<EnsureRoot<Self::AccountId>, WhitelistedCaller>;
 	type Preimages = Preimage;
-	type MaxDeposits = ConstU32<100>;
-	type MaxBlacklisted = ConstU32<100>;
-
-	type Scheduler = Scheduler;
-	type WeightInfo = democracy::weights::SubstrateWeight<Runtime>;
-
-	#[cfg(feature = "runtime-benchmarks")]
-	type SubmitOrigin = system::EnsureSigned<Self::AccountId>;
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type SubmitOrigin = frame_support::traits::EitherOf<
-		system::EnsureSignedBy<TechnicalCommitteeMembership, Self::AccountId>,
-		system::EnsureSignedBy<CouncilMembership, Self::AccountId>,
-	>;
 }
 
 parameter_types! {
@@ -160,7 +185,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
 	#[cfg(feature = "fastnet")]
-	type SpendPeriod = ConstU32<{ 1 * HOURS }>;
+	type SpendPeriod = ConstU32<{ HOURS }>;
 	#[cfg(not(feature = "fastnet"))]
 	type SpendPeriod = ConstU32<{ 3 * DAYS }>;
 	type Burn = Burn;
@@ -171,23 +196,18 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 
 	#[cfg(feature = "testnet")]
-	type ApproveOrigin = EnsureRootOrOneThirdNativeCouncil;
+	type ApproveOrigin = EnsureRootOrOneSixthNativeCouncil;
 	#[cfg(feature = "testnet")]
-	type RejectOrigin = EnsureRootOrOneThirdNativeCouncil;
+	type RejectOrigin = EnsureRootOrOneSixthNativeCouncil;
 
 	#[cfg(not(feature = "testnet"))]
 	type ApproveOrigin = EnsureRootOrTwoThirdNativeCouncil;
 	#[cfg(not(feature = "testnet"))]
-	type RejectOrigin = EnsureRootOrTwoThirdNativeCouncil;
-}
-
-impl governance_registry::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
+	type RejectOrigin = EnsureRootOrMoreThenHalfNativeCouncil;
 }
 
 impl sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }

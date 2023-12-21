@@ -3,74 +3,45 @@ Design Proposal: Pablo Formalization and Restructure
 
 Table of Contents
 
--   [1. Abstract](#1-abstract)
--   [2. Background](#2-background)
--   [3. Requirements](#3-requirements)
--   [4. Method](#4-method)
-    -   [4.1. Fee Math Updates](#41-fee-math-updates)
-    -   [4.2. Liquidity Provider Token (LPT) Math
-        Updates](#42-liquidity-provider-token-lpt-math-updates)
-    -   [4.3. Validation: Pool Asset (Pair) Validation Must be at the
-        Top Level of `Amm` trait
-        Implementation](#43-validation-pool-asset-pair-validation-must-be-at-the-top-level-of-amm-trait-implementation)
-    -   [4.4. Validation: the Asset Ratio When Adding
-        Liquidity](#44-validation-the-asset-ratio-when-adding-liquidity)
-    -   [4.5. Refactoring: `CurrencyPair`
-        Usage](#45-refactoring-currencypair-usage)
-    -   [4.6. Unit Test Updates](#46-unit-test-updates)
-    -   [4.7. Algorithm:
-        `constant_product::compute_out_given_in`](#47-algorithm-constant_productcompute_out_given_in)
-    -   [4.8. Algorithm:
-        `constant_product::compute_in_given_out`](#48-algorithm-constant_productcompute_in_given_out)
-    -   [4.9. Algorithm:
-        `constant_product::compute_deposit_lp`](#49-algorithm-constant_productcompute_deposit_lp)
-    -   [4.10. Algorithm:
-        `constant_product::compute_redeemed_for_lp`](#410-algorithm-constant_productcompute_redeemed_for_lp)
-    -   [4.11. Algorithm: `Amm::currency_pair` →
-        `Amm::assets`](#411-algorithm-ammcurrency_pair--ammassets)
-    -   [4.12. Algorithm:
-        `Amm::get_exchange_value`](#412-algorithm-ammget_exchange_value)
-    -   [4.13. Algorithm: `Amm::exchange` →
-        `Amm::swap`](#413-algorithm-ammexchange--ammswap)
-    -   [4.14. Algorithm: `Amm::sell`](#414-algorithm-ammsell)
-    -   [4.15. Algorithm: `Amm::buy`](#415-algorithm-ammbuy)
-    -   [4.16. Algorithm:
-        `Amm::add_liquidity`](#416-algorithm-ammadd_liquidity)
-    -   [4.17. Algorithm:
-        `Amm::remove_liquidity`](#417-algorithm-ammremove_liquidity)
-    -   [4.18. Fail Safes](#418-fail-safes)
-        -   [4.18.1. At the protocol level, where the entire Pablo
-            protocol in multiple pallets is
-            affected.](#4181-at-the-protocol-level-where-the-entire-pablo-protocol-in-multiple-pallets-is-affected)
-        -   [4.18.2. At the pallet level, where a particular Pablo
-            pallet is
-            affected.](#4182-at-the-pallet-level-where-a-particular-pablo-pallet-is-affected)
-        -   [4.18.3. At the pool type level where all pools of a
-            particular pool type like LBP is
-            affected.](#4183-at-the-pool-type-level-where-all-pools-of-a-particular-pool-type-like-lbp-is-affected)
-        -   [4.18.4. At the individual pool level where a single pool is
-            affected](#4184-at-the-individual-pool-level-where-a-single-pool-is-affected)
-        -   [4.18.5. At the functionality level where a particular
-            functionality for example like "removing liquidity" is
-            affected.](#4185-at-the-functionality-level-where-a-particular-functionality-for-example-like-removing-liquidity-is-affected)
--   [5. Implementation](#5-implementation)
-    -   [5.1. Stage 1: Cutting Down on Non-useful Parts for
-        Launch](#51-stage-1-cutting-down-on-non-useful-parts-for-launch)
-    -   [5.2. Stage 2: Consistently Implement the Balancer Based CPP
-        Equations](#52-stage-2-consistently-implement-the-balancer-based-cpp-equations)
-    -   [5.3. Stage 3: Change/Implement Algorithms for
-        CPP](#53-stage-3-changeimplement-algorithms-for-cpp)
--   [6. Quality Assurance](#6-quality-assurance)
--   [7. Audit](#7-audit)
--   [8. Questions](#8-questions)
--   [Appendix A: Proof of Fee for
-    "In-given-out"](#appendix-a-proof-of-fee-for-in-given-out)
--   [Appendix B: Proof of Proportional LPT Calculation for Liquidity
-    Added in a Single Pool
-    Asset](#appendix-b-proof-of-proportional-lpt-calculation-for-liquidity-added-in-a-single-pool-asset)
--   [Appendix C: Proof of Proportional LPT Calculation for Liquidity
-    Added in Pool Weight
-    Ratio](#appendix-c-proof-of-proportional-lpt-calculation-for-liquidity-added-in-pool-weight-ratio)
+- [Design Proposal: Pablo Formalization and Restructure](#design-proposal-pablo-formalization-and-restructure)
+  - [1. Abstract](#1-abstract)
+  - [2. Background](#2-background)
+  - [3. Requirements](#3-requirements)
+  - [4. Method](#4-method)
+    - [4.1. Fee Math Updates](#41-fee-math-updates)
+    - [4.2. Liquidity Provider Token (LPT) Math Updates](#42-liquidity-provider-token-lpt-math-updates)
+    - [4.3. Validation: Pool Asset (Pair) Validation Must be at the Top Level of `Amm` trait Implementation](#43-validation-pool-asset-pair-validation-must-be-at-the-top-level-of-amm-trait-implementation)
+    - [4.4. Validation: the Asset Ratio When Adding Liquidity](#44-validation-the-asset-ratio-when-adding-liquidity)
+    - [4.5. Refactoring: `CurrencyPair` Usage](#45-refactoring-currencypair-usage)
+    - [4.6. Unit Test Updates](#46-unit-test-updates)
+    - [4.7. Algorithm: `constant_product::compute_out_given_in`](#47-algorithm-constant_productcompute_out_given_in)
+    - [4.8. Algorithm: `constant_product::compute_in_given_out`](#48-algorithm-constant_productcompute_in_given_out)
+    - [4.9. Algorithm: `constant_product::compute_deposit_lp`](#49-algorithm-constant_productcompute_deposit_lp)
+    - [4.10. Algorithm: `constant_product::compute_redeemed_for_lp`](#410-algorithm-constant_productcompute_redeemed_for_lp)
+    - [4.11. Algorithm: `Amm::currency_pair` → `Amm::assets`](#411-algorithm-ammcurrency_pair--ammassets)
+    - [4.12. Algorithm: `Amm::get_exchange_value`](#412-algorithm-ammget_exchange_value)
+    - [4.13. Algorithm: `Amm::exchange` → `Amm::swap`](#413-algorithm-ammexchange--ammswap)
+    - [4.14. Algorithm: `Amm::sell`](#414-algorithm-ammsell)
+    - [4.15. Algorithm: `Amm::buy`](#415-algorithm-ammbuy)
+    - [4.16. Algorithm: `Amm::add_liquidity`](#416-algorithm-ammadd_liquidity)
+    - [4.17. Algorithm: `Amm::remove_liquidity`](#417-algorithm-ammremove_liquidity)
+    - [4.18. Fail Safes](#418-fail-safes)
+      - [4.18.1. At the protocol level, where the entire Pablo protocol in multiple pallets is affected.](#4181-at-the-protocol-level-where-the-entire-pablo-protocol-in-multiple-pallets-is-affected)
+      - [4.18.2. At the pallet level, where a particular Pablo pallet is affected.](#4182-at-the-pallet-level-where-a-particular-pablo-pallet-is-affected)
+      - [4.18.3. At the pool type level where all pools of a particular pool type like LBP is affected.](#4183-at-the-pool-type-level-where-all-pools-of-a-particular-pool-type-like-lbp-is-affected)
+      - [4.18.4. At the individual pool level where a single pool is affected](#4184-at-the-individual-pool-level-where-a-single-pool-is-affected)
+      - [4.18.5. At the functionality level where a particular functionality for example like "removing liquidity" is affected.](#4185-at-the-functionality-level-where-a-particular-functionality-for-example-like-removing-liquidity-is-affected)
+  - [5. Implementation](#5-implementation)
+    - [5.1. Stage 1: Cutting Down on Non-useful Parts for Launch](#51-stage-1-cutting-down-on-non-useful-parts-for-launch)
+    - [5.2. Stage 2: Consistently Implement the Balancer Based CPP Equations](#52-stage-2-consistently-implement-the-balancer-based-cpp-equations)
+    - [5.3. Stage 3: Change/Implement Algorithms for CPP](#53-stage-3-changeimplement-algorithms-for-cpp)
+    - [5.4 Stage 4: Front-end Changes](#54-stage-4-front-end-changes)
+  - [6. Quality Assurance](#6-quality-assurance)
+  - [7. Audit](#7-audit)
+  - [8. Questions](#8-questions)
+  - [Appendix A: Proof of Fee for "In-given-out"](#appendix-a-proof-of-fee-for-in-given-out)
+  - [Appendix B: Proof of Proportional LPT Calculation for Liquidity Added in a Single Pool Asset](#appendix-b-proof-of-proportional-lpt-calculation-for-liquidity-added-in-a-single-pool-asset)
+  - [Appendix C: Proof of Proportional LPT Calculation for Liquidity Added in Pool Weight Ratio](#appendix-c-proof-of-proportional-lpt-calculation-for-liquidity-added-in-pool-weight-ratio)
 
 ## 1. Abstract
 
@@ -438,19 +409,6 @@ less specific.
     }
 
 ### 4.11. Algorithm: `Amm::currency_pair` → `Amm::assets`
-
-This is a renaming plus a reorganization of this logic to better match
-the `CurrencyPair` refactoring.Because of the [Refactoring:
-`CurrencyPair` Usage](#_refactoring_currencypair_usage), this function
-should just return the list of assets in the pool.
-
-    pub trait Amm {
-        // ....
-
-        fn assets(pool_id: Self::PoolId) -> Result<Vec<AssetId>, DispatchError>;
-
-        // ....
-    }
 
 <img src="0008-pablo-lbp-cpp/images/images/pablo-amm-currencies.png" width="289" height="211" alt="pablo amm currencies" />
 

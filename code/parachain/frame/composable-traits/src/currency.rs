@@ -191,6 +191,9 @@ pub struct Rational64 {
 	pub d: u64,
 }
 
+#[cfg(version("1.72"))]
+impl core::marker::ConstParamTy for Rational64 {}
+
 pub trait RationalLike<const N: u64, const D: u64> {
 	fn new() -> Self;
 	const CHECK: () = if D == 0 {
@@ -244,7 +247,7 @@ impl<const N: u64, const D: u64> RationalLike<N, D> for Rational64 {
 }
 
 impl Rational64 {
-	pub const fn from(n: u64, d: u64) -> Self {
+	pub fn from(n: u64, d: u64) -> Self {
 		Self::from_unchecked(n, d.max(1))
 	}
 
@@ -252,11 +255,11 @@ impl Rational64 {
 		Self { n, d }
 	}
 
-	pub const fn one() -> Self {
+	pub fn one() -> Self {
 		Rational64::from(1, 1)
 	}
 
-	pub const fn zero() -> Self {
+	pub fn zero() -> Self {
 		Rational64::from(0, 1)
 	}
 
@@ -269,13 +272,13 @@ impl Rational64 {
 	}
 }
 
-impl const From<Rational64> for FixedU128 {
+impl From<Rational64> for FixedU128 {
 	fn from(this: Rational64) -> Self {
 		Self::from_rational(this.n.into(), this.d.into())
 	}
 }
 
-impl const From<(u64, u64)> for Rational64 {
+impl From<(u64, u64)> for Rational64 {
 	fn from(this: (u64, u64)) -> Self {
 		{
 			let n = this.0;
@@ -285,7 +288,7 @@ impl const From<(u64, u64)> for Rational64 {
 	}
 }
 
-impl const From<Rational64> for FixedU64 {
+impl From<Rational64> for FixedU64 {
 	fn from(this: Rational64) -> Self {
 		Self::from_rational(this.n.into(), this.d.into())
 	}

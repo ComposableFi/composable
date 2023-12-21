@@ -1,47 +1,103 @@
 ---
+title: Composable Documentation
+hide_table_of_contents: true
 slug: /
 ---
 
+<div class="container">
+  <div class="row">
+    <div class="col col--4">
+      <a href="/networks/picasso-parachain-overview">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212572/Networks_g8sles.png" alt="Networks" alt="Networks"/>
+          </div>
+          <div class="card__body">
+            <h3>Networks</h3>
+            Explore the Composable networks on Kusama, Polkadot and Cosmos.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/technology/ibc">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Architecture_jyrrsj.png" alt="Networks" alt="Architecture" />
+          </div>
+          <div class="card__body">
+            <h3>Architecture</h3>
+              Read about the extension of the IBC protocol beyond Cosmos and the Composable Virtual Machine (CVM).
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/develop/build-on-composable">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212546/Develop_nvdomh.png" alt="Networks" alt="Develop" />
+          </div>
+          <div class="card__body">
+            <h3>Develop</h3>
+              Develop with Picasso, its testnet, Composable Cosmos and instructions to setup an oracle, collator and validator.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/ecosystem/composable-ecosystem">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Ecosystem_emvgmt.png" alt="Networks" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>Ecosystem</h3>
+             Learn about the Composable ecosystem, Team, Press Kit and Bug Bounties.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
+      <a href="/user-guides">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212583/User_guides_mpt7el.png" alt="Networks" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>User Guides</h3>
+              Navigate Composable's technology and infrastructure via User Guides.
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 
-# Introduction
+
+
 
 *Composable Finance: Composing DeFi for mass adoption*
-
 
 ![composable_finance](./composable-face-banner.png)
 *any money, any chain, anywhere*
 
+:::note
+The documentation for Composable is presently undergoing development, consequently it may result in an usual display.
+:::
 ## The Vision
 
 In an ideal cross-chain world, developers and users interact unhindered across ecosystems and protocols, regardless of 
-where their assets reside. For this reason, our team at [Composable Finance](https://www.composable.finance/) 
+where their assets reside. For this reason, [Composable Finance](https://www.composable.finance/) 
 is on a mission to pioneer innovative Web3 user experiences in a trustless, non-custodial, and decentralized manner. 
 Our efforts will not only enable new and valuable opportunities, but will also facilitate easy onboarding of traditional
 finance stakeholders into DeFi.
 
 ## The Problem
 
-While centralized solutions continue to pose setbacks in the space, decentralized finance (DeFi) continues to gain 
-traction. It's still a good time to be in DeFi, with many top protocols experiencing an influx of users and high total 
-value locked (TVL), as well as a promising amount of stablecoins in circulation.
+Amidst the growth of decentralized finance (DeFi), the industry faces challenges stemming from centralization, while gaining momentum. However, this expansion has led to increased fragmentation, with projects emerging on Layer 2 (L2) or Layer 1 (L1) networks instead of or in addition to the original Ethereum mainnet.
 
-While DeFi continues to expand and scale, **fragmentation of the industry and its market is worsening**. 
-Projects continue to launch on layer 2 (L2) or layer 1 (L1) networks instead of or in addition to the original Ethereum mainnet. 
-DeFi has thus expanded and is therefore characterized by several ecosystems beyond Ethereum, each with its own unique benefits, that often exist in silos.
-
-A lack of interoperability solutions exists between these ecosystems creating barriers to value transfer across layers and chains. 
-While it has become easier to move assets between ecosystems, it has wrongfully been accomplished via 
-**centralized, custodial, and trusted methods of asset transfer, which are vulnerable to hacks.** 
-Additionally, managing cross-chain assets is still a challenge as several applications are segregated inside the various ecosystems. 
-This infrastructure should be improved so that all DeFi participants can build and use applications that are cost-effective and performant.
-
-Resultantly, in the race for market share and users, two key functionalities are becoming the most important components 
-for remaining competitive in the quickly evolving landscape: Capital efficiency and trustless interoperability. 
-Both developers and users will seek methods to interface with different ecosystems in a scalable, provable, secure, and decentralized manner. 
-
-It is clear that we are approaching a world in which the future of DeFi will be fully blockchain-agnostic. 
-In other words, the solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. 
-Instead, it is the unification of all ecosystems via a natively cross-chain infrastructure.
+Despite the construction of blockchain bridges enabling asset movement, secure interoperability remains lacking, causing barriers to value transfer between ecosystems in a decentralized manner. Current solutions are centralized and susceptible to vulnerabilities that have led to over $2 billion dollars in exploits. Moreover, managing cross-chain assets proves challenging due to ecosystem segregation and a lack of cross-chain user friendly experiences. 
 
 ## Limitations in Current Approaches
 Current approaches to solving these problems are limited by at least one of the below:
@@ -49,64 +105,24 @@ Current approaches to solving these problems are limited by at least one of the 
 - They are focused on creating an entirely new security model, based on a segregated chain
 - They are creating new messaging protocols instead of leveraging existing messaging protocols
 - They depend on oracles for finality
-- They do not provide a framework for users to navigate these different ecosystems
 - They do not focus on the cross-ecosystem user experience (UX)
 - They take centralized, trusted, or custodial approaches
 
 ## The Composable Solution
 
-Composable Finance’s full technical stack 
-has been designed to usher in an era of cross-ecosystem interoperability 
-without abandoning the trustless, decentralized, permissionless, and non-custodial aspects of web3. 
-Subsequently, this allows for the unification of functionality across all connected blockchain ecosystems.
+Composable's technical stack establishes seamless and secure cross-ecosystem interoperability while upholding web3's core principles. Users' intentions trigger automated cross-chain transactions, streamlining processes. The solution to the current fragmentation in DeFi is not more of the same bridges being built between one chain to another. Instead, it is the unification of all ecosystems powered by a generalized framework for cross-chain infrastructure - the [Inter-blockchain Communication Protocol](https://ibcprotocol.org/). 
 
-Specifically, we are building infrastructure that allows developers to deploy applications natively capable of 
-cross-chain functions. This infrastructure also allows users to access previously disparate ecosystems simultaneously, 
-autonomously interoperating across layers and chains, all through the same fabric and entry point: the Composable ecosystem.
-
-The result is that DeFi users will be able to have their actions reduced to parameters that determine a cascade of 
-automated cross-chain transactions to achieve their objectives instead of requiring users to navigate each step in 
-the process themselves:
-
-![routing](./xcvm-routing.png)
-
-Our interoperable infrastructure forms the foundation for DeFi's mass adoption. 
-Additionally it enables modular functionality for any application. The basis of modular functionality is that a program, 
-or in this case a decentralized application, can be separated into interchangeable modules capable of functioning independently. 
-This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: 
-users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for
-a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi.
-
-We are accomplishing these goals through a multifaceted technical stack
-where we begin by bridging gaps between today’s isolated blockchains and layer 2 scaling solutions in order to create a 
-single and unified access point that is the 
-[Composable Cross-Chain VM (XCVM)](https://medium.com/composable-finance/composable-finance-emerging-as-the-first-cross-chain-smart-contracting-l1-4e837b8bd57e) 
-— that serves to orchestrate and compute smart contract functions across the array of EVM, Polkadot and IBC ecosystems autonomously, 
-with the purpose of optimizing for best execution and mitigating all user experience constraints for developers and end-users.
-
-Composable Labs is devoted to pushing new protocols that harness the composable tech stack, while Composable Research is 
-on a quest to solidify new interoperability and development standards across Web3 and DeFi. 
-One of our key objectives overall is to develop and deploy a novel set of financial primitives and for developers to 
-utilize the suite of new tools and technologies we are building. All our efforts are serving to highlight 
-the technical and UX benefits Composable offers to applications built atop our ecosystem.
+Composable's interoperable infrastructure forms the foundation for DeFi's mass adoption, offering user-centric services like optimal lending rates and efficient swaps. The [Composable VM](./technology/cvm.md) unifies monolithic chains, optimizing smart contract execution for developers and users.
 
 ## Get Involved
 
-We’ve been working on enhancing our ecosystem and vision while ensuring that we are leading the way in terms of 
-innovation and accessibility for cross-chain DeFi. Through our collective vision and our suite of bespoke offerings, 
-we aim to embed collaboration in a space where competition has predominated. Returning back to the core values of 
-decentralism, we are passionate about collaborating with other projects and supporters who share our vision.
-The future we are building needs everyone to play a part, and we encourage you to reach out to our team for informal or
-formal enquiries to see how we can work together to build tomorrow, today.
-
-
+We're focused on pioneering innovation and accessibility for cross-chain DeFi, emphasizing collaboration over competition through our collective vision and bespoke offerings. Embracing decentralization, we seek partnerships with like-minded projects and supporters, inviting everyone to contribute to building the future. Feel free to connect with our team for inquiries on working together.
 
 **Join the Composable community:**
 
 [Composable Twitter](https://twitter.com/ComposableFin) | [Picasso Twitter](https://twitter.com/Picasso_Network) | 
-[Telegram](https://t.me/composablefinance) | [Discord](https://discord.com/invite/composable) | 
+[Telegram](https://t.me/composable_chat) | [Discord](https://discord.com/invite/composable) | 
 [Website](https://www.composable.finance/) | [GitHub](https://github.com/ComposableFi) | 
 [LinkedIn](https://www.linkedin.com/company/composable-finance/)
 
 [Composable Medium](https://composablefi.medium.com/about) | [Picasso Medium](https://medium.com/@picasso_network)
-

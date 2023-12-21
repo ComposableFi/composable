@@ -1,14 +1,23 @@
 # The Composable Team
 
-The Composable team consists of approximately 35 individuals, with 20 members dedicated to Engineering, Infrastructure, and Research, while 11 others are focused on Product, Design, Marketing, and Business Development. The remaining four individuals are assigned to Legal, Finance, and HR roles. Biographies of select core members are provided below.
+The [Composable Foundation](https://www.composablefoundation.com/) serves as the underlying organisational structure to drive forward the Picasso and Composable Protocols. The Foundation and its members will support the core protocols in ecosystem development, research and engineering efforts to continue advancing the Composable ecosystem to new heights.
 
-## 0xbrainjar | Founder & CEO
+The Composable team consists of approximately 30 individuals, with 15 members dedicated to Engineering, Infrastructure, and Research, while 11 others are focused on Product, Design, Marketing, and Business Development. The remaining four individuals are assigned to Legal, Finance, and HR roles. Biographies of select core members are provided below. 
+
+## Henry Love | Board Member and the Executive Director
+Henry Love is a seasoned Founder and Executive. Prior to joining the Composable Foundation, Henry held the position of Managing Partner and the Head of US operation for Fundamental Labs, a leading crypto-focused venture fund based in Singapore. Before joining Fundamental Labs, Henry co-founded a crypto corporate venture studio, YGC, and its spin out company Executive Council Network (ECN). He joined the crypto industry by stepping in as the Chief Investment Officer at a crypto-focused family office who pioneered the industry after leaving Facebook as a top performer in the marketing, e-commerce, & strategy division.
+
+## 0xbrainjar | Founder & Research Director
 
 Brainjar brings a deep understanding of the blockchain space and a comprehensive vision on cross-chain DeFi. He is focused on researching blockchain infrastructure and relevant trends to advise on Composable’s development as well as designing products that can best leverage the Composable tech stack.  He’s also advising Composable Labs, the incubation arm that births and supports projects using Composable’s tech stack. Brainjar writes about the R&D at Composable on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
 
-## Blas Rodriguez Irizar | Chief Technology Officer
+## Blas Rodriguez Irizar | Co-Founder & CTO
 
 Blas has 8 years of experience as a Software Engineer. He started his blockchain experience at LayerTwo, moving to Consensys where he worked on building zk-rollups. Blas has expertise in building high performance systems and working with different blockchains like Solana, Ethereum, and Bitcoin. He holds a Bachelor’s Degree in Science and a Masters Degree in Finance. In his role at Composable, Blas oversees the Research and Engineering departments with the critical responsibility of creating the technology strategy behind Composable’s products. [Twitter](https://mobile.twitter.com/blasrodri)
+
+## Miguel Santefé | Co-Founder & Head of Design
+
+Formerly identified as 0xslenderman, Miguel started his career in technology consultancy. Given his passion for aesthetics and design, he became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in creative direction. He has been in crypto since 2014 and has been designing applications since 2018. Previous to joining Composable, he led the creative strategy at various DeFi projects. Miguel has a background in IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
 
 ## Eoin Whelan | Chief Finance Officer
 
@@ -22,37 +31,32 @@ Jeffrey has specialized experience spanning the different dimensions of finance 
 
 Ahmad has 11 years of experience and spent most of his career advising institutions on strategy, operations, and organizational topics. Ahmad is focused on the operational side of Composable and holds a B.B.A. in Entrepreneurial Studies and an MBA from INSEAD. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. At Composable, Ahmad is responsible for overseeing the day-to-day operations and ensuring that business processes are efficient, effective, and aligned with the overall strategy. [Twitter](https://twitter.com/wehbix)
 
-## 0xslenderman | Head of Design
-
-0xslenderman started his career in technology consultancy. Given his passion for aesthetics and design, he became an entrepreneur founding a creative consultancy company. Since then, he obtained 7 years of experience in creative direction. He has been in crypto since 2014 and has been designing applications since 2018. Previous to joining Composable, he led the creative strategy at various DeFi projects. 0xslenderman has a background in IT Engineering and Computer Science, which enables him to turn complex and tech-heavy concepts into seamless and user-friendly experiences. [Twitter](https://twitter.com/0xslenderman)
-
-## Robert Zhuang | Head of Product Delivery
-
-Rob has more than 16 years of experience in project management and delivery. He started his career in traditional finance working at ANZ Bank and HSBC as Project Manager and Digital Transformation Lead. He then moved to digital banking at BABB leading delivery efforts. Before joining Composable, Rob gathered entrepreneurial experience founding the blockchain company Footballnet. With two bachelor degrees in Commerce and Law, Rob brings broad experience to Composable and unites product, design, and development in order to bring Composable’s vision to life. [Twitter](https://twitter.com/GosuRZ)
-
 ## Joseph DeTommasso | Head of Strategy
 
 Joe possesses extensive experience in both the crypto and traditional finance (TradFi) sectors, having contributed to the Bitcoin network as an independent node operator in 2011 and working with top hedge funds where he was focused on statistical arbitrage between international ETFs. Joe worked with leading crypto funds like FalconX and CMS Holdings, managing relationships and strategic partnerships with trading partners and liquidity providers. At Composable, Joe focuses on tokenomics, driving strategic direction and goals, and crafting plans to achieve business objectives. [Twitter](https://twitter.com/__Swurve__)
-
-## Joon Whang | Frontend Lead
-
-Joon is a seasoned Frontend software engineer with a background primarily focused in the Cosmos ecosystem. He began his blockchain career at Cosmostation, where he gained hands-on experience in Cosmos by re-writing Mintscan. Subsequently, he moved on to LayerTwo and other prominent companies such as Osmosis and Tendermint. At Composable, Joon currently serves as the Lead Frontend engineer, responsible for all user-facing products. [Twitter](https://twitter.com/cosmonaut_joon)
 
 ## Kostya Kastsevich | Parachain Lead
 
 After graduating from UC Berkeley, Kostya worked on analyzing financial data and supporting storage infrastructure for various IT companies. In 2020, he joined a blockchain startup, where he developed both the front-end and back-end of a Web 3 application. Later on, Kostya shifted his focus to Substrate and Rust. Currently, Kostya is responsible for overseeing the technical aspects and delivery of innovative solutions on Composable's parachains, Picasso and Composable.
 
+## Dzmitry Lahoda | Staff Software Engineer
+Dzmitry is a seasoned software developer with 20 years of experience, specializing in blockchain and cryptocurrency. With 95% of his assets in crypto and a net-zero trading portfolio, he is deeply committed to the crypto ecosystem. Currently, he's contributing to the Composable project, focusing on practical applications for cross-chain interoperability. For Dzmitry, code is not just a tool, but a language for shaping the future.
+
 ## Vladislav Marshukin | Bridging Lead
 
 Vlad is a skilled software engineer with experience in blockchain technology and programming languages like Rust, Java, C++, and Android development. He currently works as the Bridging Lead, focusing on developing several Centauri connections. In the past, he has delivered successful projects at companies like Soramitsu, Bitfury, and Paymon Inc. Vlad has a particular interest in functional programming, formal verification, and embedded systems, which he applies to internal projects and helps the team succeed.
 
+## Michal Nazarewicz | Senior Researcher
+Michal Nazarewicz is a skilled programmer proficient in languages like C, C++, Rust, and Python, with extensive experience in GNU/Linux systems and cloud infrastructure management. They've contributed significantly as a Senior Software Engineer at NEAR, optimized low-latency solutions at Hudson River Trading, and played key roles at Google, including Site Reliability Engineer and Software Engineer, while also making substantial contributions to the Linux kernel during their tenure at Samsung Electronics.
+
+
+## Sydney Sweck | Lead Research Associate
+Sydney has broad experience encompassing academia, writing, research, and blockchain. She has previously worked as a university lecture professor, lab specialist, and researcher in biology and the life sciences. She has also participated in the blockchain and DeFi industries for over 6 years, bringing her skills in writing, education, and research to these fields. This includes her present role as the Lead Research Associate at Composable, where she leads the organization, documentation, and dissemination of the company’s research efforts. 
+
+
 ## Jafar Azam | Developer Relations
 
 Jafar is a versatile professional with expertise in foreign exchange trading, cross-border payment and regulatory landscapes. He holds a BSc in Economics and actively explores reading in Cryptography, Psychology, and Philosophy. After a wealth of experience working for Ethereum-based protocols, Jafar now focuses on fostering productive relationships for business development and ecosystem growth at Composable.
-
-## Josie Leung | Senior Product Owner
-
-Josie boasts vast project management and business development expertise, having significantly contributed to startup growth and excelling in competitive roles at Linkedin and Crypto.com. She developed Crypto.com's core business pre-DeFi summer and later focused on retail products built on the IBC Protocol at Ignite (formerly Tendermint). At Composable, Josie drives product development by defining product features and coordinating with cross-functional teams for market delivery.
 
 ## Patrick Kondek | Marketing Lead
 
