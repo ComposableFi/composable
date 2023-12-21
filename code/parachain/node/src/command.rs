@@ -9,11 +9,15 @@ use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
 use log;
 use picasso_runtime::Block;
+use polkadot_service::PruningMode;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
+	NetworkParams, PruningParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::config::{BasePath, PrometheusConfig};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+	BlocksPruning,
+};
 use sp_runtime::traits::AccountIdConversion;
 use std::net::SocketAddr;
 
@@ -352,6 +356,18 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.shared_params()
 			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
+	}
+
+	fn pruning_params(&self) -> Option<&PruningParams> {
+		self.base.base.pruning_params()
+	}
+
+	fn state_pruning(&self) -> Result<Option<PruningMode>> {
+		self.base.base.state_pruning()
+	}
+
+	fn blocks_pruning(&self) -> Result<BlocksPruning> {
+		self.base.base.blocks_pruning()
 	}
 
 	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
