@@ -374,7 +374,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_addr(default_listen_port)
 	}
 
-
 	// fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
 	// 	self.base.base.rpc_http(default_listen_port)
 	// }
