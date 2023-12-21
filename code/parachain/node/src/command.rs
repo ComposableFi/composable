@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use crate::{chain_names, service::ComposableExecutor};
 
 use crate::{
@@ -284,6 +285,8 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
 
+			println!("Relaychain flags: {:?}", cli.relaychain_args);
+			std::thread::sleep(std::time::Duration::from_secs(10));
 			runner.run_node_until_exit(|config| async move {
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
@@ -374,6 +377,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_addr(default_listen_port)
 	}
 
+
 	// fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
 	// 	self.base.base.rpc_http(default_listen_port)
 	// }
@@ -462,5 +466,9 @@ impl CliConfiguration<Self> for RelayChainCli {
 		chain_spec: &Box<dyn ChainSpec>,
 	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
 		self.base.base.telemetry_endpoints(chain_spec)
+	}
+
+	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+		self.base.base.rpc_addr(default_listen_port)
 	}
 }
