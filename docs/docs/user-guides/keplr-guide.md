@@ -28,6 +28,10 @@ After verifying your recovery phrase, you will come across a drop down menu to a
 
 In the search bar type “Composable”, choose the Composable chain and click “Save".
 
+:::tip 
+If you don't see the Composable Cosmos chain in the dropdown, head to Keplr settings. In the general section, look for the option to manage non-native chains. Here, you can add the Composable chain.
+:::
+
 ![keplr-3](./images-keplr-guide/images-keplr-5.png)
 
 Congratulations! You have now integrated your Keplr account with Composable cosmos.

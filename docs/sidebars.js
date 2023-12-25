@@ -58,8 +58,8 @@
              "user-guides/how-to-provide-liquidity",
              "user-guides/how-to-trade-pica-on-pablo",
              "user-guides/composable-cosmos-staking",
-             "user-guides/centauri-guide",
-             "user-guides/centauri-transfers",
+             "user-guides/dot-lp-guide",
+             "user-guides/trustless-transfers",
            ],
          },
          {
