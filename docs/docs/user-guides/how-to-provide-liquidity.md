@@ -3,19 +3,6 @@
 Providing liquidity on a decentralized exchange (DEX) like Pablo can be a way to earn passive income by providing assets to liquidity pools.
 Here is a guide on how to provide liquidity on the Pablo DEX. 
 
-:::info
-
-The following pools are live on [Pablo](https://app.pablo.finance/provide-liquidity/) and currently offering LP staking rewards:
-
-- KSM/USDT
-- PICA/USDT
-- PICA/KSM
-- PICA/DOT
-- DOT/USDT
-- KSM/DOT
-
-:::
-
 The Picasso Council has proposed a fee of 0.3% for the inaugural pools. Users who provide liquidity to these pools can earn a share of the fees that the pools generate. The fees for swapping, buying or selling tokens are calculated as a percentage of the swap size and are distributed among liquidity providers based on their share of the pool.
 
 To learn how to swap tokens on Pablo, you can follow a step-by-step tutorial provided in this guide.
