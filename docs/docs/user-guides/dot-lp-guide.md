@@ -1,6 +1,8 @@
 # How to LP & stake DOT on Pablo via Trustless Zone
 
-The [IBC](../technology/composable-ibc.md) DOT-KSM connection serves as the first transfer protocol between Kusama (KSM) and Polkadot (DOT), unlocks the potential for a seamless flow of liquidity between parachains on both networks. Token transfers are a prime example of this, enabling increased liquidity across protocols on both chains. This guide outlines the steps involved in transferring DOT from Polkadot to Picasso using XCM and IBC to provide liquidity on [Pablo](../technology/pablo-overview.md).
+The [IBC](../technology/composable-ibc.md) DOT-KSM connection serves as the first transfer protocol between Kusama (KSM) and Polkadot (DOT), unlocks the potential for a seamless flow of liquidity between parachains on both networks. Token transfers are a prime example of this, enabling increased liquidity across protocols on both chains. It is important to note that IBC powers functionality beyond token transfers and unlocks composability between Polkadot and Kusama. One could possibly send XCM messages using IBC as a transport layer. This would enable XCM execution on Kusama or a Kusama parachain sent from Polkadot or a Polkadot parachain. 
+
+This guide outlines the steps involved in transferring DOT from Polkadot to Picasso using XCM and IBC to provide liquidity on [Pablo](../technology/pablo-overview.md).
 
 There are two steps required to complete the process:
 
