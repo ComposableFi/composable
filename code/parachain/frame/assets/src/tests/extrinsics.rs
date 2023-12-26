@@ -97,6 +97,68 @@ fn test_force_transfer_native() {
 }
 
 #[test]
+fn test_force_transfer_all_alive() {
+	new_test_ext().execute_with(|| {
+		Pallet::<Test>::force_transfer_all(
+			RuntimeOrigin::root(),
+			ASSET_ID,
+			FROM_ACCOUNT,
+			TO_ACCOUNT,
+			true,
+		)
+		.expect("force_transfer should work");
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), 1);
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT * 2 - 1);
+	});
+}
+
+#[test]
+fn test_force_transfer_all_native_alive() {
+	new_test_ext().execute_with(|| {
+		Pallet::<Test>::force_transfer_all_native(
+			RuntimeOrigin::root(),
+			FROM_ACCOUNT,
+			TO_ACCOUNT,
+			true,
+		)
+		.expect("force_transfer_native should work");
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), 1);
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT * 2 - 1);
+	});
+}
+
+#[test]
+fn test_force_transfer_all() {
+	new_test_ext().execute_with(|| {
+		Pallet::<Test>::force_transfer_all(
+			RuntimeOrigin::root(),
+			ASSET_ID,
+			FROM_ACCOUNT,
+			TO_ACCOUNT,
+			false,
+		)
+		.expect("force_transfer should work");
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), 0);
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT * 2);
+	});
+}
+
+#[test]
+fn test_force_transfer_all_native() {
+	new_test_ext().execute_with(|| {
+		Pallet::<Test>::force_transfer_all_native(
+			RuntimeOrigin::root(),
+			FROM_ACCOUNT,
+			TO_ACCOUNT,
+			false,
+		)
+		.expect("force_transfer_native should work");
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &FROM_ACCOUNT), 0);
+		assert_eq!(Pallet::<Test>::total_balance(ASSET_ID, &TO_ACCOUNT), INIT_AMOUNT * 2);
+	});
+}
+
+#[test]
 fn test_transfer_all() {
 	new_test_ext().execute_with(|| {
 		Pallet::<Test>::transfer_all(

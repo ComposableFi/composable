@@ -309,6 +309,73 @@ pub mod pallet {
 			)?;
 			Ok(().into())
 		}
+
+		/// Transfer all free balance of the `asset` from `source` to `dest`.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(T::WeightInfo::force_transfer_all())]
+		#[pallet::call_index(10)]
+		pub fn force_transfer_all(
+			origin: OriginFor<T>,
+			asset: T::AssetId,
+			source: <T::Lookup as StaticLookup>::Source,
+			dest: <T::Lookup as StaticLookup>::Source,
+			keep_alive: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let source = T::Lookup::lookup(source)?;
+			let dest = T::Lookup::lookup(dest)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			let reducible_balance = <Self as Inspect<T::AccountId>>::reducible_balance(
+				asset,
+				&source,
+				keep_alive,
+				Fortitude::Polite,
+			);
+			<Self as Mutate<T::AccountId>>::transfer(
+				asset,
+				&source,
+				&dest,
+				reducible_balance,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		/// Transfer all free balance of the native asset from `source` to `dest`.
+		///
+		/// # Errors
+		///  - When `origin` is not signed.
+		///  - If the `dest` cannot be looked up.
+		#[pallet::weight(T::WeightInfo::force_transfer_all_native())]
+		#[pallet::call_index(11)]
+		pub fn force_transfer_all_native(
+			origin: OriginFor<T>,
+			source: <T::Lookup as StaticLookup>::Source,
+			dest: <T::Lookup as StaticLookup>::Source,
+			keep_alive: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let source = T::Lookup::lookup(source)?;
+			let dest = T::Lookup::lookup(dest)?;
+			let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+			let reducible_balance = <Self as NativeInspect<T::AccountId>>::reducible_balance(
+				&source,
+				keep_alive,
+				Fortitude::Polite,
+			);
+			<Self as NativeMutate<T::AccountId>>::transfer(
+				&source,
+				&dest,
+				reducible_balance,
+				keep_alive,
+			)?;
+			Ok(())
+		}
 	}
 
 	pub(crate) fn valid_asset_id<T: Config>(asset_id: T::AssetId) -> Option<T::AssetId> {

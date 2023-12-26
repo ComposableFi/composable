@@ -14,6 +14,8 @@ pub trait WeightInfo {
 	fn force_transfer_native() -> Weight;
 	fn transfer_all() -> Weight;
 	fn transfer_all_native() -> Weight;
+	fn force_transfer_all() -> Weight;
+	fn force_transfer_all_native() -> Weight;
 	fn mint_initialize() -> Weight;
 	fn set_administrator() -> Weight;
 	fn mint_into() -> Weight;
@@ -29,6 +31,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn transfer_all_native() -> Weight {
+		Weight::from_parts(83_205_000_u64, 0)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
+	}
+
+	fn force_transfer_all() -> Weight {
+		Weight::from_parts(83_205_000_u64, 0)
+			.saturating_add(T::DbWeight::get().reads(4_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
+	}
+
+	fn force_transfer_all_native() -> Weight {
 		Weight::from_parts(83_205_000_u64, 0)
 			.saturating_add(T::DbWeight::get().reads(4_u64))
 			.saturating_add(T::DbWeight::get().writes(4_u64))
@@ -101,6 +115,18 @@ impl WeightInfo for () {
 	}
 
 	fn transfer_all_native() -> Weight {
+		Weight::from_parts(83_205_000_u64, 0)
+			.saturating_add(RocksDbWeight::get().reads(4_u64))
+			.saturating_add(RocksDbWeight::get().writes(4_u64))
+	}
+
+	fn force_transfer_all() -> Weight {
+		Weight::from_parts(83_205_000_u64, 0)
+			.saturating_add(RocksDbWeight::get().reads(4_u64))
+			.saturating_add(RocksDbWeight::get().writes(4_u64))
+	}
+
+	fn force_transfer_all_native() -> Weight {
 		Weight::from_parts(83_205_000_u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(4_u64))
 			.saturating_add(RocksDbWeight::get().writes(4_u64))
