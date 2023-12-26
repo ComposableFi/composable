@@ -158,7 +158,6 @@ fn test_force_transfer_all_native() {
 	});
 }
 
-
 #[test]
 fn test_transfer_all() {
 	new_test_ext().execute_with(|| {
