@@ -310,7 +310,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Transfer all free balance of the `asset` from `origin` to `dest`.
+		/// Transfer all free balance of the `asset` from `source` to `dest`.
 		///
 		/// # Errors
 		///  - When `origin` is not signed.
