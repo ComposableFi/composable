@@ -60,6 +60,23 @@ benchmarks! {
 		T::NativeCurrency::mint_into(&caller, amount).expect("always can mint in test");
 	}: _(RawOrigin::Root, from, dest, amount, false)
 
+	force_transfer_all {
+		let caller: T::AccountId = FROM_ACCOUNT.into();
+		let asset_id: T::AssetId = ASSET_ID.into();
+		let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
+		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+		let amount: T::Balance = TRANSFER_AMOUNT.into();
+		T::MultiCurrency::mint_into(asset_id, &caller, amount).expect("always can mint in test");
+	}: _(RawOrigin::Root, asset_id, from, dest, false)
+
+	force_transfer_all_native {
+		let caller: T::AccountId = FROM_ACCOUNT.into();
+		let from = T::Lookup::unlookup(FROM_ACCOUNT.into());
+		let dest = T::Lookup::unlookup(TO_ACCOUNT.into());
+		let amount: T::Balance = TRANSFER_AMOUNT.into();
+		T::NativeCurrency::mint_into(&caller, amount).expect("always can mint in test");
+	}: _(RawOrigin::Root, from, dest, false)
+
 	transfer_all {
 		let caller: T::AccountId = whitelisted_caller();
 		let asset_id: T::AssetId = ASSET_ID.into();
