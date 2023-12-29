@@ -5,6 +5,7 @@ pub fn get_config() -> Vec<SovereignSubAccount> {
 			println!("{}", "feature 'composable': Relayer for Composable network");
 			let _sovereign_account_id = "13YMK2ecbyxtm4cmFs31PqzWmQ7gWVboJSmXbcA56DB94xB9";
 			let sovereign_account_id_index_0 = "12x6QU4c9eRPxJMATFsRNFiZTMK5QgZkdZFFeu2QDKn4TR82";
+			// no need for rest of the accounts. dot staked only via sub account with index 0
 			let sovereign_account_id_index_1 = "1461Z7Bm1bwQpz1PuYMQ8phj9bRpxNU7ZYsb7aXQRAUuNecG";
 			let sovereign_account_id_index_2 = "15ySsNFkAhswdn9hSKkzoK7LhmJrj8bgyUZQAiM7Df9JpBUH";
 			let sovereign_account_id_index_3 = "15s3DuzMeftBH7YdHykwPDUd2DBxdNbiyqgDfZDA3i5eRwUW";
@@ -50,31 +51,31 @@ pub fn get_config() -> Vec<SovereignSubAccount> {
 			storage_key: s0.clone(),
 			derivative_index: 0,
 		},
-		SovereignSubAccount {
-			address: sovereign_account_id_index_1.to_string(),
-			storage_key: s1.clone(),
-			derivative_index: 1,
-		},
-		SovereignSubAccount {
-			address: sovereign_account_id_index_2.to_string(),
-			storage_key: s2.clone(),
-			derivative_index: 2,
-		},
-		SovereignSubAccount {
-			address: sovereign_account_id_index_3.to_string(),
-			storage_key: s3.clone(),
-			derivative_index: 3,
-		},
-		SovereignSubAccount {
-			address: sovereign_account_id_index_4.to_string(),
-			storage_key: s4.clone(),
-			derivative_index: 4,
-		},
-		SovereignSubAccount {
-			address: sovereign_account_id_index_5.to_string(),
-			storage_key: s5.clone(),
-			derivative_index: 5,
-		},
+		// SovereignSubAccount {
+		// 	address: sovereign_account_id_index_1.to_string(),
+		// 	storage_key: s1.clone(),
+		// 	derivative_index: 1,
+		// },
+		// SovereignSubAccount {
+		// 	address: sovereign_account_id_index_2.to_string(),
+		// 	storage_key: s2.clone(),
+		// 	derivative_index: 2,
+		// },
+		// SovereignSubAccount {
+		// 	address: sovereign_account_id_index_3.to_string(),
+		// 	storage_key: s3.clone(),
+		// 	derivative_index: 3,
+		// },
+		// SovereignSubAccount {
+		// 	address: sovereign_account_id_index_4.to_string(),
+		// 	storage_key: s4.clone(),
+		// 	derivative_index: 4,
+		// },
+		// SovereignSubAccount {
+		// 	address: sovereign_account_id_index_5.to_string(),
+		// 	storage_key: s5.clone(),
+		// 	derivative_index: 5,
+		// },
 	];
 	sub_accounts
 }
