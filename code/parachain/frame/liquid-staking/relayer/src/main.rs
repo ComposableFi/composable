@@ -57,9 +57,9 @@ async fn main() {
 	let sleep_time_min = sleep_time_min.parse::<u64>().unwrap_or_else(|_| 60);
 
 	let relay = std::env::var("RELAY_HOST")
-		.unwrap_or_else(|_| "wss://kusama-rpc.polkadot.io:443".to_string());
+		.unwrap_or_else(|_| "wss://polkadot-rpc-tn.dwellir.com:443".to_string());
 	let para = std::env::var("PARA_HOST")
-		.unwrap_or_else(|_| "wss://rpc.composablenodes.tech:443".to_string());
+		.unwrap_or_else(|_| "wss://composable-rpc.dwellir.com:443".to_string());
 
 	println!("Configuration:");
 	println!("relay: {}", relay);
