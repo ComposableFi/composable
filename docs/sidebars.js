@@ -74,7 +74,7 @@
              "user-guides/trustless-faq",
            ],
          }, 
-         "user-guides/polkassembly-picasso-governance",
+         "user-guides/picasso-governance",
        ],
      },
    ],
