@@ -188,9 +188,23 @@
        collapsible: false,
        collapsed: false,
        items: [
+        "technology/ibc/ethereum-ibc",
+        {
+          type: "category",
+          label: "Solana Restaking & IBC",
+          link: {
+            type: "doc",
+            id: "technology/ibc/solana-ibc",
+          },
+          collapsible: true,
+          collapsed: true,
+          items: [
+            "technology/ibc/solana/technical-overview",
+            "technology/ibc/solana/restaking",
+          ],
+        },
         "technology/ibc/cosmos-ibc",
         "technology/ibc/polkadot-kusama-ibc",
-        "technology/ibc/ethereum-ibc",
         "technology/ibc/near-ibc-bridge",
         "technology/ibc/hyperspace-relayer",
         "technology/ibc/light-clients",
