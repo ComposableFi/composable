@@ -82,8 +82,6 @@ The following multisigs are controlled by the governance council and are activat
 These multisigs are considered non-circulating, 
 and can only be considered “circulating” if voted upon by protocol governance to become circulating.
 
-Treasury Multisig: `5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm` 
-
 Team Tokens Multisig: `5zBQWEzVJuF7BPkgi8hxRW4T3c4RkfhMuArgXekwHyLck4hT`
 
 Ecosystem Incentives Multisig : `5upPPwmpXUp3yrgx6erAzr84BfywuhVhKCeza5MGmBY8wJCK`
@@ -101,7 +99,9 @@ In accordance with [Council motion #16](https://picasso.polkassembly.io/motion/1
 
 Pursuant to [Council motion #19](https://picasso.polkassembly.io/motion/19), the Picasso Team Multisig will be reimbursed at its designated address from the Picasso Treasury. These tokens were mistakenly spent from the Team multisig address prior to the migration of a new Team Multisig, and therefore, reimbursed by the intended location, the Picasso treasury. The total PICA amount to be reimbursed is 51,874,200 PICA.
 
-**Neither of these events aims to modify any previously established token allocations; rather, they intend to rectify an accounting error between multisig addresses.**
+Following the launch of OpenGov phase 2 on Picasso, the allocation for the Picasso Treasury was transferred from the multisig account (`5uMNuPRaGaJ6BXoys1Myi5gioCsc5dMux4A6R2dnxGPcNoHm`) reserved by the council to the Treasury pallet account (`5w3oyasYR35Hek3szEEuWUz8Vm2XXDs4dMoosQEvLU8JGuw7`). 
+
+**Neither of these events aims to modify any previously established token allocations; rather, they intend to rectify an accounting error between multisig addresses and improve the decentralisation of the protocol.**
 
 ### Protocol Controlled Addresses
 
