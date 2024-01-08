@@ -18,7 +18,7 @@ and its proprietary technology stack.
 - [Apollo] - Picasso’s native oracle
 
 [Pablo]: ../technology/pablo-overview.md
-[Composable-IBC]: ../technology/composable-ibc.md
+[Composable-IBC]: ../technology/ibc.md
 [Apollo]: ../technology/apollo-overview.md
 
 ## How is Picasso enabling interoperable DeFi

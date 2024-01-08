@@ -54,10 +54,10 @@
            },
            collapsible: false,
            items: [
+             "user-guides/composable-cosmos-staking",
              "user-guides/claim-rewards-guide",
              "user-guides/how-to-provide-liquidity",
              "user-guides/how-to-trade-pica-on-pablo",
-             "user-guides/composable-cosmos-staking",
              "user-guides/dot-lp-guide",
              "user-guides/trustless-transfers",
            ],
@@ -265,34 +265,14 @@
 
   ],
    ecosystem: [
-     {
-       type: "category",
-       label: "Ecosystem",
- 
-       link: {
-         type: "generated-index",
-         slug: "ecosystem",
-       },
-       collapsible: false,
-       items: [
-         {
-           type: "category",
-           label: "Composable Ecosystem",
-           link: {
-             type: `doc`,
-             id: `ecosystem/composable-ecosystem`,
-           },
-           collapsible: false,
-           items: [
-             "ecosystem/request-for-proposals",
-           ],
-         },
-         "ecosystem/composable-research",
-         "ecosystem/the-composable-team",
-         "ecosystem/press-kit",
-       ],
-     },
- 
+    {
+      type: "doc",
+      id: "ecosystem/composable-ecosystem",
+    },
+     "ecosystem/request-for-proposals",
+     "ecosystem/composable-research",
+     "ecosystem/the-composable-team",
+     "ecosystem/press-kit",
      {
        type: "doc",
        label: "Audits, Fixes & Bug Bounties",

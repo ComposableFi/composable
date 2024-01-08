@@ -34,7 +34,7 @@ The following diagram provides a high-level architecture of how these three comp
 
 ## Setting up a node
 
-[Setup a node by following the collator guide](../developer-guides/collator-guide.md)
+[Setup a node by following the collator guide](../develop/collator-guide.md)
 
 ## Using PolkadotJS Web Interface
 

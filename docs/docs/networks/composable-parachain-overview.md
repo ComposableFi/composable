@@ -57,10 +57,10 @@ facilitate the creation of non-custodial, natively cross-chain smart contracts. 
 
 [(CVM)]: ../technology/cvm.md
 
-### Centauri - Composable’s trustless bridging solution
+###  Composable’s trustless bridging solution
 
-[Composable IBC](../technology/composable-ibc.md) a trustless bridge that implements and expands the inter-blockchain communication (IBC) protocol outside of Cosmos. This will support cross-ecosystem communication between IBC-enabled blockchains, 
-Polkadot, and other ecosystems such as Ethereum and NEAR Protocol.
+[IBC](../technology/ibc.md) the main bridging framework in the Composable ecosystem. It is a trust-minimised format for cross-chain communication and therefore, Composable will support cross-ecosystem communication between IBC-enabled blockchains, 
+Polkadot, and other ecosystems such as Ethereum, Solana and NEAR Protocol.
 
 ## How the Composable Parachain synergizes with Picasso?
 
@@ -91,5 +91,5 @@ optimal volume flow and liquidity distribution furthermore bolstered and facilit
 
 [Picasso]: ./picasso-parachain-overview.md
 [oracle services]: ../technology/apollo-overview.md
-[trustless bridging infrastructure]: ../technology/composable-ibc.md
+[trustless bridging infrastructure]: ../technology/ibc.md
 [Pablo]: ../technology/pablo-overview.md

@@ -30,7 +30,7 @@ Composable's infrastructure is built on the foundation of three high-performance
 - It supports the IBC protocol for interoperability.
 - Developers can harness the power of the CosmWasm VM for smart contract development.
 
-### [Composable Cosmos](../networks/centauri-chain.md)
+### [Composable Cosmos](../networks/composable-cosmos.md)
 - Composable Cosmos is another blockchain within the Composable ecosystem.
 - It integrates the IBC protocol for cross-chain compatibility.
 - Like the others, Composable Cosmos employs the CosmWasm VM for smart contracts.

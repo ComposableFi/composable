@@ -14,16 +14,16 @@ Onboarding other parachains to connect to Picasso, Composable and IBC-enabled ch
 
 ### Apollo onboarding:
 
-Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), 
+Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../technology/apollo-overview.md), 
 like Teller and API3. 
 
 ### Collator onboarding:
 
-Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), 
+Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../technology/apollo-overview.md), 
 like Teller and API3. 
 ### Data provider onboarding:
 
-Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), 
+Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../technology/apollo-overview.md), 
 like Teller and API3. 
 
 ### Pallet onboarding:
@@ -34,4 +34,4 @@ Onboarding pallets onto [Picasso](../parachains/picasso-parachain-overview.md) a
 Onboarding new layers, chains, and their associated validators into our ecosystem and interoperable infrastructure. 
 
 ### Building modular applications with the Composable CVM:
-Onboarding developers to use the [Composable Cross-Chain VM (CVM)](../products/cvm.md).
+Onboarding developers to use the [Composable Cross-Chain VM (CVM)](../technology/cvm.md).
