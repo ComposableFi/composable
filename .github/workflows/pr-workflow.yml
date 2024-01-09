@@ -398,8 +398,8 @@ jobs:
     name: mantis-e2e
     outputs:
       ok: ${{ steps.ok.outputs.ok }}
-    # needs:
-    #   - build-all-checks-packages
+    needs:
+      - build-all-checks-packages
     runs-on:
       - ubuntu-latest-m
     concurrency:
