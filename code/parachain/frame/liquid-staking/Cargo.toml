@@ -71,21 +71,21 @@ pallet-message-queue = { git = "https://github.com/paritytech/substrate", defaul
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-  'parity-scale-codec/std',
-  'frame-support/std',
-  'frame-system/std',
-  'pallet-utility/std',
-  'sp-runtime/std',
-  'sp-std/std',
-  'sp-trie/std',
-  'pallet-xcm/std',
-  'xcm/std',
-  'scale-info/std',
-  'polkadot-parachain/std',
-  'polkadot-primitives/std',
-  'cumulus-primitives-core/std',
-  'pallet-xcm-helper/std',
-  'primitives/std',
+	'cumulus-primitives-core/std',
+	'frame-support/std',
+	'frame-system/std',
+	'pallet-utility/std',
+	'pallet-xcm-helper/std',
+	'pallet-xcm/std',
+	'parity-scale-codec/std',
+	'polkadot-parachain/std',
+	'polkadot-primitives/std',
+	'primitives/std',
+	'scale-info/std',
+	'sp-runtime/std',
+	'sp-std/std',
+	'sp-trie/std',
+	'xcm/std',
 ]

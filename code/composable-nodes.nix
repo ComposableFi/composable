@@ -110,6 +110,7 @@
           makeComposableNode self'.packages.picasso-testfast-runtime
           self'.packages.composable-testfast-runtime;
 
+        # asd
         composable-bench-node = crane.nightly.cargoBuild
           (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";

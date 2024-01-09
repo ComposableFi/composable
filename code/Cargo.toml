@@ -20,10 +20,10 @@ color-eyre = { version = "0.5.11", default-features = false }
 composable-node = { path = "parachain/node" }
 
 [features]
-builtin-wasm = ["composable-node/builtin-wasm"]
+builtin-wasm = [ "composable-node/builtin-wasm" ]
 picasso = []
-runtime-benchmarks = ["composable-node/runtime-benchmarks"]
-std = ["composable-node/std"]
+runtime-benchmarks = [ "composable-node/runtime-benchmarks" ]
+std = [ "composable-node/std" ]
 
 [workspace.lints.rust]
 unsafe = "deny"

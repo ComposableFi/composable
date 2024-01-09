@@ -30,14 +30,14 @@ sp-std = { default-features = false, workspace = true }
 strum_macros = "0.24"
 strum = { version = "0.24", default-features = false, features = ["derive"] }
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-  "frame-support/std",
-  "frame-system/std",
-  "sp-runtime/std",
-  "sp-io/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-arithmetic/std",
-  "scale-info/std",
+	"frame-support/std",
+	"frame-system/std",
+	"scale-info/std",
+	"sp-arithmetic/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
 ]
