@@ -72,3 +72,4 @@ std = [
 	'xcm/std',
 	"pallet-assets/std"
 ]
+runtime-benchmarks = []
