@@ -3763,13 +3763,6 @@
         "nixpkgs": "nixpkgs_11"
       },
       "locked": {
-<<<<<<< HEAD
-        "lastModified": 1702084598,
-        "narHash": "sha256-pqS3LgnidQyGLEbHNlcMkoKLuQipxRQbpxDQiMhQFPw=",
-        "owner": "ComposableFi",
-        "repo": "networks",
-        "rev": "75e880e94bb560df2cc4663cfac2dcab590ffdc9",
-=======
         "lastModified": 1703173993,
         "narHash": "sha256-knmvZLtlEPT0RSdpjPUuzYUL3RDiYhZpKNxNxj6r9Dk=",
         "owner": "ComposableFi",
@@ -3793,7 +3786,6 @@
         "owner": "ComposableFi",
         "repo": "networks",
         "rev": "cbe5301c009515ba7f092c0de4783cf9ae3d69a5",
->>>>>>> 26b79a502 (up cvm)
         "type": "github"
       },
       "original": {
