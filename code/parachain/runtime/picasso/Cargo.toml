@@ -185,6 +185,11 @@ runtime-benchmarks = [
 	"utility/runtime-benchmarks",
 	"vesting/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
+	"farming/runtime-benchmarks",
+	"pallet-multihop-xcm-ibc/runtime-benchmarks",
+	"revenue-ibc/runtime-benchmarks",
+	"transaction-payment/runtime-benchmarks",
+	"reward/runtime-benchmarks"
 ]
 
 std = [
@@ -285,4 +290,5 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"pallet-custom-origins/std"
 ]

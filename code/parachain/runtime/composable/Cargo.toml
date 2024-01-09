@@ -150,6 +150,8 @@ runtime-benchmarks = [
 	"treasury/runtime-benchmarks",
 	"utility/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
+	"crowdloan-rewards/runtime-benchmarks",
+	"transaction-payment/runtime-benchmarks"
 ]
 std = [
 	"asset-tx-payment/std",
@@ -232,4 +234,5 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"pallet-custom-origins/std"
 ]
