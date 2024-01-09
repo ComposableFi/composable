@@ -17,6 +17,7 @@
           src = rustSrc;
           cargoCheckCommand = "true";
           NIX_BUILD_FLAKE = "true";
+          RUSTC_STAGE = 1;
         };
 
         common-test-deps-attrs = subnix.subenv // {
