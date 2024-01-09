@@ -9,7 +9,7 @@ Henry Love is a seasoned Founder and Executive. Prior to joining the Composable 
 
 ## 0xbrainjar | Founder & Research Director
 
-Brainjar brings a deep understanding of the blockchain space and a comprehensive vision on cross-chain DeFi. He is focused on researching blockchain infrastructure and relevant trends to advise on Composable’s development as well as designing products that can best leverage the Composable tech stack.  He’s also advising Composable Labs, the incubation arm that births and supports projects using Composable’s tech stack. Brainjar writes about the R&D at Composable on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
+Omar is a seasoned researcher and innovator in the blockchain industry. His deep understanding of the space complemented by an encompassing perspective on the vision of cross-chain DeFi has established him as a thought leader and valuable pioneer. His current focus entails the investigation and research of blockchain infrastructure and trends, providing valuable insights that guide Composable's development. Brainjar writes about the R&D at Composable on [Twitter](https://twitter.com/0xbrainjar) and [Medium](https://medium.com/@0xbrainjar).
 
 ## Blas Rodriguez Irizar | Co-Founder & CTO
 

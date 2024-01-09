@@ -19,7 +19,7 @@ More details on these potential ecosystem benefits can be found below:
 
 Composable has allocated 10% of the PICA token supply to “Ecosystem Incentives”, 
 which include rewards for participating in a number of future actions on the Picasso network. 
-These are programmatic incentives to bootstrap network growth such as running an oracle on [Apollo](../../products/apollo-overview.md). 
+These are programmatic incentives to bootstrap network growth such as running an oracle on [Apollo](../../technology/apollo-overview.md). 
 A subcategory of these incentives are the so-called “Infrastructure Tokens”, 
 currently comprising approximately 0.72% of the total token supply of PICA (72,132,700 tokens) 
 and dedicated to rewarding people running infrastructure for the Composable Ecosystem. 
@@ -166,4 +166,4 @@ in the event any statement is or becomes inaccurate,
 the creator is not responsible for any such inaccuracies and the reader fully disclaims and releases the creator from any and all liability. 
 Since the content is intended to be disclosed on the date of its release there is no duty on the part of the creator to update any material shared herein. 
 Please see our important Legal Disclosures & Disclaimers which are fully incorporated herein as if set out here at length:
-[https://www.composable.finance/disclaimer](https://www.composable.finance/disclaimer )
+[https://www.composable.finance/disclaimer](https://www.composable.finance/disclaimer)

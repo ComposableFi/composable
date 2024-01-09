@@ -1,22 +1,37 @@
 # Staking PICA on Composable Cosmos
 
-This guide demonstrates the steps to transfer PICA to [Composable Cosmos](../parachains/composable-cosmos.md) and stake PICA by delegating them to validators on the network. 
+This guide demonstrates the steps to transfer PICA to [Composable Cosmos](../networks/composable-cosmos.md) and stake PICA by delegating them to validators on the network. 
 
-1. To begin, you need to send PICA from Picasso to Composable Cosmos. Go to https://app.trustless.zone/ and connect both your Polkadot and Cosmos wallets.
+## Download the Leap extension​
+The following link allows you to download the Leap extension: https://www.leapwallet.io/download
 
-![staking-uno]
+Once downloaded and installed, click on 'Leap Cosmos Wallet' in your extensions where you will be redirected to setup your wallet.
 
-1. Select Picasso as the source chain and Centauri as the destination chain. Input the desired amount you want to send to Composable Cosmos for staking. A pop-up will appear, prompting you to confirm the specified amount.
+## Setting up an account​
 
-![staking-deus]
+To setup an account on your Leap extension, you have the following three options:
 
-1. Now head to https://ping.pub/composable and connect your Keplr wallet. Select the 'Delegate' button and the validator you wish to delegate your PICA tokens to. Enter the amount of PICA you wish to stake.
+1. “Create new wallet” and then "Create new recovery phrase". Ensure you have secured your passphrase. 
+2. Import an existing seed phrase or wallet. 
+3. Connect a hardware wallet (If your PICA is on a ledger device)
+
+To begin, you need to send PICA to Composable Cosmos. Go to https://app.trustless.zone/ and connect both your Polkadot and Leap wallet.
+
+![staking-uno](../user-guides/images-staking-pica/staking-one.png)
+
+
+Head to the [staking page on Leapboard](https://cosmos.leapwallet.io/transact/stake/plain) and select the Picasso chain. Enter the amount of PICA you wish to stake, choose a validator to delegate your tokens to and press Stake.
+
+![staking-deus](../user-guides/images-staking-pica/leap.png)
+
+## Alternative Method
+Head to https://ping.pub/composable and connect your wallet. Select the 'Delegate' button and the validator you wish to delegate your PICA tokens to. Enter the amount of PICA you wish to stake.
 
 :::tip
 Ensure the 'Fees' are set to 0 after clicking the Advance option as outlined in the screenshot.
 :::
 
-![staking-quatro]
+![staking-quatro](../user-guides/images-staking-pica/centauri-stake-4.png)
 
 You have now successfully staked PICA to secure Composable Cosmos!
 
