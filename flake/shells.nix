@@ -82,12 +82,17 @@
         echo 'chain-id = "centauri-1"' >> ~/.banksy/config/client.toml
       '';
       neutron-mainnet-shell = ''
-        rm --force --recursive ~/.neutron
-        mkdir --parents ~/.neutron/config
-        echo 'keyring-backend = "os"' >> ~/.neutron/config/client.toml
-        echo 'output = "json"' >> ~/.neutron/config/client.toml
-        echo 'node = "https://rpc-kralum.neutron-1.neutron.org:443"' >> ~/.neutron/config/client.toml
-        echo 'chain-id = "${networks.neutron.mainnet.CHAIN_ID}"' >> ~/.neutron/config/client.toml      
+        rm --force --recursive ~/.neutrond
+        mkdir --parents ~/.neutrond/config
+        CLIENT_CONFIG=~/.neutrond/config/client.toml
+        if [[ ! -f $CLIENT_CONFIG ]]; then
+          echo 'keyring-backend = "os"' > $CLIENT_CONFIG
+        fi
+        dasel put --type=string --write=toml --file="$CLIENT_CONFIG" --value  "os" "keyring-backend"
+        dasel put --type=string --write=toml --file="$CLIENT_CONFIG" --value "json" "output" 
+        dasel put --type=string --write=toml --file="$CLIENT_CONFIG" --value "${networks.neutron.mainnet.NODE}" "node" 
+        dasel put --type=string --write=toml --file="$CLIENT_CONFIG" --value  "${networks.neutron.mainnet.CHAIN_ID}" "chain-id"
+        dasel put --type=string --write=toml --file="$CLIENT_CONFIG" --value  "sync" "broadcast-mode"
       '';
       osmosis-mainnet-shell = ''
         rm ~/.osmosisd/config/client.toml 

@@ -17,7 +17,7 @@
 
       all-checks = pkgs.linkFarmFromDrvs "all-checks" (with pkgs;
         with self'.packages; [
-          all-deps-shell
+          all-outputs
           benchmarks-check
           cargo-clippy-check
           cargo-deny-check

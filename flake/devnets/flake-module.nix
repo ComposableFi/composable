@@ -318,10 +318,10 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-cvm-init = {
-                command = self'.packages.osmosisd-cvm-init;
+              osmosis-cvm-init = {
+                command = self'.packages.osmosis-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
+                log_location = "${devnet-root-directory}/osmosis-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };

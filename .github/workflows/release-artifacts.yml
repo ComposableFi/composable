@@ -25,7 +25,6 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable
           installCommand: "true"
-          skipAddingSubstituter: true  
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
