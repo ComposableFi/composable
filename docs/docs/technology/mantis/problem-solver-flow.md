@@ -4,7 +4,7 @@ An end to end flow description of getting data for solvers, posting the solution
 ## Overview
 
 These are steps which, detailed below, happen in this syste:
-1. Users post problems
+1. User post problems.
 2. Solvers collect data needed to solve problems
 3. Solvers run optimization algorithm
 4. Solvers post solutions on chain into contract
