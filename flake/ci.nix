@@ -30,8 +30,6 @@
           composable-bench-node
           deadnix-check
           mantis-e2e
-          devnet-xc-fresh
-          devnet-xc-image
           hyperspace-composable-rococo-picasso-rococo
           picasso-testfast-runtime
         ]);
