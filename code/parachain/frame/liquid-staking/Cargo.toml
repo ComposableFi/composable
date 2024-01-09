@@ -88,4 +88,6 @@ std = [
 	'sp-std/std',
 	'sp-trie/std',
 	'xcm/std',
+	"composable-support/std",
+	"composable-traits/std"
 ]

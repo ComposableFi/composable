@@ -70,4 +70,5 @@ std = [
 	'sp-std/std',
 	'xcm-executor/std',
 	'xcm/std',
+	"pallet-assets/std"
 ]
