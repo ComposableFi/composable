@@ -27,6 +27,7 @@
         # rust asks for this dependings on version
         ZLIB_VERSION = "1.3";
         LIBZ_SYS_STATIC = 1;
+        RUSTC_STAGE = 1;
       };
 
       # for packages
@@ -44,9 +45,11 @@
         name = "check-pallet";
         runtimeInputs = [ self'.packages.rust-nightly pkgs.protobuf ];
         text = ''
-          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" 
-          cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
-          cargo clippy --package "$1" -- --deny warnings --allow deprecated
+          RUSTC_STAGE=1;
+          export RUSTC_STAGE
+          RUSTC_STAGE=1 cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --verbose
+          RUSTC_STAGE=1 cargo check --no-default-features --target wasm32-unknown-unknown --package "$1" --features runtime-benchmarks
+          RUSTC_STAGE=1 cargo clippy --package "$1" -- --deny warnings --allow deprecated
         '';
       };
       check-std-wasm = pkgs.writeShellApplication {

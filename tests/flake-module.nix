@@ -42,6 +42,7 @@
                 cd tests
                 nix run .#mantis-tests -- --mnemonic "$APPLICATION1" --outpost-contract-address "$(cat ${pkgs.networksLib.pica.devnet.CHAIN_DATA}/outpost_contract_address)"
               )
+              SUCCESS_CODE=0
               pckill
               break
             fi
