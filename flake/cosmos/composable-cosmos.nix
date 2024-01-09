@@ -120,11 +120,7 @@
           ${bashTools.export pkgs.networksLib.pica.devnet}
           KEY=${cosmosTools.cvm.centauri}
 
-          if [[ $(curl 127.0.0.1:$CONSENSUS_RPC_PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
-           sleep 5
-          fi
-
-          if [[ $(curl 127.0.0.1:$PORT/block | jq .result.block.header.height -r) -lt 5 ]]; then
+          if [[ $(curl "127.0.0.1:$CONSENSUS_RPC_PORT/block" | jq .result.block.header.height -r) -lt 5 ]]; then
            sleep 5
           fi
 
