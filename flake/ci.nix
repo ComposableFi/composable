@@ -17,22 +17,21 @@
 
       all-checks = pkgs.linkFarmFromDrvs "all-checks" (with pkgs;
         with self'.packages; [
-          # no-std benchmark build broken because of composavble-ibc deps, like pallet-ibc
+          # no-std benchmark build broken because of ComposableFi/composble-ibc deps, like pallet-ibc
           # benchmarks-check
           # check-composable-benchmarks-ci
           # check-picasso-benchmarks-ci
+          # cargo-no-std-cosmwasm # uses pallet-ibc direcly
+          # composable-bench-node
           all-outputs
           cargo-clippy-check
           cargo-deny-check
           cargo-fmt-check
           cargo-no-std-core-check
-          cargo-no-std-cosmwasm
           cargo-no-std-xcm-ibc
-          composable-bench-node
           deadnix-check
           hyperspace-composable-rococo-picasso-rococo
-          mantis-e2e
-          picasso-testfast-runtime
+          mantis-e2e          
         ]);
 
       all-outputs = pkgs.linkFarmFromDrvs "all-outputs" (with pkgs;
@@ -50,6 +49,7 @@
           devnet-picasso-image
           devnet-xc-fresh
           devnet-xc-image
+          picasso-testfast-runtime
           devnet-cosmos
           hyperspace-composable-rococo-picasso-rococo
         ]);
