@@ -3,7 +3,7 @@
 ## Let us have 4 orders
 
 1. 100pica=10atom
-2. 100pica=1010atom
+2. 100pica=10atom
 3. 20atom=100pica
 4. 20atom=100pica
 
