@@ -24,11 +24,11 @@
         });
 
       # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
-      mkOptimizedRuntime = { name, features ? ""
+      mkOptimizedRuntime = { name, features ? "", tag ? "prod"
         , common-deps ? self'.packages.common-deps-nightly }:
         let runtime = mkRuntime name features common-deps;
         in pkgs.stdenv.mkDerivation {
-          name = "${runtime.name}-optimized";
+          name = "${runtime.name}-${tag}-optimized";
           phases = [ "installPhase" ];
           nativeBuildInputs = [ pkgs.binaryen ];
           installPhase = ''
@@ -93,12 +93,15 @@
           name = "composable";
           features = "";
         };
+        # asd
         picasso-bench-runtime = mkOptimizedRuntime {
           name = "picasso";
+          tag = "bench";
           features = "runtime-benchmarks";
           common-deps = self'.packages.common-wasm-bench-deps;
         };
         composable-bench-runtime = mkOptimizedRuntime {
+          tag = "bench";
           name = "composable";
           features = "runtime-benchmarks";
           common-deps = self'.packages.common-wasm-bench-deps;

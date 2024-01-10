@@ -22,7 +22,7 @@
                             BLOCK_SECONDS=5
                             FEE=uosmo
                             BINARY=osmosisd
-                            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+                            OUTPOST_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/outpost_contract_address")
               a
                             TRANSFER_PICA_TO_OSMOSIS=$(cat << EOF
                             {
@@ -69,7 +69,7 @@
                             EOF
                             )                  
 
-                            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+                            "$BINARY" tx wasm execute "$OUTPOST_CONTRACT_ADDRESS" "$TRANSFER_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
                             sleep "$BLOCK_SECONDS"
             '';
           };
@@ -91,11 +91,10 @@
 
           text = ''
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"      
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
+
             FROM_ADDRESS=$("$BINARY" keys show APPLICATION1 --keyring-backend test --home "$CHAIN_DATA" --keyring-dir "$KEYRING_TEST" --output json | jq -r '.address')
             echo "$FROM_ADDRESS"
-            centaurid tx ibc-transfer transfer transfer channel-0 "$FROM_ADDRESS" 1366642100500ppica --chain-id="$CHAIN_ID"  --node "$NODE" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${cosmos-log} --keyring-backend test  --home "$CHAIN_DATA" --from "$FROM_ADDRESS" --keyring-dir "$KEYRING_TEST"             
+            centaurid tx ibc-transfer transfer transfer channel-0 "$FROM_ADDRESS" 1366642100500ppica --chain-id="$CHAIN_ID"  --node="$NODE" --output=json --yes --gas=25000000 --fees=920000166"$FEE" ${cosmos-log} --keyring-backend=test  --home="$CHAIN_DATA" --from="$FROM_ADDRESS" --keyring-dir="$KEYRING_TEST"             
           '';
         };
 
@@ -105,24 +104,20 @@
             ++ [ self'.packages.centaurid pkgs.jq ];
 
           text = ''
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"      
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
             ${bashTools.export pkgs.networksLib.pica.devnet}
             FROM_ADDRESS=$("$BINARY" keys show APPLICATION1 --keyring-backend test --home "$CHAIN_DATA" --keyring-dir "$KEYRING_TEST" --output json | jq -r '.address')
             centaurid tx ibc-transfer transfer transfer channel-1 "$FROM_ADDRESS" 1366642100500ppica --chain-id="$CHAIN_ID"  --node "tcp://localhost:$RPCPORT" --output json --yes --gas 25000000 --fees 920000166"$FEE" ${cosmos-log} --keyring-backend test  --home "$CHAIN_DATA" --from "$FROM_ADDRESS" --keyring-dir "$KEYRING_TEST"             
           '';
         };
 
-        xapp-no-really-cross-chain = pkgs.writeShellApplication {
-          name = "xapp-no-really-cross-chain";
+        devnet-transfer-to-virtual-wallet = pkgs.writeShellApplication {
+          name = "devnet-transfer-to-virtual-wallet";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.centaurid ];
           text = ''
             sleep 12 # just stupid wait for previous transfer of osmo, need to improve
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
-            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+            OUTPOST_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/outpost_contract_address")
 
             APP_MSG=$(cat << EOF            
             {
@@ -150,21 +145,19 @@
             }            
             EOF
             )
-            "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 3232323"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+            centaurid tx wasm execute "$OUTPOST_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --yes --gas 25000000 --fees 1000000000"$FEE" --amount 3232323"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from test1 --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           '';
         };
 
-        xapp-swap-centauri-osmo-to-osmosis-pica-and-back =
+        devnet-swap-centauri-osmo-to-osmosis-pica-and-back =
           pkgs.writeShellApplication {
-            name = "xapp-swap-centauri-osmo-to-osmosis-pica-and-back";
+            name = "devnet-swap-centauri-osmo-to-osmosis-pica-and-back";
             runtimeInputs = devnetTools.withBaseContainerTools
               ++ [ self'.packages.centaurid ];
             text = ''
               sleep 12 # just stupid wait for previous transfer of osmo, need to improve
               ${bashTools.export pkgs.networksLib.pica.devnet}
-              CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-              KEYRING_TEST="$CHAIN_DATA/keyring-test"            
-              GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+              OUTPOST_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/outpost_contract_address")
 
               APP_MSG=$(cat << EOF            
               {
@@ -247,31 +240,26 @@
               }            
               EOF
               )
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount "1212121ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
+              "$BINARY" tx wasm execute "$OUTPOST_CONTRACT_ADDRESS" "$APP_MSG" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --yes --gas 25000000 --fees 1000000000"$FEE" --amount "1212121ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
             '';
           };
 
-        xapp-swap-pica-to-osmo = pkgs.writeShellApplication {
-          name = "xc-swap-pica-to-osmo";
+        devnet-swap-pica-to-osmo = pkgs.writeShellApplication {
+          name = "devnet-swap-pica-to-osmo";
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ self'.packages.centaurid pkgs.jq ];
           text = ''
             ${bashTools.export pkgs.networksLib.pica.devnet}
-            CHAIN_DATA="${devnet-root-directory}/.centaurid"          
-            KEYRING_TEST="$CHAIN_DATA/keyring-test"            
-            GATEWAY_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/gateway_contract_address")
+            OUTPOST_CONTRACT_ADDRESS=$(cat "$CHAIN_DATA/outpost_contract_address")
 
             SWAP_PICA_TO_OSMOSIS=$(cat << EOF
               {
                   "execute_program": {
-                    "salt": "737061776e5f776974685f6173736574",
                     "program": {
-                      "tag": "737061776e5f776974685f6173736574",
                       "instructions": [
                         {
                           "spawn": {
                             "network_id": 3,
-                            "salt": "737061776e5f776974685f6173736574",
                             "assets": [
                               [
                                 "158456325028528675187087900673",
@@ -282,7 +270,6 @@
                               ]
                             ],
                             "program": {
-                              "tag": "737061776e5f776974685f6173736574",
                               "instructions": [
                                 {
                                   "exchange": {
@@ -310,7 +297,6 @@
                                 {
                                   "spawn": {
                                     "network_id": 2,
-                                    "salt": "737061776e5f776974685f6173736574",
                                     "assets": [
                                       [
                                         "237684487542793012780631851010",
@@ -321,7 +307,6 @@
                                       ]
                                     ],
                                     "program": {
-                                      "tag": "737061776e5f776974685f6173736574",
                                       "instructions": [
                                         {
                                           "transfer": {
@@ -332,7 +317,6 @@
                                               [
                                                 "158456325028528675187087900674",
                                                 {
-                                                    "intercept": "0",
                                                     "slope": "1000000000000000000"
                                                 }
                                               ]
@@ -355,19 +339,12 @@
                         "1234567890"
                       ]
                     ]
-                  },
-                  "tip": "centauri12smx2wdlyttvyzvzg54y2vnqwq2qjatescq89n"              
+                  }       
               }
             EOF
             )                  
 
-            # check route
-            "$BINARY" query wasm contract-state smart "$GATEWAY_CONTRACT_ADDRESS" '{ "get_ibc_ics20_route" : { "for_asset" : "158456325028528675187087900673", "to_network": 3 } }' --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --home "$CHAIN_DATA"
-
-            while true; do
-              "$BINARY" tx wasm execute "$GATEWAY_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$PORT" --output json --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test  --home "$CHAIN_DATA" --from ${cosmosTools.cvm.moniker} --keyring-dir "$KEYRING_TEST" --trace --log_level trace
-              sleep "10"
-            done
+            centaurid tx wasm execute "$OUTPOST_CONTRACT_ADDRESS" "$SWAP_PICA_TO_OSMOSIS" --chain-id="$CHAIN_ID"  --node "tcp://localhost:$CONSENSUS_RPC_PORT" --yes --gas 25000000 --fees 1000000000"$FEE" --amount 1234567890"$FEE" --log_level info --keyring-backend test --home "$CHAIN_DATA" --from test1 --keyring-dir "$KEYRING_TEST" --trace --log_level trace
           '';
         };
 

@@ -27,9 +27,9 @@
           cargoArtifacts = self'.packages.common-deps;
           cargoBuildCommand = "cargo build --release --package ${name}";
           cargoExtraArgs = "--features=builtin-wasm";
-          CW_CVM_GATEWAY_WASM_PATH = "${
-              self.inputs.cvm.packages."${system}".cw-cvm-gateway
-            }/lib/cw_cvm_gateway.wasm";
+          CW_CVM_OUTPOST_WASM_PATH = "${
+              self.inputs.cvm.packages."${system}".cw-cvm-outpost
+            }/lib/cw_cvm_outpost.wasm";
           CW_CVM_EXECUTOR_WASM_PATH = "${
               self.inputs.cvm.packages."${system}".cw-cvm-executor
             }/lib/cw_cvm_executor.wasm";
@@ -110,6 +110,7 @@
           makeComposableNode self'.packages.picasso-testfast-runtime
           self'.packages.composable-testfast-runtime;
 
+        # asd
         composable-bench-node = crane.nightly.cargoBuild
           (systemCommonRust.common-std-bench-attrs // rec {
             name = "composable";

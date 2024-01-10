@@ -4,7 +4,7 @@ An end to end flow description of getting data for solvers, posting the solution
 ## Overview
 
 These are steps which, detailed below, happen in this syste:
-1. Users post problems
+1. User post problems.
 2. Solvers collect data needed to solve problems
 3. Solvers run optimization algorithm
 4. Solvers post solutions on chain into contract
@@ -74,6 +74,19 @@ https://github.com/BrunoMazorra/2-assets-matching
 
 Rust port:
 https://github.com/ComposableFi/composable/blob/main/mantis/solver/src/solver.rs
+
+
+#### Optimization
+
+In general, when all routes take proportion fees from token operations (transfer/exchanges). 
+This happens because solution may pick up any real value amid to points of doing operation with all input tokens or not doing at all.
+Actually can find what part of tokens should go into
+
+With cross transfers, there are constant fees regardless of transfer amount.
+That makes need to decide to go to other chain or not.
+That decision is binary and makes problem non convex (cannot take arbitrary point of like partially go to chain).
+That means that some tricks and heuristics to be used convert mixed integer problem (integer whole values) to convex(real values),
+and iterate picking route vs not route decisions semi randomly.
 
 
 ### 4. Solvers post solution on chain into contract

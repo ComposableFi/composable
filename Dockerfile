@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/vscode/devcontainers/base:0.202.7-bullseye
 
-ARG NIX_VERSION=2.17.0
+ARG NIX_VERSION=2.18.1
 ARG CHANNEL_URL=https://github.com/NixOS/nixpkgs/archive/1db42b7fe3878f3f5f7a4f2dc210772fd080e205.tar.gz
 
 ARG USER=vscode

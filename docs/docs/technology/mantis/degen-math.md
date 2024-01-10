@@ -1,6 +1,6 @@
 # Why solvers will not rug you?
 
-**Let us have 4 orders:**
+## Let us have 4 orders
 
 1. 100pica=10atom
 2. 100pica=1010atom
@@ -9,7 +9,7 @@
 
 Read it 100 pica for minumum for 10 atom and other direction.
 
-**"Fair" solution is:**
+### "Fair" solution is
 
 1. 20atom
 2. 20atom
@@ -21,14 +21,14 @@ So read it `order number 1 got 20atom as he wanted`
 Let look different cases of "unfair".
 
 
-**Limits**
+### Limits
 
 1. 9atom
 ...
 
 So nobody will get less than limited, liked in FIFO Order Book.
 
-**Not maximal volume**
+### Not maximal volume
 
 1. 10atom
 2. 10atom
@@ -44,9 +44,7 @@ Volume of this solution is `20*200`.
 
 Solution with larger volume accepted.
 
-
-**Not fair price**
-
+### Not fair price
 
 1. 10atom
 2. 30atom
@@ -58,10 +56,27 @@ In this case volume is good, but settling price for order 2 was better than orde
 This solution will be rejected, because all orders will be compare to same single accepted price.
 1 and 2 violate one accepted price rule, so solution will be rejected.
 
+**CoWs ensure that users get fair prices against each other**
 
-**Market mechanics**
+### Price is too far from oracle
+
+Also we do not use Oracle to define optimal price,
+but in case two solution are same in volume and fair price,
+solution which is closer to oracle is picked.
+
+### Cross chain execution
+
+After users got fair price against each other in CoW, remaining part of batch can be solved cross chain.
+
+Cross chain execution uses MANTIS commitment protocol to ensure safe execution.
+
+### Why batch CoW first and only equilibrium after?
+
+#### Market mechanics in equilibrium
 
 Like with FIFO Order Book like we all know, when Batch auctions has many solvers and many orders, limit difference narrows down and more solvers compete for being accepted, so larger volume. 
 
-That leads to optimal spot price. 
+That leads to optimal spot price.
+
+We assume that fair price in batch auction eventually will be optimal, as safes gas costs of cross chain execution and generally more safe against MEV.
 

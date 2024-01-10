@@ -53,23 +53,23 @@ xcm-executor = { workspace = true, features = ['std'] }
 pallet-assets = { git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.43', default-features = false }
 
 [features]
-default = ['std']
+default = [ 'std' ]
 # runtime-benchmarks = ['frame-benchmarking']
 std = [
-  'parity-scale-codec/std',
-  'frame-benchmarking/std',
-  'frame-support/std',
-  'frame-system/std',
-  'sp-runtime/std',
-  'scale-info/std',
-  'sp-std/std',
-  'xcm/std',
-  'sp-core/std',
-  'xcm-executor/std',
-  'primitives/std',
-
-  'polkadot-parachain/std',
-  'cumulus-primitives-core/std',
-
-  'polkadot-primitives/std',
+	'cumulus-primitives-core/std',
+	'frame-benchmarking/std',
+	'frame-support/std',
+	'frame-system/std',
+	'parity-scale-codec/std',
+	'polkadot-parachain/std',
+	'polkadot-primitives/std',
+	'primitives/std',
+	'scale-info/std',
+	'sp-core/std',
+	'sp-runtime/std',
+	'sp-std/std',
+	'xcm-executor/std',
+	'xcm/std',
+	"pallet-assets/std"
 ]
+runtime-benchmarks = []

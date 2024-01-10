@@ -38,17 +38,17 @@ cosmwasm-std = { workspace = true, default-features = false, features = [
 serde-json-wasm = { workspace = true, default-features = false }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-  "codec/std",
-  "composable-support/std",
-  "composable-traits/std",
-  "cosmwasm-std/std",
-  "frame-support/std",
-  "ibc-rs-scale/std",
-  "scale-info/std",
-  "serde-json-wasm/std",
-  "sp-runtime/std",
-  "sp-std/std",
-  "xcm/std",
+	"codec/std",
+	"composable-support/std",
+	"composable-traits/std",
+	"cosmwasm-std/std",
+	"frame-support/std",
+	"ibc-rs-scale/std",
+	"scale-info/std",
+	"serde-json-wasm/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"xcm/std",
 ]

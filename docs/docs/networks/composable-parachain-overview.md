@@ -53,7 +53,7 @@ and the most efficient deployment of functions across suitable ecosystems.
 ### The Composable Virtual Machine (CVM)
 
 Composable’s Virtual Machine [(CVM)] will be able to leverage the pallets from Picasso and Composable to 
-facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and interpreter instances.
+facilitate the creation of non-custodial, natively cross-chain smart contracts. The CVM serves as a top-layer orchestration layer, capable of calling into existing applications and pallets across multiple ecosystems asynchronously. CVM applications will be deployable from any ecosystem housing the necessary satellite contracts and executor instances.
 
 [(CVM)]: ../technology/cvm.md
 

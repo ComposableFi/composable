@@ -47,11 +47,11 @@ nix run .#xc-swap-pica-to-osmo
 
 `Assets` are put into `ICS-20` packet.
 
-`Assets` are sent to `cvm-executor` contract, and  `wasm` termination callback is done to `cvm-gateway` contract with sender info and `Spawn` body.
+`Assets` are sent to `cvm-executor` contract, and  `wasm` termination callback is done to `cvm-outpost` contract with sender info and `Spawn` body.
 
 `Memo` wasm message contains information to verify check sender from hash. 
 
-`cvm-gateway` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `cvm-executor`. 
+`cvm-outpost` contract verifies amount sent and proceed with move of assets up to amount in message via delegation from `cvm-executor`. 
 
 Approach is needed because there is no `amount` information can be securely transferred in `memo`.
 

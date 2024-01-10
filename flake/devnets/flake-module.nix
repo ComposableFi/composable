@@ -15,13 +15,24 @@
     in {
 
       packages = rec {
+        devnet-prune = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools
+            ++ [ pkgs.process-compose pckill ];
+          name = "devnet-prune";
+          text = ''
+            pckill
+            rm --force --recursive ${devnet-root-directory}       
+          '';
+        };
 
-        process-compose-stop = pkgs.writeShellApplication {
+        pckill = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools
             ++ [ pkgs.process-compose ];
-          name = "process-compose-stop";
+          name = "pckill";
           text = ''
+            set +o errexit
             pkill -SIGTERM process-compose
+            set -o errexit          
           '';
         };
 
@@ -70,13 +81,13 @@
             ++ [ pkgs.process-compose ];
           name = "prune-run-unsafe";
           text = ''
-            process-compose-stop() {
+            pckill() {
               for i in $(process-compose process list)
               do
                 process-compose process stop "$i"
               done
             }
-            process-compose-stop
+            pckill
             pkill composable centaurid osmosisd hyperspace hermes
           '';
         };
@@ -307,10 +318,10 @@
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };
-              osmosisd-cvm-init = {
-                command = self'.packages.osmosisd-cvm-init;
+              osmosis-cvm-init = {
+                command = self'.packages.osmosis-cvm-init;
                 depends_on."osmosis".condition = "process_healthy";
-                log_location = "${devnet-root-directory}/osmosisd-cvm-init.log";
+                log_location = "${devnet-root-directory}/osmosis-cvm-init.log";
                 availability = { restart = chain-restart; };
                 namespace = "cosmos";
               };

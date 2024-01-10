@@ -17,21 +17,25 @@
           src = rustSrc;
           cargoCheckCommand = "true";
           NIX_BUILD_FLAKE = "true";
+          RUSTC_STAGE = 1;
         };
 
         common-test-deps-attrs = subnix.subenv // {
           src = rustSrc;
           doCheck = true;
           SKIP_WASM_BUILD = "1";
+          RUSTC_STAGE = 1;
         };
 
         common-std-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
           SKIP_WASM_BUILD = "1";
+          RUSTC_STAGE = 1;
         };
         common-wasm-bench-attrs = common-attrs // {
           cargoExtraArgs = "--features=runtime-benchmarks";
           SKIP_WASM_BUILD = "1";
+          RUSTC_STAGE = 1;
         };
       };
 

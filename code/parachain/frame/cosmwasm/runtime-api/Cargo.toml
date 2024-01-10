@@ -17,5 +17,5 @@ sp-api = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
 [features]
-default = ["std"]
-std = ["sp-api/std"]
+default = [ "std" ]
+std = [ "sp-api/std" ]

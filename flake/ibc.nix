@@ -19,7 +19,7 @@
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-picasso-kusama-to-centauri-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-centauri-to-picasso-kusama-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml"  
             cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/picasso-centauri-ibc/config-core.toml"                
-            CODE_ID=$(cat ${devnet-root-directory}/.centaurid/code_id)
+            CODE_ID=$(cat ${pkgs.networksLib.pica.devnet.CHAIN_DATA}/code_id)
             echo "$CODE_ID"
             sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"
             echo "wasm_code_id = \"$CODE_ID\""

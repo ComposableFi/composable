@@ -1,0 +1,25 @@
+{
+  "execute_program": {
+    "program": {
+      "instructions": [
+        {
+          "spawn": {
+            "network_id": 4,
+            "assets": [
+              [
+                "237684487542793012780631851013",
+                {
+                  "slope": "1000000000000000000"
+                }
+              ]
+            ],
+            "program": {
+              "instructions": [
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
