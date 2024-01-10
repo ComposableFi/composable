@@ -1,4 +1,4 @@
-# Virtual wallet
+# Composable Account Abstraction
 
 The Virtual Wallet allows users to manage funds across multiple networks using a single native account on one designated chain, known as the "wallet" chain.
 

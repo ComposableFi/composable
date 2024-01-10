@@ -138,6 +138,3 @@ https://github.com/ComposableFi/composable/blob/ee480d0062b8cde89e5cfb848881d88b
 ### 8. CVM executed
 
 That is mostly converting CVM instruction to IBC packets.
-
-
-

@@ -110,27 +110,27 @@ hex = "0.4.3"
 
 [features]
 builtin-wasm = [
-	"composable-runtime/builtin-wasm",
-	"picasso-runtime/builtin-wasm",
+  "composable-runtime/builtin-wasm",
+  "picasso-runtime/builtin-wasm",
 ]
 default = []
 runtime-benchmarks = [
-	"composable-runtime/runtime-benchmarks",
-	"picasso-runtime/runtime-benchmarks",
-	"polkadot-cli/runtime-benchmarks",
-	"polkadot-service/runtime-benchmarks",
+  "composable-runtime/runtime-benchmarks",
+  "picasso-runtime/runtime-benchmarks",
+  "polkadot-cli/runtime-benchmarks",
+  "polkadot-service/runtime-benchmarks",
 ]
 std = [
-	"assets-rpc/std",
-	"assets-runtime-api/std",
-	"common/std",
-	"composable-runtime/std",
-	"cosmwasm-runtime-api/std",
-	"crowdloan-rewards-runtime-api/std",
-	"pablo-runtime-api/std",
-	"pallet-assets/std",
-	"pallet-crowdloan-rewards/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
-	"picasso-runtime/std",
-	"primitives/std",
+  "assets-rpc/std",
+  "assets-runtime-api/std",
+  "common/std",
+  "composable-runtime/std",
+  "cosmwasm-runtime-api/std",
+  "crowdloan-rewards-runtime-api/std",
+  "pablo-runtime-api/std",
+  "pallet-assets/std",
+  "pallet-crowdloan-rewards/std",
+  "pallet-transaction-payment-rpc-runtime-api/std",
+  "picasso-runtime/std",
+  "primitives/std",
 ]

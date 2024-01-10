@@ -23,8 +23,12 @@ Let look different cases of "unfair".
 
 ### Limits
 
+```
 1. 9atom
 ...
+```
+
+Solution giving first order 9 ATOM will fail, as it gives than limit wanted.
 
 So nobody will get less than limited, liked in FIFO Order Book.
 
@@ -35,7 +39,7 @@ So nobody will get less than limited, liked in FIFO Order Book.
 3. 100pica
 4. 100pica
 
-So as you can see solver favored 3 and 4 solutions, but underfilled 1 and 2. 
+So as you can see solver favored 3 and 4 solutions, but underfilled 1 and 2.
 
 Solution will be rejected. Why?
 

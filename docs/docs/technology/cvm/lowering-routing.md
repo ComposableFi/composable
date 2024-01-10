@@ -12,7 +12,7 @@ Simplified CVM:
 type Instruction = Deposit | Exchange | Spawn
 interface Spawn {
     assets : Asset[]
-    network_id : NetworkId
+    network_id : NetworkIdPgi
     instructions: Instruction[]
 } 
 type NetworkId = number
@@ -59,6 +59,7 @@ After example I will summarize zoo of things into some categories and describe d
 ## Examples
 
 Examples follows pattern:
+
 * what expected user intent
 * what is ideal execution
 * what are CVM and registry subtleties
@@ -109,23 +110,24 @@ What CVM prescribes:
 Cosmos Hub cannot execute Contracts.
 So CVM should generate PFM packet which transfer 100% of assets to Cosmos Hub,
 and Cosmos Hub sends it to Osmosis.
-On Osmosis PFM ends with Wasm Hook call, where it actually end with CVM program.
+On Osmosis PFM ends with Wasm Hook call, where it actually end with CVM program or direct DEX call.
 
 Algorithm should detect, using registry, that intermediate chain does not have Contracts,
-and replace intermediate part PFM.
+and replace intermediate part with PFM forward.
 
 PFM can transfer only 100% assets, so CVM program transferring part of assets from Cosmos Hub or doing some Exchange must be rejected.
 
 ### C
 
 CVM program tells:
+
 1. Transfer DOT from Osmosis to Centauri
 2. From Centauri to Picasso
 3. From Picasso to Composable
 4. From Composable to Polkadot
 
 So in this case full CVM program can transfer from Osmosis to Centauri.
-But on chain it is possible to find out that program is transfer of 100% assets only.
+But starting from Composable chain it is possible to transfer only 100% of assets, neither part nor absolute.
 
 In this case 1-3 can be PFM transfer, and 3-4 can be XCM Multihop transfer.
 
@@ -134,7 +136,8 @@ In this case 1-3 can be PFM transfer, and 3-4 can be XCM Multihop transfer.
 
 User intents to `Transfer PICA from Centauri to Polkadot`.
 
-Whatever CVM program tells that, it must be rejected. 
+Whatever CVM program tells that, it must be rejected.
+
 Polkadot can have only DOT.
 
 ### E
@@ -145,6 +148,7 @@ CVM program tells
 2. Stake on Stride
 
 Also CVM describes second operation as if it is happened on Stride, really ICA Callback must be formed by CVM program to send IBC packet to Stake.
+
 Really CVM never reaches as some general AST tree to Stride.
 
 
@@ -162,7 +166,7 @@ So routing algorithm for such CVM program must form sandwich like: `CVM(PFM(PFM(
 
 As above `F`, but D and C has Contracts.
 
-Also D and C can do full CVM hops, why not just do cheaper PFM?s
+Also D and C can do full CVM hops, why not just do cheaper PFM with direct WASM hooks of adapters?
 
 
 ### G
@@ -170,8 +174,9 @@ Also D and C can do full CVM hops, why not just do cheaper PFM?s
 A chain knows what is on B chain, and B chain knows what is on C.
 But chain A does not knows how B is connected to C
 
-In case B has Contracts, we send it.
+In case B has Contracts, we send CVM to decide.
 In case B has no Contracts, but CVM is just transfer, we send PFM.
+Because B to C will be single hop transfer.
 
 Other cases rejected.
 
@@ -184,30 +189,29 @@ Given CVM program(tree) and Registry data(graph) on chain, solution to provide a
 
 Solution to be executed on chain, cheap one, but still constrained in computation.
 
-So it can be proven that on chain one is impossible, which is good solution too.
+So it can be proven that on chain computations are impossible, and we need lower offchain.
 
 **Limited information**
 
 Each chain may have limited information about other chains, and yet we have to trust sender if he knows what he asks for.
 
-So some CVM program to be rejected
-
+So some CVM program to be rejected or some hope for best.
+ 
 **Multiple spawns**
 
-On chain A, program can split to move some assets to B and some to C. 
+On chain A, program can split to move some assets to B and some to C.
 So that both proper transport possibles to be found.
-
 
 **Optimization(Optional)**
 
 Price optimization, if can do Wasm Hooks/ICA Callbacks instead of full CVM when possible.
-Do Transfer if CVM asks only for transfers, even if full CVM possible.s 
+Do Transfer if CVM asks only for transfers, even if full contract based CVM possible.
 
 **Hints(Optional)**
 
 CVM program may have routing hints, telling what to do in case of limited information or price option.
 
-Hints may be replaced by trustless CVM bots force Registry propagation. 
+Hints may be replaced by trustless CVM bots forcing Registry propagation.
 
 ## Possible ideas of implementation
 
@@ -236,7 +240,7 @@ A
 
   5.2 If no CVM before path not found, reject execution.
 
-6 Output is send CVM output for generate detailed packets packets
+6 Output is sent as CVM output for generate detailed packets
 
 6.1 CVM uses whole path metadata to generate proper transport payload
 
@@ -244,7 +248,8 @@ A
 ```
 
 
-Also can vary like
+Also can vary like:
+
 ```python
 B
 
@@ -264,4 +269,5 @@ B
 
 ### Lowering
 
-Ethereum too high price to execute above algorithm, so any chain sending to ethereum, but lower CVM program into exact Ethereum ABI.
+Ethereum too high price to execute above algorithm and Solana too constrained by heap/gas,
+so any chain sending to Ethereum/Solana must lower CVM program into exact Ethereum/Solana ABI.
