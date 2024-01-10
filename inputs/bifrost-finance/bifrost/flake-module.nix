@@ -20,7 +20,6 @@
           inherit version;
           src = bifrost-src;
           doCheck = false;
-          __noChroot = true;
           buildInputs = with pkgs; [ openssl zstd ];
           configurePhase = ''
             	mkdir home

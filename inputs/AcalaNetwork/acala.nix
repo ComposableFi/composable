@@ -16,7 +16,6 @@
           installPhase = ''
             mkdir --parents $out/bin && mv ./target/release/acala $out/bin
           '';
-          __noChroot = true;
           doCheck = false;
           buildInputs = with pkgs; [ openssl ];
           nativeBuildInputs = with pkgs; [

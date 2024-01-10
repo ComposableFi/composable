@@ -19,6 +19,7 @@
             sha256 = "sha256-nFC1+sEbXm89Vc+Fqz9uzJCfFTqqVGCZP4jR3TqBjDY=";
             fetchSubmodules = false;
           };
+          # shave off some build time using https://github.com/andresilva/polkadot.nix/blob/master/pkgs/polkadot/default.nix
           __noChroot = true;
           configurePhase = ''
             mkdir home
