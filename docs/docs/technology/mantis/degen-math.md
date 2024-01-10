@@ -80,3 +80,18 @@ That leads to optimal spot price.
 
 We assume that fair price in batch auction eventually will be optimal, as safes gas costs of cross chain execution and generally more safe against MEV.
 
+So instead of these orders:
+```
+1. 100pica=10atom
+2. 100pica=10atom
+3. 20atom=100pica
+4. 20atom=100pica
+```
+
+we get these orders:
+```
+1. 100pica=17atom
+2. 101pica=18atom
+3. 20atom=99pica
+4. 21atom=100pica 
+```
