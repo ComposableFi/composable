@@ -30,4 +30,16 @@ The following is a current list of assets available on Picasso. The metadata for
 | Astar                 | ASTR    | 2006     | 18       |
 | Equilibrium           | EQ      | 2011     | 9        |
 | Tinkernet             | TNKR    | 2125     | 12       |
+| SILK                  | SILK    | 16       | 6        |
+| Celestia              | TIA     | 19       | 6        |
+| Inter Stable Token    | IST     | 25       | 6        |
+| Kujira                | KUJI    | 28       | 6        |
+| USK                   | USK     | 26       | 6        |
+| Injective             | INJ     | 24       | 18       |
+| Quicksilver           | QCK     | 29       | 6        |
+| Moonriver             | MOVR    | 23       | 18       |
+| Moonbeam              | GLMR    | 40       | 18       | 
+| Polkadot asset hub USDT | USDT  | 149    | 6       |
+| Polkadot asset hub USDC | USDC  | 150    | 6       |
+
 
