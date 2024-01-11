@@ -20,7 +20,7 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
-      <a href="/technology/ibc">
+      <a href="/technology/architecture">
         <div class="card">
           <div class="card__image">
             <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Architecture_jyrrsj.png" alt="Networks" alt="Architecture" />

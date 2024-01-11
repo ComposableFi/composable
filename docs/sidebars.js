@@ -178,6 +178,7 @@
    ],
 
    architecture: [
+    "technology/architecture",
     {
     type: "category",
        label: "IBC",
