@@ -27,7 +27,8 @@ We ended up unlocking additional rewards and allocating 16% of LAYR's token supp
 ## DOT Purchase Log
 
 This page catalogues all the stablecoin conversions to DOT via TPS (the OTC desk of 3AC ) and contributed to the 
-crowdloan for the Composable Parachain.
+crowdloan for the Composable Parachain. You can find the purchase logs corresponding to the Ethereum address for stablecoin contributors on our [Github](https://github.com/ComposableFi/composable/blob/main/docs/docs/networks/composable/crowdloan-contributors/LAYR-stables-logs.csv).
+
 
 | Date       | Stablecoins    | DOT purchase price |
 | ---------- | -------------- | ------------------ |

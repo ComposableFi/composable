@@ -82,7 +82,7 @@ const config = {
 						label: 'Networks',
 					},
 					{
-						to: '/technology/ibc',
+						to: '/technology/architecture',
 						position: 'left',
 						label: 'Architecture',
 					},
