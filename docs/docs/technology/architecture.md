@@ -9,7 +9,7 @@ These different components collectively facilitate a complete, end-to-end ecosys
 ## [The CVM](cvm.md)
 In the blockchain industry, virtual machines play a key role in executing smart contracts, processing transactions, and ensuring the overall integrity of the chain. Existing virtual machines are designed for specific blockchains, such as the Ethereum Virtual Machine (EVM) being designed for the Ethereum chain.
  
-The Composable Virtual Machine (CVM) plays a different role in that it was constructed as a solution to carry out the critical role of a standard VM, but optimized for cross-chain operations. The CVM is an orchestration language and execution runtime for cross-chain program execution and intent settlement over IBC. With the CVM, developers are no longer restricted to one blockchain ecosystem and instead are able to execute cross-chain operations in one user-signed transaction.
+The Composable Virtual Machine (CVM) plays a different role in that it was constructed as a solution to carry out cross-chain operations. The CVM is an orchestration language and execution runtime for cross-chain program execution and intent settlement over IBC. With the CVM, developers are no longer restricted to one blockchain ecosystem and instead are able to execute cross-chain operations in one user-signed transaction.
 
 ## [The IBC Protocol](ibc.md)
 
@@ -30,3 +30,4 @@ Picasso’s native token is also PICA. Its use current cases include collator st
 Composable Polkadot is our parachain on the Polkadot network. Similarly to Picasso enabling us to seamlessly connect our bridge to Kusama, Composable Polkadot allows us to seamlessly connect the bridge to Polkadot. Moreover, Composable Polkadot inherits the security of the Polkadot relay chain, and thus offers an incredibly secure environment to our ecosystem. Furthermore, having both a Kusama and Polkadot parachain has allowed us to connect the DotSama space at a greater level than ever before.
 
 Composable Polkadot’s native token is [LAYR](../networks/composable/LAYR-tokenomics.md). Its use cases include serving as the universal gas token for Composable, facilitating flash loans and borrowing, and participating in restaking, collator staking, and OpenGov on Composable Polkadot. 
+
