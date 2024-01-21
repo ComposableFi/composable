@@ -27,7 +27,7 @@ slug: /
           </div>
           <div class="card__body">
             <h3>Architecture</h3>
-              Read about the extension of the IBC protocol beyond Cosmos and the Composable Virtual Machine (CVM).
+              Read about the extension of the IBC protocol beyond Cosmos, the Composable Virtual Machine (CVM) and Restaking on Solana.
           </div>
         </div>
       </a>
@@ -77,14 +77,8 @@ slug: /
 
 
 
-*Composable Finance: Composing DeFi for mass adoption*
-
 ![composable_finance](./composable-face-banner.png)
-*any money, any chain, anywhere*
 
-:::note
-The documentation for Composable is presently undergoing development, consequently it may result in an usual display.
-:::
 ## The Vision
 
 In an ideal cross-chain world, developers and users interact unhindered across ecosystems and protocols, regardless of 
