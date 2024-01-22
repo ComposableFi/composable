@@ -65,5 +65,13 @@ jitoSOL is the liquid staking token from [Jito](https://www.jito.network/), whic
 
 Each of these tokens represents a significant market that can now be restaked to Picasso’s Solana IBC validators. If you already hold any of these tokens, or if we’ve inspired you to acquire some, we hope you’ll consider restaking them with us to support Picasso’s Solana IBC connection and to enhance your own yield.
 
+## Multisig signers
+The restaking layer will initially be governed by two multisigs with limited abilities until a decentralised governance system is established.
 
+1. The **Admin multisig** is responsible for the following:
 
+- Whitelisting tokens
+- Setting the staking cap
+- Setting if the guest chain is initialised or not
+  
+2. The **Upgradability multisig** holds the upgrade authority. This multisig has the ability to upgrade the restaking contract and no other powers.
