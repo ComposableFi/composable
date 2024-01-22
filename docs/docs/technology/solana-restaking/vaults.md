@@ -16,7 +16,7 @@ There will be a cap set on the vaults in the following three phases during the l
 ## Delegation Options
 Upon the launch of the bridge, users have the option to delegate their staked tokens to a validator. Users can choose to delegate to a validator of their choice, delegate to their own validator, or if they opt for neither of these, a validator will be randomly delegated the tokens.
 
-Users who wish to remove their stake from the vault after IBC is live must wait until the unbonding period (denoted as "x") of the gues blockchain has elapsed. 
+Users who wish to remove their stake from the vault after IBC is live must wait until the unbonding period (denoted as "x") of the guest blockchain has elapsed. 
 
 ## Receipt Token
 Once users deposit stake into the vaults, they receive a unique NFT which represents the value of their stake. To ensure accurate tracking of rewards, the decision to use NFTs for Receipt Tokens is crucial. Fungible tokens cannot make them transferable because the state would have to be connected to the staker’s public key. If they are made transferable, rewards cannot be tracked.
@@ -27,14 +27,14 @@ The NFT would be used to derive the seeds of an account which would store the fo
 - Stake token mint
 - the last time they received the rewards
 
-NFTs can be easily transferred to anyone while retaining the state information. The NFT holder is the only account hat has the ability to claim the rewards. The rewards can also be made partially transferable but through the contract. 
+NFTs can be easily transferred to anyone while retaining the state information. The NFT holder is the only account that has the ability to claim the rewards. 
 
 ## Staking Process 
 
 1. The following process is how a user would deposit their stake, either SOL, JitoSOL, mSOL or bSOL
 2. An NFT is minted and a new PDA is created with the NFT mint as the seed. The stake is updated throgh a CPI call to the guest chain program. The PDA would store the following data:
    - stake amount
-   - take mint
+   - stake mint
    - last epoch height at which rewards were claimed
    - validator pubkey
 
