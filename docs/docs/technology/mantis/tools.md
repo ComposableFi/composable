@@ -2,12 +2,7 @@
 ## Development Progress
 As of November 15, 2023 MANTIS is in mainnet testing. Details of this testing period are as follows:
 
-Composable is running MANTIS and the Composable Virtual Machine (CVM) on mainnet. Osmosis, Neutron, and the Composable Cosmos chain will be accessible for cross-chain operations on the mainnet testing. The flow and components of the testing are as follows:
-- We will create faucets for people to use
-- There is a place where solvers can connect to the mainnet testing over an RPC
-- There is a place where problems can be submitted by users over an RPC
-
-Additional public details of this testing can be found on [this notion page](https://www.notion.so/composablefoundation/Banksy-Testnet-4-72b7f8317bcf406e9059ae258733eb31), which includes specifications and setup/joining instructions. The code repo is available on [this GitHub page](https://github.com/notional-labs/composable-networks/tree/main/banksy-testnet-4).
+Composable is running MANTIS and the Composable Virtual Machine (CVM) on mainnet. Osmosis, Neutron, and the Composable Cosmos chain will be accessible for cross-chain operations on the mainnet testing.
 
 ## Testing Period
 With mainnet deployment, we can begin getting user traction and initial use of MANTIS via a campaign “game”. In this campaign, users will be able to submit problems/intentions through the frontend. We will provide test tokens for this purpose, which users will be able to deposit in a basic user interface. 
