@@ -33,7 +33,7 @@ Here’s how you can make use of the restaking vaults:
 5. At the launch of the connection, all deposited assets in the vault will be delegated to validators for the Solana IBC connection, helping to secure the network
 6. Your assets will then be designated as restaked with validators
 7. You’ll start accruing restaking rewards proportionate to the amount of assets and time you’re staked, in addition to a bonus for being a vault participant
-8. You can withdraw your restaked assets at any time after the launch of Solana IBC. You must wait for the guest blockchain's unbonding period to receive your tokens.
+8. You can withdraw your restaked assets at any time after the launch of Solana IBC once the guest blockchain's unbonding period is over.
 
 ## How Restaking Will Work
 
