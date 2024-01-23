@@ -243,6 +243,8 @@ mantis: [
    "technology/mantis/solver-integration",
    "technology/mantis/solver-guide",
    "technology/mantis/integration-guide",
+   "technology/mantis/tools",
+
 
         ],
    develop: [
