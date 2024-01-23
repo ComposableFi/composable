@@ -6,7 +6,9 @@ Composable’s architecture is thoughtfully constructed to actualize this missio
 
 These different components collectively facilitate a complete, end-to-end ecosystem for cross-chain DeFi. In brief, the core components of the technical architecture are as follows:
 
-## [The CVM](cvm.md)
+## [MANTIS](mantis.md)
+Multichain Agnostic Normalized Trust-minimized Intent Settlement (MANTIS) is an ecosystem-agnostic intent settlement framework. It is the culmination of all other elements of our architecture; it uses our trust minimized bridge (and thus the IBC as well as all three of our different chains) as well as the CVM to facilitate cross-chain execution of user intents. As a result, we are able to provide users with a novel, intuitive, and streamlined experience for participating in cross-chain DeFi. 
+## [Composable VM](cvm.md)
 In the blockchain industry, virtual machines play a key role in executing smart contracts, processing transactions, and ensuring the overall integrity of the chain. Existing virtual machines are designed for specific blockchains, such as the Ethereum Virtual Machine (EVM) being designed for the Ethereum chain.
  
 The Composable Virtual Machine (CVM) plays a different role in that it was constructed as a solution to carry out cross-chain operations. The CVM is an orchestration language and execution runtime for cross-chain program execution and intent settlement over IBC. With the CVM, developers are no longer restricted to one blockchain ecosystem and instead are able to execute cross-chain operations in one user-signed transaction.

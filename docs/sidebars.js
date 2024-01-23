@@ -229,9 +229,22 @@
         "technology/cvm/tutorial",
    ],
   },
-
-  "technology/mantis",
+  
 ],
+mantis: [
+  {
+    type: "doc",
+    id: "technology/mantis",
+  },
+   "technology/mantis/benefits-use-cases",
+   "technology/mantis/protocol-architecture",
+   "technology/mantis/protocol-flow",
+   "technology/mantis/solvers-solutions",
+   "technology/mantis/solver-integration",
+   "technology/mantis/solver-guide",
+   "technology/mantis/integration-guide",
+
+        ],
    develop: [
     {
       type: "doc",

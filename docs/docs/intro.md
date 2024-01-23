@@ -33,6 +33,19 @@ slug: /
       </a>
     </div>
     <div class="col col--4">
+      <a href="/technology/mantis">
+        <div class="card">
+          <div class="card__image">
+            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1700212545/Architecture_jyrrsj.png" alt="Networks" alt="Networks" />
+          </div>
+          <div class="card__body">
+            <h3>MANTIS</h3>
+              MANTIS.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col col--4">
       <a href="/develop/build-on-composable">
         <div class="card">
           <div class="card__image">

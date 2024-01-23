@@ -1,6 +1,6 @@
 # Composable Cosmos
 
-_This page provides an overview of the Composable Cosmos chain, which is a Tendermint-based blockchain serving as a core component of [Composable IBC](../technology/composable-ibc.md)._
+_This page provides an overview of the Composable Cosmos chain, which is a Tendermint-based blockchain serving as a core component of [Composable's IBC expansion beyond Cosmos](../technology/ibc.md)._
 
 ## Background
 The motivation behind establishing this blockchain is the realization that building new IBC connections to each individual Cosmos chain is a time-consuming process. Initially, we were required to wait for Cosmos chains to upgrade to SDK v0.47 and a future IBC v7 update which includes the ICS-8 Wasm module (currently unreleased) in order to integrate the Grandpa light client written in CosmWasm. **Furthermore, this chain serves a critical role for future IBC connections as the reach of Composable IBC is expanded.**
@@ -27,8 +27,8 @@ Similar to the way majority of Cosmos chains operate, validators can vote using 
 
 | Parameter                                          | Period/Number  |
 |----------------------------------------------------|----------------|
-| Total Deposit                           | 2 days          |
+| Total Deposit                           | 2 million PICA          |
 | Quorum          | 30%         |
-| Voting Period | 5 days        |
+| Voting Period | 1 day        |
 | Threshold                | 50% |
 | No-with-veto                             |  33%   |
