@@ -7,7 +7,7 @@ Composable’s architecture is thoughtfully constructed to actualize this missio
 These different components collectively facilitate a complete, end-to-end ecosystem for cross-chain DeFi. In brief, the core components of the technical architecture are as follows:
 
 ## [MANTIS](mantis.md)
-Multichain Agnostic Normalized Trust-minimized Intent Settlement (MANTIS) is an ecosystem-agnostic intent settlement framework. It is the culmination of all other elements of our architecture; it uses our trust minimized bridge (and thus the IBC as well as all three of our different chains) as well as the CVM to facilitate cross-chain execution of user intents. As a result, we are able to provide users with a novel, intuitive, and streamlined experience for participating in cross-chain DeFi. 
+Multichain Agnostic Normalized Trust-minimized Intent Settlement (MANTIS) is an ecosystem-agnostic intent settlement framework. It is the culmination of all other elements mentioned in this page; it uses Picasso's trust minimized bridge (IBC connections) as well as the CVM to facilitate cross-chain execution of user intents. As a result, users can interact with a novel, intuitive, and streamlined experience for participating in cross-chain DeFi. 
 ## [Composable VM](cvm.md)
 In the blockchain industry, virtual machines play a key role in executing smart contracts, processing transactions, and ensuring the overall integrity of the chain. Existing virtual machines are designed for specific blockchains, such as the Ethereum Virtual Machine (EVM) being designed for the Ethereum chain.
  
@@ -23,13 +23,13 @@ Composable opted to deploy a Cosmos SDK chain as it enabled the customisation of
 
 ## [Picasso](../networks/picasso-parachain-overview.md)
 
-Picasso is Composable’s Kusama parachain. Having our own Kusama parachain has allowed us to optimally connect our IBC bridge to Kusama. Moreover, Picasso serves as the infrastructure layer powering the rest of our technical stack, offering primitives that support our ecosystem such as the [Pablo decentralized exchange](https://www.pablo.finance/).
+Picasso is Composable’s Kusama parachain. Having a Kusama parachain enabled an IBC bridge to Kusama. Moreover, Picasso serves as the infrastructure layer powering the rest of the technical stack, offering primitives that support the ecosystem such as the [Pablo decentralized exchange](https://www.pablo.finance/).
 
 Picasso’s native token is also PICA. Its use current cases include collator staking on Picasso, Apollo staking, and validator staking. In the future, use cases will also include liquid staking revenue and bridging revenue. Moreover, [PICA is used for governing Picasso](../networks/picasso/governance.md).
 
 ## [Composable Polkadot](../networks/composable-parachain-overview.md)
 
-Composable Polkadot is our parachain on the Polkadot network. Similarly to Picasso enabling us to seamlessly connect our bridge to Kusama, Composable Polkadot allows us to seamlessly connect the bridge to Polkadot. Moreover, Composable Polkadot inherits the security of the Polkadot relay chain, and thus offers an incredibly secure environment to our ecosystem. Furthermore, having both a Kusama and Polkadot parachain has allowed us to connect the DotSama space at a greater level than ever before.
+Composable Polkadot is a parachain on the Polkadot network. Similarly to Picasso enabling us to seamlessly connect a trust-minimized bridge to Kusama, Composable Polkadot allows us to seamlessly connect the bridge to Polkadot. Moreover, Composable Polkadot inherits the security of the Polkadot relay chain, and thus offers an incredibly secure environment. Furthermore, having both a Kusama and Polkadot parachain has allowed us to connect the DotSama space at a greater level than ever before.
 
 Composable Polkadot’s native token is [LAYR](../networks/composable/LAYR-tokenomics.md). Its use cases include serving as the universal gas token for Composable, facilitating flash loans and borrowing, and participating in restaking, collator staking, and OpenGov on Composable Polkadot. 
 
