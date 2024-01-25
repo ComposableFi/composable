@@ -6,7 +6,7 @@
 
 📝 **A1:** Composable Cosmos, Composable Parachain, and Picasso are the cornerstones of our ecosystem, each serving a unique yet interconnected role.
 
-1. **[Composable Cosmos Chain](../networks/centauri-chain.md)**: This is a native chain within the Cosmos ecosystem, specifically designed for interoperability. It connects to our Picasso parachain in the Kusama network via IBC (Inter-Blockchain Communication), facilitating seamless asset transfers and cross-chain functionalities.
+1. **[Composable Cosmos Chain](../networks/composable-cosmos.md)**: This is a native chain within the Cosmos ecosystem, specifically designed for interoperability. It connects to our Picasso parachain in the Kusama network via IBC (Inter-Blockchain Communication), facilitating seamless asset transfers and cross-chain functionalities.
 2. **[Composable Parachain](../networks/composable-parachain-overview.md)**: Residing in the Polkadot ecosystem, the Composable Parachain is built for cross-chain functionality and also utilizes IBC to connect with our Picasso parachain in the Kusama network.
 3. **[Picasso](../networks/picasso-parachain-overview.md)**: An infrastructure layer on Kusama aiming for DeFi interoperability. Its native token is $PICA, and it connects to Composable Cosmos and Parachain via IBC.
 

@@ -87,6 +87,11 @@ const config = {
 						label: 'Architecture',
 					},
 					{
+						to: '/technology/mantis',
+						position: 'left',
+						label: 'MANTIS',
+					},
+					{
 						to: '/develop/build-on-composable',
 						position: 'left',
 						label: 'Develop',

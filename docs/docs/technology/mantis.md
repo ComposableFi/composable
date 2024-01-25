@@ -1,40 +1,33 @@
-# MANTIS
+# Protocol Overview
 
-**Multichain Agnostic Normalised Trust-minimised Intent Settlement**
-## The Problem
+Composable’s Multichain Agnostic Normalized Trust-minimized Intent Settlement (MANTIS) is an ecosystem-agnostic intent settlement framework. MANTIS facilitates settlement of cross-chain user intents, optimising the supply chain to deliver upon our vision of a user-centric, ecosystem-agnostic future for DeFi. 
 
-There is no one set definition for this Intents in DeFi. In general, intents are understood to be users’ desires for a given transaction or other outcome. Intents include desired parameters (such as to swap X amount of A token for B token), but leave some room for flexibility (such as where this swap occurs) in the solution that solvers provide. Anoma’s Apriori does a great job of breaking down the history and various definitions of intents in this blog about their Intents Day event. This blog by Essential also provides another means of defining intents and solvers.
+Presently, MANTIS is live on mainnet for testing with a number of solvers to fulfill user intents, with the inclusion of oracles and collators to run validators for this framework.
 
-Composable believes that:
+:::info Understanding Intents
 
-- Intents are inherently cross-domain
-- Blockchains are inherently trust-no-one markets
+Intents have become a hot topic in DeFi, though there is no one set definition for this concept. In general, intents are understood to be users’ desires for a given transaction or other outcome. Intents include desired parameters (such as to swap X amount of A token for B token), but leave some room for flexibility (such as where this swap occurs) in the solution that solvers provide. Anoma does a great job of breaking down the history and various definitions of intents in [this blog](https://anoma.net/blog/intents-arent-real) about their Intents Day event. [This blog](https://blog.essential.builders/introducing-essential/) by Essential also provides another means of defining intents and solvers.
+:::
+## Intents are Inherently Cross-Domain
 
-Distinct blockchain ecosystems, though increasing the solution space for problems, do not actually communicate with each other. There is thus a huge amount of potential loss due to lack of synchronicity between these markets. There is no credibly verifiable way to settle orders between chains, and also settle them at the same time. 
+Composable's thesis introduces an additional feature to how intents are currently recognised, interoperability - intents are inherently cross-domain. To understand this, the history of the equities markets provides great insights as it became more efficient with execution being broken across different markets. Prior to the introduction of dark pools, which are private liquidity pools, individuals were only able to use select markets:
 
-So, how can the supply chain be optimised so that there is the remote possibility of facilitating this?
+After the introduction of dark pools, which enabled orders to be broken up and split into different markets, the solution space broadened and more earnings opportunities were made available:
 
-## The Solution: MANTIS
+![dark-pool](../technology/mantis/overview.png)
+## Blockchains are Inherently Trust-No-One Markets
+Orders live on blocks that are publicly verifiable. A supply chain forms around these orders, involving the following entities and roles:
 
-MANTIS is comprised of the following components:
+- **Users** - submit orders
+- **Protocols** - serve as venues for orders
+- **Block builders** - build blocks within orders
+- **Proposers** - propose blocks with orders
+- **Searchers** - extract MEV from the presence of these orders in pre-processed blocks
 
-**Solvers**
+This relationship is shown below:
 
-In the [CVM](./cvm.md), a solver takes in data about users’ transactions, comes up with a solution to fulfill these transactions, and is incentivised to do so.
+![flow](../technology/mantis/flow.png)
 
-**Cross-Domain Communication via the IBC**
+Distinct blockchain markets, though increasing the solution space for problems, do not actually communicate with each other. There is thus a huge amount of potential loss due to lack of synchronicity between these markets. Unlike the equities market, there is no credibly verifiable way to settle orders between chains, and also settle them at the same time.
 
-MANTIS leverages IBC to facilitate cross-chain intent settlement. IBC already connects Polkadot and Kusama to Cosmos appchains via Composable's work, with expansion to Solana and Ethereum in active development. 
-
-**Multi-Domain Auctions**
-
-User intents are scored based on volume cleared, with solutions being screened for MEV and bundled into a block for each domain.
-
-**Language for Execution**
-
-When the best solution is found, it is turned into a CVM program, which specifies the execution route.
-
-**Verifiable Settlement**
-
-Settlement of transactions resolving user intents must be verifiable. We also believe that these transactions must be partial block aware; To improve cross-domain censorship-resistance and enforce searcher conditioning for cross-domain transactions, partial block auctions are a must.
-
+How can the supply chain be optimized so that there is the remote possibility of facilitating this? **The solution is MANTIS.**
