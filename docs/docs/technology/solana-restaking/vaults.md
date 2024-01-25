@@ -1,6 +1,6 @@
 # Restaking Vaults
 
-Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/stake-during-bounding/solana/restaking/README.md) offer users a secure and flexible way to **stake various Solana ecosystem tokens, participate in the launch of IBC on Solana, and delegate tokens to validators**. Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/df10524387eb27af5ddd97016b25ce03a38be0e2/solana/restaking/programs/restaking/src/lib.rs) on Solana provide users the opportunity to stake SOL (Solana) and earn additional yield on Solana LSTs (Liquid Staked Solana tokens) in phase 1, and later, in phase 2, users will also be able to stake Orca LP tokens and receipt tokens from other platforms. The vaults are planned for a January launch where they will stay open until the launch of Solana IBC. Once launch occurs, the assets will be assigned to the guest blockchain layer. It is important to be aware vault deposits will be locked until launch. There will be three rounds of deposits with caps.
+Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/README.md) offer users a secure and flexible way to **stake various Solana ecosystem tokens, participate in the launch of IBC on Solana, and delegate tokens to validators**. Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/programs/restaking/src/lib.rs) on Solana provide users the opportunity to stake SOL (Solana) and earn additional yield on Solana LSTs (Liquid Staked Solana tokens) in phase 1, and later, in phase 2, users will also be able to stake Orca LP tokens and receipt tokens from other platforms. The vaults are planned for a January launch where they will stay open until the launch of Solana IBC. Once launch occurs, the assets will be assigned to the guest blockchain layer. It is important to be aware vault deposits will be locked until launch. There will be three rounds of deposits with caps.
 
 Understanding the processes outlined in this documentation will enable users to be a part of implementing IBC on Solana and help navigate engaging with the Restaking vaults effectively.
 
@@ -26,6 +26,7 @@ The NFT would be used to derive the seeds of an account which would store the fo
 - Stake amount
 - Stake token mint
 - the last time they received the rewards
+- validator pubkey
 
 NFTs can be easily transferred to anyone while retaining the state information. The NFT holder is the only account that has the ability to claim the rewards. 
 
