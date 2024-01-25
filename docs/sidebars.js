@@ -241,6 +241,8 @@
     "technology/solana-restaking/vaults"],
 },
 
+],
+
 mantis: [
   {
     type: "doc",
@@ -255,10 +257,6 @@ mantis: [
    "technology/mantis/integration-guide",
    "technology/mantis/tools",
 
-
-  ],
-
-  "technology/mantis",
 ],
    develop: [
     {
