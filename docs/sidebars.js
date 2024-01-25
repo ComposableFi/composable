@@ -201,7 +201,6 @@
           collapsed: true,
           items: [
             "technology/ibc/solana/technical-overview",
-            "technology/ibc/solana/restaking",
           ],
         },
         "technology/ibc/cosmos-ibc",
@@ -229,8 +228,19 @@
         "technology/cvm/tutorial",
    ],
   },
-  
-],
+  {
+    type: "category",
+        label: "Solana Restaking",
+        link: {
+         type: "doc",
+          id: "technology/solana-restaking",
+       },
+      collapsible: false,
+      collapsed: false,
+      items: [
+    "technology/solana-restaking/vaults"],
+},
+
 mantis: [
   {
     type: "doc",
@@ -246,14 +256,16 @@ mantis: [
    "technology/mantis/tools",
 
 
-        ],
+  ],
+
+  "technology/mantis",
+],
    develop: [
     {
       type: "doc",
       id: "develop/build-on-composable",
     },
     "develop/composable-cosmos",
-    "develop/composable-testnet-4",
     "develop/local-picasso-guide",
     "develop/oracle-set-up-guide",
     "develop/collator-guide",
