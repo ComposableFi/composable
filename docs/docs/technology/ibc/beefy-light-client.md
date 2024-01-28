@@ -1,4 +1,4 @@
-# The 11-BEEFY IBC Light Client
+# 11-BEEFY IBC Light Client
 
 :::note
 

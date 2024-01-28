@@ -74,4 +74,16 @@ The restaking layer will initially be governed by two multisigs with limited abi
 - Setting the staking cap
 - Setting if the guest chain is initialised or not
   
-2. The **Upgradability multisig** holds the upgrade authority. This multisig has the ability to upgrade the restaking contract and no other powers.
+2. The **Upgradability multisig** holds the upgrade authority. This multisig has the ability to upgrade the restaking contract and no other powers. This is composed of a 7-of-9 multisig at address JD4dNpiv9G24jmq8XQMuxbQPKN4rYV7kue2Hzi1kNT4Q. The purpose of this multisig will be to control upgrade authority on the vault contracts. As we move toward the launch of SOL IBC, we will look to expand this multisig in the greater pursuit of further decentralization. Signers for the multisig are as follows:
+
+- Miguel Matos — Board member, Composable Foundation. Professor at the Universidade de Lisboa & Researcher at INESC-ID.
+- Dan Edlebeck — Advisor, Composable
+- Blas Rodriguez — CTO, Composable
+- Joe DeTommaso — Head of Strategy, Composable
+- Jafar Azam — Product Owner, Composable
+- Dhruv D Jain — Research Analyst, Composable
+- SolBlaze — bSOL LSD
+- Don Cryptonium — Community Member
+- Polkachu — Validator Operator
+
+

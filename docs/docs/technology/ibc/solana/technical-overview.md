@@ -1,43 +1,12 @@
 # Technical Innovation: the Guest Blockchain
 
-Some blockchains (for example NEAR, Solana and TRON) do not meet IBC’s technical criteria (e.g. see [ICS-23 specification](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments)), preventing their integration with the wider IBC network. In response, we created a novel guest blockchain solution which runs on top of otherwise unsupported ledgers, providing all features necessary for IBC integration. We deploy the guest blockchain solution on the Solana chain where our approach introduces provable storage and enables IBC-based communication with Solana. This allows for trustless bridging to chains that otherwise cannot support the IBC.
-
 The Solana guest blockchain is a system developed by Composable and our collaborators on the research team at INESC-ID Distributed Systems Group, associated with the University of Lisbon. We are particularly grateful for the contributions of Professor Miguel Matos to this collaboration.
 
 The guest blockchain concept acts as a foundational bridge, connecting previously isolated blockchains through the broader IBC. The benefits extend to increased liquidity, cross-chain DeFi opportunities, and a streamlined user experience. As we adapt and deploy this solution on additional blockchains, the vision of trust-minimized cross-chain interoperability becomes a reality, pushing blockchain towards mass adoption.
 
-## IBC Requirements & The Need for a Guest Blockchain
-The Inter-Blockchain Communication (IBC) Protocol is an end-to-end stateful protocol for reliable, ordered, and authenticated communication between two. It enables bi-directional asynchronous communication between two blockchains within a relatively short time window (an average of less than one minute per IBC message ([Kim, Essaid, and Ju, 2022](https://ieeexplore.ieee.org/document/9919970/)). Thus, the IBC is our mechanism of choice for facilitating cross-chain communication in a trust-minimized manner.
-
-Yet, connecting to the IBC has a number of requirements. The IBC implementation on each blockchain has the following elements:
-
-- **Provable key-value store**: this provides a key-value store interface with the addition that it can cryptographically prove to an external verifier the presence or absence of a given key-value pair. It is often realised as a Merkle trie but other cryptographic commitment schemes are also possible.
-
-- **Counterparty’s light client**: an on-chain component responsible for processing and validating the blockchain headers of the counterparty blockchain. This client is light in the sense that processing only the headers requires a small amount of computational resources.
-
-- **IBC module**: handles the logic of the IBC Protocol and maintains all the state necessary for the packet exchange. Some blockchains such as those implementing the CosmWasm specification have native IBC support and hence this module is part of the runtime environment. Other blockchains are IBC-agnostic and hence the IBC module is implemented as a regular Smart Contract.
-
-- **Smart Contracts**: execute in the chain’s runtime environment and are responsible for sending and receiving IBC packets.
-
-Before two blockchains can communicate along the IBC Protocol, an IBC connection must be established that meets the above requirements. This is done through a four-way handshake whose purpose is to negotiate the protocol version and features to use, as well as to verify the identity and status of each chain.
-
-The four phases of the [handshake](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments) are:
-
-- **Init**: Chain A initiates the connection, sets the connection’s status to INIT and sends proofs of its view of: i) the status of the connection, and ii) chain B’s head. “Send” here means that an off-chain relayer forwards the message by executing a transaction on the other chain.
-- **Try**: Chain B verifies the proofs, sets the connection’s status to TRYOPEN and sends replies with two analogous proofs.
-- **Ack**: Chain A verifies the proofs, sets the connection’s status to OPEN and sends confirmation to chain B.
-- **Confirm**: Chain B sets the connection’s status to OPEN.
-
-Additional technical requirements imposed by the IBC on chains that it connects are that the ledger needs to: 
-
-- Provide a Smart Contract runtime with transactional state changes
-- Support light clients and state proofs
-- Provide block timestamps
-- Support introspection including a view of past block hashes
-
-Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The guest blockchain serves as a solution to this problem.
-
-In the next section, we present our approach for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
+:::info
+Some blockchains (for example NEAR, Solana and TRON) do not meet IBC’s technical criteria (e.g. see [ICS-23 specification](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments)), preventing the implementation of IBC on their networks. In response, we created a novel guest blockchain solution which runs on top of otherwise unsupported ledgers, providing all features necessary for IBC integration. This will be deployed on Solana to retrieve provable storage and supply Solana state proofs to enable IBC. This allows for trust-minimised bridging to chains that otherwise cannot support the IBC.
+:::
 
 ## Guest Blockchain Architecture
 Our innovative approach involves creating a guest blockchain layered atop the host blockchain. This guest blockchain extends capabilities, providing state proofs for blockchains lacking IBC compatibility. This solution is not only generic, applicable to any smart-contract-supporting blockchain, but also imposes no changes on the underlying host—a significant advantage.

@@ -1,4 +1,4 @@
-# Cosmos ⬌ Polkadot IBC
+# Polkadot IBC
 
 IBC was once known as the native communication protocol of the Cosmos ecosystem until Composable worked on extending this piece of technology to non-Cosmos chains. It allows for trust-minimised cross-chain messaging to occur between blockchains. For the IBC connection between Polkadot and Cosmos, the Tendermint and Grandpa light clients are utilised alongside `ibc-rs` and the Hyperspace relayer on Picasso and Composable Cosmos.
 
