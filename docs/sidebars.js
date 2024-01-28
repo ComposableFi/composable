@@ -189,13 +189,13 @@
        collapsible: false,
        collapsed: false,
        items: [
-        "technology/ibc/ethereum-ibc",
+        "technology/ibc/ethereum",
         {
           type: "category",
-          label: "Solana Restaking & IBC",
+          label: "Solana IBC",
           link: {
             type: "doc",
-            id: "technology/ibc/solana-ibc",
+            id: "technology/ibc/solana",
           },
           collapsible: true,
           collapsed: true,
@@ -203,9 +203,9 @@
             "technology/ibc/solana/technical-overview",
           ],
         },
-        "technology/ibc/cosmos-ibc",
-        "technology/ibc/polkadot-kusama-ibc",
-        "technology/ibc/near-ibc-bridge",
+        "technology/ibc/polkadot",
+        "technology/ibc/polkadot-kusama",
+        "technology/ibc/near",
         "technology/ibc/hyperspace-relayer",
         "technology/ibc/light-clients",
         "technology/ibc/merkle-mountain-ranges",
@@ -238,7 +238,8 @@
       collapsible: false,
       collapsed: false,
       items: [
-    "technology/solana-restaking/vaults"],
+    "technology/solana-restaking/mantis-games",
+    "technology/solana-restaking/vaults"   ],
 },
 
 ],

@@ -11,11 +11,11 @@ Before Ethereum transitioned to Proof of Stake (PoS) from its former consensus m
 
 Composable has made substantial progress in developing light clients for networks that previously lacked them, conducting extensive research and development in this domain. Composable sees the contribution made to Ethereum not only by connecting it to Cosmos, Polkadot, and other chains via IBC but also by creating a **Casper light client for the [Ethereum Beacon Chain](https://ethereum.org/en/roadmap/beacon-chain/#what-is-the-beacon-chain)** within an accelerated timeline. This light client will be deployed on the Composable Cosmos chain, which is already connected to the Cosmos and Polkadot ecosystems.
 
-The Casper Light Client relies on the **Sync Committee**, which comprises 512 validators who undergo random selection once every sync committee period, approximately equal to one day. While a validator is actively participating in the sync committee, their primary responsibility entails consistently signing the block header representing the current chain head during each slot. The Sync Committee is a succinct way of getting a sample to verify a subset of the signatures of Ethereum. 
-
 :::info
 Casper is Ethereum's PoS consensus protocol implemented within ETH 2.0. In Casper, validators participate in block creation and validation based on the amount of stake they lock up as collateral. This PoS system was adopted to enhance the security, scalability, and energy efficiency of Ethereum by reducing the need for computationally intensive mining while rewarding validators with transaction fees.
 :::
+
+The Casper Light Client relies on the **Sync Committee**, which comprises 512 validators who undergo random selection once every sync committee period, approximately equal to one day. While a validator is actively participating in the sync committee, their primary responsibility entails consistently signing the block header representing the current chain head during each slot. The Sync Committee is a succinct way of getting a sample to verify a subset of the signatures of Ethereum. 
 
 Composable will implement a Tendermint light client on Ethereum by deploying it as a smart contract. The Tendermint light client is responsible for verifying the validity of block headers from the Composable Cosmos chain and ensuring that the consensus state of the source blockchain is consistent with the header being presented. These headers contain data such as block hashes, timestamps, and state roots. It will be too expensive to verify signatures from  the validator set of the Composable Cosmos chain therefore, ZK-Snarks are used to verify all signatures in succinct proofs. Read more on light clients [here](light-clients.md).
 

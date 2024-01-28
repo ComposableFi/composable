@@ -1,22 +1,21 @@
-# Restaking Vaults
+# Vaults
 
-Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/README.md) offer users a secure and flexible way to **stake various Solana ecosystem tokens, participate in the launch of IBC on Solana, and delegate tokens to validators**. Picasso's [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/programs/restaking/src/lib.rs) on Solana provide users the opportunity to stake SOL (Solana) and earn additional yield on Solana LSTs (Liquid Staked Solana tokens) in phase 1, and later, in phase 2, users will also be able to stake Orca LP tokens and receipt tokens from other platforms. The vaults are planned for a January launch where they will stay open until the launch of Solana IBC. Once launch occurs, the assets will be assigned to the guest blockchain layer. It is important to be aware vault deposits will be locked until launch. There will be three rounds of deposits with caps.
+The [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/README.md) offers users a secure and flexible way to **stake various Solana ecosystem tokens and delegate tokens to validators in order to secure the [Guest Blockchain](../ibc/solana/technical-overview.md)**. Understanding the processes outlined in this documentation will enable users to be a part of implementing IBC on Solana and engage with the Restaking vaults effectively.
 
-Understanding the processes outlined in this documentation will enable users to be a part of implementing IBC on Solana and help navigate engaging with the Restaking vaults effectively.
+The [Restaking Vaults](https://github.com/ComposableFi/emulated-light-client/blob/master/solana/restaking/programs/restaking/src/lib.rs) on Solana provide users the opportunity to stake SOL (Solana) and earn additional yield on Solana LSTs (Liquid Staked Solana tokens) in phase 1 of the launch, and later, in phase 2, users will also be able to stake Orca LP tokens and receipt tokens from other platforms. The vaults are launching on Sunday January 28th and will remain open until the launch of [Solana IBC](../ibc/solana.md). Once launch occurs, the assets will be assigned to secure the Guest Blockchain. 
+
+:::note
+Deposits in the vault will remain locked until the implementation of IBC on Solana. After this point, users can withdraw their deposits at any time; however, they need to observe a 2-day unbonding period on the Guest Blockchain before receiving their tokens.
+:::
+
 
 ## Token Types
-Users can stake SOL and SOL LSTs in phase 1, and in phase 2, Orca LP tokens and receipt tokens from other platforms are also eligible for staking. When users stake into the vault, they receive an NFT as a receipt token. This NFT serves as a unique identifier for the staked tokens, similar to the Uni V3 NFT receipt tokens. Once users stake their tokens in the vault, they are locked up until the launch of IBC on Solana.
-
-There will be a cap set on the vaults in the following three phases during the launch of the vaults:
-
-- Round 1: 50,000 SOL 
-- Round 2: 150,000 SOL
-- Round 3: 500,000 SOL 
+Users can stake SOL and SOL LSTs in phase 1 of the restaking layer, and in phase 2, Orca LP tokens and receipt tokens from other platforms are also eligible for staking. When users stake into the vault, they receive an NFT as a receipt token. This NFT serves as a unique identifier for the staked tokens, similar to the Uni V3 NFT receipt tokens. Once users stake their tokens in the vault, they are locked up until the launch of IBC on Solana.
 
 ## Delegation Options
 Upon the launch of the bridge, users have the option to delegate their staked tokens to a validator. Users can choose to delegate to a validator of their choice, delegate to their own validator, or if they opt for neither of these, a validator will be randomly delegated the tokens.
 
-Users who wish to remove their stake from the vault after IBC is live must wait until the unbonding period (denoted as "x") of the guest blockchain has elapsed. 
+Users who wish to remove their stake from the vault after IBC is live must wait until the 2 day unbonding period of the guest blockchain has elapsed. 
 
 ## Receipt Token
 Once users deposit stake into the vaults, they receive a unique NFT which represents the value of their stake. To ensure accurate tracking of rewards, the decision to use NFTs for Receipt Tokens is crucial. Fungible tokens cannot make them transferable because the state would have to be connected to the staker’s public key. If they are made transferable, rewards cannot be tracked.
@@ -32,8 +31,8 @@ NFTs can be easily transferred to anyone while retaining the state information. 
 
 ## Staking Process 
 
-1. The following process is how a user would deposit their stake, either SOL, JitoSOL, mSOL or bSOL
-2. An NFT is minted and a new PDA is created with the NFT mint as the seed. The stake is updated throgh a CPI call to the guest chain program. The PDA would store the following data:
+1. The following process is how a user would deposit their stake, either **SOL, JitoSOL, mSOL or bSOL**
+2. An NFT is minted and a new Program Derived Address (PDA) is created with the NFT mint as the seed. The stake is updated through a CPI call to the guest chain program. The PDA would store the following data:
    - stake amount
    - stake mint
    - last epoch height at which rewards were claimed
