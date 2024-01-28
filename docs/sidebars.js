@@ -190,19 +190,7 @@
        collapsed: false,
        items: [
         "technology/ibc/ethereum",
-        {
-          type: "category",
-          label: "Solana IBC",
-          link: {
-            type: "doc",
-            id: "technology/ibc/solana",
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            "technology/ibc/solana/technical-overview",
-          ],
-        },
+        "technology/ibc/solana",
         "technology/ibc/polkadot",
         "technology/ibc/polkadot-kusama",
         "technology/ibc/near",
@@ -238,8 +226,10 @@
       collapsible: false,
       collapsed: false,
       items: [
-    "technology/solana-restaking/mantis-games",
-    "technology/solana-restaking/vaults"   ],
+    "technology/solana-restaking/technical-overview", 
+     "technology/solana-restaking/vaults",
+     "technology/solana-restaking/mantis-games"
+     ],
 },
 
 ],

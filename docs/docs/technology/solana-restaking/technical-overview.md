@@ -1,6 +1,6 @@
 # Technical Innovation: the Guest Blockchain
 
-The Solana guest blockchain is a system developed by Composable and our collaborators on the research team at INESC-ID Distributed Systems Group, associated with the University of Lisbon. We are particularly grateful for the contributions of Professor Miguel Matos to this collaboration.
+The Solana guest blockchain is a system developed by Composable and collaborators on the research team at INESC-ID Distributed Systems Group, associated with the University of Lisbon. We are particularly grateful for the contributions of Professor Miguel Matos to this collaboration.
 
 The guest blockchain concept acts as a foundational bridge, connecting previously isolated blockchains through the broader IBC. The benefits extend to increased liquidity, cross-chain DeFi opportunities, and a streamlined user experience. As we adapt and deploy this solution on additional blockchains, the vision of trust-minimized cross-chain interoperability becomes a reality, pushing blockchain towards mass adoption.
 
@@ -13,7 +13,7 @@ Our innovative approach involves creating a guest blockchain layered atop the ho
 
 This novel guest blockchain design enables IBC Protocol communication between Solana and other IBC-supported ledgers (such as ones based on the Cosmos SDK). To operate, the system requires participation of validators who take part in guest block generation. The overall flow of the guest blockchain is depicted below:
 
-![guest_blockchain](../ibc/../solana/gb.png)
+![guest_blockchain](../solana-restaking/gb.png)
 
 *This figure depicts the sequence of events when successfully sending a message from a blockchain using the guest blockchain solution and an IBC-enabled counterparty blockchain. Like in any trustless example, anyone can run a relayer to pass messages between the host blockchain and the counterparty blockchain. However, to be able to provide a proof to the counterparty blockchain, a guest blockchain with provable storage is necessary.*
 
@@ -32,7 +32,7 @@ The validator network will be directed by majority where it is the responsibilit
 Joining as a validator will require a bonded stake to keep participation gated from malicious actors easily onboarding. The size of the bond will be 500 SOL.
 
 #### (Re) Staking
-The validator set will be able to utilize liquid staking derivatives (LSD) of SOL, as well as LP tokens for this initiative. The following assets will be deemed acceptable collateral for staking as a validator: mSOL, jitoSOL, SOL/USDC LP, SOL/USDC LP, mSOL/USDC LP, jitoSOL/USDC LP
+The validator set will be able to utilize liquid staking derivatives (LSD) of SOL, as well as LP tokens for this initiative. The following assets will be deemed acceptable collateral for staking as a validator: SOL, mSOL, jitoSO and bSOL.
 The Pyth oracle will be used to access pricing feeds for assets staked to the platform.
 
 #### Slashing & Jailing: Safeguarding Integrity
