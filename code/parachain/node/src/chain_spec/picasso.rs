@@ -26,7 +26,6 @@ pub fn genesis_config(
 	existential_deposit: Balance,
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
-
 	let dex = picasso_runtime::PabloConfig {
 		pools: vec![
 			(root.clone(), CurrencyId(1), CurrencyId(4)),
