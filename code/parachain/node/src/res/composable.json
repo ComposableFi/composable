@@ -4,7 +4,8 @@
   "chainType": "Live",
   "bootNodes": [
     "/dns/rpc-01.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWQYFhu2JAnSFkP97bNuf6wXAY3uvXzK1BYCnNGXJF43tp",
-    "/dns/rpc-02.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWMt2Vgq3SsjDEoyWEmEdSLmKf3FmMeUtb2vHvRkETDRSJ"
+    "/dns/rpc-02.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWMt2Vgq3SsjDEoyWEmEdSLmKf3FmMeUtb2vHvRkETDRSJ",
+    "/dns/rpc-03.composable-network.composablenodes.tech/tcp/30334/p2p/12D3KooWMZRzu1d4xYUH2GwT3Kiweqm63TVy9E3hafU1t6KUBBJZ"
   ],
   "telemetryEndpoints": [
     [
