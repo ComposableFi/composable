@@ -26,19 +26,7 @@ pub fn genesis_config(
 	existential_deposit: Balance,
 	treasury: AccountId,
 ) -> picasso_runtime::GenesisConfig {
-	let contracts =
-		[option_env!("CW_CVM_OUTPOST_WASM_PATH"), option_env!("CW_CVM_EXECUTOR_WASM_PATH")]
-			.into_iter()
-			.flatten()
-			.map(|path| match std::fs::read(path).map(|bytes| bytes.try_into()) {
-				Ok(Ok(data)) => data,
-				Ok(Err(_err)) => panic!("{path}: wasm file is over size limit"),
-				Err(err) => panic!("{path}: {err}"),
-			})
-			.map(|contract| (root.clone(), contract))
-			.collect();
 
-	let cosmwasm = picasso_runtime::CosmwasmConfig { contracts };
 	let dex = picasso_runtime::PabloConfig {
 		pools: vec![
 			(root.clone(), CurrencyId(1), CurrencyId(4)),
@@ -106,7 +94,7 @@ pub fn genesis_config(
 			assets: primitives::topology::Picasso::assets(),
 			phantom: Default::default(),
 		},
-		cosmwasm,
+		cosmwasm: Default::default(),
 		pablo: dex,
 
 		tokens: Default::default(),
