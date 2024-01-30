@@ -46,6 +46,19 @@
            ],
          },
          {
+          type: "category",
+          label: "Solana Restaking",
+          link: {
+            type: "generated-index",
+            slug: "solana-restaking",
+          },
+          collapsible: false,
+          items: [
+            "user-guides/restaking-sol",
+            "user-guides/team-competition",
+          ],
+        },
+         {
            type: "category",
            label: "Transactions and Trading",
            link: {
