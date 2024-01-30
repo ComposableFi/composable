@@ -71,7 +71,7 @@
     composable-cosmos = {
       url = "github:ComposableFi/composable-cosmos/release/v7.0.x";
     };
-
+    # update this to update any CVM/MANTIS deps
     cvm = { url = "github:ComposableFi/cvm"; };
 
     networks = { url = "github:ComposableFi/networks"; };
