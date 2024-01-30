@@ -22,7 +22,16 @@ The parameters will be set in the following three rounds:
 ### Rewards
 There will be 17,500,000 PICA allocated to reward vault participants. Once the Solana IBC connection launches, restaked assets will be allocated to validators and users begin accruing staking rewards in the form of transfer revenue.
 
-The team that wins the competition, will receive 80% of transfer revenue for 30 days.
+The team that wins the competition, will receive 80% of transfer revenue for the first 30 days of activity on the Solana IBC bridge.
+
+The Restaking Vaults feature a reward pool of 17.5 million PICA tokens. Notably, 20% of this pool, equivalent to 3.5 million PICA, will be distributed during the Token Generation Event (TGE) of PICA on Solana coinciding with the launch of IBC on Solana. The remaining 80%, totalling 14 million PICA, will be vested evenly over a 3-month period following the conclusion of the team competition. Monthly distributions will average around 4.66 million PICA.
+
+**It’s essential that users are aware of the implications of entering the vaults and ramifications on their rewards, should they choose to unstake before rewards have fully vested.** During the MANTIS Games Competition (restaking vaults), user assets will be locked within the contracts until the launch of Solana IBC.
+
+Once IBC on Solana is launched, users will be able to unstake their assets, but their rewards will be penalized under the following conditions:
+
+- If a user decides to unstake some percentage of SOL before the end of the vesting period, they will forfeit a corresponding percentage of their rewards. E.g. If a user decides to unstake 10% of their SOL holdings in the first month, they will forfeit 10% of the remaining vested rewards scheduled for the second and third months
+- Complete early unstaking results in forfeiture of all rewards except the initial 20% received at the launch of Solana IBC.
 
 ## Phase 3 - Swap Competition 
 In this phase, MANTIS games will be full fledged. We aim to generalize competition beyond staking. Here, we introduce users’ “Degen scores” (a referral score for on-chain usage and asset capitalization; users can share this code to be followed, so others can replicate their specific intent passageways). Essentially, this allows users to copy and paste your intent for others to use, effectively referring them to input an intent. Judgements in the competition are based on this score and other factors that will be released ahead of phase 3. 

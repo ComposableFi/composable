@@ -46,6 +46,19 @@
            ],
          },
          {
+          type: "category",
+          label: "Solana Restaking",
+          link: {
+            type: "generated-index",
+            slug: "solana-restaking",
+          },
+          collapsible: false,
+          items: [
+            "user-guides/restaking-sol",
+            "user-guides/team-competition",
+          ],
+        },
+         {
            type: "category",
            label: "Transactions and Trading",
            link: {
@@ -55,7 +68,6 @@
            collapsible: false,
            items: [
              "user-guides/composable-cosmos-staking",
-             "user-guides/claim-rewards-guide",
              "user-guides/how-to-provide-liquidity",
              "user-guides/how-to-trade-pica-on-pablo",
              "user-guides/dot-lp-guide",
