@@ -15,11 +15,13 @@ A summary of the flow of the MANTIS protocol is below, with further details foun
 3. **Single-Chain Execution Scenario**:
 - **Efficient Execution**: The platform swiftly matches orders in a single transaction block for prompt fulfillment.
 - **Batch Auctions**: Batch Auctions process multiple orders simultaneously, maximizing the product of exchanged amounts (A * B) for efficient matching.
-**Order Pricing**:
+
+    **Order Pricing**:
+
 - **Dynamic Price Matching**: The platform matches orders to achieve optimal trading volume without violating user-set limits.
 - **Execution at Optimal Prices**: Execution occurs at a price that maximizes volume, ensuring efficiency.
 
-4. **Cross-Chain Execution Scenario**:
+1. **Cross-Chain Execution Scenario**:
 - **Multi-Chain Execution**: Certain orders are executed using liquidity pools across multiple blockchain networks, involving several blocks and chains.
 - **Cross-Chain Virtual Machine (CVM) Program**: The CVM facilitates these transactions, ensuring efficient multi-chain swaps.
 - **Monitoring Interface**: A detailed interface provides real-time updates for multi-chain transactions.
