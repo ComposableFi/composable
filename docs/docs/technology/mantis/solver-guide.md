@@ -6,7 +6,7 @@ This tutorial describes how to run a solver node and how users can post problems
 | **Chain** | **Stage** | **ID** |
 | -------- | -------- | -------- |
 | centauri-1     | mainnet     | centauri1lnyecncq9akyk8nk0qlppgrq6yxktr68483ahryn457x9ap4ty2sthjcyt    |
-| osmosis-1     | mainnet     | Text     |
+| osmosis-1     | mainnet     |      |
 
 
 ### Problem Submission

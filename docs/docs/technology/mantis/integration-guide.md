@@ -12,7 +12,7 @@ The end-to-end flow for getting data for solvers, posting the solution, and exec
 - The problem format is [here](https://github.com/ComposableFi/composable/blob/f65076f5fcf2f0903b3d21e62ba22d7ba91c0c9f/code/xcvm/cosmwasm/contracts/order/src/lib.rs#L65).
   - In JSON format, in https://www.npmjs.com/package/cvm-cw-types?activeTab=code, open `/cvm-cw-types/dist/cw-mantis-order/response_to_get_all_orders.json`.
 
-2. Solvers Collect Data Needed to Solve Problems
+2. **Solvers Collect Data Needed to Solve Problems**
 - AMM amounts/fees, tokens denominations, and routes are needed.
   - [AMM Neutron](https://app.astroport.fi/api/trpc/pools.getAll?input=%7B%22json%22%3A%7B%22chainId%22%3A%22phoenix-1%22%7D%7D)
   - [AMM Osmosis](https://app.osmosis.zone/api/pools?page=1&limit=300&min_liquidity=500000)
