@@ -30,16 +30,15 @@ In this mechanism, it is critical that we properly determine the value of these 
 
 Users will accumulate staking rewards proportionate to their staking amount and time. Thus, they can receive not only the yield on their original stake, but also the yield from restaking.
 
-## Multisig signers
-The restaking layer will initially be governed by two multisigs with limited abilities until a decentralised governance system is established.
-
-1. The **Admin multisig** is responsible for the following:
+## Governance
+The restaking layer will initially be governed by a multisigs until a decentralised governance system is established. This is composed of a 7-of-9 multisig at address JD4dNpiv9G24jmq8XQMuxbQPKN4rYV7kue2Hzi1kNT4Q. As we move toward the launch of SOL IBC, we will look to expand this multisig in the greater pursuit of further decentralization. The **Admin & Upgradability multisig** is responsible for the following:
 
 - Whitelisting tokens
 - Setting the staking cap
 - Setting if the guest chain is initialised or not
+- Upgrading the contract
   
-2. The **Upgradability multisig** holds the upgrade authority. This is composed of a 7-of-9 multisig at address JD4dNpiv9G24jmq8XQMuxbQPKN4rYV7kue2Hzi1kNT4Q. The purpose of this multisig will be to control upgrade authority on the vault contracts. As we move toward the launch of SOL IBC, we will look to expand this multisig in the greater pursuit of further decentralization. Signers for the multisig are as follows:
+Signers for the multisig are as follows:
 
 - Miguel Matos — Board member, Composable Foundation. Professor at the Universidade de Lisboa & Researcher at INESC-ID.
 - Dan Edlebeck — Advisor, Composable
