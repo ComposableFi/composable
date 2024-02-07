@@ -67,8 +67,8 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 
 parameter_types! {
 	pub AssetConfigHoldIdentifier: TemporalHoldIdentifier = ();
-	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
-	pub DefaultFeeAsset: CurrencyId = CurrencyId::DOT;
+	pub NativeAssetId: CurrencyId = CurrencyId::COMPOSABLE_LAYR;
+	pub DefaultFeeAsset: CurrencyId = CurrencyId::COMPOSABLE_DOT;
 }
 
 impl asset_tx_payment::Config for Runtime {
