@@ -179,6 +179,11 @@ pub mod pallet {
 			ChargeAssetIdOf<Self>,
 			ChargeAssetBalanceOf<Self>,
 		>;
+		#[pallet::constant]
+		type NativeAssetId: Get<ChargeAssetIdOf<Self>>;
+
+		#[pallet::constant]
+		type DefaultFeeAsset: Get<ChargeAssetIdOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -282,22 +287,28 @@ where
 		debug_assert!(self.tip <= fee, "tip should be included in the computed fee");
 		if fee.is_zero() {
 			Ok((fee, InitialPayment::Nothing))
-		} else if let Some(asset_id) = asset_id {
-			T::OnChargeAssetTransaction::withdraw_fee(
-				who,
-				call,
-				info,
-				asset_id,
-				fee.into(),
-				self.tip.into(),
-			)
-			.map(|i| (fee, InitialPayment::Asset(i.into())))
-		} else {
+		} else if asset_id == Some(T::NativeAssetId::get()) ||
+			(asset_id.is_none() && T::NativeAssetId::get() == T::DefaultFeeAsset::get())
+		{
 			<OnChargeTransactionOf<T> as OnChargeTransaction<T>>::withdraw_fee(
 				who, call, info, fee, self.tip,
 			)
 			.map(|i| (fee, InitialPayment::Native(i)))
 			.map_err(|_| -> TransactionValidityError { InvalidTransaction::Payment.into() })
+		} else {
+			let charge_asset = match asset_id {
+				Some(id) => id,
+				_ => T::DefaultFeeAsset::get(),
+			};
+			T::OnChargeAssetTransaction::withdraw_fee(
+				who,
+				call,
+				info,
+				charge_asset,
+				fee.into(),
+				self.tip.into(),
+			)
+			.map(|i| (fee, InitialPayment::Asset(i.into())))
 		}
 	}
 

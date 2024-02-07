@@ -61,6 +61,11 @@ impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrD
 	}
 }
 
+parameter_types! {
+	pub NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub DefaultFeeAsset: CurrencyId = CurrencyId::PICA;
+}
+
 impl asset_tx_payment::Config for Runtime {
 	type Fungibles = Tokens;
 	type OnChargeAssetTransaction =
@@ -83,4 +88,7 @@ impl asset_tx_payment::Config for Runtime {
 	type HoldIdentifierValue = ();
 
 	type HoldIdentifier = ();
+
+	type NativeAssetId = NativeAssetId;
+	type DefaultFeeAsset = DefaultFeeAsset;
 }
