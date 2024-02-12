@@ -1,6 +1,6 @@
 # PICA Use Cases
 
-Picasso and PICA powers the IBC Hub, as they are positioned to be the network and native token for cross-ecosystem-IBC transfer activity. The vision is to allow cross-chain interaction and execution while abstracting away the UX of having to individually navigate between dApps and chains.
+Picasso and PICA powers the IBC Hub, as they are positioned to be the network and native token for cross-ecosystem-IBC transfer activity. The vision is to support cross-chain interaction and execution on MANTIS to abstract the UX of having to individually navigate between dApps and chains in a secure manner.
 
 PICA serves as a natively cross-chain token. Powering multiple chains. Value is accrued to stakers via revenue distribution based on the success of IBC's ongoing cross-pollination efforts and the Generalized Restaking layer. PICA is the native token of [Picasso](../picasso-parachain-overview.md) and [Composable Cosmos](../composable-cosmos.md).
 
