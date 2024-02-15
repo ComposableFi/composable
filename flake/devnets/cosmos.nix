@@ -96,8 +96,6 @@ in {
         availability = { restart = relay; };
         depends_on."centauri".condition = "process_healthy";
         depends_on."cosmos-hub".condition = "process_healthy";
-        depends_on."centauri-neutron-init".condition =
-          "process_completed_successfully";
         namespace = "trustless-relay";
       };
 
@@ -107,6 +105,25 @@ in {
         availability = { restart = relay; };
         depends_on."cosmos-hub".condition = "process_healthy";
         depends_on."centauri-cosmos-hub-init".condition =
+          "process_completed_successfully";
+        namespace = "trustless-relay";
+      };
+
+      osmosis-cosmos-hub-init = {
+        command = self'.packages.osmosis-cosmos-hub-hermes-init;
+        log_location = "${devnet-root-directory}/osmosis-cosmos-hub-init.log";
+        availability = { restart = relay; };
+        depends_on."osmosis".condition = "process_healthy";
+        depends_on."cosmos-hub".condition = "process_healthy";
+        namespace = "trustless-relay";
+      };
+
+      osmosis-cosmos-hub-relay = {
+        command = self'.packages.osmosis-cosmos-hub-hermes-relay;
+        log_location = "${devnet-root-directory}/cosmos-hub-osmosis-relay.log";
+        availability = { restart = relay; };
+        depends_on."cosmos-hub".condition = "process_healthy";
+        depends_on."osmosis-cosmos-hub-init".condition =
           "process_completed_successfully";
         namespace = "trustless-relay";
       };

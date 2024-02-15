@@ -33,9 +33,9 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 std = [
-	"assets-runtime-api/std",
-	"composable-support/std",
-	"composable-traits/std",
+  "assets-runtime-api/std",
+  "composable-support/std",
+  "composable-traits/std",
 ]

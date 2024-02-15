@@ -19,11 +19,11 @@ sp-api = { default-features = false, workspace = true }
 sp-std = { default-features = false, workspace = true }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 std = [
-	"codec/std",
-	"composable-support/std",
-	"composable-traits/std",
-	"sp-api/std",
-	"sp-std/std",
+  "codec/std",
+  "composable-support/std",
+  "composable-traits/std",
+  "sp-api/std",
+  "sp-std/std",
 ]

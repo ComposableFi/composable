@@ -121,6 +121,7 @@
             add-genesis-account "$VALIDATOR_MNEMONIC" "$VALIDATOR_MONIKER"
             add-genesis-account "$FAUCET_MNEMONIC" "faucet"
             add-genesis-account "$RLY_MNEMONIC_3" "relayer"
+            add-genesis-account "$RLY_MNEMONIC_4" "relayer4"
             add-genesis-account "$APPLICATION1" "cvm"
             add-genesis-account "${cosmosTools.pools.mnemonic}" "pools"
 

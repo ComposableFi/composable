@@ -122,7 +122,6 @@
               address_type = { derivation = "cosmos"; };
               trusted_node = true;
             }
-            # something weird with sharing one config, will handle later with per connection relay
             # {
             #   id = networks.neutron.devnet.CHAIN_ID;
             #   rpc_addr = "http://127.0.0.1:${
@@ -161,41 +160,41 @@
             #   address_type = { derivation = "cosmos"; };
             #   trusted_node = true;
             # }
-            # {
-            #   id = networks.cosmos-hub.devnet.CHAIN_ID;
-            #   rpc_addr = "http://127.0.0.1:${
-            #       builtins.toString
-            #       networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT
-            #     }";
-            #   grpc_addr = "http://127.0.0.1:${
-            #       builtins.toString networks.cosmos-hub.devnet.GRPCPORT
-            #     }";
-            #   event_source = {
-            #     mode = "pull";
-            #     interval = "1s";
-            #   };
-            #   rpc_timeout = "10s";
-            #   account_prefix = "cosmos";
-            #   key_name = networks.cosmos-hub.devnet.CHAIN_ID;
-            #   store_prefix = "ibc";
-            #   default_gas = 100000;
-            #   max_gas = 3000000;
-            #   gas_price = {
-            #     price = 2.5e-3;
-            #     denom = "uatom";
-            #   };
-            #   gas_multiplier = 2.0;
-            #   max_msg_num = 30;
-            #   max_tx_size = 2097152;
-            #   clock_drift = "5s";
-            #   max_block_time = "10s";
-            #   trusting_period = "14days";
-            #   trust_threshold = {
-            #     numerator = "1";
-            #     denominator = "3";
-            #   };
-            #   address_type = { derivation = "cosmos"; };
-            # }
+            {
+              id = networks.cosmos-hub.devnet.CHAIN_ID;
+              rpc_addr = "http://127.0.0.1:${
+                  builtins.toString
+                  networks.cosmos-hub.devnet.CONSENSUS_RPC_PORT
+                }";
+              grpc_addr = "http://127.0.0.1:${
+                  builtins.toString networks.cosmos-hub.devnet.GRPCPORT
+                }";
+              event_source = {
+                mode = "pull";
+                interval = "1s";
+              };
+              rpc_timeout = "10s";
+              account_prefix = "cosmos";
+              key_name = networks.cosmos-hub.devnet.CHAIN_ID;
+              store_prefix = "ibc";
+              default_gas = 100000;
+              max_gas = 3000000;
+              gas_price = {
+                price = 2.5e-3;
+                denom = "uatom";
+              };
+              gas_multiplier = 2.0;
+              max_msg_num = 30;
+              max_tx_size = 2097152;
+              clock_drift = "5s";
+              max_block_time = "10s";
+              trusting_period = "14days";
+              trust_threshold = {
+                numerator = "1";
+                denominator = "3";
+              };
+              address_type = { derivation = "cosmos"; };
+            }
           ];
         }];
       }).config.hermes.toml;
@@ -299,6 +298,30 @@
           '';
         };
 
+        osmosis-cosmos-hub-hermes-init = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "osmosis-cosmos-hub-hermes-init";
+          text = ''
+            ${bashTools.export pkgs.networksLib.devnet.mnemonics}
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/osmosis-cosmos-hub"            
+            HOME=${devnet-root-directory}/osmosis-cosmos-hub
+            export HOME
+            MNEMONIC_FILE="$HOME/.hermes/mnemonics/relayer.txt"
+            export MNEMONIC_FILE
+            echo "$HOME/.hermes/mnemonics/"
+            mkdir --parents "$HOME/.hermes/mnemonics/"
+            cp --dereference --no-preserve=mode,ownership --force ${
+              builtins.toFile "hermes-config.toml" hermes-config
+            } "$HOME/.hermes/config.toml"
+            echo "$RLY_MNEMONIC_4" > "$MNEMONIC_FILE"
+            hermes keys add --chain ${networks.cosmos-hub.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.cosmos-hub.devnet.CHAIN_ID} --overwrite
+            hermes keys add --chain ${networks.osmosis.devnet.CHAIN_ID} --mnemonic-file "$MNEMONIC_FILE" --key-name ${networks.osmosis.devnet.CHAIN_ID} --overwrite
+            export RUST_LOG
+            hermes create channel --a-chain ${networks.cosmos-hub.devnet.CHAIN_ID} --b-chain ${networks.osmosis.devnet.CHAIN_ID} --a-port transfer --b-port transfer --new-client-connection --yes
+          '';
+        };
+
         osmosis-centauri-hermes-relay = pkgs.writeShellApplication {
           runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
           name = "osmosis-centauri-hermes-relay";
@@ -332,6 +355,19 @@
             RUST_LOG=${log}
             mkdir --parents "${devnet-root-directory}/centauri-cosmos-hub"            
             HOME=${devnet-root-directory}/centauri-cosmos-hub
+            export HOME
+            export RUST_LOG
+            hermes start
+          '';
+        };
+
+        osmosis-cosmos-hub-hermes-relay = pkgs.writeShellApplication {
+          runtimeInputs = devnetTools.withBaseContainerTools ++ [ hermes ];
+          name = "osmosis-cosmos-hub-hermes-relay";
+          text = ''
+            RUST_LOG=${log}
+            mkdir --parents "${devnet-root-directory}/osmosis-cosmos-hub"            
+            HOME=${devnet-root-directory}/osmosis-cosmos-hub
             export HOME
             export RUST_LOG
             hermes start

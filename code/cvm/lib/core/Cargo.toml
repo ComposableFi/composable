@@ -39,23 +39,23 @@ eth-primitive-types = { package = "primitive-types", git = "https://github.com/d
 prost-build = { workspace = true }
 
 [features]
-default = [ "std" ]
-xcm = [ "dep:xcm" ]
-cosmwasm = [ "cw-storage-plus", "cw20" ]
-substrate = [ "xcm" ]
+default = ["std"]
+xcm = ["dep:xcm"]
+cosmwasm = ["cw-storage-plus", "cw20"]
+substrate = ["xcm"]
 std = [
-	"cosmwasm-std/std",
-	"cw-storage-plus/std",
-	"cw20/std",
-	"dep:cosmwasm-schema",
-	"dep:schemars",
-	"eth-primitive-types/json-schema",
-	"eth-primitive-types/std",
-	"ibc-proto/std",
-	"ibc-rs-scale/schema",
-	"ibc-rs-scale/std",
-	"num/std",
-	"serde-cw-value/schema",
-	"serde-cw-value/std",
-	"serde-json-wasm/std",
+  "cosmwasm-std/std",
+  "cw-storage-plus/std",
+  "cw20/std",
+  "dep:cosmwasm-schema",
+  "dep:schemars",
+  "eth-primitive-types/json-schema",
+  "eth-primitive-types/std",
+  "ibc-proto/std",
+  "ibc-rs-scale/schema",
+  "ibc-rs-scale/std",
+  "num/std",
+  "serde-cw-value/schema",
+  "serde-cw-value/std",
+  "serde-json-wasm/std",
 ]
