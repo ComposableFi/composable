@@ -267,6 +267,7 @@ mantis: [
       id: "develop/build-on-composable",
     },
     "develop/composable-cosmos",
+    "develop/guest-blockchain-testnet",
     "develop/local-picasso-guide",
     "develop/oracle-set-up-guide",
     "develop/collator-guide",
