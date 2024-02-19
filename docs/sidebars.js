@@ -230,17 +230,20 @@
   },
   {
     type: "category",
-        label: "Solana Restaking",
+        label: "Generalized Restaking",
         link: {
          type: "doc",
-          id: "technology/solana-restaking",
+          id: "technology/restaking",
        },
       collapsible: false,
       collapsed: false,
       items: [
-    "technology/solana-restaking/technical-overview", 
-     "technology/solana-restaking/vaults",
-     "technology/solana-restaking/mantis-games"
+    "technology/restaking/architecture",
+    "technology/restaking/governance",
+    "technology/restaking/use-cases",
+    "technology/restaking/sol-ibc-avs",
+    "technology/restaking/vaults",
+    "technology/restaking/mantis-games"
      ],
 },
 

@@ -1,0 +1,75 @@
+# Introduction to Picasso Generalized Restaking Layer 
+
+Restaking has been [described as a new primitive](https://consensys.io/blog/eigenlayer-a-restaking-primitive) in crypto economic security that enables the rehypothecation of a token on the consensus layer. Specifically, the process of staking involves a user staking an ecosystem’s native asset to that ecosystem’s validators. The user then receives a receipt token representing this stake. They then “restake” this receipt token with validators again. This mechanism enables users to multiply the crypto economic security (and the yield) of their initial tokens, as they are essentially able to stake the same assets twice, receiving yield and supporting PoS validation both times.
+
+## What is Generalized Restaking?
+
+Economic security is a necessary construct for applications building in the decentralized space. [Eigenlayer](https://www.eigenlayer.xyz/) introduced ETH staking. Picasso is introducing restaking of assets on multiple Proof of Stake (PoS) networks to establish cross-ecosystem pooled security to Actively Validated Services (AVSes).
+
+:::tip
+The first opportunity for restaking is live on Solana. Users have a chance to get in on the action early and earn boosted rewards through [MANTIS games](../technology/restaking/mantis-games.md) - a team staking competition on [mantis.app](https://mantis.app/).
+:::
+
+Restaking has been pioneered and popularized by EigenLayer, which is a protocol for restaking ETH on Ethereum. In particular, users staking ETH are able to opt into EigenLayer’s smart contracts for restaking their ETH and thus extending the crypto economic security to additional applications within the ecosystem. EigenLayer thus addresses rising concerns of fragmented security on Ethereum, helping to bootstrap the security of various protocols/applications. EigenLayer’s total value locked (TVL) at the time of writing is over $275 million, indicating that there is a clear demand for restaking.
+
+Despite the benefits of restaking, this concept has largely not yet expanded beyond the Ethereum ecosystem. However, there is a huge potential for restaking on other chains. Leveraging the fact that Picasso is a L1 Cosmos SDK chain that is also a hub for cross-ecosystem IBC, we are able to make this restaking layer cross-chain. Thus, vaults associated with this system will exist exclusively on IBC-enabled chains. Registration and accounting of AVSes are managed on Picasso. Vault contracts are to be deployed on Solana, Picasso and Ethereum in H1.
+
+In this network, validation is powered by operators who accept restaked tokens contributed by anyone. Operators are selected according to governance on Picasso Cosmos. Their role is to check the smart contract on-chain and use these inputs to construct blocks. The block is finalized when signed by more than ⅔ of validators. Restaked funds are sent to Picasso Cosmos and encoded on the block as part of the header data, which we create a proof for. The block is stored on our internal ledger in addition to being encoded on the respective chain.
+
+A core rationale behind creating a Restaking Layer is that it enables partial block building in every domain. This addresses the censorship and block proposer agency issues outlined previously. 
+
+**Architecture at a Glance**
+
+![architecture](../technology/restaking/gen-z-staking.png)
+
+## Key features: 
+
+- Cross-Chain Backed Assets Restaking: While Eigenlayer exists as a Restaking layer on Ethereum for ETH and ETH LSTs, Generalised Restaking supports native assets from multiple ecosystems, including Solana, Cosmos, Polkadot, Ethereum, and more. UX is abstracted away from users via CVM. 
+- Flexible parameters for AVSes: AVSes can be integrated into the system as needed, with the ability to onboard and offboard at will. AVS builders possess the flexibility to define slashing conditions and customize decentralization parameters according to specific requirements.
+- Emissions and Revenue Sharing: Users will be earning a fixed yield and additional share of the revenue generated from AVSes on Picasso by restaking their assets. Additionally, PICA stakers will be earning a portion of the yield as well.
+- Permissionless onboarding: PICA governance on Picasso Cosmos cast votes to decide whether to onboard an AVS, and they have visibility into the amount they intend to reward for security purposes.
+
+## Generalized Restaking Flow
+
+The following process outlines the journey of users' LST deposits on a PoS chain, including delegation to AVSes, emission earnings, and un-staking procedures.
+
+1. Users holding LSTs on PoS chain (e.g. Solana) deposit into the vault contract. At this point no further action is required from the user unless they specify which AVS to delegate their stake to.
+
+2. The value of the deposit is propagated via IBC to the Orchestrator on Picasso Cosmos and sent to the accounting contract.
+
+3. AVSes register and propose an amount to pay for restake in exchange for security. 
+
+4. Restakers earn direct emissions from at least 40% of the revenue generated by AVSes. 
+
+5. When a user un-stakes, they will have to wait for a 7 day un-bonding period and their stake will be withdrawn to their origin address on the origin network. 
+
+<!-- ## Security Measures
+
+- Slashing: An interface will be established that validators must adhere to, similar to the framework in the Solana IBC AVS. 
+
+- Vault contracts implement a 7 day un-bonding period as a crucial security measure to secure against potential vulnerabilities and allow swift response to malicious behavior. There will be an un-bonding period for registering and unregistering AVS.
+
+- The IBC Protocol is the only transport layer utilized for sending accounting messages between different PoS chains and Picasso Cosmos. -->
+  
+## AVS & Operator Eligibility
+
+### Operator Eligibility
+- Individuals with a Picasso Cosmos address can join as Operators, and there is no minimum requirement for the amount of restaked tokens. 
+- It's possible for an address to function as both a Restaker and an Operator simultaneously, although this is optional.
+- Operators have the option to engage in network activities without possessing any restaked tokens. They can receive token delegations from other Restakers or self-delegate using their own restaked tokens.
+- To become an Operator, a governance proposal must be initiated on Picasso Cosmos to become onboarded via on-chain governance.
+
+
+### AVS Requirements
+
+The AVS onboards operators. Operators can select which AVS they wish to validate for. The exact process is detailed in the following manner:
+
+- Once an AVS has been successfully onboarded, their next step involves persuading operators to validate on their behalf. 
+- Subsequently, operators will typically delegate to the AVS by default. 
+- Users retain the option to abstain from delegating to the AVS, thus remaining unaligned with the operator to whom they have delegated.
+- AVSes must prepare off-chain code for operators to execute customized slashing 
+- Comply with the verifier interface to enable slashing of any malicious or misbehaved operators and avoid Fishermen.
+
+**Requirements for the operators vary depending on the use case of the AVS.**
+
+*To initiate discussions regarding onboarding your project, please reach out to our team on Discord and complete [this AVS Questionnaire](https://forms.gle/pYv7P5of5Wb9avkC8).*
