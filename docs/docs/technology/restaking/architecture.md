@@ -20,7 +20,7 @@ Vault Contracts are designed to receive Liquid Staked Tokens (LSTs). The assets 
    - stDYDX 
    - stATOM
    - SEI LSTs 
-   - qPICA  
+   - PICA LSTs 
    - Berachain LSTs 
 
 ### Operators 
