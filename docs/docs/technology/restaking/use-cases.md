@@ -1,4 +1,4 @@
-# Generalized Restaking Use Cases
+# Use Cases
 
 This section provides a brief overview on the some of the initial use cases for the Generalized Restaking layer:
 

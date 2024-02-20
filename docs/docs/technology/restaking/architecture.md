@@ -80,6 +80,7 @@ These are actors who ensure operators are being honest and signal if an operator
 Send stake and un-stake messages from PoS chains to Picasso Cosmos. Users can originate these requests from the PoS chains they restake assets. Additionally, users can (un)delegate their stake to operators of AVSes. These are all operations that are executed on the chain where the user assets live, and are propagated using CVM.
 
 ### Slashing Contract
+The process involves detecting malicious behavior, initiating slashing requests, and executing specific steps based on the type of slashing chosen by the AVS.
 
 1. Monitors detect malicious/anomalous behavior and begin a slashing request to the involved chain.
 2. A cross-chain message is sent along Picasso Cosmos, with the stakes frozen for the affected customer and deposit and withdrawals disabled. Pending deposits and withdrawals in the present epoch become invalid.
@@ -92,6 +93,7 @@ Send stake and un-stake messages from PoS chains to Picasso Cosmos. Users can or
 6. User funds are slashed.
 
 ### Fee Distribution
+The fee distribution process is carried out in the following manner:
 
 1. The AVS sends a reward proof to the Accounting contract to begin the fee distribution process.
 2. Picasso Cosmos triggers fee distribution process that are set by the AVS.

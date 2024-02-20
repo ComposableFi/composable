@@ -243,7 +243,8 @@
     "technology/restaking/use-cases",
     "technology/restaking/sol-ibc-avs",
     "technology/restaking/vaults",
-    "technology/restaking/mantis-games"
+    "technology/restaking/mantis-games",
+    "technology/restaking/roadmap"
      ],
 },
 
