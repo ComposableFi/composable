@@ -27,7 +27,7 @@ slug: /
           </div>
           <div class="card__body">
             <h3>Architecture</h3>
-              Read about the extension of the IBC protocol beyond Cosmos, the Composable Virtual Machine (CVM) and Restaking on Solana.
+              Read about cross-ecosystem IBC, the Composable Virtual Machine (CVM) and Picasso Generalized Restaking.
           </div>
         </div>
       </a>

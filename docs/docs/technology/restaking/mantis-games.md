@@ -1,6 +1,6 @@
 # MANTIS Games
 
-In order to bootstrap liquidity on the [restaking layer](../solana-restaking), there will be a team competion in phase 2 of MANTIS Games. The MANTIS Games involve the following phases, all designed to make participation maximally enjoyable and rewarding:
+In order to bootstrap liquidity on the [restaking layer on Solana](../restaking/vaults.md), there will be a team competion in phase 2 of MANTIS Games. The MANTIS Games involve the following phases, all designed to make participation maximally enjoyable and rewarding:
 
 ## Phase 1 - NFT Auction 
 Phase 1 introduces teams: during the course of MANTIS games, users can register to join a team on the MANTIS app. Along with your team, you will be able to participate in various competitions on [MANTIS](https://mantis.app/).
