@@ -2,7 +2,7 @@
 
 This section provides a brief overview on the some of the initial use cases for the Generalized Restaking layer:
 
-## Securing an L1 network
+## Securing an L1 network
 A major use case that can be adopted by L1 blockchains will be the ability to power an existing or launch a new PoS chain leveraging the security of the Generalized Restaking layer. This flexibility allows chains to customize their security requirements and decouple the network launch from the token launch process. In this scenario, the AVS will be the L1 network.
 
 ## Restaked Rollups
@@ -12,7 +12,7 @@ Another application of the restaking layer is for Restaked Rollups. Initially, t
 Middleware protocols such as Oracles, Bridges and Sidechains will not need to devote time and resources to their own security models, and can instead focus on their respective roles/services. Importantly, the security delivered to these protocols can be tailored to their needs, so that the cost of corrupting a middleware service equals the aggregate amount of all restaked assets via Picasso’s Restaking Layer. This means middleware services can no longer be the “weakest link” when it comes to security, making them less likely targets.
 This is already in production on Solana to implement IBC on previously IBC-incompatible chains. This connection will happen via the first AVS for Solana IBC. The purpose of this AVS is to provide state proofs of Solana via existing validators of the host network running a lightweight sidecar to generate these proofs. The AVS for Solana IBC is described in detail in this Composable Research forum post. 
 
-## Reduced Solver Collateral Requirements
+## Reduced Solver Collateral Requirements
 Within the MANTIS workflow, solver collateral will be necessary. However, solvers will have the ability to integrate with the restaking layer, significantly reducing collateral requirements.
 
 ## Partial Block Building
