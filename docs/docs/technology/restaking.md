@@ -20,7 +20,7 @@ A core rationale behind creating a Restaking Layer is that it enables partial bl
 
 **Architecture at a Glance**
 
-![architecture](../technology/restaking/gen-z-staking.png)
+![architecture](../technology/restaking/genz-restaking.png)
 
 ## Key features: 
 
