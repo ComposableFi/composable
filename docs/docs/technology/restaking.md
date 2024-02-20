@@ -60,7 +60,7 @@ The following process outlines the journey of users' LST deposits on a PoS chain
 - To become an Operator, a governance proposal must be initiated on Picasso Cosmos to become onboarded via on-chain governance.
 
 
-### AVS Requirements
+### AVS Requirements
 
 The AVS onboards operators. Operators can select which AVS they wish to validate for. The exact process is detailed in the following manner:
 
