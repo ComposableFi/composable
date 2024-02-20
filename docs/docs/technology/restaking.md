@@ -14,6 +14,10 @@ Restaking has been pioneered and popularized by EigenLayer, which is a protocol 
 
 Despite the benefits of restaking, this concept has largely not yet expanded beyond the Ethereum ecosystem. However, there is a huge potential for restaking on other chains. Leveraging the fact that Picasso is a L1 Cosmos SDK chain that is also a hub for cross-ecosystem IBC, we are able to make this restaking layer cross-chain. Thus, vaults associated with this system will exist exclusively on IBC-enabled chains. Registration and accounting of AVSes are managed on Picasso. Vault contracts are to be deployed on Solana, Picasso and Ethereum in H1. Picasso Generalized Restaking facilitates a broad spectrum of assets from PoS networks. In effect, this will enable a larger supply of tokens with a lower opportunity cost to be restaked, and therefore, decrease the cost of acquiring AVSes.
 
+:::info
+This documentation refers to [Composable Cosmos](../networks/composable-cosmos.md) as Picasso as we are currently undergoing a name change of the Composable Cosmos chain to Picasso.
+:::
+
 In this network, validation is powered by operators who accept restaked tokens contributed by anyone. Operators are selected according to governance on Picasso Cosmos. Their role is to check the smart contract on-chain and use these inputs to construct blocks. The block is finalized when signed by more than ⅔ of validators. Restaked funds are sent to Picasso Cosmos and encoded on the block as part of the header data, which we create a proof for. The block is stored on our internal ledger in addition to being encoded on the respective chain.
 
 A core rationale behind creating a Restaking Layer is that it enables partial block building in every domain. This addresses the censorship and block proposer agency issues outlined previously. 
