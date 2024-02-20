@@ -1,6 +1,6 @@
-# Use Cases
+# AVS Use Cases
 
-This section provides a brief overview on the some of the initial use cases for the Generalized Restaking layer:
+This section provides a brief overview on the some of the initial AVS use cases for the Generalized Restaking layer:
 
 ## Securing an L1 network
 A major use case that can be adopted by L1 blockchains will be the ability to power an existing or launch a new PoS chain leveraging the security of the Generalized Restaking layer. This flexibility allows chains to customize their security requirements and decouple the network launch from the token launch process. In this scenario, the AVS will be the L1 network.
