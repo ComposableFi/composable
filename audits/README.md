@@ -1,9 +1,10 @@
-# Composable Code Audits & Fixes
+# Picasso Code Audits & Fixes
 
-For transparency purposes, Composable will publish significant code fixes. 
 The related code audits are provided for context.
 
 ## Audits:
+
+[OtterSec Audit - Solana Restaking Vault - 14.02.2024](./solana-restaking/restaking_vaults_audit.pdf)
 
 [Halborn Audit - Main Pallets - 29.02.2021](./halborn/audit20210229-pallets-core.pdf)
    
@@ -21,6 +22,6 @@ The related code audits are provided for context.
 
 [Halborn Audit - IBC - 10.10.2022](./halborn/audit20221010-pallet-ibc.pdf)
 
-[Halborn Audit - Staking Rewards & fNFT- 10.10.2022](./halborn/audit20221010-pallets-stakingRewards-fnft.pdf)
+[Halborn Audit - Staking Rewards & fNFT- 10.10.2022](./halborn/audit20221010-pallets-stakingRewards-fnft.pdf) 
 
 [Halborn Audit - Pablo Refactoring 29.11.2022](./halborn/audit20221129-pallet-pablo-refactoring.pdf)
