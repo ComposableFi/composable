@@ -2,8 +2,6 @@
   "name": "Picasso Testnet (Rococo Relay)",
   "id": "picasso",
   "chainType": "Live",
-  "bootNodes": [],
-  "telemetryEndpoints": null,
   "protocolId": null,
   "properties": {
     "ss58Format": 49,
