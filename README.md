@@ -25,13 +25,12 @@ Composable Finance is dedicated to building the infrastructure for trust-minimiz
 
 Among the noteworthy pallets included are:
 
-- [CosmWasm VM for Substrate](./code/parachain/frame/cosmwasm/)
 - [Multihop (XCM + IBC)](./code/parachain/frame/pallet-multihop-xcm-ibc/) 
 - [Apollo](./code/parachain/frame/oracle/)
 - [Pablo DEX](./code/parachain/frame/pablo/)
 - [Liquid staking](./code/parachain/frame/liquid-staking/)
 
-Composable's core technology extends beyond this repository. It includes key components such as [CVM and MANTIS](https://github.com/ComposableFi/cvm), the first IBC implementation on Substrate – [Pallet-ibc](https://github.com/ComposableFi/composable-ibc), the [Composable Cosmos chain](https://github.com/notional-labs/composable-centauri), and [Solana IBC](https://github.com/ComposableFi/emulated-light-client).
+Composable's core technology extends beyond this repository. It includes key components such as [CVM and MANTIS](https://github.com/ComposableFi/composable-vm), the first IBC implementation on Substrate – [Pallet-ibc](https://github.com/ComposableFi/composable-ibc), the [Composable Cosmos chain](https://github.com/ComposableFi/composable-cosmos), and [Solana IBC](https://github.com/ComposableFi/emulated-light-client).
 
 ## Join Composable Networks
 To supply price feeds for Apollo or run a collator on Picasso, check out our documentation [here](https://docs.composable.finance/develop/collator-guide). 
