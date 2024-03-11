@@ -127,15 +127,26 @@ type Tag = Uint8Array
 /// allows one user to have several Executors to isolate funds and allowances
 type Salt = Uint8Array
 
-type Instruction = Transfer | Call | Spawn | Query | Exchange | Bond | Order | Abort | If
+type Instruction = Transfer | Call | Spawn | Query | Exchange | Stake | Order | Abort | If | Unstake | Prove | Delegate | Undelegate
+
+// Venue can convert one AssetId into other using internal rules.
+// There can be more than one venue for same input or output asset.
+// Different venues can map to same on chain contract, so with differnt default coniguraition.
+type VenueId = ExchangeId | StakingId | VerifierId
+
+interface Venue {
+    // not whole amount can be taken in some cases
+    in: (AssetAmount | BindedAmount)[]
+    // give to account abstrctions immediately
+    min_out: AssetAmount[]
+}
 
 /// Is atomic without position recorded for user
 /// Exchange - can be deposit into pool for LP token, Stake to get liquid stake token, borrow or lend.
 /// So it is super set of what usually called swap over CFMM(AMMs). 
 /// Set `ExchangeError` to result register in case of fail.
 interface Exchange {
-    in: (AssetAmount | BindedAmount)[]
-    min_out: AssetAmount[] 
+    venu: Venue
     condition : ExchangeCondition? 
 }
 
@@ -152,18 +163,34 @@ interface ExchangeCondition {
 } 
 type AggregationType = TimeWeightedAverage
 
-// time locks tokens, potentially getting some tokens out
-// can be Stake or liquidity provision 
-interface Bond {
-    exchange : Exchange 
+// Time locks(bond) tokens, potentially getting some tokens out.
+// Can be Stake or liquidity provision.
+interface Stake {
+    staking_id: Id
+    venue: Venue 
     /// maximum time for bonding, so as close as possible to it 
     time: Duration
+}
+
+// when executed, consequences may be Slashing or Reward.
+// usually called by off chain bots like AVS or relayers
+interface Prove {
+    verifier_id: Id
+    // optional proof, opaque data
+    // simplest prove is just empty crank
+    proof: bytes[]?
+}
+
+interface Unstake {
+    staking_id: Id
+    // if user does not expects imeddite untake, `min_amount` can be set to zero 
+    venue : Venue
 }
 
 /// intention for exchange which may happen in future
 /// puts into ResultRegister either cross chain error error or OrderPositionId
 interface Order {
-    exchange : Exchange
+    venue : Venue
     timeout : Duration
     partial: Ratio[]
 }
@@ -185,6 +212,11 @@ interface Spawn {
     assets : Assets
 }
 
+interface Delegate {
+    subject: UserOrigin
+    premissions: Permissions
+}
+
 /// is target chain dependant
 type Payload = Uint8Array
 
@@ -195,7 +227,7 @@ type RegisterValue = RegisterValue[]
 
 type RegisterValue = ResultRegister | IPRegister | TipRegister | SelfRegister | VersionRegister | Carry
 
-/// id sorted coints which was transferred into this `Spawn` (may be less then sent from original chain because if fee) 
+/// id sorted coints which was transferred into this `Spawn` (may be less then sent from original chain because if fee)
 type Carry = AssetId[]
 
 type IPRegister = Uint8
@@ -210,7 +242,7 @@ interface Call {
     bindings : Bindings?
 }
 
-type NativeExecutor = Polkadot | Cosmos | Evm | CosmWasm | Solana
+type NativeExecutor = PolkadotPallet | CosmosModule | Evm | CosmWasm | SVM
 
 interface Binding {    
     index : Uint8
@@ -255,11 +287,16 @@ interface Transfer {
 
 /// sorted with unique ids
 type Assets = [AssetId,  Balance][]
+
 type AssetId = GlobalId | LocalId
 type GlobalId = Uint128
 type LocalId  = Uint8Array
 
-type Balance   = { AbsoluteAmount, Ratio}
+// Source of amount, either account abstraction or carry register (examples, amount received with `Spawn` or after `Exchange`) 
+type BalanceSource = Carry | Account
+
+type Balance   = { AbsoluteAmount, Ratio,
+Source}
 
 type AbsoluteAmount = Uint128
 
@@ -267,7 +304,7 @@ type Unit     = Uint128 Ratio
 /// parts of whole
 type Ratio    = { numerator : Uint64, denominator: Uint64}
 
-/// deterministic encoding of user wallet on each chain (virtual wallet)
+/// deterministic encoding of user wallet on each chain (part of [account abstractio](composable-account-abstraction.md) )
 interface UserOrigin = {
     account : Account
     network: Network
@@ -290,7 +327,7 @@ interface SpawnPackage = {
 
 type ResultRegister = Error | ExecutionResult
 
-type Error = CallError | TransferError | SpawnError | QueryError | OrderError | BondError | ExchangeError
+type Error = CallError | TransferError | SpawnError | QueryError | OrderError | StakeError | ExchangeError
 
 /// open set of well know exchange errors
 type ExchangeError = Uint8
@@ -714,14 +751,13 @@ Shorten path of wrapped token.
 
 Just spawn on unwrapping chain and spawn to target chain for execution.
 
-### Bond (stake, lock)
+### Stake (bond, lock)
 
-
-Call Bond instruction or do raw Call for Bonding.
+Call `Stake` instruction or do raw Call for Staking.
 
 **Example**
 
-Program to `Bond` on Stride and transfer staked token to Osmosis
+Program to `Stake` on Stride and transfer staked token to Osmosis
 is detected as pattern expressed in CVM.
 
 That part of program is translated to IBC calls to Stride without contracts deployed.
@@ -732,7 +768,7 @@ execute amount=100atom { // on osmosis
     spawn Osmosis amount=100atom {
         spawn CosmosHub amount=All {
             spawn Stride amount=All {
-                bond amount=All
+                stake amount=All
                 spawn Osmosis amount=100%stAtom {
                     spawn Composable Cosmos amount=All {
 
@@ -742,6 +778,28 @@ execute amount=100atom { // on osmosis
         }
     }
 }
+```
+
+### Restake (reward/slash)
+
+Al state tracking in CVM is on per chain and behind composable account abstraction (virtual wallet),
+uncluding positions(NFTS) and delegation of users.
+Rules of operations are hidden behind venue idenfifiers used.
+Dynamic targets of operations are encoded as user origins or other parameters in specific operations (for examle validator ids).
+
+```kdl
+// stake
+
+```
+
+```kdl
+// prove to Reward
+
+```
+
+```kdl
+// unstake
+
 ```
 
 
@@ -867,3 +925,19 @@ transfer**](https://github.com/cosmos/ibc/blob/f6371ffd5de3787eb4b85f9fe77f81be4
    2. the instruction **1.3.2.** is executed: **100% of the OSMO** is
       transferred back to **Alice**.
 
+
+### Prove/Verify
+
+```kdl
+execute chain=Namada {
+    verify verifier_id=42 payload=<solution specificaiton> # off chain data with solution info
+    push Register.Result # puts result of verify onto stack
+    spawn chain=Osmosis { # capture stack with result and jump to Restaking chain
+        spawn chain=ComposableCosmos {
+           verify verifier_id=123 payload=Register.Pop
+           # verifier here checks if he sent that solution to Namada chain
+           # in case of solution was sent and did not settled as promised, Solver slashed, of Fisherman is slahed if lied
+        }
+    }
+}
+```
