@@ -223,8 +223,6 @@
         collapsible: false,
         collapsed: false,
         items: [
-        "technology/cvm/specification",
-        "technology/cvm/virtual-wallet",
         "technology/cvm/tutorial",
    ],
   },
@@ -293,18 +291,8 @@ mantis: [
         type: "doc",
         id: "nix"
       },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        "nix/install",
-        "nix/run-packages",
-        "nix/development-environments",
-        "nix/running-checks",
-        "nix/reading-logs",
-        "nix/defining-your-own-packages",
-        "nix/editing-docs",
-        "nix/troubleshooting",
-      ],
+      collapsible: false,
+      collapsed: false
     },
     {
       type: "doc",
