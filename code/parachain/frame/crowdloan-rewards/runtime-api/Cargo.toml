@@ -18,5 +18,5 @@ sp-api = { default-features = false, workspace = true }
 
 
 [features]
-default = [ "std" ]
-std = [ "composable-support/std", "sp-api/std" ]
+default = ["std"]
+std = ["composable-support/std", "sp-api/std"]

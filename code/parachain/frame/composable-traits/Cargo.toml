@@ -61,27 +61,27 @@ version = "3.0.0"
 proptest = { version = "1.0.0" }
 
 [features]
-default = [ "centauri", "std" ]
+default = ["centauri", "std"]
 std = [
-	"codec/std",
-	"composable-support/std",
-	"cosmwasm-schema",
-	"cosmwasm-std/std",
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-ibc/std",
-	"polkadot-parachain/std",
-	"proxy/std",
-	"scale-info/std",
-	"schemars",
-	"sp-core/std",
-	"sp-runtime/std",
-	"sp-std/std",
-	"xc-core/std",
-	"xcm/std",
+  "codec/std",
+  "composable-support/std",
+  "cosmwasm-schema",
+  "cosmwasm-std/std",
+  "frame-support/std",
+  "frame-system/std",
+  "pallet-ibc/std",
+  "polkadot-parachain/std",
+  "proxy/std",
+  "scale-info/std",
+  "schemars",
+  "sp-core/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xc-core/std",
+  "xcm/std",
 ]
 test-utils = []
-visualization = [ "plotters" ]
+visualization = ["plotters"]
 centauri = []
 
 [package.metadata.cargo-udeps.ignore]

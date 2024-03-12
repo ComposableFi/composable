@@ -311,9 +311,8 @@ pub trait DescribeLocation {
 impl DescribeLocation for Tuple {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		for_tuples!( #(
-			match Tuple::describe_location(l) {
-				Some(result) => return Some(result),
-				None => {},
+			if let Some(result) = Tuple::describe_location(l) {
+				return Some(result)
 			}
 		)* );
 		None
@@ -325,7 +324,7 @@ impl DescribeLocation for DescribeTerminus {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		match (l.parents, &l.interior) {
 			(0, Here) => Some(Vec::new()),
-			_ => return None,
+			_ => None,
 		}
 	}
 }
@@ -336,7 +335,7 @@ impl DescribeLocation for DescribePalletTerminal {
 		match (l.parents, &l.interior) {
 			(0, X1(PalletInstance(i))) =>
 				Some((b"Pallet", Compact::<u32>::from(*i as u32)).encode()),
-			_ => return None,
+			_ => None,
 		}
 	}
 }
@@ -346,7 +345,7 @@ impl DescribeLocation for DescribeAccountId32Terminal {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		match (l.parents, &l.interior) {
 			(0, X1(AccountId32 { id, .. })) => Some((b"AccountId32", id).encode()),
-			_ => return None,
+			_ => None,
 		}
 	}
 }
@@ -356,7 +355,7 @@ impl DescribeLocation for DescribeAccountKey20Terminal {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		match (l.parents, &l.interior) {
 			(0, X1(AccountKey20 { key, .. })) => Some((b"AccountKey20", key).encode()),
-			_ => return None,
+			_ => None,
 		}
 	}
 }
@@ -368,7 +367,7 @@ impl DescribeLocation for DescribeBodyTerminal {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		match (l.parents, &l.interior) {
 			(0, X1(Plurality { id, part })) => Some((b"Body", id, part).encode()),
-			_ => return None,
+			_ => None,
 		}
 	}
 }
@@ -400,7 +399,7 @@ impl<Suffix: DescribeLocation> DescribeLocation for DescribeFamily<Suffix> {
 				let interior = Suffix::describe_location(&tail)?;
 				Some((b"ParentChain", interior).encode())
 			},
-			_ => return None,
+			_ => None,
 		}
 	}
 }

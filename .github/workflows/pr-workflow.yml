@@ -158,6 +158,41 @@ jobs:
       - id: ok
         run: echo "ok=true" >> "$GITHUB_OUTPUT"
 
+
+  # build-all-outputs-packages-arm:
+  #   outputs:
+  #     ok: ${{ steps.ok.outputs.ok }}
+  #   name: build-all-outputs-packages-arm
+  #   needs:
+  #     - privilege-check
+  #   runs-on:
+  #     - aarch64-linux-80C-128GB-2048GB
+  #   concurrency:
+  #     group: ${{ inputs.github_workflow }}-build-all-outputs-packages-arm-${{ github.event.pull_request.number || github.ref }}
+  #     cancel-in-progress: true
+  #   steps:
+  #     - name: Set up Cachix
+  #       if: ${{ inputs.flow == 'push' }}
+  #       uses: cachix/cachix-action@586bf280495080c5a6d4868237ad28a860e4b309
+  #       with:
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         name: composable
+  #         installCommand: "true"
+  #     - uses: actions/checkout@v3
+  #       if: ${{ inputs.flow == 'push' }}
+  #       with:
+  #         lfs: true
+  #         ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
+  #         persist-credentials: false
+  #     - name: Build all packages
+  #       if: ${{ inputs.flow == 'push' }}
+  #       uses: "./.github/templates/watch-exec"
+  #       with:
+  #         command: nix -- build .#all-outputs
+  #     - id: ok
+  #       run: echo "ok=true" >> "$GITHUB_OUTPUT"
+        
+
   build-all-outputs-packages:
     outputs:
       ok: ${{ steps.ok.outputs.ok }}

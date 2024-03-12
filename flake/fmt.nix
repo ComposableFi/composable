@@ -20,8 +20,25 @@
       allTomlFiles = filesWithExtension "toml";
     in {
       packages = {
+        fix = pkgs.writeShellApplication {
+          name = "fix";
+
+          runtimeInputs = with pkgs; [
+            self'.packages.rust-nightly
+            pkgs.zlib.dev
+            pkgs.stdenv.cc.cc.lib
+            pkgs.llvmPackages.libclang.lib
+            pkgs.zlib.dev
+          ];
+
+          text = ''
+            export ZLIB_VERSION="1.3"
+            export LIBZ_SYS_STATIC=1
+            cargo clippy --fix --allow-dirty --package common
+          '';
+        };
         fmt = pkgs.writeShellApplication {
-          name = "fmt-composable";
+          name = "fmt";
 
           runtimeInputs = with pkgs;
             [ nixfmt coreutils taplo nodePackages.prettier ]

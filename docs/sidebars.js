@@ -218,13 +218,11 @@
           label: "CVM",
           link: {
            type: "doc",
-            id: "technology/cvm",
+           id: "technology/cvm",
          },
         collapsible: false,
         collapsed: false,
         items: [
-        "technology/cvm/specification",
-        "technology/cvm/virtual-wallet",
         "technology/cvm/tutorial",
    ],
   },
@@ -287,24 +285,9 @@ mantis: [
       items: ["develop/cosmwasm/walkthrough"],
     },
     {
-      type: "category",
       label: "Nix",
-      link: {
-        type: "doc",
-        id: "nix"
-      },
-      collapsible: true,
-      collapsed: true,
-      items: [
-        "nix/install",
-        "nix/run-packages",
-        "nix/development-environments",
-        "nix/running-checks",
-        "nix/reading-logs",
-        "nix/defining-your-own-packages",
-        "nix/editing-docs",
-        "nix/troubleshooting",
-      ],
+      type: "doc",
+      id: "nix"
     },
     {
       type: "doc",

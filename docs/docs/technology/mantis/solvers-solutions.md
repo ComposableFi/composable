@@ -100,11 +100,11 @@ Overall, this would work as follows:
 3. If protocols are successfully chosen as a component of the solution for the solver (and this solver has presented the best solution out of all solvers), then the order flow is routed through the protocol
 
 This requires a problem smart contract within MANTIS, which would be able to receive pre-loaded tokens.
-- Our "problem" contract would have `xc-account` like any users
-- All solution will be routed by MANTIS from the problem origin contract so it will have access to xc account on each chain
+- Our "problem" contract would have `cvm-account` like any users
+- All solution will be routed by MANTIS from the problem origin contract so it will have access to `cvm-account`` on each chain
 - So, the problem contract will have access to any tokens on that account
 - Reasonably, these accounts to have at least native tokens for gas fees and bridge fees
-- Or, protocol can have `xc-account` and do extended allowance to MANTIS sent from problem origin so the solution can peek into allowance and pay fees
+- Or, protocol can have `cvm-account` and do extended allowance to MANTIS sent from problem origin so the solution can peek into allowance and pay fees
 
 This would also require the UI for protocols to initiate and submit tokens for their campaigns, and then to subsequently monitor these campaigns.
 
