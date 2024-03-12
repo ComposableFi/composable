@@ -311,9 +311,8 @@ pub trait DescribeLocation {
 impl DescribeLocation for Tuple {
 	fn describe_location(l: &MultiLocation) -> Option<Vec<u8>> {
 		for_tuples!( #(
-			match Tuple::describe_location(l) {
-				Some(result) => return Some(result),
-				None => {},
+			if let Some(result) = Tuple::describe_location(l) {
+				return Some(result)
 			}
 		)* );
 		None
