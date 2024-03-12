@@ -218,7 +218,7 @@
           label: "CVM",
           link: {
            type: "doc",
-            id: "technology/cvm",
+           id: "technology/cvm",
          },
         collapsible: false,
         collapsed: false,
@@ -285,14 +285,9 @@ mantis: [
       items: ["develop/cosmwasm/walkthrough"],
     },
     {
-      type: "category",
       label: "Nix",
-      link: {
-        type: "doc",
-        id: "nix"
-      },
-      collapsible: false,
-      collapsed: false
+      type: "doc",
+      id: "nix"
     },
     {
       type: "doc",
