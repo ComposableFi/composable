@@ -65,6 +65,8 @@ derive_more = "0.99.17"
 blake2-rfc = { version = "0.2.18", default-features = false }
 bs58 = { version = "0.5.0", default-features = false, features = ["alloc"] }
 
+impl-trait-for-tuples = "0.2.2"
+
 [dev-dependencies]
 authorship = { default-features = false, workspace = true }
 orml-tokens = { workspace = true, default-features = false }

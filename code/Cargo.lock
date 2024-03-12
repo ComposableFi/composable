@@ -1721,6 +1721,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "ibc 0.43.1",
+ "impl-trait-for-tuples",
  "num-traits",
  "orml-tokens",
  "orml-traits",
@@ -8305,26 +8306,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-xcm-builder-kusama"
-version = "0.9.43"
-source = "git+https://github.com/open-web3-stack/orml-xcm-builder?branch=polkadot-v0.9.43#ce8b0f27860149d3ad31d77d44ee2343f54a32bc"
-dependencies = [
- "frame-support",
- "frame-system",
- "log 0.4.19",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 5.0.0",
- "sp-weights",
- "xcm",
- "xcm-executor",
-]
-
-[[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=7ecebeab7e3dbc2226ed58d32ee159271a8176ae#7ecebeab7e3dbc2226ed58d32ee159271a8176ae"
@@ -10348,7 +10329,6 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
- "orml-xcm-builder-kusama",
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",

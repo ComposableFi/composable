@@ -134,8 +134,6 @@ ibc-primitives = { workspace = true, default-features = false }
 ibc-runtime-api = { workspace = true, default-features = false }
 pallet-ibc = { workspace = true, default-features = false }
 
-orml-xcm-builder-kusama = { workspace = true, default-features = false }
-
 serde-json-wasm = { workspace = true, default-features = false }
 
 cosmwasm-vm = { workspace = true, default-features = false, features = [
@@ -240,7 +238,6 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-unknown-tokens/std",
-	"orml-xcm-builder-kusama/std",
 	"orml-xcm-support/std",
 	"orml-xtokens/std",
 	"pablo-runtime-api/std",
