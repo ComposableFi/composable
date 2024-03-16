@@ -3,12 +3,7 @@
   "id": "composable",
   "chainType": "Live",
   "bootNodes": [],
-  "telemetryEndpoints": [
-    [
-      "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
-      0
-    ]
-  ],
+  "telemetryEndpoints": [],
   "protocolId": "composable",
   "properties": {
     "ss58Format": 50,
