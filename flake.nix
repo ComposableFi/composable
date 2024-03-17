@@ -71,20 +71,6 @@
     composable-cosmos = {
       url = "github:ComposableFi/composable-cosmos/release/v7.0.x";
     };
-    # update this to update any CVM/MANTIS deps
-    cvm = { url = "github:ComposableFi/cvm"; };
-
-    networks = { url = "github:ComposableFi/networks"; };
-
-    eth-pos-devnet-src = {
-      flake = false;
-      url = "github:OffchainLabs/eth-pos-devnet";
-    };
-
-    neutron-src.url = "github:neutron-org/neutron/v2.0.0";
-    neutron-src.flake = false;
-
-    ethereum = { url = "github:nix-community/ethereum.nix"; };
 
     polkadot = {
       url =
