@@ -28,7 +28,7 @@
          type: "generated-index",
          slug: "user-guides",
        },
-       collapsible: false,
+       collapsible: true,
        items: [
          {
            type: "category",
@@ -37,7 +37,7 @@
              type: "generated-index",
              slug: "accounts-wallets",
            },
-           collapsible: false,
+           collapsible: true,
            items: [
              "user-guides/polkadotjs-extension-create-account",
              "user-guides/talisman-create-account",
@@ -52,7 +52,7 @@
             type: "generated-index",
             slug: "solana-restaking",
           },
-          collapsible: false,
+          collapsible: true,
           items: [
             "user-guides/restaking-sol",
             "user-guides/team-competition",
@@ -65,7 +65,7 @@
              type: "generated-index",
              slug: "transactions-and-trading",
            },
-           collapsible: false,
+           collapsible: true,
            items: [
              "user-guides/composable-cosmos-staking",
              "user-guides/how-to-provide-liquidity",
@@ -74,126 +74,33 @@
              "user-guides/trustless-transfers",
            ],
          },
-         {
-           type: "category",
-           label: "FAQs",
-           link: {
-             type: "generated-index",
-             slug: "faqs",
-           },
-           collapsible: false,
-           items: [
-             "user-guides/trustless-faq",
-           ],
-         }, 
          "user-guides/picasso-governance",
        ],
      },
-   ],
-   networks: [
-     {
-       type: "category",
-       label: "Picasso",
-       link: {
-         type: "doc",
-         id: "networks/picasso-parachain-overview",
-       },
-       collapsible: false,
-       collapsed: false,
-       items: [
-         "networks/picasso/governance",
-         "networks/picasso/asset-list",
-         "networks/picasso/pica-use-cases",
-         "networks/picasso/tokenomics",
-         "networks/picasso/token-transparency",
-         "networks/picasso/crowdloan",
-         {
-           type: "category",
-           label: "CosmWasm",
-           link: {
-             type: "doc",
-             id: "technology/cosmwasm-vm-overview",
-           },
-           collapsible: true,
-           collapsed: true,
-           items: [
-             "technology/cosmwasm/existing-cosmwasm-projects-to-deploy-on-ccw-vm",
-             "technology/cosmwasm/synergy-with-ibc-for-cvm",
-             "technology/cosmwasm/writing-smart-contracts-with-cosmwasm",
-           ],
-         },
-         {
-           type: "category",
-           label: "Apollo",
-           link: {
-             type: "doc",
-             id: "technology/apollo-overview",
-           },
-           collapsible: true,
-           collapsed: true,
-           items: [
-             "technology/apollo/apollo-how-it-works",
-             "technology/apollo/technical-details",
-             "technology/apollo/apollo-deployment",
-           ],
-         },
-         {
-          type: "category",
-          label: "Pablo",
-          link: {
-            type: "doc",
-            id: "technology/pablo-overview",
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            "technology/pablo/swaps-trading",
-            "technology/pablo/launch-pools",
-            "technology/pablo/cross-chain-DEX",
-          ],
-        },
-       ],
-     },
- 
-     {
-       type: "category",
-       label: "Composable",
-       link: {
-         type: "doc",
-         id: "networks/composable-parachain-overview",
-       },
-       collapsible: false,
-       collapsed: false,
-       items: [
-         "networks/composable/composie-asset-list",
-         "networks/composable/composable-crowdloan",
-         "networks/composable/LAYR-tokenomics",
-         "networks/composable/composable-council",
-         {
-          type: "category",
-          label: "Polkadot Liquid Staking",
-          link: {
-            type: "doc",
-            id: "technology/liquid-staking",
-          },
-          collapsible: true,
-          collapsed: true,
-          items: [
-            "technology/liquid-staking/why-lsd",
-            "technology/liquid-staking/technical-overview",
-          ],
-        },
-       ],
-     },
- 
-     "networks/composable-cosmos",
-   ],
+      {
+      type: "category",
+      label: "Developer Guides",
+      link: {
+        type: "generated-index",
+        slug: "developer-guides",
+      },
+      collapsible: true,
+      items: [
+        "develop/composable-cosmos",
+        "develop/solana-avs-testnet",
+        "develop/local-picasso-guide",
+        "develop/oracle-set-up-guide",
+        "develop/collator-guide",
+        "develop/nix",
+        "develop/codespaces",
 
-   architecture: [
-    "technology/architecture",
+      ],
+    },
+   ],
+   ibc: [
     {
     type: "category",
-       label: "IBC",
+       label: "Inter-Blockchain Communication Protocol (IBC)",
        link: {
          type: "doc",
          id: "technology/ibc",
@@ -213,130 +120,52 @@
        ],
       },
 
-    {
-      type: "category",
-          label: "CVM",
-          link: {
-           type: "doc",
-           id: "technology/cvm",
-         },
-        collapsible: false,
-        collapsed: false,
-        items: [
-        "technology/cvm/tutorial",
+],
+
+concepts: [
+ 
+  "concepts/picasso",
+  "concepts/ibc",
+ 
+],
+
+token: [
+ 
+      "pallets/airdrop",
+      "technology/ibc/solana",
+      "technology/ibc/polkadot",
+      "technology/ibc/polkadot-kusama",
+      "technology/ibc/near",
+      "technology/ibc/hyperspace-relayer",
+      "technology/ibc/light-clients",
+      "technology/ibc/merkle-mountain-ranges",
+      "technology/ibc/beefy-light-client",
+     
+],
+
+restaking: [
+{
+  type: "category",
+      label: "Generalized Restaking",
+      link: {
+       type: "doc",
+        id: "technology/restaking",
+     },
+    collapsible: false,
+    collapsed: false,
+    items: [
+  "technology/restaking/architecture",
+  "technology/restaking/governance",
+  "technology/restaking/use-cases",
+  "technology/restaking/sol-ibc-avs",
+  "technology/restaking/vaults",
+  "technology/restaking/mantis-games",
+  "technology/restaking/roadmap"
    ],
-  },
-  {
-    type: "category",
-        label: "Generalized Restaking",
-        link: {
-         type: "doc",
-          id: "technology/restaking",
-       },
-      collapsible: false,
-      collapsed: false,
-      items: [
-    "technology/restaking/architecture",
-    "technology/restaking/governance",
-    "technology/restaking/use-cases",
-    "technology/restaking/sol-ibc-avs",
-    "technology/restaking/vaults",
-    "technology/restaking/mantis-games",
-    "technology/restaking/roadmap"
-     ],
 },
 
 ],
 
-mantis: [
-  {
-    type: "doc",
-    id: "technology/mantis",
-  },
-   "technology/mantis/benefits-use-cases",
-   "technology/mantis/protocol-architecture",
-   "technology/mantis/protocol-flow",
-   "technology/mantis/solvers-solutions",
-   "technology/mantis/solver-integration",
-   "technology/mantis/solver-guide",
-   "technology/mantis/integration-guide",
-   "technology/mantis/tools",
-
-],
-   develop: [
-    {
-      type: "doc",
-      id: "develop/build-on-composable",
-    },
-    "develop/composable-cosmos",
-    "develop/solana-avs-testnet",
-    "develop/local-picasso-guide",
-    "develop/oracle-set-up-guide",
-    "develop/collator-guide",
-    {
-      type: "category",
-      label: "Cosmwasm CLI",
-      link: {
-        type: "doc",
-        id: "develop/cosmwasm-cli",
-      },
-      collapsible: true,
-      collapsed: true,
-      items: ["develop/cosmwasm/walkthrough"],
-    },
-    {
-      label: "Nix",
-      type: "doc",
-      id: "nix"
-    },
-    {
-      type: "doc",
-      id: "codespaces",
-    },
-
-  ],
-   ecosystem: [
-    {
-      type: "doc",
-      id: "ecosystem/composable-ecosystem",
-    },
-     "ecosystem/request-for-proposals",
-     "ecosystem/composable-research",
-     "ecosystem/the-composable-team",
-     "ecosystem/press-kit",
-     {
-       type: "doc",
-       label: "Audits, Fixes & Bug Bounties",
-       id: "audits/audit-results-recommendations-and-remediations",
-     },
-     {
-      "type": "category",
-      "label": "Archived",
-      "collapsible": true,
-      "collapsed": true,
-      "items": [
-        {
-          "type": "doc",
-          "label": "Mosaic (Discontinued)",
-          "id": "technology/mosaic/mosaic-withdrawal-guide"
-        },
-        {
-          "type": "category",
-          "label": "Parachain Vault Strategy (Discontinued)",
-          "link": {
-            "type": "doc",
-            "id": "technology/parachain-vault-strategy/composable-strategies-withdrawal-guide"
-          },
-          "collapsible": true,
-          "collapsed": true,
-          "items": [
-            "technology/parachain-vault-strategy/vault-process-in-detail",
-            "technology/parachain-vault-strategy/contracts-technical-details"
-          ],
-        },
-      ],
-    },    
-   ],
  };
  
  // if (!isProd) {

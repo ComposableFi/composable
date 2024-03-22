@@ -1,5 +1,5 @@
 ---
-title: Composable Documentation
+title: Picasso Documentation
 hide_table_of_contents: true
 slug: /
 ---

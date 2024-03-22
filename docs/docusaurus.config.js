@@ -70,50 +70,44 @@ const config = {
 				indexName: 'composable',
 			},
 			navbar: {
-				title: 'Composable Finance',
 				logo: {
-					alt: 'Composable Finance Logo',
-					src: 'img/logo.svg',
+					alt: 'Picasso Logo',
+					src: 'img/picasso-p-32.svg',
 				},
 				items: [
 					{
-						to: '/networks/picasso-parachain-overview',
+						to: '/concepts/picasso',
 						position: 'left',
-						label: 'Networks',
+						label: 'Concepts',
 					},
 					{
-						to: '/technology/architecture',
+						to: '/technology/ibc',
 						position: 'left',
-						label: 'Architecture',
+						label: 'IBC',
 					},
 					{
-						to: '/technology/mantis',
+						to: '/technology/restaking',
 						position: 'left',
-						label: 'MANTIS',
+						label: 'Restaking',
 					},
 					{
-						to: '/develop/build-on-composable',
+						to: '/technology/ibc',
 						position: 'left',
-						label: 'Develop',
-					},
-					{
-						to: '/ecosystem/composable-ecosystem',
-						position: 'left',
-						label: 'Ecosystem',
+						label: 'Governance & Token',
 					},
 					{
 						to: '/user-guides',
 						position: 'left',
-						label: 'User Guides',
+						label: 'Guides',
+					},
+					{
+						href: 'https://research.composable.finance',
+						label: 'Research',
+						position: 'right',
 					},
 					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
-						position: 'right',
-					},
-					{
-						href: 'https://explorer.trustless.zone/',
-						label: 'Explorer',
 						position: 'right',
 					},
 				],
@@ -124,10 +118,6 @@ const config = {
 					{
 						title: 'Community',
 						items: [
-							{
-								label: 'Composable Twitter',
-								href: 'https://twitter.com/composablefin',
-							},
 							{
 								label: 'Picasso Twitter',
 								href: 'https://twitter.com/Picasso_Network',
