@@ -7,26 +7,6 @@
         "info,hyperspace=info,hyperspace_parachain=debug,hyperspace_cosmos=debug";
     in {
       packages = rec {
-        picasso-centauri-ibc-init = pkgs.writeShellApplication {
-          name = "picasso-centauri-ibc-init";
-          runtimeInputs = devnetTools.withBaseContainerTools;
-          text = ''
-            mkdir --parents "/tmp/composable-devnet/picasso-centauri-ibc"
-            HOME="/tmp/composable-devnet/picasso-centauri-ibc"
-            export HOME
-            RUST_LOG='${RUST_LOG}'
-            export RUST_LOG
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-picasso-kusama-to-centauri-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"  
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.ibc-relayer-config-centauri-to-picasso-kusama-0-0-config} "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml"  
-            cp --dereference --no-preserve=mode,ownership --force ${self'.packages.hyperspace-config-core} "/tmp/composable-devnet/picasso-centauri-ibc/config-core.toml"                
-            CODE_ID=$(cat ${pkgs.networksLib.pica.devnet.CHAIN_DATA}/code_id)
-            echo "$CODE_ID"
-            sed -i "s/wasm_code_id = \"0000000000000000000000000000000000000000000000000000000000000000\"/wasm_code_id = \"$CODE_ID\"/" "/tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml"
-            echo "wasm_code_id = \"$CODE_ID\""
-            RUST_LOG='${RUST_LOG}' ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-clients --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10
-          '';
-        };
-
         composable-picasso-ibc-init = pkgs.writeShellApplication {
           name = "composable-picasso-ibc-init";
           runtimeInputs = devnetTools.withBaseContainerTools;
@@ -65,41 +45,6 @@
             RUST_LOG="${RUST_LOG}"
             export RUST_LOG
             RUST_LOG='${RUST_LOG}' ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a ${devnet-root-directory}/composable-picasso-ibc/config-chain-a.toml --config-b ${devnet-root-directory}/composable-picasso-ibc/config-chain-b.toml --config-core ${devnet-root-directory}/composable-picasso-ibc/config-core.toml --delay-period 10 --port-id transfer --version ics20-1 --order unordered
-          '';
-        };
-
-        picasso-centauri-ibc-channels-init = pkgs.writeShellApplication {
-          name = "picasso-centauri-ibc-channels-init";
-          runtimeInputs = devnetTools.withBaseContainerTools;
-          text = ''
-            HOME="/tmp/composable-devnet/picasso-centauri-ibc"
-            export HOME       
-            RUST_LOG="${RUST_LOG}"
-            export RUST_LOG
-            ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-channel --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --port-id transfer --version ics20-1 --order unordered                       
-          '';
-        };
-        picasso-centauri-ibc-relay = pkgs.writeShellApplication {
-          name = "picasso-centauri-ibc-relay";
-          runtimeInputs = devnetTools.withBaseContainerTools;
-          text = ''
-            HOME="/tmp/composable-devnet/picasso-centauri-ibc"
-            export HOME
-            RUST_LOG='${RUST_LOG}'
-            export RUST_LOG
-            RUST_LOG='${RUST_LOG}' ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace relay --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml
-          '';
-        };
-
-        picasso-centauri-ibc-connection-init = pkgs.writeShellApplication {
-          name = "picasso-centauri-ibc-connection-init";
-          runtimeInputs = devnetTools.withBaseContainerTools;
-          text = ''
-            HOME="/tmp/composable-devnet/picasso-centauri-ibc"
-            export HOME                
-            RUST_LOG="${RUST_LOG}"
-            export RUST_LOG      
-            RUST_LOG='${RUST_LOG}' ${self'.packages.hyperspace-composable-rococo-picasso-rococo}/bin/hyperspace create-connection --config-a /tmp/composable-devnet/picasso-centauri-ibc/config-chain-a.toml --config-b /tmp/composable-devnet/picasso-centauri-ibc/config-chain-b.toml --config-core /tmp/composable-devnet/picasso-centauri-ibc/config-core.toml --delay-period 10            
           '';
         };
 

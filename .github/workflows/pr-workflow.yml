@@ -428,36 +428,3 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           name: hyperspace-composable-polkadot-picasso-kusama
           artifact: hyperspace-composable-polkadot-picasso-kusama:latest
-
-  mantis-e2e:
-    name: mantis-e2e
-    outputs:
-      ok: ${{ steps.ok.outputs.ok }}
-    needs:
-      - build-all-checks-packages
-    runs-on:
-      - ubuntu-latest-m
-    concurrency:
-      group: ${{ inputs.github_workflow }}-mantis-e2e-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          lfs: true
-          ref: ${{ inputs.github_event_pull_request_head_sha || github.sha }}
-          persist-credentials: false
-      - uses: cachix/install-nix-action@v20
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - uses: cachix/cachix-action@master
-        with:
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable
-          skipAddingSubstituter: false
-          skipPush: false                
-      - name: Devnet integration tests
-        run: |
-          nix run .#mantis-e2e --accept-flake-config --impure
-      - id: ok
-        run: echo "ok=true" >> "$GITHUB_OUTPUT"
