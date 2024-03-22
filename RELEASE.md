@@ -8,11 +8,12 @@
 
 ### 3.1. Release Numbers
 
-Each composable node release involves a release of (at least) the following components,
+Each Composable node release involves a release of (at least) the following components,
 
 1. Runtime wasm - Picasso and Composable at the time of this writing.
 
-    In order to allow clear identification with the native runtime version of each node release the runtime version for each runtime is an integer that is monotonic increasing for each release.
+For each release of a node, the runtime version associated with that node's native runtime is represented by an integer. This integer increases monotonically with each new release.
+
 2. The Composable Node - main node executable.
    This is in the format `vMajor.Minor.Patch` (eg: `v5.4200.10`). Where `Major=Branch number eg: 5`, `Minor=Runtime spec_version eg: 4200` and `Patch=a patch version 0..n`. The major version number ensures that there is always a way to branch the code for an upcoming release with relevant feature flags etc., while also serving as the major version for that release. Minor version always serves to indicate a backwards compatible patch to that release.
 
@@ -32,7 +33,7 @@ Release template name is:
 
 Typical Composable releases involve multiple rounds of QA and external audits/testing that may cause multiple patch(rc) versions to be released based on feedback/issues. This means that a release branch may have a longer maintenance life cycle independent of the main branch where most of the bleeding edge development happens. In order to execute this expected workflow, the following release process steps are proposed.
 
-As the work starts for a `vMajor` (eg: v5) release,
+As the work starts for a `vMajor` (eg: v5) release:
 
 1. Create a branch `release-v5`.
 2. in order to make/deploy (in staging) a release create a tag `release-v5.4200.0` from the previously created branch, which should trigger a workflow.
@@ -53,7 +54,7 @@ The following section lays out the release steps for each release in a checklist
 ### 4.2. Verify
 
 - [ ] Storage/logic migrations from the previous versions have been removed.
-- [ ] Make sure proper logic/storage migrations are included as necessary
+- [ ] Make sure proper logic/storage migrations are included as necessary.
 - [ ] Verify documentation has been updated.
 - [ ] Verify that there are no critical update instructions in release notes from Substrate/Cumulus/Polkadot releases that may not have been taken into account.
 
@@ -64,7 +65,7 @@ The following section lays out the release steps for each release in a checklist
 - [ ] Bump numbers in runtimes `version.rs` [according rules](https://docs.substrate.io/maintain/runtime-upgrades/) and 
    - [ ] Update `spec_version` (automate-able)
    - [ ] Update `transaction_version` if existing extrinsics or their ordering has changed. Can be verified via [metadata comparison](https://github.com/paritytech/polkadot/blob/master/doc/release-checklist.md#extrinsic-ordering).
-- [ ] Update composable node version if the code has changed (relevant number in workspace `Cargo.toml`)
+- [ ] Update Composable node version if the code has changed (relevant number in workspace `Cargo.toml`)
 - [ ] Update relevant frame pallets being released in runtimes to the latest node version
 - [ ] Consider and list possible proxy filter updates for available calls.
 - [ ] Categorize (and give a title) the release according to the types of changes it does, eg: security patch, bugfix, feature etc.
@@ -83,7 +84,7 @@ It will trigger `on.push.tags` [GitHub Tag based release flow](https://docs.gith
 
 ## Notifications
 
-- GitHub allows to subscribe to Release Candidate and Release publish.
-- Web3Alerts.io allows to subscribe to parachain runtime update authorized, runtime uploaded and runtime applied.
+- GitHub allows subscribing to Release Candidate creation and Release Publication events.
+- Web3Alerts.io allows subscribing to parachain runtime update authorization, runtime upload and runtime application events.
 
-These notification allow integrations (bridges, frontend, indexers) to align their roll outs with runtime upgrades.
+These notifications allow integrations (bridges, frontend, indexers) to align their roll outs with runtime upgrades.
