@@ -53,7 +53,7 @@ Refer to the [Releases](https://github.com/ComposableFi/composable/releases) pag
 
 ### Release Process
 
-Refer to [RELEASE.md](./RELEASE.MD).
+Refer to [RELEASE.md](./RELEASE.md).
 
 ## Nix
 
