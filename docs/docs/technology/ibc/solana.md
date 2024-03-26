@@ -45,7 +45,7 @@ Additional technical requirements imposed by the IBC on chains that it connects 
 
 Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The guest blockchain serves as a solution to this problem.
 
-The [next section](../ibc/solana/technical-overview.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
+The [next section](../restaking/sol-ibc-avs.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
 
 ## Benefits & Use Cases
 

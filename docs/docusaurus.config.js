@@ -8,8 +8,8 @@ const katex = require('rehype-katex')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-	title: 'Composable Finance',
-	tagline: 'The interoperable infrastructure for Modular DeFi',
+	title: 'Picasso',
+	tagline: 'The Cross-Ecosystem IBC & Restaking Hub',
 	url: 'https://composable.finance',
 	baseUrl: '/',
 	onBrokenLinks: 'warn',
@@ -72,7 +72,7 @@ const config = {
 			navbar: {
 				logo: {
 					alt: 'Picasso Logo',
-					src: 'img/picasso-p-32.svg',
+					src: 'img/logo.svg',
 				},
 				items: [
 					{
@@ -91,7 +91,7 @@ const config = {
 						label: 'Restaking',
 					},
 					{
-						to: '/technology/ibc',
+						to: '/governance-&-token/use-cases',
 						position: 'left',
 						label: 'Governance & Token',
 					},
@@ -99,6 +99,11 @@ const config = {
 						to: '/user-guides',
 						position: 'left',
 						label: 'Guides',
+					},
+					{
+						to: '/technology/mantis',
+						position: 'left',
+						label: 'MANTIS',
 					},
 					{
 						href: 'https://research.composable.finance',
@@ -119,7 +124,7 @@ const config = {
 						title: 'Community',
 						items: [
 							{
-								label: 'Picasso Twitter',
+								label: 'Twitter',
 								href: 'https://twitter.com/Picasso_Network',
 							},
 							{
@@ -140,11 +145,7 @@ const config = {
 						title: 'More',
 						items: [
 							{
-								label: 'Composable Medium',
-								href: 'https://composablefi.medium.com',
-							},
-							{
-								label: 'Picasso Medium',
+								label: 'Medium',
 								href: 'https://medium.com/@picasso_network',
 							},
 							{

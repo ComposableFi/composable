@@ -1,4 +1,4 @@
-# OpenGov
+# Picasso Kusama OpenGov
 
 Governance mechanisms for Picasso are intended to ensure the growth and adaptation of the ecosystem in alignment with the wants and needs of the Picasso community. Therefore, all token holders are able to participate, with their votes being weighted by stake. Moreover, any alteration to Picasso must be approved by a referendum decided by PICA token holders.
 
@@ -164,10 +164,10 @@ Governance parameters (for each referenda track) are as follows:
 ## Approval Curves
 With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
 
-![whitelist-curve](../whitelist-track.png)
+![whitelist-curve](../governance-&-token/whitelist-track.png)
 *Approval curve for the Whitelist Track*
 
-![root-curve](../root-track.png)
+![root-curve](../governance-&-token/root-track.png
 *Approval curve for the Root Track*
                                                                                                              
 ## Proposal Roadmap

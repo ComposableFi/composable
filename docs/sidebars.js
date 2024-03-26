@@ -28,7 +28,7 @@
          type: "generated-index",
          slug: "user-guides",
        },
-       collapsible: true,
+       collapsible: false,
        items: [
          {
            type: "category",
@@ -84,7 +84,7 @@
         type: "generated-index",
         slug: "developer-guides",
       },
-      collapsible: true,
+      collapsible: false,
       items: [
         "develop/composable-cosmos",
         "develop/solana-avs-testnet",
@@ -126,21 +126,19 @@ concepts: [
  
   "concepts/picasso",
   "concepts/ibc",
+  "concepts/restaking",
+  "concepts/definitions",
+
  
 ],
 
 token: [
  
-      "pallets/airdrop",
-      "technology/ibc/solana",
-      "technology/ibc/polkadot",
-      "technology/ibc/polkadot-kusama",
-      "technology/ibc/near",
-      "technology/ibc/hyperspace-relayer",
-      "technology/ibc/light-clients",
-      "technology/ibc/merkle-mountain-ranges",
-      "technology/ibc/beefy-light-client",
-     
+      "governance-&-token/use-cases",
+      "governance-&-token/tokenomics",
+      "governance-&-token/governance",
+      "governance-&-token/token-transparency",
+  
 ],
 
 restaking: [
@@ -162,6 +160,35 @@ restaking: [
   "technology/restaking/mantis-games",
   "technology/restaking/roadmap"
    ],
+},
+
+],
+
+mantis: [
+  {
+    type: "doc",
+    id: "technology/mantis",
+  },
+   "technology/mantis/benefits-use-cases",
+   "technology/mantis/protocol-architecture",
+   "technology/mantis/protocol-flow",
+   "technology/mantis/solvers-solutions",
+   "technology/mantis/solver-integration",
+   "technology/mantis/solver-guide",
+   "technology/mantis/integration-guide",
+   "technology/mantis/tools",
+   {
+    type: "category",
+        label: "CVM",
+        link: {
+         type: "doc",
+         id: "technology/cvm",
+       },
+      collapsible: true,
+      collapsed: true,
+      items: [
+      "technology/cvm/tutorial",
+ ],
 },
 
 ],
