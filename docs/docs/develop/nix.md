@@ -1,5 +1,5 @@
 
-# TLDR;
+# Nix
 
 Assuming you followed official guidance to install Nix with Flakes enabled.
 

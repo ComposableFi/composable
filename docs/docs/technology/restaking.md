@@ -26,13 +26,6 @@ A core rationale behind creating a Restaking Layer is that it enables partial bl
 
 ![architecture](../technology/restaking/genz-restaking.png)
 
-## Key features: 
-
-- **Cross-Chain Backed Assets Restaking**: While Eigenlayer exists as a Restaking layer on Ethereum for ETH and ETH LSTs, Generalised Restaking supports native assets from multiple ecosystems, including Solana, Cosmos, Polkadot, Ethereum, and more. UX is abstracted away from users via CVM. 
-- **Flexible parameters for AVSes**: AVSes can be integrated into the system as needed, with the ability to onboard and offboard at will. AVS builders possess the flexibility to define slashing conditions and customize decentralization parameters according to specific requirements.
-- **Emissions and Revenue Sharing**: Users will be earning a fixed yield and additional share of the revenue generated from AVSes on Picasso by restaking their assets. Additionally, PICA stakers will be earning a portion of the yield as well.
-- **Permissionless onboarding**: PICA governance on Picasso Cosmos cast votes to decide whether to onboard an AVS, and they have visibility into the amount they intend to reward for security purposes.
-
 ## Generalized Restaking Flow
 
 The following process outlines the journey of users' LST deposits on a PoS chain, including delegation to AVSes, emission earnings, and un-staking procedures.

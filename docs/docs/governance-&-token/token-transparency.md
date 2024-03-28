@@ -5,30 +5,27 @@ Thus, we provide the community with the following information on the Picasso (PI
 
 ## Organization Objectives & Token Use Statement
 
-Composable’s native PICA token is fundamental to governance, user dynamics, and network usage on the 
-[Picasso parachain](../picasso-parachain-overview.md). 
+Picasso's native PICA token is fundamental to governance, user dynamics, and network usage on Picasso. 
 Some of the [use cases for the PICA token](./tokenomics.md) 
-are (1) gas fees, (2) governance, (3) collator staking, (4) oracle staking, 
-and (5) liquidity provisioning—all of which will operate within the Composable ecosystem. 
+are (1) gas fees, (2) governance, (3) validator and collator staking, (4) oracle staking, 
+and (5) liquidity provisioning. 
 Beyond these intended functionalities for user or token holders, 
-the PICA token also serves to (1) enhance the Picasso parachain’s sustainability, 
-and (2) support growth, development, and security in Picasso. 
+the PICA token also serves to (1) enhance the Picasso L1 Cosmos SDK chain and Picasso Kusama (parachain’s) sustainability, 
+and (2) support growth, development, and security. 
 More details on these potential ecosystem benefits can be found below:
 
 ### Enhancing the Picasso Parachain’s User Appeal and Sustainability
 
 Composable has allocated 10% of the PICA token supply to “Ecosystem Incentives”, 
 which include rewards for participating in a number of future actions on the Picasso network. 
-These are programmatic incentives to bootstrap network growth such as running an oracle on [Apollo](../../technology/apollo-overview.md). 
+These are programmatic incentives to bootstrap network growth such as running an oracle on. 
 A subcategory of these incentives are the so-called “Infrastructure Tokens”, 
 currently comprising approximately 0.72% of the total token supply of PICA (72,132,700 tokens) 
 and dedicated to rewarding people running infrastructure for the Composable Ecosystem. 
 
-Further, Composable has allocated 30% of the PICA token supply to participants in our previous [Picasso crowdloan](./crowdloan.md). 
-Our crowdloan and the user support therein were critical in helping Composable secure both its Kusama and Picasso parachain slots. 
-Thus, to reward and thank the devoted users who supported us through this process, 
-we are allocating a portion of the PICA token supply to crowdloan participants. 
-Finally, 15% of the total PICA token supply is targeted to be released as rewards for participants in Liquidity Programs in Picasso.
+Further, 30% of the PICA token supply was originally allocated to participants of the Picasso Kusama crowdloan. 
+The Picasso crowdloan and the user support therein were critical in helping secure its Kusama parachain slot. 
+Finally, 15% of the total PICA token supply is targeted to be released as rewards for participants in Liquidity Programs.
 
 :::info
 
@@ -122,10 +119,9 @@ will unlock based on the vesting schedule specified on the PICA token distributi
 For more on how the vesting pallet works, 
 please read: [https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs.](https://github.com/paritytech/substrate/blob/master/frame/vesting/src/lib.rs)
 
-### Composable Cosmos Allocation
+### Picasso Allocation
 
-The multisig address `centauri12k2pyuylm9t7ugdvz67h9pg4gmmvhn5vmvgw48` holds 1,066,669,217.2 PICA. This was transferred from the Picasso treasury for the purpose of validator delegations during genesis to secure the Composable Cosmos chain. 
-
+As per [Council Motion 26](https://picasso.polkassembly.io/motion/26), 1,066,669,217.17 PICA tokens on Picasso Kusama was transferred to the Picasso (Cosmos) upon its mainnet launch from the Picasso Treasury to an escrow address. 1,066,669,217.17 PICA was minted on Picasso for the purpose of validator delegations during genesis. PICA was not burned on Picasso, but instead sent to the escrow address and once the transfer protocol opens, they will only be unescrowed if the initial PICA supply minted on Picasso is sent back to Picasso Kusama.
 ### Hyperspace Relayer allocation
 
 The current Hyperspace account on Picasso has the following address: `5wcgm3bbotHBcSjpgN6uGV338XhxDGuB22BETxsbgaMwqhzT`.

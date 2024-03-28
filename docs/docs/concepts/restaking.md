@@ -1,0 +1,18 @@
+# What is Restaking?
+
+Restaking has been described as a new primitive in crypto-economic security that enables the rehypothecation of a token on the consensus layer. With Picasso’s Generalized Restaking layer, the process of restaking involves a user staking a layer 1 (L1) chain’s native asset with a liquid staked derivative provider (e.g. a protocol that provides a liquid staked token or LST representing the user’s stake), they then “restake” this LST in another vault for restaking, which pools security from all the LSTs deposited. This pooled security can then be used by Actively Validated Services (AVSes), which are protocols and projects tapping into this type of security.
+
+As a result, restaking enables users to multiply the crypto-economic security (and the yield) of yield-bearing assets, as they are essentially able to stake the same assets twice, receiving yield and supporting PoS validation both times. Compared to staking alone, using the same amount of initial assets, restaking thus not only increases a user’s yield, but also enhances total security by providing security to both the L1 and AVSes.
+
+Restaking has been pioneered and popularized by EigenLayer, which is a protocol for restaking Ether (ETH) on Ethereum. In particular, users staking ETH are able to opt into EigenLayer’s smart contracts for restaking their ETH and thus extending the crypto-economic security to additional applications. EigenLayer’s total value locked (TVL) at the time of writing is over $9.2 billion, indicating that there is a clear demand for restaking.
+
+Despite the benefits of restaking, this concept has largely not yet expanded beyond the Ethereum ecosystem. However, there is a huge potential for restaking on other chains. This is particularly true on Solana, where there is a massive amount of staking occurring, with many prominent staking protocols already offering liquid staking tokens (LSTs) and receipt tokens that can be used for various purposes while a user’s original assets remain staked. In fact, at the time of writing, over 390 million SOL are staked, representing a staking market capitalization of over $43 billion dollars. This is over 88% of the total circulating supply of SOL. Therefore, there is an incredibly large market for restaking these assets that are already staked in Solana.
+
+A critical part of Picasso is thus the Restaking Layer; for all chains that are interoperable with IBC, we intend to facilitate restaking by connecting our Restaking Layer to IBC. Our first use of this Restaking Layer is for Solana IBC, introducing restaking to Solana for the first time.
+
+## Key features: 
+
+- **Cross-Chain Backed Assets Restaking**: While Eigenlayer exists as a Restaking layer on Ethereum for ETH and ETH LSTs, Generalised Restaking supports native assets from multiple ecosystems, including Solana, Cosmos, Polkadot, Ethereum, and more. UX is abstracted away from users via CVM. 
+- **Flexible parameters for AVSes**: AVSes can be integrated into the system as needed, with the ability to onboard and offboard at will. AVS builders possess the flexibility to define slashing conditions and customize decentralization parameters according to specific requirements.
+- **Emissions and Revenue Sharing**: Users will be earning a fixed yield and additional share of the revenue generated from AVSes on Picasso by restaking their assets. Additionally, PICA stakers will be earning a portion of the yield as well.
+- **Permissionless onboarding**: PICA governance on Picasso Cosmos cast votes to decide whether to onboard an AVS, and they have visibility into the amount they intend to reward for security purposes.

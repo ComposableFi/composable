@@ -16,11 +16,11 @@ The following tables outline the governance procedures and parameters related to
 
 With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
 
-![whitelist-curve](../whitelist-track.png)
+<!-- ![whitelist-curve](../whitelist-track.png)
 *Approval curve for the Whitelist Track*
 
 ![root-curve](../root-track.png)
-*Approval curve for the Root Track*
+*Approval curve for the Root Track* -->
 
 
 | Track Type            | Confirm Period    | Decision Period (Voting) |

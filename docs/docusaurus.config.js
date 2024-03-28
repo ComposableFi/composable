@@ -8,14 +8,13 @@ const katex = require('rehype-katex')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-	title: 'Composable Finance',
-	tagline: 'The interoperable infrastructure for Modular DeFi',
-	url: 'https://composable.finance',
+	title: 'Picasso Documentation',
+	tagline: 'The Cross-Ecosystem IBC & Restaking Hub',
+	url: 'https://docs.picasso.network',
 	baseUrl: '/',
 	onBrokenLinks: 'warn',
 	onBrokenMarkdownLinks: 'warn',
 	favicon: 'img/favicon.ico',
-
 	// GitHub pages deployment config.
 	// If you aren't using GitHub pages, you don't need these.
 	organizationName: 'Composable Finance', // Usually your GitHub org/user name.
@@ -70,21 +69,37 @@ const config = {
 				indexName: 'composable',
 			},
 			navbar: {
-				title: 'Composable Finance',
 				logo: {
-					alt: 'Composable Finance Logo',
-					src: 'img/logo.svg',
+					alt: 'Picasso Logo',
+					src: 'img/picasso-dark.svg',
+					srcDark: 'img/picasso-light.svg',
+
 				},
 				items: [
 					{
-						to: '/networks/picasso-parachain-overview',
+						to: '/concepts/picasso',
 						position: 'left',
-						label: 'Networks',
+						label: 'Concepts',
 					},
 					{
-						to: '/technology/architecture',
+						to: '/technology/ibc',
 						position: 'left',
-						label: 'Architecture',
+						label: 'IBC',
+					},
+					{
+						to: '/technology/restaking',
+						position: 'left',
+						label: 'Restaking',
+					},
+					{
+						to: '/governance-&-token/use-cases',
+						position: 'left',
+						label: 'Governance & Token',
+					},
+					{
+						to: '/user-guides',
+						position: 'left',
+						label: 'Guides',
 					},
 					{
 						to: '/technology/mantis',
@@ -92,28 +107,13 @@ const config = {
 						label: 'MANTIS',
 					},
 					{
-						to: '/develop/build-on-composable',
-						position: 'left',
-						label: 'Develop',
-					},
-					{
-						to: '/ecosystem/composable-ecosystem',
-						position: 'left',
-						label: 'Ecosystem',
-					},
-					{
-						to: '/user-guides',
-						position: 'left',
-						label: 'User Guides',
+						href: 'https://research.composable.finance',
+						label: 'Research',
+						position: 'right',
 					},
 					{
 						href: 'https://github.com/ComposableFi/composable',
 						label: 'GitHub',
-						position: 'right',
-					},
-					{
-						href: 'https://explorer.trustless.zone/',
-						label: 'Explorer',
 						position: 'right',
 					},
 				],
@@ -125,11 +125,7 @@ const config = {
 						title: 'Community',
 						items: [
 							{
-								label: 'Composable Twitter',
-								href: 'https://twitter.com/composablefin',
-							},
-							{
-								label: 'Picasso Twitter',
+								label: 'Twitter',
 								href: 'https://twitter.com/Picasso_Network',
 							},
 							{
@@ -150,11 +146,7 @@ const config = {
 						title: 'More',
 						items: [
 							{
-								label: 'Composable Medium',
-								href: 'https://composablefi.medium.com',
-							},
-							{
-								label: 'Picasso Medium',
+								label: 'Medium',
 								href: 'https://medium.com/@picasso_network',
 							},
 							{
