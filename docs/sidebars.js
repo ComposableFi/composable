@@ -137,6 +137,7 @@ token: [
       "governance-&-token/use-cases",
       "governance-&-token/tokenomics",
       "governance-&-token/governance",
+      "governance-&-token/opengov",
       "governance-&-token/token-transparency",
   
 ],

@@ -8,6 +8,12 @@ A concerted effort has been made to ensure that the PICA token holds as much uti
 
 ## What is $PICA used for?
 
+
+## Governance
+
+In pursuit of a trustless and interoperable vision, PICA plays a crucial role, as [governance on Picasso](../picasso/governance.md) is operating OpenGov phase 2.
+
+Additionally, as PICA serves as the native token of Composable Cosmos, it is essential for governance on the [Composable Cosmos](../composable-cosmos.md) chain as well.
 ### Validator staking
 PICA is used to secure Picasso. This is the first instance of a token being utilized for validation within both the Kusama and Cosmos ecosystems and highlights the critical role PICA plays within cross-ecosystem communication.  
 
@@ -19,22 +25,15 @@ With the introduction of Solana and Ethereum IBC connections in Q1 of 2024, 20% 
 #### AVS Payment Distribution
 The Generalized Restaking Layer will secure the launches and activity of various Actively Validated Services (AVS) enhancing revenue generation for PICA stakers. A portion of the revenue, specifically 20%, will be directed towards PICA stakers. The initial AVS to be launched will be the Guest blockchain on Solana, which facilitates the Solana IBC connection.
 
-#### Polkadot Liquid Staking
-Composable launched Liquid Staked DOT (LSDOT) on [trustless.zone](https://app.trustless.zone/stake/), a liquid staked derivative for Polkadot's native token. Revenue from this activity will flow to PICA, providing yield emissions from liquid staking, but only while stakings are locked. The value accrual for liquid staking is a 1% fee + 75% of 10% of the yield generated.
 
 :::tip
-Follow [this guide](https://docs.composable.finance/user-guides/composable-cosmos-staking) to stake PICA on Composable Cosmos and earn rewards through various protocol revenue streams.
+Follow [this guide](https://docs.composable.finance/user-guides/pica-staking) for staking PICA on Picasso to take part in governance and earn rewards through various protocol revenue streams.
 :::
-
-### Oracle staking​
-Apollo is a permissionless, MEV-resistant oracle solution. Anyone can run an oracle node on Picasso by providing stake in PICA.
-
-### Collator staking​ 
-25% of fees on Picasso are distributed to collators, with the remaining 75% going directly to the community-governed treasury. Collators on Picasso are required to put down a stake to produce blocks on [Picasso](../picasso-parachain-overview.md), as with most proof of stake networks. 
 
  
 
-<!-- ## Staking Reward Curve for Bridging Fees
+<!-- Commented as this hasn't been implemented yet
+## Staking Reward Curve for Bridging Fees
 
 Users may stake their PICA for a % share of revenue generated from bridging fees. The PICA staking rewards curve acts as a method of rewarding users who have staked their PICA over a threshold duration of time. Users who hit a maximum duration of 90-days staked will receive a proportional share of the 20% of bridge revenue allocated towards PICA stakers. 
 
@@ -68,21 +67,6 @@ Share of redistributed revenue up the curve for longer-duration stakers will onl
 
 ## The first cross-ecosystem token
 As Picasso plays a pivotal role on Cosmos and Kusama, PICA will be utilized across both ecosystems as new use cases and integrations are established.
-
-### Gas (network usage)​
-The PICA token is uniquely positioned as the gas token at the center of Picasso, powering Composable’s efforts to enhance blockchain interoperability. PICA will also act as the gas token for the CosmWasm dApps deployed on the `ccw-vm` on Picasso. 
-
-All fees may change dynamically depending on network load and pool or protocol fee formulas. The most fundamental factor for gas fees is the computational resources it consumes which is represented as the transaction's "weight". The weight of a transaction is converted into an appropriate amount of PICA by the polynomial formula which changes dynamically depending on the target load of the network. This means as the usage of the chain increases towards maximum capacity, the price of a unit of weight increases as well.
-
-### Primary pairing on Pablo​
-
-Pablo is the native DEX of the Picasso ecosystem and is integrated directly into the runtime of our parachain as a pallet. As such, a primary trading pair on Pablo will be PICA. You can also expect various liquidity incentives with 15% of PICA’s supply being allocated towards liquidity programs. 
-
-## Governance
-
-In pursuit of a trustless and interoperable vision, PICA plays a crucial role, as [governance on Picasso](../picasso/governance.md) is operating OpenGov phase 2.
-
-Additionally, as PICA serves as the native token of Composable Cosmos, it is essential for governance on the [Composable Cosmos](../composable-cosmos.md) chain as well.
 
 ## Where is PICA available?
 

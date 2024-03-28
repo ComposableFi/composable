@@ -33,5 +33,3 @@ Once IBC on Solana is launched, users will be able to unstake their assets, but 
 - If a user decides to unstake some percentage of SOL before the end of the vesting period, they will forfeit a corresponding percentage of their rewards. E.g. If a user decides to unstake 10% of their SOL holdings in the first month, they will forfeit 10% of the remaining vested rewards scheduled for the second and third months
 - Complete early unstaking results in forfeiture of all rewards except the initial 20% received at the launch of Solana IBC.
 
-## Phase 3 - Swap Competition 
-In this phase, MANTIS games will be full fledged. We aim to generalize competition beyond staking. Here, we introduce users’ “Degen scores” (a referral score for on-chain usage and asset capitalization; users can share this code to be followed, so others can replicate their specific intent passageways). Essentially, this allows users to copy and paste your intent for others to use, effectively referring them to input an intent. Judgements in the competition are based on this score and other factors that will be released ahead of phase 3. 

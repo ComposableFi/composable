@@ -8,14 +8,13 @@ const katex = require('rehype-katex')
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-	title: 'Picasso',
+	title: 'Picasso Documentation',
 	tagline: 'The Cross-Ecosystem IBC & Restaking Hub',
-	url: 'https://composable.finance',
+	url: 'https://docs.picasso.network',
 	baseUrl: '/',
 	onBrokenLinks: 'warn',
 	onBrokenMarkdownLinks: 'warn',
 	favicon: 'img/favicon.ico',
-
 	// GitHub pages deployment config.
 	// If you aren't using GitHub pages, you don't need these.
 	organizationName: 'Composable Finance', // Usually your GitHub org/user name.
@@ -72,7 +71,9 @@ const config = {
 			navbar: {
 				logo: {
 					alt: 'Picasso Logo',
-					src: 'img/logo.svg',
+					src: 'img/picasso-dark.svg',
+					srcDark: 'img/picasso-light.svg',
+
 				},
 				items: [
 					{
