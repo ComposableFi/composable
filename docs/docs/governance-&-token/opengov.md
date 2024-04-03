@@ -4,11 +4,7 @@ Governance mechanisms for Picasso Kusama are intended to ensure the growth and a
 
 [Picasso’s Polkassembly](https://picasso.polkassembly.io/opengov) will serve as a governance forum where open discussion about the future of Picasso Kusama can occur. Here, proposals can be refined based on community input.  
 
-The OpenGov structure for Picasso Kusama was implemented in two phases. Picasso Kusama has passed the first phase with phase 2 live in production.
-
-**Phase 1:** Implement OpenGov with governance handled by two collectives: The Picasso Kusama Council and the Technical Committee. The purpose of this phase was to maintain the speed and efficiency demonstrated by the recent launches and connections on Picasso Kusama.
-
-**Phase 2:** Now, the second phase of Picasso Kusama OpenGov is live, a new era of decentralisation, allowing PICA holders to actively participate in governance and a new structure of collectives.
+Picasso Kusama OpenGov is live, a new era of decentralisation, allowing PICA holders to actively participate in governance and a new structure of collectives. PICA serves as the native token of Picasso Kusama and plays a vital role on the parachain. It is extensively used as a gas token and governance token [powered by OpenGov](../governance-%26-token/opengov.md). Additionally, PICA is a requirement for infrastructure providers who operate oracles and collators on the network.
 
 Picasso’s OpenGov structure and design is an adapted version of Polkadot OpenGov.
 

@@ -63,9 +63,6 @@ Share of redistributed revenue up the curve for longer-duration stakers will onl
 - 60 Days <= x < 90 Days : receive 35% of redistributed revenue from stakers lower in the curve
 - 90 Days <= x : receive 50% of redistributed revenue from stakers lower in the curve -->
 
-## Picasso Kusama
-PICA serves as the native token of Picasso Kusama and plays a vital role on the parachain. It is extensively used as a gas token and governance token [powered by OpenGov](../governance-%26-token/opengov.md). Additionally, PICA is a requirement for infrastructure providers who operate oracles and collators on the network.
-
 ## Where is PICA available?
 
 The PICA token is available on:
