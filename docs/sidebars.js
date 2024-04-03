@@ -67,7 +67,7 @@
            },
            collapsible: true,
            items: [
-             "user-guides/composable-cosmos-staking",
+             "user-guides/pica-staking",
              "user-guides/how-to-provide-liquidity",
              "user-guides/how-to-trade-pica-on-pablo",
              "user-guides/dot-lp-guide",

@@ -5,7 +5,7 @@ The [Restaking Vaults on Solana](https://github.com/ComposableFi/emulated-light-
 The Restaking Vaults on Solana provide users the opportunity to stake SOL (Solana) and earn additional yield on Solana LSTs (Liquid Staked Solana tokens). The vaults are currently live on [mantis.app](https://www.mantis.app/) and will remain open until the launch of [Solana IBC](../ibc/solana.md). Once launch occurs, the assets will be assigned to secure the [AVS for Solana IBC](../restaking/sol-ibc-avs.md). 
 
 :::note
-Deposits in the vault will remain locked until the implementation of IBC on Solana. After this point, users can withdraw their deposits at any time; however, they need to observe a 2-day unbonding period on the AVS for Solana IBC before receiving their tokens.
+Deposits in the vault will remain locked until the implementation of IBC on Solana. After this point, users can withdraw their deposits at any time; however, they need to observe a 7-day unbonding period on the AVS for Solana IBC before receiving their tokens.
 :::
 
 ## Token Types

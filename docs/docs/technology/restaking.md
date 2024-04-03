@@ -18,7 +18,7 @@ Despite the benefits of restaking, this concept has largely not yet expanded bey
 This documentation refers to [Composable Cosmos](../networks/composable-cosmos.md) as Picasso as we are currently undergoing a name change of the Composable Cosmos chain to Picasso.
 :::
 
-In this network, validation is powered by operators who accept restaked tokens contributed by anyone. Operators are selected according to governance on Picasso Cosmos. Their role is to check the smart contract on-chain and use these inputs to construct blocks. The block is finalized when signed by more than ⅔ of validators. Restaked funds are sent to Picasso Cosmos and encoded on the block as part of the header data, which we create a proof for. The block is stored on our internal ledger in addition to being encoded on the respective chain.
+In this network, validation is powered by operators who accept restaked tokens contributed by anyone. Operators are selected according to governance on Picasso. Their role is to check the smart contract on-chain and use these inputs to construct blocks. The block is finalized when signed by more than ⅔ of validators. Restaked funds are sent to Picasso and encoded on the block as part of the header data, which we create a proof for. The block is stored on our internal ledger in addition to being encoded on the respective chain.
 
 A core rationale behind creating a Restaking Layer is that it enables partial block building in every domain. This addresses the censorship and block proposer agency issues outlined previously. 
 
@@ -32,7 +32,7 @@ The following process outlines the journey of users' LST deposits on a PoS chain
 
 1. Users holding LSTs on PoS chain (e.g. Solana) deposit into the vault contract. At this point no further action is required from the user unless they specify which AVS to delegate their stake to.
 
-2. The value of the deposit is propagated via IBC to the Orchestrator on Picasso Cosmos and sent to the accounting contract.
+2. The value of the deposit is propagated via IBC to the Orchestrator on Picasso and sent to the accounting contract.
 
 3. AVSes register and propose an amount to pay for restake in exchange for security. 
 
@@ -46,15 +46,15 @@ The following process outlines the journey of users' LST deposits on a PoS chain
 
 - Vault contracts implement a 7 day un-bonding period as a crucial security measure to secure against potential vulnerabilities and allow swift response to malicious behavior. There will be an un-bonding period for registering and unregistering AVS.
 
-- The IBC Protocol is the only transport layer utilized for sending accounting messages between different PoS chains and Picasso Cosmos. -->
+- The IBC Protocol is the only transport layer utilized for sending accounting messages between different PoS chains and Picasso. -->
   
 ## AVS & Operator Eligibility
 
 ### Operator Eligibility
-- Individuals with a Picasso Cosmos address can join as Operators, and there is no minimum requirement for the amount of restaked tokens. 
+- Individuals with a Picasso address can join as Operators, and there is no minimum requirement for the amount of restaked tokens. 
 - It's possible for an address to function as both a Restaker and an Operator simultaneously, although this is optional.
 - Operators have the option to engage in network activities without possessing any restaked tokens. They can receive token delegations from other Restakers or self-delegate using their own restaked tokens.
-- To become an Operator, a governance proposal must be initiated on Picasso Cosmos to become onboarded via on-chain governance.
+- To become an Operator, a governance proposal must be initiated on Picasso to become onboarded via on-chain governance.
 
 
 ### AVS Requirements

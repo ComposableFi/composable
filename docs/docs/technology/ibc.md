@@ -10,7 +10,7 @@ In every communication between two applications, there is a **relayer**, an off-
 
 ## Requirements to implement IBC on a network
 
-To implement IBC on a blockchain, three essential components, collectively referred to as the IBC stack are required. First, you require an implementation of the IBC protocol in the programming language that the underlying blockchain uses. Second, a light client is essential and finally, you'll need the support of an IBC relayer.
+To implement IBC on a blockchain, various components are required. This section highlights three essential components. First, an implementation of the IBC protocol in the programming language that the underlying blockchain uses. Second, a light client and finally, you'll need an IBC-Relayer designed to be compatible with the chain.
 
 ### IBC Implementations
 This refers to the connection and packet level integration of the IBC implementation. It enables the protocol to establish handshake-based connections to securely process and interpret IBC opaque data packets between different blockchains. In production, there are only two implementations of this core IBC functionality. The first implementation is the original `ibc-go`, which is specifically designed for Cosmos SDK chains written in Golang. The second implementation is [`ibc-rs`](https://github.com/ComposableFi/centauri/tree/master/ibc/modules), an implementation of the IBC protocol for Rust based blockchains. It's worth noting that, among all the IBC-enabled chains in production, the majority use `ibc-go`, with the exceptions being Composable Polkadot, Picasso, and Composable Cosmos.
