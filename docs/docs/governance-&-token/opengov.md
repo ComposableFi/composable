@@ -1,30 +1,26 @@
-# OpenGov
+# Picasso Kusama OpenGov
 
-Governance mechanisms for Picasso are intended to ensure the growth and adaptation of the ecosystem in alignment with the wants and needs of the Picasso community. Therefore, all token holders are able to participate, with their votes being weighted by stake. Moreover, any alteration to Picasso must be approved by a referendum decided by PICA token holders.
+Governance mechanisms for Picasso Kusama are intended to ensure the growth and adaptation of the ecosystem in alignment with the wants and needs of the Picasso Kusama community. Therefore, all token holders are able to participate, with their votes being weighted by stake. Moreover, any alteration to Picasso Kusama must be approved by a referendum decided by PICA token holders.
 
-[Picasso’s Polkassembly](https://picasso.polkassembly.io/opengov) will serve as a governance forum where open discussion about the future of Picasso can occur. Here, proposals can be refined based on community input.  
+[Picasso’s Polkassembly](https://picasso.polkassembly.io/opengov) will serve as a governance forum where open discussion about the future of Picasso Kusama can occur. Here, proposals can be refined based on community input.  
 
-The OpenGov structure for Picasso was implemented in two phases. Picasso has passed the first phase with phase 2 live in production.
-
-**Phase 1:** Implement OpenGov with governance handled by two collectives: The Picasso Council and the Technical Committee. The purpose of this phase was to maintain the speed and efficiency demonstrated by the recent launches and connections on Picasso.
-
-**Phase 2:** Now, the second phase of Picasso OpenGov is live, a new era of decentralisation, allowing PICA holders to actively participate in governance and a new structure of collectives.
+Picasso Kusama OpenGov is live, a new era of decentralisation, allowing PICA holders to actively participate in governance and a new structure of collectives. PICA serves as the native token of Picasso Kusama and plays a vital role on the parachain. It is extensively used as a gas token and governance token [powered by OpenGov](../governance-%26-token/opengov.md). Additionally, PICA is a requirement for infrastructure providers who operate oracles and collators on the network.
 
 Picasso’s OpenGov structure and design is an adapted version of Polkadot OpenGov.
 
 ## Core Tenets
 
-Core principles guiding participation in the Picasso OpenGov process are as follows:
+Core principles guiding participation in the Picasso Kusama OpenGov process are as follows:
 
-- Supporting engagement of token holders who are influenced by and in turn would like to influence Picasso governance, even when their opinions and desires differ from that of the Composable team
-- Prioritising the greater good of Picasso and its community over any individual interests
+- Supporting engagement of token holders who are influenced by and in turn would like to influence Picasso Kusama governance, even when their opinions and desires differ from that of the Composable team
+- Prioritising the greater good of Picasso Kusama and its community over any individual interests
 - Upholding transparency and openness with the public
 - Acting morally and with a mind for consequences of action or inaction
 - Standing firmly against any malicious language, behaviour, and actions
 
 ## On-Chain Governance
 
-Picasso’s hard governance involves on-chain mechanisms where the majority of tokens on Picasso determine key decisions. These decisions are made via token holders voting on proposed referenda. 
+Picasso’s hard governance involves on-chain mechanisms where the majority of tokens on Picasso Kusama determine key decisions. These decisions are made via token holders voting on proposed referenda. 
 
 ### OpenGov Committees
 
@@ -49,7 +45,7 @@ The Treasury Committee also control Picasso’s multi-sig wallets holding the al
 The **Relayer Committee** consists of accounts running the Hyperspace relayer.
 
 ## Definitions
-Definitions and components for OpenGov on Picasso are detailed below:
+Definitions and components for OpenGov on Picasso Kusama are detailed below:
 
 #### Origins 
 An origin is an authorization-based dispatch source for an operation. This determines the Track that a referendum is posted in.
@@ -64,10 +60,10 @@ This is the hash of the proposal to be enacted. The first step to make a proposa
 Proposals are an action or item (defined by the pre-image hash) proposed by a token holder and open for consideration/discussion by token holders.
 
 #### Referendum
-A referendum is a stake-based voting model. Each referendum is associated with an individual proposal for modifying Picasso in some way. This could include changes to code, parameters, or the governance of Picasso.
+A referendum is a stake-based voting model. Each referendum is associated with an individual proposal for modifying Picasso Kusama in some way. This could include changes to code, parameters, or the governance of Picasso Kusama.
 
 ## Tracks
-This is a specific pipeline delineating the life cycle of a proposal. Tracks in Picasso OpenGov are Root, Whitelist Caller, General Admin, Referendum Canceller, and Referendum Killer:
+This is a specific pipeline delineating the life cycle of a proposal. Tracks in Picasso Kusama OpenGov are Root, Whitelist Caller, General Admin, Referendum Canceller, and Referendum Killer:
 
 | Track           | Description    | Example |
 |-----------------------|-------------------|--------------------------|
@@ -84,7 +80,7 @@ Token holders can approve or reject proposals.
 A vote’s weight is defined by the following:
 
 1. The number of tokens a user commits to a vote
-2. The lock period of the vote; in Picasso OpenGov, users can voluntarily lock tokens to increase their voting power, with longer lock periods associated with a conviction multiplier on vote weight: 
+2. The lock period of the vote; in Picasso Kusama OpenGov, users can voluntarily lock tokens to increase their voting power, with longer lock periods associated with a conviction multiplier on vote weight: 
 
 | Lock Period After Enactment     | Conviction Multiplier    | Lock Time |
 |-----------------------|-------------------|--------------------------|
@@ -98,7 +94,7 @@ A vote’s weight is defined by the following:
 
 
 #### Vote Delegation
-Voters can delegate voting power (including conviction multiplier) to other token holders (“delegates”). This feature exists to allow tokens to be delegated to those who may be more knowledgeable about the Picasso network and thus able to make more informed decisions on specific referenda.
+Voters can delegate voting power (including conviction multiplier) to other token holders (“delegates”). This feature exists to allow tokens to be delegated to those who may be more knowledgeable about Picasso Kusama and thus able to make more informed decisions on specific referenda.
 
 #### Multirole Delegation
 Voting power can be delegated based on tracks, e.g. token holders can specify different delegates for each track.
@@ -164,10 +160,10 @@ Governance parameters (for each referenda track) are as follows:
 ## Approval Curves
 With X % of support, Referenda can pass after Y duration (time periods in the table) since the beginning of referenda depending on whethere the approval rate is above the approval curve.
 
-![whitelist-curve](../whitelist-track.png)
+![whitelist-curve](../governance-&-token/whitelist-track.png)
 *Approval curve for the Whitelist Track*
 
-![root-curve](../root-track.png)
+![root-curve](../governance-&-token/root-track.png
 *Approval curve for the Root Track*
                                                                                                              
 ## Proposal Roadmap

@@ -9,9 +9,9 @@ The TL;DR of this innovation is that there will exist a guest blockchain inside 
 The guest blockchain essentially serves as a replication of Solana, but unlike Solana, it is able to interoperate along the IBC and Composable’s trust-minimized bridge, [trustless.zone](https://app.trustless.zone/). In this manner, the guest blockchain can be considered as a sort of Layer 2 (L2) of the Solana network.
 
 :::tip Solana Restaking
-Through the Solana IBC connection, **[restaking is enabled on Solana](../solana-restaking.md) for the first time**. Restaking is a new and popular concept primarily established in the Ethereum community. In brief, restaking involves staking an asset with a blockchain’s validators along the PoS mechanism using liquid staked and receipt tokens belonging to the underlying L1.
+Through the Solana IBC connection, **[restaking is enabled on Solana](../restaking.md) for the first time**. Restaking is a new and popular concept primarily established in the Ethereum community. In brief, restaking involves staking an asset with a blockchain’s validators along the PoS mechanism using liquid staked and receipt tokens belonging to the underlying L1.
 
-This not only increases the yield a DeFi user can earn, but also enhances total security. These benefits are now being delivered into the Solana ecosystem as a necessary feature to implement IBC on the network. The restaking layer will be incentivized via the team staking competition designed for the [restaking vaults](../solana-restaking/vaults.md).
+This not only increases the yield a DeFi user can earn, but also enhances total security. These benefits are now being delivered into the Solana ecosystem as a necessary feature to implement IBC on the network. The restaking layer will be incentivized via the team staking competition designed for the [restaking vaults](../restaking/vaults.md).
 :::
 
 ## IBC Requirements & The Need for a Guest Blockchain
@@ -27,7 +27,7 @@ Yet, connecting to the IBC has a number of requirements. The IBC implementation 
 
 - **Smart Contracts**: execute in the chain’s runtime environment and are responsible for sending and receiving IBC packets.
 
-Before two blockchains can communicate along the IBC Protocol, an IBC connection must be established that meets the above requirements. This must be done through a four-way handshake whose purpose is to negotiate the protocol version and features to use, as well as to verify the identity and status of each chain.
+In addition to the requirements mentioned in the first section of this documentation, for two blockchains to communicate along the IBC Protocol, an IBC connection must be established that meets the above requirements. This must be done through a four-way handshake whose purpose is to negotiate the protocol version and features to use, as well as to verify the identity and status of each chain.
 
 The four phases of the [handshake](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments) are:
 
@@ -45,7 +45,7 @@ Additional technical requirements imposed by the IBC on chains that it connects 
 
 Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The guest blockchain serves as a solution to this problem.
 
-The [next section](../ibc/solana/technical-overview.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
+The [next section](../restaking/sol-ibc-avs.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
 
 ## Benefits & Use Cases
 
