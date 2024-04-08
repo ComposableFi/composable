@@ -2,11 +2,11 @@
 
 Composable is working on implementing the Inter-Blockchain Communication (IBC) protocol on [Solana](https://solana.com/), establishing trust-minimized connections with Ethereum, Cosmos, and Polkadot. This accomplishment stands as a pioneering achievement, overcoming technical challenges that were previously deemed impossible.
 
-Due to the requirements of implementing the IBC protocol, Solana and a number of other chains like [TRON](https://tron.network/) and [NEAR](https://near.org/) were previously thought to be incompatible with IBC. In collaboration with the University of Lisbon, Composable developed a mechanism for making Solana and other IBC-incompatible chains capable of supporting IBC for the first time. Initially it will be deployed on Solana, with plans for expansion to other networks in the future.
+Due to the requirements of implementing the IBC protocol, Solana and a number of other chains like [TRON](https://tron.network/) and [NEAR](https://near.org/) were previously thought to be incompatible with IBC. In collaboration with the University of Lisbon, a solution has been developed for making Solana and other IBC-incompatible chains capable of supporting IBC for the first time. Initially it will be deployed on Solana, with plans for expansion to other networks in the future.
 
-The TL;DR of this innovation is that there will exist a guest blockchain inside of Solana deployed as a smart contract, providing all of the features needed to make Solana IBC-compatible. **Validators on the guest blockchain receive messages about transactions on Solana, using this information to create blocks on the guest blockchain that reflect these Solana transactions.** 
+The TL;DR of this innovation is an AVS powered by the Solana Restaking Layer and deployed on Solana as a smart contract, providing all of the features needed to make Solana IBC-compatible. **Operators of the AVS receive messages about transactions on Solana, using this information to create blocks on the AVS that reflect these Solana transactions.** 
 
-The guest blockchain essentially serves as a replication of Solana, but unlike Solana, it is able to interoperate along the IBC and Composable’s trust-minimized bridge, [trustless.zone](https://app.trustless.zone/). In this manner, the guest blockchain can be considered as a sort of Layer 2 (L2) of the Solana network.
+The [AVS for Solana IBC](../restaking/sol-ibc-avs.md) (previously referred to as the Guest Blockchain) serves as a replication of Solana, but unlike Solana, it is able to interoperate along the IBC landscape via [Mantis.app](https://games.mantis.app/). In this manner, the AVS for Solana IBC can be considered as a sort of Layer 2 (L2) of the Solana network.
 
 :::tip Solana Restaking
 Through the Solana IBC connection, **[restaking is enabled on Solana](../restaking.md) for the first time**. Restaking is a new and popular concept primarily established in the Ethereum community. In brief, restaking involves staking an asset with a blockchain’s validators along the PoS mechanism using liquid staked and receipt tokens belonging to the underlying L1.
@@ -14,7 +14,7 @@ Through the Solana IBC connection, **[restaking is enabled on Solana](../restaki
 This not only increases the yield a DeFi user can earn, but also enhances total security. These benefits are now being delivered into the Solana ecosystem as a necessary feature to implement IBC on the network. The restaking layer will be incentivized via the team staking competition designed for the [restaking vaults](../restaking/vaults.md).
 :::
 
-## IBC Requirements & The Need for a Guest Blockchain
+## IBC Requirements & The Need for an AVS for Solana IBC
 IBC is an end-to-end stateful protocol for reliable, ordered, and authenticated communication between two blockchains. It enables bi-directional asynchronous communication between two blockchains within a relatively short time window (an average of less than one minute per IBC message ([Kim, Essaid, and Ju, 2022](https://ieeexplore.ieee.org/document/9919970/)). Thus, IBC is the only current mechanism of choice for facilitating cross-chain communication in a trust-minimized manner.
 
 Yet, connecting to the IBC has a number of requirements. The IBC implementation on each blockchain has the following elements:
@@ -43,9 +43,9 @@ Additional technical requirements imposed by the IBC on chains that it connects 
 - Provide block timestamps
 - Support introspection including a view of past block hashes
 
-Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The guest blockchain serves as a solution to this problem.
+Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The AVS for Solana IBC serves as a solution to this problem.
 
-The [next section](../restaking/sol-ibc-avs.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
+This [section](../restaking/sol-ibc-avs.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
 
 ## Benefits & Use Cases
 

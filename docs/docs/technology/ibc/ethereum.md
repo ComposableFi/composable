@@ -1,12 +1,12 @@
 # Ethereum IBC
 
-Ethereum's integration with the IBC protocol expands the ability to offer novel and valuable DeFi use cases and enhance opportunities for participants across diverse ecosystems.
+:::tip
+The inaugral implementation of IBC on Ethereum is now live on mainnet. Users can utilise [Mantis.app](https://games.mantis.app/) to bridge between Ethereum and Cosmos chains via Picasso.
+:::
 
-In line with prior IBC extensions, incorporating essential components such as a light client, relayer, and IBC implementation remains a prerequisite. However, when extending IBC compatibility to Ethereum, it became imperative to supplement the relayer with a ZK-Circuit. 
+Ethereum's integration with the IBC protocol expands the ability to offer novel and valuable DeFi use cases and enhance opportunities for participants across diverse ecosystems. In line with prior IBC extensions, incorporating essential components such as a light client, relayer, and IBC implementation remains a prerequisite. However, when extending IBC compatibility to Ethereum, it became imperative to supplement the relayer with a ZK-Circuit. 
 
-Previous IBC extensions relied on ibc-rs, whereas, this particular integration utilises an IBC implementation in Solidity.
-
-The essential components powering the Ethereum IBC connection are described in the following sections.
+Previous IBC extensions relied on ibc-rs, whereas, this particular integration utilises an IBC implementation in Solidity. The essential components powering the Ethereum IBC connection are described in the following sections.
 
 ## Light Clients
 Before Ethereum transitioned to Proof of Stake (PoS) from its former consensus mechanism, Proof of Work (PoW), developing a light client was notably challenging. Building a light client for any PoW blockchain presents difficulties due to the need for resource-intensive validation of PoW, storage requirements for large block sizes, slow and bandwidth-intensive syncing and having non-deterministic finality - this means that transactions are never truly finalised so there is always the potential for someone to create a longer chain originating from a block preceding the current one, excluding it from the valid chain. These challenges arise from PoW's computational complexity and resource demands, making it more intricate to implement a light client compared to blockchains using PoS consensus mechanisms.

@@ -3,7 +3,7 @@ As of January 18, 2023
 
 These Terms of Use (“Terms”) constitute a binding and enforceable legal contract between Composable Foundation 
 and its affiliates (“Composable,” “we,” “us,” or the “Company”) and you, an end user of the services (“you” or “User”) 
-at https://www.composable.finance, https://picasso.xyz and https://tools.xcvm.dev/ (the “Services”).
+at https://www.composable.finance, https://picasso.xyz, https://games.mantis.app/ and https://app.pablo.finance/ (the “Services”).
 These Terms also include any guidelines, announcements, additional terms, policies, and disclaimers made available 
 or issued by us from time to time. 
 By accessing, using or clicking on our website (and all related subdomains) or its mobile applications (the “Site”) or
