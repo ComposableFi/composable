@@ -31,7 +31,6 @@
           cargo-no-std-xcm-ibc
           deadnix-check
           hyperspace-composable-rococo-picasso-rococo
-          mantis-e2e
         ]);
 
       all-outputs = pkgs.linkFarmFromDrvs "all-outputs" (with pkgs;
@@ -50,7 +49,6 @@
           devnet-xc-fresh
           devnet-xc-image
           picasso-testfast-runtime
-          devnet-cosmos
           hyperspace-composable-rococo-picasso-rococo
         ]);
 
