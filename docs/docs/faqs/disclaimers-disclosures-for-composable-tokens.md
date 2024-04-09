@@ -3,7 +3,7 @@
 As of December 21, 2022
 
 This Specific Disclaimers and Disclosures for the Composable Tokens (“Disclaimer”) relates to the PICA tokens, 
-LAYR tokens, financial non-fungible tokens (fNFTs), and other tokens or products (the “Composable Tokens”) issued or 
+MANTIS tokens, lsDOT and other tokens or products (the “Composable Tokens”) issued or 
 developed by Composable Foundation (the “Company”) that is found within the Ethereum, Polkadot, Kusama and Cosmos blockchain ecosystem. 
 The Disclaimers shall also apply, including without limitation, to the Company’s agents, representatives, 
 beneficial owners, directors, officers, employees, contractors, affiliates, and related persons.

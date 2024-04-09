@@ -20,11 +20,11 @@ The parameters will be set in the following three rounds:
 
 
 ### Rewards
-There will be 17,500,000 PICA allocated to reward vault participants. Once the Solana IBC connection launches, restaked assets will be allocated to validators and users begin accruing staking rewards in the form of transfer revenue.
+There will be 35,000,000 PICA allocated to reward vault participants. Once the Solana IBC connection launches, restaked assets will be allocated to validators and users begin accruing staking rewards in the form of transfer revenue.
 
 The team that wins the competition, will receive 80% of transfer revenue for the first 30 days of activity on the Solana IBC bridge.
 
-The Restaking Vaults feature a reward pool of 17.5 million PICA tokens. Notably, 20% of this pool, equivalent to 3.5 million PICA, will be distributed during the Token Generation Event (TGE) of PICA on Solana coinciding with the launch of IBC on Solana. The remaining 80%, totalling 14 million PICA, will be vested evenly over a 3-month period following the conclusion of the team competition. Monthly distributions will average around 4.66 million PICA.
+The Restaking Vaults feature a reward pool of 35 million PICA tokens. Notably, 20% of this pool, will be distributed during the Token Generation Event (TGE) of PICA on Solana coinciding with the launch of IBC on Solana. The remaining 80% will be vested evenly over a 3-month period following the conclusion of the team competition.
 
 **It’s essential that users are aware of the implications of entering the vaults and ramifications on their rewards, should they choose to unstake before rewards have fully vested.** During the MANTIS Games Competition (restaking vaults), user assets will be locked within the contracts until the launch of Solana IBC.
 

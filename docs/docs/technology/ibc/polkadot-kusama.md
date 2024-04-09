@@ -1,10 +1,10 @@
 # Kusama ⬌ Polkadot IBC
 
-The first implementation of Composable IBC was between [Kusama](https://kusama.network/) and [Polkadot](https://polkadot.network/) via Picasso and Composable. This was a significant development as no bridge exists connecting these two relay chains and it also marked the **first implementation of IBC outside of the Cosmos ecosystem**.
+The **first implementation of IBC outside of the Cosmos** ecosystem was between [Kusama](https://kusama.network/) and [Polkadot](https://polkadot.network/) via Picasso Kusama and Composable. This was a significant development as no bridge exists connecting these two relay chains. 
 
 :::info
 
-On Polkadot & Kusama, parachains can connect to each other using the [Cross-Chain Message Passing protocol (XCM)](https://wiki.polkadot.network/docs/learn-xcm). XCM messages are used to transfer tokens, execute smart contracts, and perform other actions across different parachains. Parachains lacked the means to communicate with each other across different relay chains until the development of Composable IBC.
+On Polkadot & Kusama, parachains can connect to each other using the [Cross-Chain Message Passing protocol (XCM)](https://wiki.polkadot.network/docs/learn-xcm). XCM messages are used to transfer tokens, execute smart contracts, and perform other actions across different parachains. Parachains lacked the means to communicate with each other across different relay chains until the development of IBC outside Cosmos.
 
 :::
 
@@ -13,8 +13,8 @@ A diagram showcasing the components utilized in this implementation can be found
 ![kusama_polkadot_bridge_stack](../images-centauri/kusama-polkadot-bridge-stack.png)
 Kusama ⬌ Polkadot transfers utilizing IBC
 
-The shared components of Composable IBC's implementations between Kusama ⬌ Polkadot and other connections is apparent from their respective architectures. This is because the IBC protocol has a generalized structure for passing messages.
+The shared components of the IBC implementations between Kusama ⬌ Polkadot and [Polkadot ⬌ Cosmos](../ibc/polkadot.md) is apparent from their respective architectures. This is due to the fact that the IBC protocol features a standardized structure for message passing and messaging requirements that must be adhered to
 
-By utilizing IBC as a trustless access point for DotSama to the wider cryptocurrency ecosystem, we can leverage a proven and successful cross-chain communication protocol and enable transfers of assets between parachains in both ecosystems. This innovation is of significant importance in achieving Kusama's goals, which have always been focused on experimentation, developer acquisition, and paving the way for the future of DotSama.
+By utilizing IBC as a trust-minimised access point for DotSama to the wider cryptocurrency ecosystem, a proven and successful cross-chain communication protocol can be leveraged to enable transfers of assets between parachains in both ecosystems.
 
-The fees for transferring through Composable IBC are paid by utilizing the tokens being transferred, which have a value of 0.4% of the notional amount. In the future, this will be switched to a $10 fee in the case where there is a pool on Pablo. 
+The fees for transferring between Polkadot and Kusama is 0.5% of the notional amount bridged.

@@ -1,25 +1,26 @@
 # Solana AVS Testnet Guide
 
 :::info
-This document serves as a guide for becoming a validator during the mainnet testing phase of the Solana IBC AVS powered by the Picasso Restaking layer. Operators of this AVS are essentially validators of the previously known 'Guest Blockchain'. Additional information can be found [here](../technology/solana-restaking/technical-overview.md).
+This document serves as a guide for onboarding as an operatior of the AVS for Solana IBC AVS powered by the Picasso Restaking layer. Operators of this AVS are essentially validators of the previously known 'Guest Blockchain'. Additional information can be found [here](../technology/restaking/sol-ibc-avs.md).
 :::
 
-### Validator Security Model
-The validator set of the Guest Blockchain will be directed by majority where it is the responsibility of active validators to maintain uptime and sign corresponding payloads of transactions.
+### Operator Security Model
+The operator set of the AVS will be directed by majority where it is the responsibility of active validators to maintain uptime and sign corresponding payloads of transactions.
 
 ### Bonding
 
-Joining as a validator will require a bonded stake to keep participation gated from malicious actors easily onboarding. The size of the bond will be 0.1 SOL.
+Joining as a validator will require a bonded stake to keep participation gated from malicious actors easily onboarding. The size of the bond will be 25 SOL.
 
 ### (Re) Staking
-The validator set will be able to utilize liquid staked derivatives of SOL, such as jitoSOL, mSOL, bSOL and LST.   
+The validator set will be able to utilize liquid staked derivatives of SOL, such as jitoSOL, mSOL, bSOL, LST and edgevanaSOL.   
 
 ### Oracles
-Pyth oracle will be used to access price feeds for LST assets staked to the platform. 
+The Pyth oracle will be used to access price feeds for LST assets staked to the platform. 
+
+### Slashing 
+Slashing functionality will not be included during the initial launch stage. It will be implemented after the network is fully operational and IBC is live in production on Solana.
 
 ## Validator Setup
-
-Currently, slashing functionality and reward distribution are not available. These features are planned for implementation in the next stage. Additionally, we are in the process of releasing an explorer for this testnet.
 
 1. Install the validator CLI using the following command (From `validator-testing` branch) 
 ```

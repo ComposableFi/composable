@@ -33,8 +33,6 @@ Entities responsible for executing off-chain software logic restaked from an AVS
 ### Restaking
 A new primitive in crypto-economic security that enables the rehypothecation of a token on the consensus layer.
 
-### Solvers 
-Entities that compete to determine an optimal solution (in the form of a transaction execution pathway) for a user's intent. See: intents.
-
 ### Sync Committee
 A committee of 512 validators that is randomly selected every sync committee period (~1 day). While a validator is part of the currently active sync committee, they are expected to continually sign the block header that is the new head of the chain at each slot.
+

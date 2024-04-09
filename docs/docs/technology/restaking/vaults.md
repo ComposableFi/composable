@@ -28,7 +28,7 @@ BlazeStake is a Solana staking protocol that provides bSOL (liquid staked SOL to
 ## Delegation Options
 Upon the launch of the bridge, users have the option to delegate their staked tokens to a validator. Users can choose to delegate to a validator of their choice, delegate to their own validator, or if they opt for neither of these, a validator will be randomly delegated the tokens.
 
-Users who wish to remove their stake from the vault after IBC is live must wait until the 2 day unbonding period of the AVS for Solana IBC has elapsed. 
+Users who wish to remove their stake from the vault after IBC is live must wait until the 7 day unbonding period of the AVS for Solana IBC has elapsed. 
 
 ## Receipt Token
 Once users deposit stake into the vaults, they receive a unique NFT which represents the value of their stake. To ensure accurate tracking of rewards, the decision to use NFTs for Receipt Tokens is crucial. Fungible tokens cannot make them transferable because the state would have to be connected to the staker’s public key. If they are made transferable, rewards cannot be tracked.
