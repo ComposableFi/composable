@@ -107,7 +107,6 @@
         ./code/runtimes.nix
         ./code/services/cmc-api/cmc-api.nix
         ./code/utils/price-feed/price-feed.nix
-        ./docs/flake-module.nix
         ./flake/ci.nix
         ./flake/bash.nix
         ./flake/cargo-tools.nix
