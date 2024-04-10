@@ -1,7 +1,7 @@
 # Solana AVS Testnet Guide
 
 :::info
-This document serves as a guide for onboarding as an operatior of the AVS for Solana IBC AVS powered by the Picasso Restaking layer. Operators of this AVS are essentially validators of the previously known 'Guest Blockchain'. Additional information can be found [here](../technology/restaking/sol-ibc-avs.md).
+This document serves as a guide for onboarding as an operatior of the AVS for Solana IBC, powered by the Picasso Restaking layer. Operators of this AVS are essentially validators of the previously known 'Guest Blockchain'. Additional information can be found [here](../technology/restaking/sol-ibc-avs.md).
 :::
 
 ### Operator Security Model
@@ -22,22 +22,24 @@ Slashing functionality will not be included during the initial launch stage. It 
 
 ## Validator Setup
 
-1. Install the validator CLI using the following command (From `validator-testing` branch) 
+1. Install the validator CLI using the following command (From `validator` branch) 
 ```
-cargo install --git https://github.com/composableFi/emulated-light-client#validator-testing
+cargo install --git https://github.com/composableFi/emulated-light-client#validator
 ```
 2. Check if the validator CLI is installed using the following command. The current version should be returned as a value indicating successful installation.
 ```
 validator --version
 > 0.0.1
 ```
-3. Set up the rpc url with validator keypair using the command below (note that the program ID is already added). Try to use custom 
-rpc since the solana public rpc is not good enough to send transactions and will usually be dropped frequently. You can get the rpc
-from helius, quicknode or triton. Keypair path is the path to your keypair json file. [For Example](https://github.com/ComposableFi/emulated-light-client/blob/2313bbd4c1f838ce36b894e781ede5eb63b7c698/solana/solana-ibc/keypair.json)
+3. Set up the rpc url with your validator keypair using the command below (note that the program ID is already added). Use a custom 
+rpc since the Solana public rpc is not good enough to send transactions and will usually be dropped frequently. Keypair path is the path to your keypair json file. [For Example](https://github.com/ComposableFi/emulated-light-client/blob/2313bbd4c1f838ce36b894e781ede5eb63b7c698/solana/solana-ibc/keypair.json)
 ```
-validator init --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 7uvnkZxh7Z1wwVFMQ1ak7u4LXWx9f8tkgUnMMyiZrSZb --keypair-path <KEYPAIR_PATH>
+validator init --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH>
 ```
-4. Once the config file is set, run the validator. 
+:::info
+It's recommended to use the same key as your mainnet validator to ensure that you always have enough SOL in your account. However, you can use a different key if you prefer, but make sure you have enough SOL to cover gas fees at all times.
+:::
+4. Once the config file is set, run the validator: 
 ```
 validator run
 ```
@@ -46,5 +48,5 @@ You can even pass any of the arguments which would override the default config s
 optional and has higher preference than the default config file. Any of the arguments can be passes and its not neccessary to pass
 all of them.
 ```
-validator run --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 7uvnkZxh7Z1wwVFMQ1ak7u4LXWx9f8tkgUnMMyiZrSZb --keypair-path <KEYPAIR_PATH>
+validator run --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH>
 :::
