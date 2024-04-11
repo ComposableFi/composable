@@ -1,4 +1,4 @@
-# Solana AVS Testnet Guide
+# Solana AVS Mainnet Guide
 
 :::info
 This document serves as a guide for onboarding as an operator of the AVS for Solana IBC, powered by the Picasso Restaking layer. Operators of this AVS are essentially validators of the previously known 'Guest Blockchain'. Additional information can be found [here](../technology/restaking/sol-ibc-avs.md).
