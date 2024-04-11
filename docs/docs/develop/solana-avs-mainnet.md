@@ -43,7 +43,24 @@ validator init --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWri
 :::info
 It's recommended to use the same key as your mainnet validator to ensure that you always have enough SOL in your account. However, you can use a different key if you prefer, but make sure you have enough SOL to cover gas fees at all times.
 :::
-4. Once the config file is set, run the validator: 
+
+4. Run the following command to bond 25 SOL or liquid staked SOL token in order to join the network.
+ 
+The token address can be any one of the whitelisted tokens under the restaking layer. Currently, 25 tokens from: wSOL, bSOL, jitoSOL, mSOL, LST, or edgeSOL are accepted. Validators are free to choose from any of these options as the deposit asset. The addresses are as follows:
+
+- wSOL: `So11111111111111111111111111111111111111112`
+- bSOL: `bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1`
+- jitoSOL: `J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn`
+- LST: `LSTxxxnJzKDFSLr4dUkPcmCf5VyryEqzPLz5j4bpxFp`
+- edgeSOL: `edge86g9cVz87xcpKpy3J77vbp4wYd9idEV562CCntt`
+- mSOL: `mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So`
+
+```
+Validator stake -a 25000000000 -t <token-address> —rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH>
+```
+   
+
+1. Once the config file is set, run the validator: 
 ```
 validator run
 ```
