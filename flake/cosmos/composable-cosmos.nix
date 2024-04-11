@@ -19,7 +19,29 @@
         cosmwasm-check = self.inputs.cosmos.packages."${system}".cosmwasm-check;
       };
 
-      centaurid = self.inputs.composable-cosmos.packages."${system}".centaurid;
+       centauri = cosmosLib.mkCosmosGoApp {
+        name = "centauri";
+        version = "v6.5.1";
+        src = self.inputs.composable-cosmos;
+        vendorHash = "sha256-GZSvL2INqpBLiusSW9SOW/Ylw5+vfRST0h1xBdvyaDQ=";
+        tags = [ "netgo" ];
+        engine = "cometbft/cometbft";
+        excludedPackages = [ "interchaintest" "simd" ];
+        preFixup = ''
+          ${cosmosLib.wasmdPreFixupPhase
+          self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 "centaurid"}
+        '';
+        buildInputs = [ self.inputs.cosmos.packages.${system}.libwasmvm_1_2_4 ];
+        proxyVendor = true;
+        doCheck = false;
+      };
+
+      centaurid = pkgs.writeShellApplication {
+        name = "centaurid";
+        text = ''
+          ${centauri}/bin/centaurid "$@"
+        '';
+      };
 
       ibc-lightclients-wasm-v1-msg-push-new-wasm-code = code: {
         "messages" = [{
@@ -60,7 +82,7 @@
           ${bashTools.export pkgs.networksLib.pica.devnet}
           VALIDATOR_KEY=$("$BINARY" keys show ${cosmosTools.validators.moniker} --keyring-backend=test --keyring-dir="$KEYRING_TEST" --output=json | jq .address -r )
 
-          "$BINARY" tx gov submit-proposal ${ics10-grandpa-cw-proposal}/ics10_grandpa_cw.wasm.json --from="$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
+          "$BINARY" tx gov submit-proposal /home/cocokick/ics10_grandpa_cw.wasm.json --from="$VALIDATOR_KEY"  --keyring-backend test --gas 9021526220000 --fees 92000000166$FEE --keyring-dir "$KEYRING_TEST" --chain-id "$CHAIN_ID" --yes --home "$CHAIN_DATA" --output json
           sleep $BLOCK_SECONDS
           "$BINARY" query auth module-account gov --chain-id "$CHAIN_ID" --node tcp://localhost:$CONSENSUS_RPC_PORT --home "$CHAIN_DATA" | jq '.account.base_account.address' --raw-output
           PROPOSAL_ID=1

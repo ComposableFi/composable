@@ -1,0 +1,18 @@
+{
+ "messages": [
+  {
+    "@type": "/centauri.ratelimit.v1beta1.MsgUpdateRateLimit",
+    "authority": "centauri10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq",
+    "denom": "ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518",
+    "min_rate_limit_amount": "30410000000",
+    "channel_id": "channel-2",
+    "max_percent_send": "30",
+    "max_percent_recv": "30",
+    "duration_hours": "1"
+  }
+ ],
+ "metadata": "ipfs://CID",
+ "deposit": "1000ppica",
+ "title": "transfer limit",
+ "summary": "transferlimit"
+}
