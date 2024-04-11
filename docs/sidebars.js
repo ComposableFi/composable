@@ -87,7 +87,7 @@
       collapsible: false,
       items: [
         "develop/composable-cosmos",
-        "develop/solana-avs-testnet",
+        "develop/solana-avs-mainnet",
         "develop/local-picasso-guide",
         "develop/oracle-set-up-guide",
         "develop/collator-guide",
