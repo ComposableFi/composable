@@ -59,8 +59,7 @@ The token address can be any one of the whitelisted tokens under the restaking l
 Validator stake -a 25000000000 -t <token-address> —rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH>
 ```
    
-
-1. Once the config file is set, run the validator: 
+5. Once the config file is set, run the validator: 
 ```
 validator run
 ```

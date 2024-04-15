@@ -32,7 +32,7 @@ Validators produce blocks with state proofs, relayed to the counterparty chain. 
 The validator network will be directed by majority where it is the responsibility of active validators to maintain uptime and sign corresponding payloads of transactions.
 
 #### Bonding
-Joining as a validator will require a bonded stake to keep participation gated from malicious actors easily onboarding. The size of the bond will be 500 SOL.
+Joining as a validator will require a bonded stake to keep participation gated from malicious actors easily onboarding. The size of the bond will be 25 SOL.
 
 #### (Re) Staking
 The validator set will be able to utilize liquid staking derivatives (LSD) of SOL, as well as LP tokens for this initiative. The following assets will be deemed acceptable collateral for staking as a validator: SOL, mSOL, jitoSO and bSOL.

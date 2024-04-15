@@ -19,24 +19,14 @@ Casper is Ethereum's PoS consensus protocol implemented within ETH 2.0. In Caspe
 
 The Casper Light Client relies on the **Sync Committee**, which comprises 512 validators who undergo random selection once every sync committee period, approximately equal to one day. While a validator is actively participating in the sync committee, their primary responsibility entails consistently signing the block header representing the current chain head during each slot. The Sync Committee is a succinct way of getting a sample to verify a subset of the signatures of Ethereum. 
 
-A Tendermint light client is deployed on Ethereum as a smart contract and responsible for verifying the validity of block headers from Picasso and ensuring that the consensus state of the source blockchain is consistent with the header being presented. These headers contain data such as block hashes, timestamps, and state roots. It will be too expensive to verify signatures from  the validator set of Picasso, therefore, ZK-Snarks are used to verify all signatures in succinct proofs. Read more on light clients [here](light-clients.md).
+A Tendermint light client is deployed on Ethereum as a smart contract and responsible for verifying the validity of block headers from Picasso and ensuring that the consensus state of the source blockchain is consistent with the header being presented. These headers contain data such as block hashes, timestamps, and state roots. It will be too expensive to verify signatures from  the validator set of Picasso, therefore, [TendermintX](https://github.com/succinctlabs/tendermintx) is used to verify all signatures in succinct proofs. Read more on light clients [here](light-clients.md).
 
-## ZK Circuit
-Wthin the [Hyperspace](hyperspace-relayer.md) operation on Ethereum, a **zero-knowledge (ZK) circuit** is employed to optimise and sustain the cost of the relayer. A ZK circuit is a program capable of generating a proof when given a set of inputs. This proof can then be verified to ensure the correctness of each computational step executed within the circuit. 
-
-The ZK circuit involves a **prover** and **verifier**. Similar to Hyperspace, the prover is a permissionless off-chain component that anyone can run. The verifier lives on-chain as a smart contract on Ethereum. The role of the verifier is to verify proofs submitted by the prover, in this case, a succinct proof of client updates from the Composable Cosmos chain.
-
-:::tip
-Verifiers receive proofs from provers and subsequently validate these claims, resulting in the generation of zero-knowledge proofs. For an in-depth explanation of this process, [read here](https://ethereum.org/en/developers/docs/zksnarks).
-:::
-
-In particular, the IBC connection to Ethereum currently operates with a Groth16 SNARK circuit specialized in verifying signatures of the Ed25519 signature scheme. The proving times stand at 2 minutes, thanks to Rapid SNARK, an accelerated prover software.
+## TendermintX
+Previously, validating the Tendermint consensus protocol within the EVM posed a challenge due to the absence of an Ed25519 precompile, the default signature scheme used in Cosmos chains using the Tendermint consensus. Existing Solidity implementations for this verification incurred gas costs averaging around 25 million. However, zero-knowledge proofs serve as a precompile for the EVM, enabling developers to integrate highly intricate computations seamlessly. The deployment of smart contracts and circuits by Succinct for Tendermint X is now operational in production, with each client update for the IBC implementation on Ethereum costing approximately 650,000 gas.
 
 :::info
 The Ed25519 signature scheme is a cryptographic algorithm used for digital signatures and adopted by majority of Blockchains. It is based on the elliptic curve cryptography and provides strong security with relatively short key sizes. The scheme is named after the Edwards curve Curve25519, which is used as the underlying mathematical structure. Ed25519 offers efficient signing and verification operations, making it popular for various applications such as secure communication protocols, cryptocurrencies, and digital authentication systems.
 :::
-
-In the next release, Succinct Lab's TendermintX ZK Tendermint light client circuit designed will be integrated to enhance the efficiency of relaying costs and accelerate client update speeds on Ethereum.
 
 ## IBC implementation in Solidity
 Building upon the existing IBC implementation in Solidity by [Hyperledger Labs](https://github.com/hyperledger-labs/yui-ibc-solidity), the contracts that have been deployed are optimised for a production-ready environment tailored for Ethereum. 
