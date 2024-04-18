@@ -37,9 +37,11 @@ validator --version
 ```
 3. Set up the rpc url with your validator keypair using the command below (note that the program ID is already added). Use a custom 
 rpc since the Solana public rpc is not good enough to send transactions and will usually be dropped frequently. Keypair path is the path to your keypair json file. [For Example](https://github.com/ComposableFi/emulated-light-client/blob/2313bbd4c1f838ce36b894e781ede5eb63b7c698/solana/solana-ibc/keypair.json)
+
 ```
-validator init --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH>
+validator init --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH> -—priority-fees <PRIORITY_FEES>
 ```
+
 :::info
 It's recommended to use the same key as your mainnet validator to ensure that you always have enough SOL in your account. However, you can use a different key if you prefer, but make sure you have enough SOL to cover gas fees at all times.
 :::
@@ -56,17 +58,20 @@ The token address can be any one of the whitelisted tokens under the restaking l
 - mSOL: `mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So`
 
 ```
-Validator stake -a 25000000000 -t <token-address> —rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH>
+Validator stake -a 25000000000 -t <token-address> —rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH> -—priority-fees <PRIORITY_FEES>
 ```
    
 5. Once the config file is set, run the validator: 
+
 ```
-validator run
+validator run -—priority-fees <PRIORITY_FEES>
 ```
 :::note
 You can even pass any of the arguments which would override the default config set in previous step. These arguments are
 optional and has higher preference than the default config file. Any of the arguments can be passes and its not neccessary to pass
 all of them.
+
 ```
-validator run --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH>
+validator run --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id 2HLLVco5HvwWriNbUhmVwA2pCetRkpgrqwnjcsZdyTKT --keypair-path <KEYPAIR_PATH> -—priority-fees <PRIORITY_FEES>
+```
 :::
