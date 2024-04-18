@@ -33,7 +33,7 @@ cargo install --git https://github.com/composableFi/emulated-light-client --bran
 2. Check if the validator CLI is installed using the following command. The current version should be returned as a value indicating successful installation.
 ```
 validator --version
-> 0.0.1
+> 0.0.5
 ```
 3. Set up the rpc url with your validator keypair using the command below (note that the program ID is already added). Use a custom 
 rpc since the Solana public rpc is not good enough to send transactions and will usually be dropped frequently. Keypair path is the path to your keypair json file. [For Example](https://github.com/ComposableFi/emulated-light-client/blob/2313bbd4c1f838ce36b894e781ede5eb63b7c698/solana/solana-ibc/keypair.json)
@@ -59,8 +59,7 @@ The token address can be any one of the whitelisted tokens under the restaking l
 Validator stake -a 25000000000 -t <token-address> —rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH>
 ```
    
-
-1. Once the config file is set, run the validator: 
+5. Once the config file is set, run the validator: 
 ```
 validator run
 ```
