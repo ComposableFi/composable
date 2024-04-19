@@ -28,8 +28,11 @@ Upon the AVS launch, rewards will not be active until the initiation of IBC on S
 
 1. Install the validator CLI using the following command (From `validator` branch) 
 ```
-cargo install --git https://github.com/composableFi/emulated-light-client --branch validator
+cargo install --git https://github.com/composableFi/emulated-light-client
 ```
+
+If you have previously installed the binary, use the `--force` flag.
+
 2. Check if the validator CLI is installed using the following command. The current version should be returned as a value indicating successful installation.
 ```
 validator --version
