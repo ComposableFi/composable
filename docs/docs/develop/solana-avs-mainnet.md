@@ -61,7 +61,7 @@ The token address can be any one of the whitelisted tokens under the restaking l
 - mSOL: `mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So`
 
 ```
-Validator stake -a 25000000000 -t <token-address> --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH> -—priority-fees 400000
+Validator stake -a 25000000000 -t <token-address> --rpc-url <RPC_URL> --ws-url <WS_URL> --program-id <PROGRAM_ID> --keypair-path <KEYPAIR_PATH> -—priority-fees 10000
 ```
    
 5. Once the config file is set, run the validator: 
