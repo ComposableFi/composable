@@ -7,7 +7,7 @@ description = "composable-cosmwasm, the foundation for wasm smart contracts."
 [dependencies]
 clap = { version = "4.0.32", features = ["derive"] }
 cosmwasm-orchestrate = { git = "https://github.com/ComposableFi/cosmwasm-vm" }
-cosmwasm-std = "1.2.7"
+cosmwasm-std = "1.4.4"
 frame-support = "21.0.0"
 hex = "0.4.3"
 jsonrpc = "0.16.0"
