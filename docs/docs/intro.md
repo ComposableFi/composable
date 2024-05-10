@@ -10,7 +10,7 @@ slug: /
       <a href="/concepts/picasso">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649620/concepts_qdp369.png" alt="Concepts" alt="Concepts"/>
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361756/concepts_ry3crk.png" alt="Concepts" alt="Concepts"/>
           </div>
           <div class="card__body">
             <h3>Concepts</h3>
@@ -23,7 +23,7 @@ slug: /
       <a href="/technology/ibc">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649553/ibc_logc3s.png" alt="Concepts" alt="IBC" />
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361777/ibc_vqn2fz.png" alt="Concepts" alt="IBC" />
           </div>
           <div class="card__body">
             <h3>IBC</h3>
@@ -36,7 +36,7 @@ slug: /
       <a href="/technology/restaking">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649577/restaking_kiyib6.png" alt="Concepts" alt="Restaking" />
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361808/restaking_s87eqo.png" alt="Concepts" alt="Restaking" />
           </div>
           <div class="card__body">
             <h3>Restaking</h3>
@@ -49,7 +49,7 @@ slug: /
       <a href="/governance-&-token/use-cases">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649550/gov_ndvxre.png" alt="Concepts" alt="Concepts" />
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361784/gov_lwzhrq.png" alt="Concepts" alt="Concepts" />
           </div>
           <div class="card__body">
             <h3>Governance & Token</h3>
@@ -62,7 +62,7 @@ slug: /
       <a href="/user-guides">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649537/dev_grfoz1.png" alt="Concepts" alt="Concepts" />
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361767/dev_f1l2zi.png" alt="Concepts" alt="Concepts" />
           </div>
           <div class="card__body">
             <h3>Developer & User Guides</h3>
@@ -75,7 +75,7 @@ slug: /
       <a href="/technology/mantis">
         <div class="card">
           <div class="card__image">
-            <img src="https://res.cloudinary.com/dmgmny0ro/image/upload/v1711649553/mantis_1_nhucqu.png" alt="Concepts" alt="Concepts" />
+            <img src="https://res.cloudinary.com/daklnyhgw/image/upload/v1715361798/mantis_1_h0uizv.png" alt="Concepts" alt="Concepts" />
           </div>
           <div class="card__body">
             <h3>MANTIS</h3>
