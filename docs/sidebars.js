@@ -86,7 +86,7 @@
       },
       collapsible: false,
       items: [
-        "develop/composable-cosmos",
+        "develop/picasso",
         "develop/solana-avs-mainnet",
         "develop/local-picasso-guide",
         "develop/oracle-set-up-guide",

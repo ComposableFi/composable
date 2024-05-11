@@ -1,4 +1,4 @@
-# How to create a Keplr Wallet for Composable Cosmos
+# How to create a Keplr Wallet for Picasso
 
 ## Download the Keplr extension​
 The following link allows you to download the Keplr extension: https://www.keplr.app/#extension 
@@ -23,21 +23,22 @@ Protect your seed phrase like your life depends on it, as anyone with access to 
 
 Next, add a display name for the account (e.g., Picasso) and set a password. 
 
-## Add Composable Cosmos to Keplr
+## Add Picasso to Keplr
 After verifying your recovery phrase, you will come across a drop down menu to add support for the chains of your choice. 
 
-In the search bar type “Composable”, choose the Composable chain and click “Save".
+In the search bar type “Picasso” and click “Save".
 
 :::tip 
-If you don't see the Composable Cosmos chain in the dropdown, head to Keplr settings. In the general section, look for the option to manage non-native chains. Here, you can add the Composable chain.
+If you don't see Picasso in the dropdown:
+1. Head to Keplr "General" in settings
+2. Select the "Add/Remove Non-Native Chains" option
+3. Add Picasso
 :::
 
-![keplr-3](./images-keplr-guide/images-keplr-5.png)
+![keplr-3](./images-keplr-guide/images-keplr.png)
 
 Congratulations! You have now integrated your Keplr account with Composable cosmos.
 
-## Add Composable Cosmos Testnet to Keplr
+## Add Picasso Testnet to Keplr
 
-If you're interacting with the Composable Cosmos Testnet which was previously referred to as Centauri and Bansky, simply add `centauri-testnet` similar to the previous step.
-
-![banksy](./images-keplr-guide/add-banksy.png)
+If you're interacting with the Picasso Testnet which was previously referred to as Bansky, simply add `Picasso Testnet` in a similar procedure to the previous steps.

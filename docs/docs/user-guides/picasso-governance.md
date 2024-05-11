@@ -1,10 +1,10 @@
-# Interacting with Picasso governance
+# Interacting with Picasso Kusama governance
 
 Picasso Kusama utilizes Polkassembly for on-chain governance participation. Follow the proposal roadmap if you wish to take part in initiating a proposal on Picasso.
 
 ## Proposal Roadmap
 
-Any PICA token holder has the ability to create, vote and contribute to Referenda on Picasso. See [this section](../networks/picasso/governance.md) for further details on proposal parameters.
+Any PICA token holder has the ability to create, vote and contribute to Referenda on Picasso. See [this section](../governance-%26-token/opengov.md) for further details on proposal parameters.
 
 1. A proposal author should submit their idea to Picasso’s Polkassembly governance forum, where they should be open to community feedback for at least five days before moving forward
 2. Taking into account feedback, the proposal author can submit their proposal on-chain
