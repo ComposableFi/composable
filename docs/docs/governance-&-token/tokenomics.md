@@ -20,4 +20,4 @@ The total supply of PICA is 10 billion tokens. PICA Token distribution is intend
 ![pica_allocation_pie](./pica-allocation-pie.png)
 
 **Estimated allocation and length of program is subject to change. 
-[Specific Disclaimers and Disclosures for the PICA Token](https://docs.composable.finance/faqs/disclaimers-disclosures-for-composable-tokens)
+[Specific Disclaimers and Disclosures for the PICA Token](https://docs.picasso.network/faqs/disclaimers-disclosures-for-composable-tokens)

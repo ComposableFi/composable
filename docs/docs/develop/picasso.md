@@ -1,16 +1,15 @@
-# Composable Cosmos Mainnet
+# Picasso Mainnet
 
 ## Information
 - Network information: https://github.com/ComposableFi/composable-cosmos
 - Chain ID: centauri-1
 - Genesis: https://github.com/notional-labs/composable-networks/blob/main/mainnet/genesis.json
 - Binary: https://github.com/ComposableFi/composable-cosmos/releases/tag/v6.3.1
-- Current version: v6.3.1 (check the repository for the latest release)
+- Current version: v6.6.41 (check the repository for the latest release)
 - Public Notional endpoints:
-  - RPC: https://composable-rpc.polkachu.com/ (1) https://api-composable-ia.cosmosia.notional.ventures (2)
-- Block Explorer: https://ping.pub/composable (1) https://explorer.nodestake.top/composable/ (2)
-- Faucet: **The gas fees for Composable Cosmos is zero.**
-- IBC Channels: https://polkachu.com/ibcs?network=composable
+  - RPC: https://picasso-rpc.polkachu.com/ (1) https://api-composable-ia.cosmosia.notional.ventures (2)
+- Block Explorer: https://ping.pub/picasso (1) https://explorer.nodestake.top/composable/ (2)
+- IBC Channels: https://polkachu.com/ibcs?network=picasso
 
 ## Hardware recommendation
 ```
@@ -55,14 +54,9 @@ c7f52f81ee1b1f7107fc78ca2de476c730e00be9@65.109.80.150:2635
 4cb008db9c8ae2eb5c751006b977d6910e990c5d@65.108.71.163:2630,63559b939442512ed82d2ded46d02ab1021ea29a@95.214.55.138:53656
 ```
 
-## Explorer
-
-Nodestake: https://explorer.nodestake.top/composable/
-
-Ping Pub: https://ping.pub/composable
 
 ## Snapshots
-Fresh state synced snapshots and other mainnet materials could be found here: https://polkachu.com/networks/composable
+Fresh state synced snapshots and other mainnet materials could be found here: https://polkachu.com/networks/picasso
 Thanks to Polkachu.
 
 ## Creating the Validator

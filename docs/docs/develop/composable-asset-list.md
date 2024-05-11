@@ -1,4 +1,4 @@
-# Composable Asset List
+# Composable Polkadot Asset List
 
 The following is a current list of assets available on the Composable Parachain. The metadata for assets is stored in the `assetsRegistry` pallet and amounts are stored in the `tokens` (ORML) pallet.
 
