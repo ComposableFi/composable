@@ -89,7 +89,6 @@ impl<ResponseHandler: OnResponse> ShouldExecute
 }
 
 pub type Barrier = (
-	AllowKnownQueryResponsesSubstituteQuerierIfNone<PolkadotXcm>,
 	AllowSubscriptionsFrom<ParentOrSiblings>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	TakeWeightCredit,

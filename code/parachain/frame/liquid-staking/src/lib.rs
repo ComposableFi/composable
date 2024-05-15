@@ -669,6 +669,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		//6 sec
+		//0.5 sec * 8 = 4 sec -> 2sec consues
+
 		/// Bond_extra on relaychain via xcm.transact
 		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::bond_extra())]
@@ -1860,7 +1863,7 @@ pub mod pallet {
 
 			use frame_support::traits::tokens::Preservation;
 			let keep_alive = false;
-			let keep_alive =
+			let keep_alive: Preservation =
 				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
 			T::Assets::transfer(staking_currency, &module_id, who, amount, keep_alive)?;
 

@@ -136,7 +136,7 @@ async fn main() {
 
 			let mut claimed_rewards = vec![];
 
-			for claimed_reward in relaychain_staking_ledger.claimed_rewards.0.iter() {
+			for claimed_reward in relaychain_staking_ledger.legacy_claimed_rewards.0.iter() {
 				let e = claimed_reward.clone();
 				claimed_rewards.push(e);
 			}
