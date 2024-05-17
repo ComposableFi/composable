@@ -26,3 +26,12 @@ The `ICS-8 client` enables light client implementations written in CosmWasm to r
 ### [Hyperspace Relayer](./ibc/hyperspace-relayer.md)
 
 Relayers act as intermediaries responsible for relaying messages, transactions, and state updates across interconnected blockchains within an IBC connection. Hyperspace is a custom-built relayer implementation that allows for transferring arbitrary packets on non-Cosmos blockchains using the IBC protocol. In the future, we anticipate that other relayer solutions will add support for cross-ecosystem message passing through IBC. However, as of now, Hyperspace is the only relayer implementation that has this functionality.
+
+In addition to these requirements, for two blockchains to communicate along the IBC Protocol, an IBC connection must be established that meets the above requirements. This must be done through a four-way handshake whose purpose is to negotiate the protocol version and features to use, as well as to verify the identity and status of each chain.
+
+The four phases of the [handshake](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments) are:
+
+- **Init**: Chain A initiates the connection, sets the connection’s status to INIT and sends proofs of its view of: i) the status of the connection, and ii) chain B’s head. “Send” here means that an off-chain relayer forwards the message by executing a transaction on the other chain.
+- **Try**: Chain B verifies the proofs, sets the connection’s status to TRYOPEN and sends replies with two analogous proofs.
+- **Ack**: Chain A verifies the proofs, sets the connection’s status to OPEN and sends confirmation to chain B.
+- **Confirm**: Chain B sets the connection’s status to OPEN.

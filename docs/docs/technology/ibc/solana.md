@@ -1,6 +1,10 @@
 # Solana IBC
 
-Composable is working on implementing the Inter-Blockchain Communication (IBC) protocol on [Solana](https://solana.com/), establishing trust-minimized connections with Ethereum, Cosmos, and Polkadot. This accomplishment stands as a pioneering achievement, overcoming technical challenges that were previously deemed impossible.
+An implementation of IBC on [Solana](https://solana.com/) is live, establishing trust-minimized connections with Ethereum, Cosmos, and Polkadot. This accomplishment stands as a pioneering achievement, overcoming technical challenges that were previously deemed impossible. 
+
+:::tip
+Head to the [Picasso App](https://app.picasso.network/) and try it now!
+:::
 
 Due to the requirements of implementing the IBC protocol, Solana and a number of other chains like [TRON](https://tron.network/) and [NEAR](https://near.org/) were previously thought to be incompatible with IBC. In collaboration with the University of Lisbon, a solution has been developed for making Solana and other IBC-incompatible chains capable of supporting IBC for the first time. Initially it will be deployed on Solana, with plans for expansion to other networks in the future.
 
@@ -27,15 +31,6 @@ Yet, connecting to the IBC has a number of requirements. The IBC implementation 
 
 - **Smart Contracts**: execute in the chain’s runtime environment and are responsible for sending and receiving IBC packets.
 
-In addition to the requirements mentioned in the first section of this documentation, for two blockchains to communicate along the IBC Protocol, an IBC connection must be established that meets the above requirements. This must be done through a four-way handshake whose purpose is to negotiate the protocol version and features to use, as well as to verify the identity and status of each chain.
-
-The four phases of the [handshake](https://github.com/cosmos/ibc/tree/main/spec/core/ics-023-vector-commitments) are:
-
-- **Init**: Chain A initiates the connection, sets the connection’s status to INIT and sends proofs of its view of: i) the status of the connection, and ii) chain B’s head. “Send” here means that an off-chain relayer forwards the message by executing a transaction on the other chain.
-- **Try**: Chain B verifies the proofs, sets the connection’s status to TRYOPEN and sends replies with two analogous proofs.
-- **Ack**: Chain A verifies the proofs, sets the connection’s status to OPEN and sends confirmation to chain B.
-- **Confirm**: Chain B sets the connection’s status to OPEN.
-
 Additional technical requirements imposed by the IBC on chains that it connects are that the ledger needs to: 
 
 - Provide a Smart Contract runtime with transactional state changes
@@ -46,6 +41,24 @@ Additional technical requirements imposed by the IBC on chains that it connects 
 Yet, not all chains meet these requirements. Notably, Solana does not offer state proofs, and instead uses a [simpler mechanism for payment and state verification](https://docs.solana.com/proposals/simple-payment-and-state-verification). The AVS for Solana IBC serves as a solution to this problem.
 
 This [section](../restaking/sol-ibc-avs.md) outlines the approach taken for satisfying IBC requirements without having to extend the ledger implementation.  This solution can run on any blockchain which offers a Smart Contracts runtime.  We demonstrate it running on the Solana network and overcoming Solana’s lack of state proofs.
+
+Audits for the IBC stack on Solana can be found on our [repository](https://github.com/ComposableFi/composable/tree/main/audits/solana-ibc-avs).
+
+The IBC contract on Solana is currently managed by a 6/10 multisig, comprising both internal team members and external participants, including:
+
+Don Cryptonium — Community Member
+Polkachu — Validator Operator
+Dan Edlebeck — Advisor, Composable
+Rex St. John — Anza
+Max Kaplan — Edgevana
+
+This arrangement is temporary, pending the activation of cross-chain governance, after which the contracts will be governed by PICA stakers. The primary purpose of the multisig is to ensure contract upgradability.
+## Assets
+Assets entering Solana must also undergo whitelisting due to the constraints of Solana's data types, specifically, the u64 limit, which imposes restrictions on minting large amounts of tokens with large exponents.
+
+Solana's u64 data type imposes limitations on the minting of tokens with large exponents, affecting assets bridged into Solana. Most Cosmos tokens, with 6 decimals, are not affected by Solana's constraints. 
+
+To address this challenge, we have implemented an asset whitelisting contract that ensures compatibility between assets bridged into Solana and Solana's data type constraints. Through whitelisting, tokens undergo necessary adjustments, including decimal reduction for tokens exceeding 9 decimals, to guarantee seamless integration within the Solana ecosystem. Initially, there will be a 2/4 multisig that has the authority to whitelist accepted assets into the bridge. At a later time, PICA governance on Picasso will manage this process. It is important to note this multisig is not the owner of the IBC assets that are minted on Solana.
 
 ## Benefits & Use Cases
 
