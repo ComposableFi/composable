@@ -1174,6 +1174,16 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SetMembers { members });
 			Ok(())
 		}
+
+		#[pallet::call_index(27)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_incentive())]
+		#[transactional]
+		pub fn force_update_exchange_rate(origin: OriginFor<T>, rate: Rate) -> DispatchResult {
+			T::UpdateOrigin::ensure_origin(origin)?;
+			ExchangeRate::<T>::put(rate);
+			Self::deposit_event(Event::<T>::ExchangeRateUpdated(rate));
+			Ok(())
+		}
 	}
 
 	#[pallet::hooks]
