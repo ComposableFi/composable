@@ -46,11 +46,11 @@ Audits for the IBC stack on Solana can be found on our [repository](https://gith
 
 The IBC contract on Solana is currently managed by a 6/10 multisig, comprising both internal team members and external participants, including:
 
-Don Cryptonium — Community Member
-Polkachu — Validator Operator
-Dan Edlebeck — Advisor, Composable
-Rex St. John — Anza
-Max Kaplan — Edgevana
+- Don Cryptonium — Community Member
+- Polkachu — Validator Operator
+- Dan Edlebeck — Advisor, Composable
+- Rex St. John — Anza
+- Max Kaplan — Edgevana
 
 This arrangement is temporary, pending the activation of cross-chain governance, after which the contracts will be governed by PICA stakers. The primary purpose of the multisig is to ensure contract upgradability.
 ## Assets
