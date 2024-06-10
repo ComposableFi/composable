@@ -66,5 +66,6 @@ Share of redistributed revenue up the curve for longer-duration stakers will onl
 The PICA token is available on:
 
 - [Osmosis DEX](https://app.osmosis.zone/)
-- [Pablo DEX](https://app.pablo.finance/) on Picasso
+- [Pablo DEX](https://app.pablo.finance/) on Picasso Kusama
 - [Uniswap V2](https://app.uniswap.org/explore/tokens/ethereum/0xbb63a9b64a80e9338b8ea298c51765e57c4f159c?chain=mainnet) on Ethereum
+- [Jupiter](https://jup.ag/swap/966vsqwoS3ZBrHesTyAvE7esFV2kaHaDFLLXs4asPdLJ-So11111111111111111111111111111111111111112) on Solana
