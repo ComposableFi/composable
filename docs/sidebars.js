@@ -178,7 +178,6 @@ mantis: [
    "technology/mantis/solver-guide",
    "technology/mantis/integration-guide",
    "technology/mantis/tools",
-   "technology/mantis/tokenomics",
    {
     type: "category",
         label: "CVM",
