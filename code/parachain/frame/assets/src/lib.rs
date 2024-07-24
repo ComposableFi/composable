@@ -376,6 +376,41 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(T::WeightInfo::burn_from())]
+		pub fn burn_from_caller(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			#[pallet::compact] amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let is_native = T::NativeAssetId::get() == asset_id;
+			if keep_alive && is_native{
+				let keep_alive =
+				if keep_alive { Preservation::Preserve } else { Preservation::Expendable };
+				let reducible_balance = <Self as Inspect<T::AccountId>>::reducible_balance(
+					asset_id,
+					&who,
+					keep_alive,
+					Fortitude::Polite,
+				);
+				//want to keep alive account.
+				if amount > reducible_balance {
+					return Err(Error::<T>::InvalidCurrency.into());
+				}
+			}
+
+			<Self as Mutate<T::AccountId>>::burn_from(
+				asset_id,
+				&who,
+				amount,
+				Precision::BestEffort,
+				Fortitude::Polite,
+			)?;
+			Ok(().into())
+		}
 	}
 
 	pub(crate) fn valid_asset_id<T: Config>(asset_id: T::AssetId) -> Option<T::AssetId> {
