@@ -30,8 +30,11 @@ jobs:
           fetch-depth: 0
       - uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          # username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          # password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           nix run .#generate-release-artifacts --print-build-logs
           COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)
