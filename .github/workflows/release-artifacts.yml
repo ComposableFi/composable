@@ -41,16 +41,16 @@ jobs:
           nix run .#generate-release-artifacts --print-build-logs
           COMPOSABLE_VERSION=$(nix eval --raw .#composable-node.version)
           docker load --input release-artifacts/composable-image
-          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:v$COMPOSABLE_VERSION"
-          docker tag composable:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:v$COMPOSABLE_VERSION"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:latest-prerelease"
+          docker tag composable:latest "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v$COMPOSABLE_VERSION"
+          docker tag composable:latest "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-prerelease"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v$COMPOSABLE_VERSION"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-prerelease"
 
           docker load --input release-artifacts/devnet-image
-          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v$COMPOSABLE_VERSION"
-          docker tag devnet:latest "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:v$COMPOSABLE_VERSION"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/devnet:latest-prerelease"                    
+          docker tag devnet:latest "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/devnet:v$COMPOSABLE_VERSION"
+          docker tag devnet:latest "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/devnet:latest-prerelease"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/devnet:v$COMPOSABLE_VERSION"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/devnet:latest-prerelease"                    
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
