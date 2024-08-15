@@ -102,11 +102,6 @@ const config = {
 						label: 'Guides',
 					},
 					{
-						to: '/technology/mantis',
-						position: 'left',
-						label: 'MANTIS',
-					},
-					{
 						href: 'https://research.composable.finance',
 						label: 'Research',
 						position: 'right',
@@ -125,12 +120,12 @@ const config = {
 						title: 'Community',
 						items: [
 							{
-								label: 'Twitter',
+								label: 'X',
 								href: 'https://twitter.com/Picasso_Network',
 							},
 							{
 								label: 'Telegram',
-								href: 'https://t.me/https://t.me/composablefinance',
+								href: 'https://t.me/composablefinance',
 							},
 							{
 								label: 'Discord',
