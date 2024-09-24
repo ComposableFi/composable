@@ -6,10 +6,6 @@ Restaking has been [described as a new primitive](https://consensys.io/blog/eige
 
 Economic security is a necessary construct for applications building in the decentralized space. [Eigenlayer](https://www.eigenlayer.xyz/) introduced ETH staking. Picasso is introducing restaking of assets on multiple Proof of Stake (PoS) networks to establish cross-ecosystem pooled security to Actively Validated Services (AVSes).
 
-:::tip
-The first opportunity for Restaking on Solana is live. Users have a chance to get in on the action early and earn boosted rewards through [MANTIS games](../technology/restaking/mantis-games.md) - a team staking competition on [mantis.app](https://mantis.app/).
-:::
-
 Restaking has been pioneered and popularized by EigenLayer, which is a protocol for restaking ETH on Ethereum. In particular, users staking ETH are able to opt into EigenLayer’s smart contracts for restaking their ETH and thus extending the crypto economic security to additional applications within the ecosystem. EigenLayer thus addresses rising concerns of fragmented security on Ethereum, helping to bootstrap the security of various protocols/applications. EigenLayer’s total value locked (TVL) at the time of writing is over $7.5 billion, indicating that there is a clear demand for restaking.
 
 Despite the benefits of restaking, this concept has largely not yet expanded beyond the Ethereum ecosystem. However, there is a huge potential for restaking on other chains. Leveraging the fact that Picasso is a L1 Cosmos SDK chain that is also a hub for cross-ecosystem IBC, we are able to make this restaking layer cross-chain. Thus, vaults associated with this system will exist exclusively on IBC-enabled chains. Registration and accounting of AVSes are managed on Picasso. Vault contracts are to be deployed on Solana, Picasso and Ethereum in H1. Picasso Generalized Restaking facilitates a broad spectrum of assets from PoS networks. In effect, this will enable a larger supply of tokens with a lower opportunity cost to be restaked, and therefore, decrease the cost of acquiring AVSes.

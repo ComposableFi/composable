@@ -3,9 +3,6 @@
 ### Actively Validated Services (AVSes) 
 A project or protocol that needs distributed validation and acquires said validation via restaking. Examples of AVSes are middleware services, layer 2 networks, bridges, data layers, and dApps.
 
-### Composable Virtual Machine (CVM) 
-An orchestration language and execution runtime for cross-chain program execution and intents settlement that operates, specifically over IBC.
-
 ### Cross-Domain Maximal Extractible Value (MEV) 
 The maximum value that can be captured from arbitrage transactions executed in a specified order across multiple domains. See: Maximal Extractible Value.
 
@@ -24,7 +21,7 @@ Lightweight, trustless mechanisms for verifying the state of the counterparty bl
 ### Maximal Extractible Value (MEV)
 The maximal value extractable between one or more blocks, given any arbitrary re-ordering, insertion or censorship of pending or existing transactions (as defined by Obadia et al., 2021).
 
-### Multichain-Agnostic Normalized Trust-Minimized Intent Settlement (MANTIS) 
+### Multichain-Agnostic Normalized Trust-Minimized Intent Settlement ([Mantis](https://mantis.app/)) 
 A vertically integrated, optimized intents settlement framework with expression, execution, and settlement. 
 
 ### Operators 

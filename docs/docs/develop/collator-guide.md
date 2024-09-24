@@ -87,11 +87,7 @@ To see logs, run:
 sudo docker logs -f $(sudo docker ps |grep composable|awk '{print $1}')
 ```
 
-The latest version of the application can be found at [Docker hub] or [Composable releases].
-
-[Docker hub]: https://hub.docker.com/r/composablefi/composable/tags
-
-[Composable releases]: (https://github.com/ComposableFi/composable/releases/)
+The latest version of the application can be found at [Docker hub](https://hub.docker.com/r/composablefi/composable/tags) or [Composable releases](https://github.com/ComposableFi/composable/releases/).
 
 This configuration will pass the key into the Composable application at startup. Verify that it is being used by checking the log for:
 

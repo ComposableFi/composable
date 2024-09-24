@@ -76,9 +76,6 @@ This contract is responsible for updating the state of vaults deployed on variou
 ### Fishermen Protocol
 These are actors who ensure operators are being honest and signal if an operator is misbehaving and needs to be slashed. Anyone is allowed to become a Fisherman and rewards are provided to any misbehaviour reports via Slashing. 
 
-### CVM
-Send stake and un-stake messages from PoS chains to Picasso Cosmos. Users can originate these requests from the PoS chains they restake assets. Additionally, users can (un)delegate their stake to operators of AVSes. These are all operations that are executed on the chain where the user assets live, and are propagated using CVM.
-
 ### Slashing Contract
 The process involves detecting malicious behavior, initiating slashing requests, and executing specific steps based on the type of slashing chosen by the AVS.
 
