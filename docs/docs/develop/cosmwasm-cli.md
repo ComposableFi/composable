@@ -3,7 +3,7 @@
 Composable Cosmwasm CLI is a CLI tool to quickly get started with the ecosystem and interact with a chain that runs `pallet-cosmwasm`. In this guide, we will show you how to run the CLI on a local Picasso network and Picasso Rococo. 
 
 :::info 
-Picasso Rococo is a testnet (test network) for [Picasso](../networks/picasso-parachain-overview.md). It allows developers to experiment, test runtime module deployment, and refine their applications to ensure the stability and compatibility of new features before deploying on Picasso mainnet by interacting with the [Rococo Relay Chain](https://polkadot.network/blog/rococo-revamp-becoming-a-community-parachain-testbed/).
+Picasso Rococo is a testnet (test network) for Picasso. It allows developers to experiment, test runtime module deployment, and refine their applications to ensure the stability and compatibility of new features before deploying on Picasso mainnet by interacting with the [Rococo Relay Chain](https://polkadot.network/blog/rococo-revamp-becoming-a-community-parachain-testbed/).
 :::
 
 ## Setting up the development environemnt

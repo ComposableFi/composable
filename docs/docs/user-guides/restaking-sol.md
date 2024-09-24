@@ -9,7 +9,7 @@ After connecting your wallet, you will see the following screen. Currently, you 
 Once your intent is expressed as displayed below, you’ll need to approve the transaction with your wallet. 
 
 :::info
-The fee to mint an NFT is 0.03 SOL, this amount will be returned to your account once the NFT is burned. You can read more about this process [here](../technology/solana-restaking/vaults.md).
+The fee to mint an NFT is 0.03 SOL, this amount will be returned to your account once the NFT is burned. You can read more about this process [here](../technology/restaking/vaults.md).
 :::
 
 ![intent](../user-guides/images-restaking-guide/restaking-2.png)
