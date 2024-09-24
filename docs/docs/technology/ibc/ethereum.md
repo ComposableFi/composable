@@ -1,7 +1,7 @@
 # Ethereum IBC
 
 :::tip
-The inaugral implementation of IBC on Ethereum is now live on mainnet. Users can utilise [Mantis.app](https://games.mantis.app/) to bridge between Ethereum and Cosmos chains via Picasso.
+The inaugral implementation of IBC on Ethereum is now live on mainnet. Users can utilise [app.picasso.network](https://app.picasso.network/?from=ETHEREUM&to=SOLANA) to bridge between Ethereum, Solana and Cosmos chains via Picasso.
 :::
 
 Ethereum's integration with the IBC protocol expands the ability to offer novel and valuable DeFi use cases and enhance opportunities for participants across diverse ecosystems. In line with prior IBC extensions, incorporating essential components such as a light client, relayer, and IBC implementation remains a prerequisite. However, when extending IBC compatibility to Ethereum, it became imperative to supplement the relayer with a ZK-Circuit. 
@@ -19,9 +19,9 @@ Casper is Ethereum's PoS consensus protocol implemented within ETH 2.0. In Caspe
 
 The Casper Light Client relies on the **Sync Committee**, which comprises 512 validators who undergo random selection once every sync committee period, approximately equal to one day. While a validator is actively participating in the sync committee, their primary responsibility entails consistently signing the block header representing the current chain head during each slot. The Sync Committee is a succinct way of using a sample to verify a subset of the signatures of Ethereum. 
 
-Previously, validating the Tendermint consensus protocol within the EVM posed a challenge due to the absence of an Ed25519 precompile, the default signature scheme used in Cosmos chains using the Tendermint consensus. Existing Solidity implementations for this verification incurred gas costs averaging around 25 million. However, zero-knowledge proofs serve as a precompile for the EVM, enabling developers to integrate highly intricate computations seamlessly. Picasso's zkIBC bridge to Ethereum employs [TendermintX](https://github.com/succinctlabs/tendermintx) to verify all signatures in succinct proofs. 
+Previously, validating the Tendermint consensus protocol within the EVM posed a challenge due to the absence of an Ed25519 precompile, the default signature scheme used in Cosmos chains using the Tendermint consensus. Existing Solidity implementations for this verification incurred gas costs averaging around 25 million. However, zero-knowledge proofs serve as a precompile for the EVM, enabling developers to integrate highly intricate computations seamlessly. Picasso's zkIBC bridge to Ethereum initially employed [TendermintX](https://github.com/succinctlabs/tendermintx) to verify all signatures in succinct proofs. After the launch of [Succinct's SP1](https://github.com/succinctlabs/sp1), the bridge switched its implementation and now uses **SP1 in production**. 
 
-The deployment of smart contracts and circuits by Succinct for TendermintX is operational in production, with each client update for the IBC implementation on Ethereum costing approximately 650,000 gas. These client updates include headers of Picasso and data such as block hashes, timestamps, and state roots. 
+The deployment of smart contracts and circuits by Succinct for SP1 is operational in production, with each client update for the IBC implementation on Ethereum. These client updates include headers of Picasso and data such as block hashes, timestamps, and state roots. 
 
 :::info
 The Ed25519 signature scheme is a cryptographic algorithm used for digital signatures and adopted by majority of Blockchains. It is based on the elliptic curve cryptography and provides strong security with relatively short key sizes. The scheme is named after the Edwards curve Curve25519, which is used as the underlying mathematical structure. Ed25519 offers efficient signing and verification operations, making it popular for various applications such as secure communication protocols, cryptocurrencies, and digital authentication systems.

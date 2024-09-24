@@ -15,7 +15,7 @@ Signers for the multisig are as follows:
 
 - Miguel Matos — Board member, Composable Foundation. Professor at the Universidade de Lisboa & Researcher at INESC-ID.
 - Dan Edlebeck — Advisor, Composable
-- Blas Rodriguez — CTO, Composable
+- Blas Rodriguez — Advisor, Composable
 - Joe DeTommaso — Head of Strategy, Composable
 - Jafar Azam — Product Owner, Composable
 - Dhruv D Jain — Research Analyst, Composable

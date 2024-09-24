@@ -102,6 +102,11 @@ const config = {
 						label: 'Guides',
 					},
 					{
+						href: 'https://docs.mantis.app',
+						label: 'Mantis',
+						position: 'right',
+					},					
+					{
 						href: 'https://research.composable.finance',
 						label: 'Research',
 						position: 'right',
@@ -146,7 +151,7 @@ const config = {
 							},
 							{
 								label: 'Press Kit',
-								href: 'https://docs.composable.finance/ecosystem/press-kit',
+								href: 'https://www.picasso.network/brand-kit',
 							},
 							{
 								label: 'Risk Factors',

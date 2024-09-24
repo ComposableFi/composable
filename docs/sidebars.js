@@ -54,9 +54,7 @@
           },
           collapsible: true,
           items: [
-            "user-guides/restaking-sol",
-            "user-guides/team-competition",
-          ],
+            "user-guides/restaking-sol",          ],
         },
          {
            type: "category",
@@ -68,9 +66,6 @@
            collapsible: true,
            items: [
              "user-guides/pica-staking",
-             "user-guides/how-to-provide-liquidity",
-             "user-guides/how-to-trade-pica-on-pablo",
-             "user-guides/dot-lp-guide",
              "user-guides/trustless-transfers",
            ],
          },
@@ -89,7 +84,6 @@
         "develop/picasso",
         "develop/solana-avs-mainnet",
         "develop/local-picasso-guide",
-        "develop/oracle-set-up-guide",
         "develop/collator-guide",
         "develop/nix",
         "develop/codespaces",
@@ -110,6 +104,7 @@
        items: [
         "technology/ibc/ethereum",
         "technology/ibc/solana",
+        "technology/ibc/bitcoin",
         "technology/ibc/polkadot",
         "technology/ibc/polkadot-kusama",
         "technology/ibc/near",
@@ -158,7 +153,6 @@ restaking: [
   "technology/restaking/use-cases",
   "technology/restaking/sol-ibc-avs",
   "technology/restaking/vaults",
-  "technology/restaking/mantis-games",
   "technology/restaking/roadmap"
    ],
 },

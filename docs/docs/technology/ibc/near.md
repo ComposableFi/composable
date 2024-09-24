@@ -3,7 +3,7 @@ _IBC everywhere_
 
 :::note
 
-This section outlines our progress in connecting the IBC Protocol to NEAR and our upcoming plans. While we are still working on this project, we expect to launch sometime in Q1 2024.
+This section outlines our progress in connecting the IBC Protocol to NEAR and our upcoming plans. While we are still working on this project, we expect to launch sometime in Q1 2025.
 
 :::
 

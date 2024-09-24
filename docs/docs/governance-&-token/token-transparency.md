@@ -104,9 +104,7 @@ Following the launch of OpenGov phase 2 on Picasso, the allocation for the Picas
 
 #### Crowdloan Pallet Funds
 
-Are located at the crowdloan pallet: `5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u`
-
-A detailed list of the crowdloan contributions and rewards can be found [on our GitHub](https://github.com/ComposableFi/composable/blob/main/docs/docs/networks/picasso/crowdloan-contributors/crowdloan-logs.csv).
+Were located at the crowdloan pallet: `5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u`
 
 #### IBC Escrow Address
 
@@ -161,5 +159,4 @@ The past performance of any asset is not indicative of future results. Although 
 in the event any statement is or becomes inaccurate, 
 the creator is not responsible for any such inaccuracies and the reader fully disclaims and releases the creator from any and all liability. 
 Since the content is intended to be disclosed on the date of its release there is no duty on the part of the creator to update any material shared herein. 
-Please see our important Legal Disclosures & Disclaimers which are fully incorporated herein as if set out here at length:
-[https://www.composable.finance/disclaimer](https://www.composable.finance/disclaimer)
+Please see our important [Legal Disclosures & Disclaimers](https://github.com/ComposableFi/composable/blob/main/docs/docs/faqs/disclaimers-disclosures-for-composable-tokens.md) which are fully incorporated herein as if set out here at length.

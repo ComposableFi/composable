@@ -7,7 +7,7 @@
 - Binary: https://github.com/ComposableFi/composable-cosmos/releases/tag/v6.3.1
 - Current version: v6.6.41 (check the repository for the latest release)
 - Public Notional endpoints:
-  - RPC: https://picasso-rpc.polkachu.com/ (1) https://api-composable-ia.cosmosia.notional.ventures (2)
+  - RPC: https://picasso-rpc.polkachu.com/ 
 - Block Explorer: https://ping.pub/picasso (1) https://explorer.nodestake.top/composable/ (2)
 - IBC Channels: https://polkachu.com/ibcs?network=picasso
 
