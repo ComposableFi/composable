@@ -1,6 +1,7 @@
 name: watch-exec
 description: Calls commands within a cachix watch-exec wrapper.
 
+
 inputs:
   command:
     description: "The shell command to execute within a watch-exec context"
