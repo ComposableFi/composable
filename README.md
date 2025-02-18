@@ -33,7 +33,7 @@ Among the noteworthy pallets included are:
 Composable's core technology extends beyond this repository. It includes key components such as [CVM and MANTIS](https://github.com/ComposableFi/composable-vm), the first IBC implementation on Substrate – [Pallet-ibc](https://github.com/ComposableFi/composable-ibc), the [Composable Cosmos chain](https://github.com/ComposableFi/composable-cosmos), and [Solana IBC](https://github.com/ComposableFi/emulated-light-client).
 
 ## Join Composable Networks
-To supply price feeds for Apollo or run a collator on Picasso, check out our documentation [here](https://docs.composable.finance/develop/collator-guide). 
+To supply price feeds for Apollo or run a collator on Picasso, check out our documentation [here](https://docs.picasso.network/develop/collator-guide/). 
 
 To become a validator on Composable Cosmos mainnet or testnet, see the instructions [here](https://docs.composable.finance/develop/composable-cosmos).
 
