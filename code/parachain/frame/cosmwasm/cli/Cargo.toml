@@ -24,5 +24,5 @@ subxt = { version = "0.31.0", default-features = false, features = [
   "substrate-compat",
 ] }
 thiserror = "1.0.40"
-tokio = { version = "1.29.1", features = ["full"] }
+tokio = { version = "1.38.2", features = ["full"] }
 log = { version = "0.4.19", default-features = false }
