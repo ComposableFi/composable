@@ -4,7 +4,7 @@ The onboarding process for operators occurs following approval by PICA governanc
 
 Initially, the owner of the contracts on Picasso Cosmos will be set to a multisig. In the next stage of governance, the owner of the contracts on will be designated to the Upgrade Authority address. This ensures that PICA governance retains control over the contracts for the purpose of upgradability.
 
-The restaking vault on Solana is currently governed by a multisig until decentralised governance is established. This is composed of a 7-of-9 multisig at address `JD4dNpiv9G24jmq8XQMuxbQPKN4rYV7kue2Hzi1kNT4Q`. As we move toward the launch of SOL IBC, we will look to expand this multisig in the greater pursuit of further decentralization. The **Admin & Upgradability multisig** is responsible for the following:
+The restaking vault on Solana is currently governed by a multisig until decentralised governance is established. This is composed of a 5-of-9 multisig at address `JD4dNpiv9G24jmq8XQMuxbQPKN4rYV7kue2Hzi1kNT4Q`. As we move toward the launch of SOL IBC, we will look to expand this multisig in the greater pursuit of further decentralization. The **Admin & Upgradability multisig** is responsible for the following:
 
 - Whitelisting tokens
 - Setting the staking cap
@@ -15,10 +15,9 @@ Signers for the multisig are as follows:
 
 - Miguel Matos — Board member, Composable Foundation. Professor at the Universidade de Lisboa & Researcher at INESC-ID.
 - Dan Edlebeck — Advisor, Composable
-- Blas Rodriguez — Advisor, Composable
-- Joe DeTommaso — Head of Strategy, Composable
-- Jafar Azam — Product Owner, Composable
-- Dhruv D Jain — Research Analyst, Composable
+- Miguel Santefe - Co-Founder, Composable
+- Omar Zaki - Founder, Composable
+- Jeff Smith - General Counsel, Composable
 - SolBlaze — bSOL LSD
 - Don Cryptonium — Community Member
 - Polkachu — Validator Operator
