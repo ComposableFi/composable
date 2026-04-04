@@ -58,7 +58,3 @@ Refer to [RELEASE.md](./RELEASE.md).
 ## Nix
 
 Use [`nix`](https://docs.composable.finance/nix) to run and build Composable developer environments.
-
-
-
-
